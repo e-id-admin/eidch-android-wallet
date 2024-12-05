@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config>
+        <domain includeSubdomains="false">mam-managed.bit.admin.ch</domain>
+        <trust-anchors>
+            <certificates src="@raw/dynatrace" />
+        </trust-anchors>
+    </domain-config>
+    <domain-config>
+        <domain includeSubdomains="false">enforcement-service.bit.admin.ch</domain>
+        <trust-anchors>
+            <certificates src="@raw/root_admin_ch" />
+        </trust-anchors>
+    </domain-config>
+    <domain-config>
+        <domain includeSubdomains="true">trust-infra.swiyu.admin.ch</domain>
+        <trust-anchors>
+            <certificates src="@raw/root_admin_ch" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

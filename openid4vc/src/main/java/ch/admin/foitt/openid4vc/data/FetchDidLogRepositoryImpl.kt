@@ -1,0 +1,23 @@
+package ch.admin.foitt.openid4vc.data
+
+import ch.admin.foitt.openid4vc.domain.model.ResolveDidError
+import ch.admin.foitt.openid4vc.domain.repository.FetchDidLogRepository
+import com.github.michaelbull.result.coroutines.runSuspendCatching
+import com.github.michaelbull.result.mapError
+import io.ktor.client.HttpClient
+import io.ktor.client.request.accept
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import java.net.URL
+import javax.inject.Inject
+
+class FetchDidLogRepositoryImpl @Inject constructor(
+    private val httpClient: HttpClient
+) : FetchDidLogRepository {
+    override suspend fun fetchDidLog(url: URL) = runSuspendCatching<String> {
+        httpClient.get(url) {
+            accept(ContentType("application", "jsonl+json"))
+        }.bodyAsText()
+    }.mapError { throwable -> ResolveDidError.NetworkError(throwable) }
+}

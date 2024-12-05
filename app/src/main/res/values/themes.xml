@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.PublicBetaWallet" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="navigationBarColor">@android:color/transparent</item>
+        <item name="statusBarColor">@android:color/transparent</item>
+    </style>
+</resources>

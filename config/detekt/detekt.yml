@@ -1,0 +1,110 @@
+comments:
+  active: true
+
+complexity:
+  active: true
+  LargeClass:
+    active: false  # default: true
+    threshold: 600
+  LongMethod:
+    active: false  # default: true
+    threshold: 60
+  TooManyFunctions:
+    active: true
+    thresholdInFiles: 11
+    thresholdInClasses: 11
+    thresholdInInterfaces: 11
+    thresholdInObjects: 11
+    thresholdInEnums: 11
+    ignoreDeprecated: false
+    ignorePrivate: true  # default: false
+    ignoreOverridden: false
+    excludes: [ '**/*Module.kt', '**/test/**', '**/androidTest/**' ]  # Dagger/Hilt modules and tests
+  LongParameterList:
+    functionThreshold: 9
+    constructorThreshold: 9
+    ignoreAnnotated: [
+      'Composable',
+      'HiltViewModel',
+      'Inject'
+    ]
+
+coroutines:
+  active: true
+
+empty-blocks:
+  active: true
+
+exceptions:
+  active: true
+  TooGenericExceptionCaught:
+    active: false  # default: true
+
+formatting:
+  active: true
+  MaximumLineLength:
+    maxLineLength: 140  # keep aligned with style -> MaxLineLength
+    excludes: [ '**/test/**', '**/androidTest/**' ]  # Avoid shortening test names
+  ArgumentListWrapping:
+    maxLineLength: 140 # the max line length above apparently does not cover this -> keep values aligned
+  ParameterListWrapping:
+    maxLineLength: 140 # the max line length above apparently does not cover this -> keep values aligned
+  ParameterWrapping:
+    maxLineLength: 140 # the max line length above apparently does not cover this -> keep values aligned
+naming:
+  active: true
+  NoNameShadowing:
+    active: true  # default: false
+  FunctionNaming:
+    ignoreAnnotated: [ 'Composable' ]  # see https://detekt.github.io/detekt/compose.html
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9]*'  # see https://detekt.github.io/detekt/compose.html
+
+performance:
+  active: true
+
+potential-bugs:
+  active: true
+
+style:
+  active: true
+  MaxLineLength:
+    active: false  # see formatting -> MaximumLineLength -> maxLineLength
+  MagicNumber:
+    active: false
+    ignorePropertyDeclaration: true  # see https://detekt.github.io/detekt/compose.html
+    ignoreCompanionObjectPropertyDeclaration: true  # see https://detekt.github.io/detekt/compose.html
+  UnusedPrivateMember:
+    ignoreAnnotated: [
+      'Preview',
+      'WalletDefaultPreview',
+      'PhoneSmallScreenPreview',
+      'PhoneMediumScreenPreview',
+      'PhoneLargeScreenPreview',
+      'PhoneSmallLandscapeScreenPreview',
+      'PhoneMediumLandscapeScreenPreview',
+      'PhoneLargeLandscapeScreenPreview',
+      'TabletSmallScreenPreview',
+      'TabletMediumScreenPreview',
+      'TabletLargeScreenPreview',
+      'TabletSmallLandscapeScreenPreview',
+      'TabletMediumLandscapeScreenPreview',
+      'TabletLargeLandscapeScreenPreview',
+      'WalletAllScreenPreview',
+      'AllCompactScreensPreview',
+      'AllLargeScreensPreview',
+      'AllScreensPreview',
+      'WalletComponentPreview',
+    ]  # see https://detekt.github.io/detekt/compose.html
+  ForbiddenComment:
+    comments:
+      - reason: 'Forbidden FIXME todo marker in comment, please fix the problem.'
+        value: 'FIXME'
+      - reason: 'Forbidden STOPSHIP todo marker in comment, please address the problem before shipping the code.'
+        value: 'STOPSHIP'
+  ReturnCount:
+    excludeGuardClauses: true
+  DestructuringDeclarationWithTooManyEntries:
+    ignoreAnnotated: [
+      'Composable',
+    ]

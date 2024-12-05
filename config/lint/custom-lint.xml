@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Ignore false positive -->
+    <issue id="InvalidPackage">
+        <ignore path="**/kotlinx-coroutines-core-**" />
+    </issue>
+
+    <!-- Exclude files that are out of our hands but may lead to lint issues -->
+    <issue id="all">
+        <ignore path="**/.gradle/*" />
+    </issue>
+
+    <!-- This tests for duplicate string values and is therefore pointless -->
+    <issue id="DuplicateStrings" severity="ignore" />
+
+    <!-- Even if all orientations are supported in general, it can be okay to lock the orientation on a single activity -->
+    <issue id="LockedOrientationActivity" severity="ignore" />
+
+
+    <!-- These are currently not real word problems -->
+    <issue id="SyntheticAccessor" severity="ignore" />
+    <issue id="MediaCapabilities" severity="ignore" />
+
+    <!-- This produces too many false positives -->
+    <issue id="Typos" severity="ignore" />
+
+    <!-- Unused ids and resources are not a real problem and can be removed in the build process. -->
+    <issue id="UnusedIds" severity="ignore" />
+    <issue id="UnusedResources" severity="ignore" />
+
+    <!-- This error is a hint that there could be a problem in the linting process itself.  -->
+    <!-- Reduced the severity from error to warning. -->
+    <issue id="LintError" severity="warning" />
+
+    <issue id="MissingTranslation" severity="warning" />
+
+    <!-- This error is a hint that there could be problems with ChromeOs hardware. -->
+    <!-- Reduced the severity from error to warning. -->
+    <issue id="PermissionImpliesUnsupportedChromeOsHardware" severity="warning" />
+</lint>

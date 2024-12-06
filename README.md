@@ -1,4 +1,4 @@
-![24 github_banner-publicbeta v0 2](https://github.com/user-attachments/assets/e0ea1926-5935-43f1-a3b9-38b0bbd2b085)
+![24 github_banner-publicbeta v0 2](https://github.com/e-id-admin/eidch-ios-wallet/blob/main/24.github_banner-publicbeta.v0.2.jpg)
 
 # Public Beta Wallet - Android
 

@@ -1,15 +1,11 @@
 package ch.admin.foitt.wallet.platform.navArgs.domain.model
 
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest
-import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.ClientNameDisplay
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.CompatibleCredential
-import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.LogoUriDisplay
 
 data class PresentationCredentialListNavArg(
     val compatibleCredentials: Array<CompatibleCredential>,
     val presentationRequest: PresentationRequest,
-    val clientDisplay: Array<ClientNameDisplay>,
-    val uriDisplay: Array<LogoUriDisplay>
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

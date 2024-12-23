@@ -82,7 +82,8 @@ class ValidatePresentationRequestImpl @Inject constructor(
         }
 
         verifyJwtSignature(
-            issuerDid = presentationRequest.clientId,
+            did = presentationRequest.clientId,
+            kid = jwtHeader.keyID,
             signedJwt = presentationRequest.signedJWT
         )
             .mapError { error -> error.toValidatePresentationRequestError(presentationRequest.responseUri) }

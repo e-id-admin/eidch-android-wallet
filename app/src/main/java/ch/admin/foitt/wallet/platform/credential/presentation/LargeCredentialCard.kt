@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialCardMocks
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
+import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.preview.ComposableWrapper
 import ch.admin.foitt.wallet.platform.preview.WalletComponentPreview
 import ch.admin.foitt.wallet.theme.Gradients
@@ -44,8 +46,12 @@ fun LargeCredentialCard(
     contentColor = Color.Unspecified,
 ) {
     val textColor = credentialCardState.textColor
+    if (credentialCardState.isCredentialFromBetaIssuer) {
+        DemoWatermark(color = textColor)
+    }
     Column(
         modifier = Modifier
+            .fillMaxSize()
             .drawBehind {
                 drawRect(brush = Gradients.diagonalCredentialBrush())
                 drawRect(brush = Gradients.leftBottomRadialLargeCredentialBrush(size))
@@ -56,7 +62,11 @@ fun LargeCredentialCard(
         CredentialContent(credentialCardState, textColor)
         Spacer(modifier = Modifier.weight(1f))
         Spacer(modifier = Modifier.height(Sizes.s04))
-        CredentialStatusBadge(status = credentialCardState.status, textColor = credentialCardState.textColor)
+        Badges(
+            credentialStatus = credentialCardState.status,
+            textColor = credentialCardState.textColor,
+            isCredentialFromBetaIssuer = credentialCardState.isCredentialFromBetaIssuer,
+        )
     }
 }
 
@@ -108,6 +118,19 @@ private fun CredentialText(
             )
         }
     }
+}
+
+@Composable
+private fun Badges(
+    isCredentialFromBetaIssuer: Boolean,
+    credentialStatus: CredentialStatus?,
+    textColor: Color,
+) = Row {
+    if (isCredentialFromBetaIssuer) {
+        DemoBadge()
+        Spacer(modifier = Modifier.width(Sizes.s02))
+    }
+    CredentialStatusBadge(status = credentialStatus, textColor = textColor)
 }
 
 private class LargeCredentialCardPreviewParams :

@@ -3,6 +3,7 @@ package ch.admin.foitt.wallet.feature.settings.presentation.security
 import android.content.Context
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.eventToast.domain.repository.PassphraseChangeSuccessToastRepository
 import ch.admin.foitt.wallet.platform.eventTracking.domain.usecase.ApplyUserPrivacyPolicy
 import ch.admin.foitt.wallet.platform.eventTracking.domain.usecase.IsUserPrivacyPolicyAcceptedFlow
 import ch.admin.foitt.wallet.platform.login.domain.model.CanUseBiometricsForLoginResult
@@ -36,6 +37,7 @@ class SecuritySettingsViewModel @Inject constructor(
     isUserPrivacyPolicyAcceptedFlow: IsUserPrivacyPolicyAcceptedFlow,
     private val getPassphraseWasDeleted: GetPassphraseWasDeleted,
     private val savePassphraseWasDeleted: SavePassphraseWasDeleted,
+    private val passphraseChangeSuccessToastRepository: PassphraseChangeSuccessToastRepository,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
 ) : ScreenViewModel(setTopBarState, setFullscreenState) {
@@ -61,6 +63,10 @@ class SecuritySettingsViewModel @Inject constructor(
     }
 
     val shareAnalysisEnabled = isUserPrivacyPolicyAcceptedFlow()
+
+    val showPassphraseChangeSuccessToast = passphraseChangeSuccessToastRepository.passphraseChangeSuccess
+
+    fun hidePassphraseChangeSuccessToast() = passphraseChangeSuccessToastRepository.hidePassphraseChangeSuccess()
 
     fun onChangeBiometrics() {
         viewModelScope.launch {

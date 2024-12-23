@@ -148,7 +148,7 @@ class ValidateTokenStatusListImplTest {
 
     private fun success() {
         mockAnyCredential(ISSUER)
-        coEvery { mockVerifyJwtSignature(any(), any()) } returns Ok(Unit)
+        coEvery { mockVerifyJwtSignature(did = any(), kid = any(), signedJwt = any()) } returns Ok(Unit)
     }
 
     private fun mockAnyCredential(issuer: String?) {

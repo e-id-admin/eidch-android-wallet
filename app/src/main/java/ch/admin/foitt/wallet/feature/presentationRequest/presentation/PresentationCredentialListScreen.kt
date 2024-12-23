@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -21,8 +20,9 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.InvitationHeader
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.Buttons
-import ch.admin.foitt.wallet.platform.composables.InvitationHeader
 import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
 import ch.admin.foitt.wallet.platform.composables.SpacerBottom
 import ch.admin.foitt.wallet.platform.composables.SpacerTop
@@ -31,6 +31,7 @@ import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialMoc
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.PresentationCredentialListNavArg
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTexts
 import ch.admin.foitt.wallet.theme.WalletTheme
@@ -41,10 +42,12 @@ import com.ramcosta.composedestinations.annotation.Destination
 )
 @Composable
 fun PresentationCredentialListScreen(viewModel: PresentationCredentialListViewModel) {
+    val presentationCredentialListUiState = viewModel.presentationCredentialListUiState.collectAsStateWithLifecycle().value
+    val verifierUiState = viewModel.verifierUiState.collectAsStateWithLifecycle().value
+
     PresentationCredentialListScreenContent(
-        verifierName = viewModel.verifierName.collectAsStateWithLifecycle().value,
-        verifierImage = viewModel.verifierLogo.collectAsStateWithLifecycle().value,
-        credentialCardStates = viewModel.presentationCredentialListUiState.collectAsStateWithLifecycle().value,
+        verifierUiState = verifierUiState,
+        credentialCardStates = presentationCredentialListUiState.credentials,
         isLoading = viewModel.isLoading.collectAsStateWithLifecycle().value,
         onCredentialSelected = viewModel::onCredentialSelected,
         onBack = viewModel::onBack,
@@ -53,8 +56,7 @@ fun PresentationCredentialListScreen(viewModel: PresentationCredentialListViewMo
 
 @Composable
 private fun PresentationCredentialListScreenContent(
-    verifierName: String?,
-    verifierImage: Painter?,
+    verifierUiState: ActorUiState,
     credentialCardStates: List<CredentialCardState>,
     isLoading: Boolean,
     onCredentialSelected: (Int) -> Unit,
@@ -91,10 +93,7 @@ private fun PresentationCredentialListScreenContent(
             credentialStates = credentialCardStates,
             onCredentialSelected = onCredentialSelected,
             headerContent = {
-                ListHeader(
-                    verifierName = verifierName,
-                    verifierImage = verifierImage,
-                )
+                ListHeader(verifierUiState = verifierUiState)
             },
         )
         Buttons.Outlined(
@@ -120,16 +119,15 @@ private fun PresentationCredentialListScreenContent(
 }
 
 @Composable
-private fun ListHeader(verifierName: String?, verifierImage: Painter?) {
+private fun ListHeader(verifierUiState: ActorUiState) {
+    Spacer(modifier = Modifier.height(Sizes.s06))
     InvitationHeader(
-        modifier = Modifier.padding(vertical = Sizes.s02, horizontal = Sizes.s06),
-        inviterName = verifierName ?: stringResource(id = R.string.presentation_verifier_name_unknown),
-        inviterImage = verifierImage,
-        message = stringResource(id = R.string.presentation_verifier_text)
+        inviterName = verifierUiState.name,
+        inviterImage = verifierUiState.painter,
+        trustStatus = verifierUiState.trustStatus,
     )
-    WalletTexts.TitleSmall(text = stringResource(id = R.string.presentation_select_credential_title))
-    Spacer(modifier = Modifier.height(Sizes.s02))
-    WalletTexts.Body(text = stringResource(id = R.string.presentation_select_credential_subtitle))
+    Spacer(modifier = Modifier.height(Sizes.s06))
+    WalletTexts.BodyLarge(text = stringResource(id = R.string.tk_present_multiplecredentials_title))
     Spacer(modifier = Modifier.height(Sizes.s04))
 }
 
@@ -163,8 +161,11 @@ private fun CompactCredentialList(
 private fun PresentationCredentialListScreenPreview() {
     WalletTheme {
         PresentationCredentialListScreenContent(
-            verifierName = "My Verifier Name",
-            verifierImage = painterResource(id = R.drawable.pilot_ic_strassenverkehrsamt),
+            verifierUiState = ActorUiState(
+                name = "My verifier name",
+                painter = painterResource(R.drawable.pilot_ic_strassenverkehrsamt),
+                trustStatus = TrustStatus.TRUSTED,
+            ),
             credentialCardStates = CredentialMocks.cardStates.toList().map { it.value() },
             isLoading = false,
             onCredentialSelected = {},

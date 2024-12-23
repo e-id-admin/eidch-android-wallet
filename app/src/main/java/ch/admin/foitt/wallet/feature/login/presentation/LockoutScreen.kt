@@ -29,7 +29,6 @@ import ch.admin.foitt.wallet.platform.scaffold.presentation.FullscreenGradient
 import ch.admin.foitt.wallet.platform.utils.LocalActivity
 import ch.admin.foitt.wallet.platform.utils.OnResumeEventHandler
 import ch.admin.foitt.wallet.theme.Sizes
-import ch.admin.foitt.wallet.theme.WalletButtonColors
 import ch.admin.foitt.wallet.theme.WalletTexts
 import ch.admin.foitt.wallet.theme.WalletTheme
 import com.ramcosta.composedestinations.annotation.Destination
@@ -92,7 +91,6 @@ private fun LockoutScreenContent(
             content = {
                 Content(
                     countdown = countdown,
-                    showIcon = false,
                 )
             },
             stickyBottomContent = {
@@ -114,19 +112,16 @@ private fun LockoutScreenContent(
 @Composable
 private fun Content(
     countdown: Pair<Long, LockoutViewModel.TimeUnit>,
-    showIcon: Boolean = true,
 ) = Column(
     modifier = Modifier.centerHorizontallyOnFullscreen(),
     horizontalAlignment = Alignment.CenterHorizontally,
 ) {
-    if (showIcon) {
-        Icon(
-            modifier = Modifier.size(Sizes.s14),
-            painter = painterResource(R.drawable.wallet_ic_lock),
-            tint = WalletTheme.colorScheme.onGradientFixed,
-            contentDescription = null,
-        )
-    }
+    Icon(
+        modifier = Modifier.size(Sizes.s14),
+        painter = painterResource(R.drawable.wallet_ic_lock),
+        tint = WalletTheme.colorScheme.onGradientFixed,
+        contentDescription = null,
+    )
     Spacer(modifier = Modifier.height(Sizes.s04))
     WalletTexts.TitleLarge(
         text = stringResource(R.string.tk_login_locked_title),
@@ -163,9 +158,8 @@ private fun BottomButtons(
         )
         Spacer(modifier = Modifier.height(Sizes.s02))
     }
-    Buttons.Text(
+    Buttons.FilledSecondaryContainerFixed(
         text = stringResource(R.string.tk_login_locked_secondarybutton_text),
-        colors = WalletButtonColors.text().copy(contentColor = WalletTheme.colorScheme.secondaryFixed),
         onClick = onPassphraseForgotten,
     )
 }

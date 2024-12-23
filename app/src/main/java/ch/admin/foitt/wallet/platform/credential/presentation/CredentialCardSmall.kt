@@ -35,6 +35,12 @@ fun CredentialCardSmall(
     color = credentialState.backgroundColor,
     contentColor = Color.Unspecified,
 ) {
+    if (credentialState.isCredentialFromBetaIssuer) {
+        DemoWatermark(
+            color = credentialState.textColor,
+            large = false,
+        )
+    }
     Box(
         modifier = Modifier
             .drawBehind {

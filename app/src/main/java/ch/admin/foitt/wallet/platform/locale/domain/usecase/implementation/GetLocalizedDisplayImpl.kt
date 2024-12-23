@@ -10,33 +10,55 @@ class GetLocalizedDisplayImpl @Inject constructor(
     private val getCurrentAppLocale: GetCurrentAppLocale
 ) : GetLocalizedDisplay {
 
-    override fun <T : LocalizedDisplay> invoke(displays: Collection<T>): T? {
+    override fun <T : LocalizedDisplay> invoke(
+        displays: Collection<T>,
+        preferredLocale: String?,
+    ): T? {
         val appLocale = getCurrentAppLocale()
         val language = appLocale.language // e.g. "de"
         val country = appLocale.country // e.g. "CH"
 
         // Search for LocalizedDisplay with a perfect match of $language-$country, e.g. "de-CH"
-        val displayWithPerfectLocaleMatch = displays.firstOrNull { display ->
-            display.locale.replace("_", "-").equals("$language-$country", ignoreCase = true)
-        }
+        val displayWithPerfectLocaleMatch = displays.getPerfectMatch(
+            language = language,
+            country = country,
+        )
 
         // If available, return the perfectly matching LocalizedDisplay
         // Otherwise return the LocalizedDisplay whose locale's $language part has the lowest index aka highest priority
-        return displayWithPerfectLocaleMatch ?: bestMatchingLocale(language = language, displays = displays)
+        return displayWithPerfectLocaleMatch ?: bestMatchingLocale(
+            language = language,
+            preferredLocale = preferredLocale,
+            displays = displays
+        )
     }
 
-    private fun <T : LocalizedDisplay> bestMatchingLocale(language: String, displays: Collection<T>): T? {
+    private fun <T : LocalizedDisplay> Collection<T>.getPerfectMatch(
+        language: String,
+        country: String,
+    ) = firstOrNull { display ->
+        display.locale.formatLocale().equals("$language-$country", ignoreCase = true)
+    }
+
+    private fun String.formatLocale() = replace("_", "-")
+
+    private fun String.language() = split("-", "_").first()
+
+    private fun <T : LocalizedDisplay> bestMatchingLocale(language: String, preferredLocale: String?, displays: Collection<T>): T? {
         // Create a map of preferred languages with the provided language in the first place.
         // The map value indicates the preference order (lower index => higher priority)
+
         val preferredLanguages = setOf(language)
             .plus(DisplayLanguage.PRIORITIES)
             .mapIndexed { index: Int, s: String -> s to index }
             .toMap()
         return displays.minByOrNull { display ->
             preferredLanguages.getOrDefault(
-                display.locale.split("-", "_").first(),
+                display.locale.language(),
                 Int.MAX_VALUE
             )
+        } ?: displays.firstOrNull { display ->
+            display.locale.language().equals(preferredLocale?.language(), ignoreCase = true)
         } ?: displays.firstOrNull() // return the first LocalizedDisplay if none contains a preferred language
     }
 }

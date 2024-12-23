@@ -22,7 +22,7 @@ class GetCredentialIssuerDisplayFlowImpl @Inject constructor(
     private val getLocalizedDisplay: GetLocalizedDisplay,
 ) : GetCredentialIssuerDisplayFlow {
     override fun invoke(credentialId: Long): Flow<Result<CredentialIssuerDisplay?, GetCredentialIssuerDisplayFlowError>> =
-        credentialIssuerDisplayRepo.getIssuerDisplays(credentialId)
+        credentialIssuerDisplayRepo.getIssuerDisplaysFlow(credentialId)
             .mapError(CredentialIssuerDisplayRepositoryError::toGetCredentialIssuerDisplayFlowError)
             .andThen { credentialIssuerDisplays ->
                 coroutineBinding {

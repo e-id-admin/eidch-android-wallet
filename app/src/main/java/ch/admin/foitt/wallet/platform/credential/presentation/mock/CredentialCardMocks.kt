@@ -20,7 +20,7 @@ object CredentialCardMocks {
         backgroundColor = Color(0xFF00A3E0),
         textColor = MaterialTheme.colorScheme.onPrimaryContainer,
         borderColor = MaterialTheme.colorScheme.primaryContainer,
-        isCredentialFromBetaIssuer = false,
+        isCredentialFromBetaIssuer = true,
     )
 
     val state2 @Composable get() = CredentialCardState(

@@ -1,6 +1,5 @@
 package ch.admin.foitt.wallet.feature.credentialOffer
 
-import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.model.CredentialOfferError
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.usecase.GetCredentialOffer
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.usecase.implementation.GetCredentialOfferImpl
@@ -10,6 +9,9 @@ import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.cl
 import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.credentialDisplay1
 import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.credentialWithDetails
 import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.issuerDisplay1
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorField
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchIssuerDisplayData
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.IsCredentialFromBetaIssuerImpl
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimDisplay
@@ -17,8 +19,7 @@ import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedDisplay
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialOfferRepository
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.MapToCredentialClaimData
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatement
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.FetchAnyCredentialTrustStatement
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
 import com.github.michaelbull.result.Err
@@ -27,7 +28,6 @@ import com.github.michaelbull.result.getError
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.impl.annotations.MockK
-import io.mockk.mockk
 import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
@@ -50,10 +50,10 @@ class GetCredentialOfferImplTest {
     lateinit var mockMapToCredentialClaimData: MapToCredentialClaimData
 
     @MockK
-    lateinit var mockFetchAnyCredentialTrustStatement: FetchAnyCredentialTrustStatement
+    lateinit var mockIsCredentialFromBetaIssuerImpl: IsCredentialFromBetaIssuerImpl
 
     @MockK
-    lateinit var mockIsCredentialFromBetaIssuerImpl: IsCredentialFromBetaIssuerImpl
+    lateinit var mockFetchIssuerDisplayData: FetchIssuerDisplayData
 
     private lateinit var getCredentialOffer: GetCredentialOffer
 
@@ -65,11 +65,11 @@ class GetCredentialOfferImplTest {
             credentialOfferRepository = mockCredentialOfferRepository,
             getLocalizedDisplay = mockGetLocalizedDisplay,
             mapToCredentialClaimData = mockMapToCredentialClaimData,
-            fetchAnyCredentialTrustStatement = mockFetchAnyCredentialTrustStatement,
+            fetchIssuerDisplayData = mockFetchIssuerDisplayData,
             isCredentialFromBetaIssuer = mockIsCredentialFromBetaIssuerImpl,
         )
 
-        success()
+        setupDefaultMocks()
     }
 
     @AfterEach
@@ -102,7 +102,7 @@ class GetCredentialOfferImplTest {
 
     @Test
     fun `Getting the credential offer maps errors from the GetLocalizedDisplay use case`() = runTest {
-        coEvery { mockGetLocalizedDisplay(credentialWithDetails.issuerDisplays) } returns null
+        coEvery { mockGetLocalizedDisplay(credentialWithDetails.credentialDisplays) } returns null
 
         val result = getCredentialOffer(CREDENTIAL_ID).firstOrNull()
 
@@ -125,7 +125,7 @@ class GetCredentialOfferImplTest {
         Assertions.assertEquals(exception, error.throwable)
     }
 
-    private fun success() {
+    private fun setupDefaultMocks() {
         coEvery {
             mockCredentialOfferRepository.getCredentialOfferByIdFlow(CREDENTIAL_ID)
         } returns flow { emit(Ok(credentialWithDetails)) }
@@ -135,8 +135,17 @@ class GetCredentialOfferImplTest {
             mockMapToCredentialClaimData(any<CredentialClaim>(), any<List<CredentialClaimDisplay>>())
         } returnsMany listOf(Ok(claimData1), Ok(claimData2))
 
-        val mockTrustStatement = mockk<TrustStatement>()
-        coEvery { mockFetchAnyCredentialTrustStatement(any<AnyCredential>()) } returns Ok(mockTrustStatement)
+        coEvery { mockFetchIssuerDisplayData.invoke(credentialId = any()) } returns mockIssuerDisplayData
         coEvery { mockIsCredentialFromBetaIssuerImpl(any()) } returns false
     }
+
+    private val mockIssuerDisplayData = ActorDisplayData(
+        name = listOf(
+            ActorField(value = "a", "de"),
+            ActorField(value = "b", "en"),
+        ),
+        image = null,
+        preferredLanguage = "de",
+        trustStatus = TrustStatus.TRUSTED,
+    )
 }

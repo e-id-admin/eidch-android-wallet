@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
@@ -26,6 +26,7 @@ import ch.admin.foitt.wallet.platform.passphraseInput.presentation.PassphraseInp
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.utils.TestTags
 import ch.admin.foitt.wallet.theme.Sizes
+import ch.admin.foitt.wallet.theme.WalletTextFieldColors
 import ch.admin.foitt.wallet.theme.WalletTexts
 import ch.admin.foitt.wallet.theme.WalletTheme
 import com.ramcosta.composedestinations.annotation.Destination
@@ -34,20 +35,20 @@ import com.ramcosta.composedestinations.annotation.Destination
 @Composable
 fun EnterNewPassphraseScreen(viewModel: EnterNewPassphraseViewModel) {
     EnterNewPassphraseScreenContent(
-        passphrase = viewModel.passphrase.collectAsStateWithLifecycle().value,
+        textFieldValue = viewModel.textFieldValue.collectAsStateWithLifecycle().value,
         passphraseInputFieldState = viewModel.passphraseInputFieldState.collectAsStateWithLifecycle().value,
         isNextButtonEnabled = viewModel.isNextButtonEnabled.collectAsStateWithLifecycle().value,
-        onUpdatePassphrase = viewModel::onUpdatePassphrase,
+        onTextFieldValueChange = viewModel::onTextFieldValueChange,
         onCheckPassphrase = viewModel::onCheckPassphrase,
     )
 }
 
 @Composable
 private fun EnterNewPassphraseScreenContent(
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
     isNextButtonEnabled: Boolean,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
     when (currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass) {
@@ -58,9 +59,9 @@ private fun EnterNewPassphraseScreenContent(
             verticalArrangement = Arrangement.Top,
             content = {
                 CompactContent(
-                    passphrase = passphrase,
+                    textFieldValue = textFieldValue,
                     passphraseInputFieldState = passphraseInputFieldState,
-                    onUpdatePassphrase = onUpdatePassphrase,
+                    onTextFieldValueChange = onTextFieldValueChange,
                     onCheckPassphrase = onCheckPassphrase
                 )
             },
@@ -81,10 +82,10 @@ private fun EnterNewPassphraseScreenContent(
             verticalArrangement = Arrangement.Top,
             content = {
                 LargeContent(
-                    passphrase = passphrase,
+                    textFieldValue = textFieldValue,
                     passphraseInputFieldState = passphraseInputFieldState,
                     isNextButtonEnabled = isNextButtonEnabled,
-                    onUpdatePassphrase = onUpdatePassphrase,
+                    onTextFieldValueChange = onTextFieldValueChange,
                     onCheckPassphrase = onCheckPassphrase
                 )
             },
@@ -94,17 +95,17 @@ private fun EnterNewPassphraseScreenContent(
 
 @Composable
 private fun CompactContent(
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
     Spacer(modifier = Modifier.height(Sizes.s04))
     PassphraseInputComponent(
         modifier = Modifier.fillMaxWidth(),
-        colors = textFieldColors(),
+        colors = WalletTextFieldColors.textFieldColors(),
         passphraseInputFieldState = passphraseInputFieldState,
-        passphrase = passphrase,
+        textFieldValue = textFieldValue,
         label = {
             Label(
                 passphraseInputFieldState = passphraseInputFieldState,
@@ -115,17 +116,17 @@ private fun CompactContent(
         },
         keyboardImeAction = ImeAction.Next,
         onKeyboardAction = onCheckPassphrase,
-        onPassphraseChange = onUpdatePassphrase,
+        onTextFieldValueChange = onTextFieldValueChange,
         onAnimationFinished = {},
     )
 }
 
 @Composable
 private fun LargeContent(
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
     isNextButtonEnabled: Boolean,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
     Spacer(modifier = Modifier.height(Sizes.s04))
@@ -134,9 +135,9 @@ private fun LargeContent(
     ) {
         PassphraseInputComponent(
             modifier = Modifier.weight(1f),
-            colors = textFieldColors(),
+            colors = WalletTextFieldColors.textFieldColors(),
             passphraseInputFieldState = passphraseInputFieldState,
-            passphrase = passphrase,
+            textFieldValue = textFieldValue,
             label = {
                 Label(
                     passphraseInputFieldState = passphraseInputFieldState,
@@ -147,7 +148,7 @@ private fun LargeContent(
             },
             keyboardImeAction = ImeAction.Next,
             onKeyboardAction = onCheckPassphrase,
-            onPassphraseChange = onUpdatePassphrase,
+            onTextFieldValueChange = onTextFieldValueChange,
             onAnimationFinished = {},
         )
         Spacer(modifier = Modifier.width(Sizes.s08))
@@ -157,15 +158,6 @@ private fun LargeContent(
         )
     }
 }
-
-@Composable
-private fun textFieldColors() = TextFieldDefaults.colors().copy(
-    focusedContainerColor = WalletTheme.colorScheme.background,
-    unfocusedContainerColor = WalletTheme.colorScheme.background,
-    errorContainerColor = WalletTheme.colorScheme.background,
-    errorTextColor = WalletTheme.colorScheme.onSurfaceVariant,
-    errorTrailingIconColor = WalletTheme.colorScheme.onSurfaceVariant,
-)
 
 @Composable
 private fun Label(
@@ -189,7 +181,7 @@ private fun SupportingText() = WalletTexts.BodySmall(
 private fun BottomButton(
     enabled: Boolean,
     onCheckPassphrase: () -> Unit
-) = Buttons.FilledPrimaryFixed(
+) = Buttons.FilledPrimary(
     modifier = Modifier.testTag(TestTags.CONTINUE_BUTTON.name),
     text = stringResource(R.string.tk_global_continue),
     enabled = enabled,
@@ -201,10 +193,10 @@ private fun BottomButton(
 private fun EnterNewPassphraseScreenPreview() {
     WalletTheme {
         EnterNewPassphraseScreenContent(
-            passphrase = "abc123",
+            textFieldValue = TextFieldValue("abc123"),
             passphraseInputFieldState = PassphraseInputFieldState.Typing,
             isNextButtonEnabled = true,
-            onUpdatePassphrase = {},
+            onTextFieldValueChange = {},
             onCheckPassphrase = {},
         )
     }

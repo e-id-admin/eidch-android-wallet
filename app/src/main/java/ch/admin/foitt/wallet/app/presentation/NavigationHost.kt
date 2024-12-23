@@ -18,6 +18,8 @@ import ch.admin.foitt.wallet.feature.credentialOffer.presentation.DeclineCredent
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.DeclineCredentialOfferViewModel
 import ch.admin.foitt.wallet.feature.credentialWrongData.presentation.CredentialWrongDataScreen
 import ch.admin.foitt.wallet.feature.credentialWrongData.presentation.CredentialWrongDataViewModel
+import ch.admin.foitt.wallet.feature.home.presentation.BetaIdScreen
+import ch.admin.foitt.wallet.feature.home.presentation.BetaIdViewModel
 import ch.admin.foitt.wallet.feature.home.presentation.HomeScreen
 import ch.admin.foitt.wallet.feature.home.presentation.HomeViewModel
 import ch.admin.foitt.wallet.feature.login.presentation.BiometricLoginScreen
@@ -106,6 +108,7 @@ import ch.admin.foitt.wallet.platform.versionEnforcement.presentation.AppVersion
 import ch.admin.foitt.walletcomposedestinations.NavGraphs
 import ch.admin.foitt.walletcomposedestinations.destinations.AppVersionBlockedScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.AuthWithPinScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.BetaIdScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.BiometricLoginScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.ConfirmNewPassphraseScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialDetailScreenDestination
@@ -371,6 +374,10 @@ fun NavigationHost(
 
         screenDestination(LockoutScreenDestination) { viewModel: LockoutViewModel ->
             LockoutScreen(viewModel)
+        }
+
+        screenDestination(BetaIdScreenDestination) { viewModel: BetaIdViewModel ->
+            BetaIdScreen(viewModel)
         }
     }
 }

@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.composables.Buttons
@@ -30,10 +31,10 @@ fun AuthWithPinScreen(
     AuthWithPinScreenContent(
         enableBiometrics = viewModel.enableBiometrics,
         passphraseInputFieldState = viewModel.passphraseInputFieldState.collectAsStateWithLifecycle().value,
-        passphrase = viewModel.passphrase.collectAsStateWithLifecycle().value,
+        textFieldValue = viewModel.textFieldValue.collectAsStateWithLifecycle().value,
         errorMessage = viewModel.errorMessage.collectAsStateWithLifecycle().value,
         isLoading = viewModel.isLoading.collectAsStateWithLifecycle().value,
-        onUpdatePassphrase = viewModel::onUpdatePassphrase,
+        onTextFieldValueChange = viewModel::onTextFieldValueChange,
         onCheckPassphrase = viewModel::onCheckPassphrase,
         onClosePassphraseError = viewModel::onClosePassphraseError,
     )
@@ -43,10 +44,10 @@ fun AuthWithPinScreen(
 private fun AuthWithPinScreenContent(
     enableBiometrics: Boolean,
     passphraseInputFieldState: PassphraseInputFieldState,
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     errorMessage: Int?,
     isLoading: Boolean,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
     onClosePassphraseError: () -> Unit,
 ) = Box(modifier = Modifier.fillMaxSize()) {
@@ -60,11 +61,11 @@ private fun AuthWithPinScreenContent(
         PassphraseInputComponent(
             modifier = Modifier.fillMaxWidth(),
             passphraseInputFieldState = passphraseInputFieldState,
-            passphrase = passphrase,
+            textFieldValue = textFieldValue,
             enabled = !isLoading,
             keyboardImeAction = ImeAction.Go,
             onKeyboardAction = onCheckPassphrase,
-            onPassphraseChange = onUpdatePassphrase,
+            onTextFieldValueChange = onTextFieldValueChange,
             onAnimationFinished = {},
         )
         errorMessage?.let {

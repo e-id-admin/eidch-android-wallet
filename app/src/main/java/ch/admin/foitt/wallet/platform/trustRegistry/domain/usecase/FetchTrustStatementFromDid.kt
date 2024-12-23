@@ -5,5 +5,7 @@ import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatement
 import com.github.michaelbull.result.Result
 
 fun interface FetchTrustStatementFromDid {
-    suspend operator fun invoke(issuerDid: String): Result<TrustStatement, FetchTrustStatementFromDidError>
+    suspend operator fun invoke(
+        did: String,
+    ): Result<TrustStatement, FetchTrustStatementFromDidError>
 }

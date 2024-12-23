@@ -16,18 +16,22 @@ import com.github.michaelbull.result.getOrElse
 import com.github.michaelbull.result.mapError
 import javax.inject.Inject
 
-class FetchTrustStatementFromDidImpl @Inject constructor(
+internal class FetchTrustStatementFromDidImpl @Inject constructor(
     private val getTrustUrlFromDid: GetTrustUrlFromDid,
     private val trustStatementRepository: TrustStatementRepository,
     private val validateTrustStatement: ValidateTrustStatement,
 ) : FetchTrustStatementFromDid {
-    override suspend fun invoke(issuerDid: String): Result<TrustStatement, FetchTrustStatementFromDidError> = coroutineBinding {
+    override suspend operator fun invoke(
+        did: String,
+    ): Result<TrustStatement, FetchTrustStatementFromDidError> = coroutineBinding {
         runSuspendCatching {
-            val url = getTrustUrlFromDid(issuerDid)
+            val url = getTrustUrlFromDid(did)
                 .mapError(GetTrustUrlFromDidError::toFetchTrustStatementFromDidError)
                 .bind()
 
-            val trustStatementsRaw = trustStatementRepository.fetchTrustStatements(url)
+            val trustStatementsRaw = trustStatementRepository.fetchTrustStatements(
+                url = url
+            )
                 .mapError(TrustStatementRepositoryError::toFetchTrustStatementFromDidError)
                 .bind()
 

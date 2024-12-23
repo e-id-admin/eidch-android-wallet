@@ -1,8 +1,9 @@
 package ch.admin.foitt.wallet.platform.trustRegistry
 
-import ch.admin.foitt.openid4vc.domain.model.sdjwt.SdJwt
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustRegistryErrors
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustRegistryError
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatement
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatementStatus
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatementStatusList
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.repository.TrustStatementRepository
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.FetchTrustStatementFromDid
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.GetTrustUrlFromDid
@@ -61,38 +62,38 @@ class FetchTrustStatementFromDidImpTest {
 
     @Test
     fun `Fetching a trust statement from a did returns an error if the url can not be parsed from the did`() = runTest {
-        coEvery { mockGetTrustUrlFromDid(issuerDid) } returns Err(TrustRegistryErrors.Unexpected(Exception()))
+        coEvery { mockGetTrustUrlFromDid(issuerDid) } returns Err(TrustRegistryError.Unexpected(Exception()))
 
-        useCase(issuerDid).assertErrorType(TrustRegistryErrors.Unexpected::class)
+        useCase(issuerDid).assertErrorType(TrustRegistryError.Unexpected::class)
     }
 
     @Test
     fun `Fetching a trust statement from a did returns an error if the statements can not be fetched`() = runTest {
         coEvery {
             mockTrustStatementRepository.fetchTrustStatements(url)
-        } returns Err(TrustRegistryErrors.Unexpected(Exception()))
+        } returns Err(TrustRegistryError.Unexpected(Exception()))
 
-        useCase(issuerDid).assertErrorType(TrustRegistryErrors.Unexpected::class)
+        useCase(issuerDid).assertErrorType(TrustRegistryError.Unexpected::class)
     }
 
     @Test
     fun `Fetching a trust statement from a did returns an error if the fetched statement list is empty`() = runTest {
         coEvery { mockTrustStatementRepository.fetchTrustStatements(url) } returns Ok(emptyList())
 
-        useCase(issuerDid).assertErrorType(TrustRegistryErrors.Unexpected::class)
+        useCase(issuerDid).assertErrorType(TrustRegistryError.Unexpected::class)
     }
 
     @Test
     fun `Fetching a trust statement from a did returns an error if no statement can be verified`() = runTest {
-        coEvery { mockValidateTrustStatement(any()) } returns Err(TrustRegistryErrors.Unexpected(Exception()))
+        coEvery { mockValidateTrustStatement(any()) } returns Err(TrustRegistryError.Unexpected(Exception()))
 
-        useCase(issuerDid).assertErrorType(TrustRegistryErrors.Unexpected::class)
+        useCase(issuerDid).assertErrorType(TrustRegistryError.Unexpected::class)
     }
 
     private fun setupDefaultMocks() {
         coEvery { mockGetTrustUrlFromDid(issuerDid) } returns Ok(url)
         coEvery { mockTrustStatementRepository.fetchTrustStatements(url) } returns Ok(trustStatementRaws)
-        coEvery { mockValidateTrustStatement(trustStatementRaw1) } returns Err(TrustRegistryErrors.Unexpected(Exception()))
+        coEvery { mockValidateTrustStatement(trustStatementRaw1) } returns Err(TrustRegistryError.Unexpected(Exception()))
         coEvery { mockValidateTrustStatement(trustStatementRaw2) } returns Ok(trustStatement2)
     }
 
@@ -101,5 +102,22 @@ class FetchTrustStatementFromDidImpTest {
     private val trustStatementRaw1 = "truststatement1"
     private val trustStatementRaw2 = "truststatement2"
     private val trustStatementRaws = listOf(trustStatementRaw1, trustStatementRaw2)
-    private val trustStatement2 = TrustStatement(SdJwt(trustStatementRaw2))
+    private val trustStatement2 = TrustStatement(
+        exp = 0,
+        iat = 0,
+        nbf = 0,
+        iss = "",
+        logoUri = mapOf(),
+        orgName = mapOf(),
+        prefLang = "",
+        status = TrustStatementStatus(
+            statusList = TrustStatementStatusList(
+                idx = 0,
+                uri = "",
+            ),
+        ),
+        sdAlg = "",
+        sub = "",
+        vct = "",
+    )
 }

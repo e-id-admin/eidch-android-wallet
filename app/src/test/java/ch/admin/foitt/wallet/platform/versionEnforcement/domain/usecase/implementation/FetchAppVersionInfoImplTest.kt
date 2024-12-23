@@ -2,11 +2,11 @@ package ch.admin.foitt.wallet.platform.versionEnforcement.domain.usecase.impleme
 
 import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedDisplay
 import ch.admin.foitt.wallet.platform.utils.AppVersion
-import ch.admin.foitt.wallet.platform.utils.BuildConfigProvider
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.model.AppVersionInfo
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.model.VersionEnforcement
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.model.VersionEnforcementError
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.repository.VersionEnforcementRepository
+import ch.admin.foitt.wallet.platform.versionEnforcement.domain.usecase.GetAppVersion
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
@@ -26,7 +26,7 @@ import org.junit.jupiter.params.provider.ValueSource
 class FetchAppVersionInfoImplTest {
 
     @MockK
-    private lateinit var mockBuildConfigProvider: BuildConfigProvider
+    private lateinit var mockGetAppVersion: GetAppVersion
 
     @MockK
     private lateinit var mockVersionEnforcementRepository: VersionEnforcementRepository
@@ -47,12 +47,12 @@ class FetchAppVersionInfoImplTest {
         MockKAnnotations.init(this)
 
         useCase = FetchAppVersionInfoImpl(
-            buildConfigProvider = mockBuildConfigProvider,
+            getAppVersion = mockGetAppVersion,
             versionEnforcementRepository = mockVersionEnforcementRepository,
             getLocalizedDisplay = mockGetLocalizedDisplay
         )
 
-        success()
+        setupDefaultMocks()
     }
 
     @AfterEach
@@ -125,18 +125,17 @@ class FetchAppVersionInfoImplTest {
     }
 
     @Test
-    fun `Fetching app version info where version is higher than max app version returns valid`() =
-        runTest {
-            mockVersions(
-                minVersion = lowerAppVersion,
-                maxVersion = middleAppVersion,
-                appVersion = higherAppVersion,
-            )
+    fun `Fetching app version info where version is higher than max app version returns valid`() = runTest {
+        mockVersions(
+            minVersion = lowerAppVersion,
+            maxVersion = middleAppVersion,
+            appVersion = higherAppVersion,
+        )
 
-            val info = useCase()
+        val info = useCase()
 
-            assertTrue(info is AppVersionInfo.Valid)
-        }
+        assertTrue(info is AppVersionInfo.Valid)
+    }
 
     @Test
     fun `Fetching app version info where version is blocked and no localized display is found returns blocked`() = runTest {
@@ -170,8 +169,8 @@ class FetchAppVersionInfoImplTest {
         assertTrue(info is AppVersionInfo.Unknown)
     }
 
-    private fun success() {
-        every { mockBuildConfigProvider.appVersion } returns middleAppVersion
+    private fun setupDefaultMocks() {
+        every { mockGetAppVersion() } returns middleAppVersion
 
         every { mockVersionEnforcement.displays } returns mockDisplays
         coEvery { mockGetLocalizedDisplay(mockDisplays) } returns display
@@ -189,7 +188,7 @@ class FetchAppVersionInfoImplTest {
     private fun mockVersions(minVersion: AppVersion?, maxVersion: AppVersion, appVersion: AppVersion) {
         every { mockVersionEnforcement.criteria.minAppVersionIncluded } returns minVersion
         every { mockVersionEnforcement.criteria.maxAppVersionExcluded } returns maxVersion
-        every { mockBuildConfigProvider.appVersion } returns appVersion
+        every { mockGetAppVersion() } returns appVersion
     }
 
     private companion object {

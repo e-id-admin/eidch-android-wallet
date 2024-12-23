@@ -15,13 +15,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.InvitationHeader
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.Buttons
-import ch.admin.foitt.wallet.platform.composables.InvitationHeader
 import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
 import ch.admin.foitt.wallet.platform.composables.SpacerBottom
 import ch.admin.foitt.wallet.platform.composables.SpacerTop
@@ -31,6 +31,7 @@ import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCa
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.PresentationRequestNavArg
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimData
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTheme
 import com.ramcosta.composedestinations.annotation.Destination
@@ -43,10 +44,10 @@ fun PresentationRequestScreen(viewModel: PresentationRequestViewModel) {
     BackHandler(onBack = viewModel::onDecline)
 
     val presentationRequestUiState = viewModel.presentationRequestUiState.collectAsStateWithLifecycle().value
+    val verifierUiState = viewModel.verifierUiState.collectAsStateWithLifecycle().value
 
     PresentationRequestContent(
-        verifierName = viewModel.verifierName.collectAsStateWithLifecycle().value,
-        verifierImage = viewModel.verifierLogoPainter.collectAsStateWithLifecycle().value,
+        verifierUiState = verifierUiState,
         requestedClaims = presentationRequestUiState.requestedClaims,
         credentialCardState = presentationRequestUiState.credential,
         isLoading = viewModel.isLoading.collectAsStateWithLifecycle().value,
@@ -58,8 +59,7 @@ fun PresentationRequestScreen(viewModel: PresentationRequestViewModel) {
 
 @Composable
 private fun PresentationRequestContent(
-    verifierName: String?,
-    verifierImage: Painter?,
+    verifierUiState: ActorUiState,
     requestedClaims: List<CredentialClaimData>,
     credentialCardState: CredentialCardState,
     isLoading: Boolean,
@@ -74,15 +74,16 @@ private fun PresentationRequestContent(
     )
     CredentialClaimsScreenContent(
         topContent = {
+            Spacer(modifier = Modifier.height(Sizes.s06))
             InvitationHeader(
-                inviterName = verifierName ?: stringResource(id = R.string.presentation_verifier_name_unknown),
-                inviterImage = verifierImage,
-                message = stringResource(id = R.string.presentation_verifier_text),
+                inviterName = verifierUiState.name,
+                inviterImage = verifierUiState.painter,
+                trustStatus = verifierUiState.trustStatus,
                 modifier = Modifier
                     .statusBarsPadding()
                     .padding(horizontal = Sizes.s04)
-                    .padding(vertical = Sizes.s02, horizontal = Sizes.s06),
             )
+            Spacer(modifier = Modifier.height(Sizes.s06))
         },
         bottomContent = {
             PresentationRequestButtons(
@@ -142,12 +143,15 @@ private fun PresentationRequestButtons(
 private fun PresentationRequestScreenPreview() {
     WalletTheme {
         PresentationRequestContent(
-            verifierName = "My Verfifier Name",
+            verifierUiState = ActorUiState(
+                name = "My Verfifier Name",
+                painter = painterResource(id = R.drawable.pilot_ic_strassenverkehrsamt),
+                trustStatus = TrustStatus.TRUSTED
+            ),
             requestedClaims = CredentialMocks.claimList,
             isLoading = false,
             onSubmit = {},
             onDecline = {},
-            verifierImage = painterResource(id = R.drawable.pilot_ic_strassenverkehrsamt),
             credentialCardState = CredentialMocks.cardState01,
             isSubmitting = false,
         )

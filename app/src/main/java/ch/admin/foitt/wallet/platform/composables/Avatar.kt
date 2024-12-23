@@ -3,6 +3,7 @@ package ch.admin.foitt.wallet.platform.composables
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -20,7 +21,8 @@ fun Avatar(imagePainter: Painter?, size: AvatarSize) {
         modifier = Modifier
             .size(size.toDp())
             .clip(CircleShape)
-            .background(WalletTheme.colorScheme.surfaceContainerHigh),
+            .background(WalletTheme.colorScheme.surfaceContainerHigh)
+            .padding(size.internalPadding),
         contentAlignment = Alignment.Center,
     ) {
         imagePainter?.let {
@@ -37,6 +39,12 @@ private fun AvatarSize.toDp() = when (this) {
     AvatarSize.SMALL -> Sizes.s08
     AvatarSize.MEDIUM -> Sizes.s10
     AvatarSize.LARGE -> Sizes.s14
+}
+
+private val AvatarSize.internalPadding get() = when (this) {
+    AvatarSize.SMALL -> Sizes.s01
+    AvatarSize.MEDIUM -> Sizes.s02
+    AvatarSize.LARGE -> Sizes.s03
 }
 
 enum class AvatarSize {

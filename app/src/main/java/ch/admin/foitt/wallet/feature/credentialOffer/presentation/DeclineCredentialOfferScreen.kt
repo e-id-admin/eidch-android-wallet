@@ -40,13 +40,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.InvitationHeader
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.Buttons
-import ch.admin.foitt.wallet.platform.composables.InvitationHeader
 import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
 import ch.admin.foitt.wallet.platform.composables.presentation.HeightReportingLayout
-import ch.admin.foitt.wallet.platform.credential.presentation.model.IssuerUiState
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.DeclineCredentialOfferNavArg
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletButtonColors
 import ch.admin.foitt.wallet.theme.WalletTexts
@@ -71,7 +72,7 @@ fun DeclineCredentialOfferScreen(
 @Composable
 private fun DeclineCredentialOfferScreenContent(
     isLoading: Boolean,
-    issuer: IssuerUiState,
+    issuer: ActorUiState,
     onCancel: () -> Unit,
     onDecline: () -> Unit,
 ) {
@@ -112,7 +113,7 @@ private fun DeclineCredentialOfferScreenContent(
 
 @Composable
 private fun Header(
-    issuer: IssuerUiState,
+    issuer: ActorUiState,
     headerHeight: MutableState<Dp>,
 ) = HeightReportingLayout(
     onContentHeightMeasured = { height -> headerHeight.value = height }
@@ -120,10 +121,10 @@ private fun Header(
     Column {
         Spacer(modifier = Modifier.height(Sizes.s06))
         InvitationHeader(
-            modifier = Modifier.padding(top = Sizes.s01, start = Sizes.s06, end = Sizes.s06),
+            modifier = Modifier.padding(horizontal = Sizes.s04),
             inviterName = issuer.name,
             inviterImage = issuer.painter,
-            message = stringResource(id = R.string.credential_offer_invitation),
+            trustStatus = issuer.trustStatus,
         )
         Spacer(modifier = Modifier.height(Sizes.s06))
     }
@@ -208,9 +209,10 @@ private fun DeclineCredentialOfferScreenContentPreview() {
     WalletTheme {
         DeclineCredentialOfferScreenContent(
             isLoading = false,
-            issuer = IssuerUiState(
+            issuer = ActorUiState(
                 name = "Test Issuer",
-                painter = painterResource(id = R.drawable.wallet_ic_scan_person)
+                painter = painterResource(id = R.drawable.wallet_ic_scan_person),
+                trustStatus = TrustStatus.TRUSTED,
             ),
             onCancel = {},
             onDecline = {},

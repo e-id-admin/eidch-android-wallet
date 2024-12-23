@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.feature.onboarding.presentation
 
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.ConfirmPassphraseNavArg
@@ -30,8 +31,8 @@ class OnboardingPassphraseViewModel @Inject constructor(
     override val topBarState = TopBarState.Transparent(titleId = R.string.tk_global_enterpassword, onUp = navManager::popBackStack)
     override val fullscreenState = FullscreenState.Fullscreen
 
-    private val _passphrase = MutableStateFlow("")
-    val passphrase = _passphrase.asStateFlow()
+    private val _textFieldValue = MutableStateFlow(TextFieldValue(""))
+    val textFieldValue = _textFieldValue.asStateFlow()
 
     private var _passphraseInputFieldState: MutableStateFlow<PassphraseInputFieldState> =
         MutableStateFlow(PassphraseInputFieldState.Typing)
@@ -43,18 +44,18 @@ class OnboardingPassphraseViewModel @Inject constructor(
     private val _isValidating = MutableStateFlow(false)
     val isValidating = _isValidating.asStateFlow()
 
-    fun onUpdatePassphrase(passphrase: String) {
+    fun onTextFieldValueChange(textFieldValue: TextFieldValue) {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
-        _passphrase.value = passphrase
+        _textFieldValue.value = textFieldValue
     }
 
     fun onCheckPassphrase() {
         viewModelScope.launch {
-            when (validatePassphrase(passphrase.value)) {
+            when (validatePassphrase(textFieldValue.value.text)) {
                 PassphraseValidationState.VALID -> {
                     _passphraseInputFieldState.value = PassphraseInputFieldState.Success
                     navigateToConfirmPassphraseScreen()
-                    _passphrase.value = ""
+                    _textFieldValue.value = TextFieldValue("")
                 }
 
                 PassphraseValidationState.INVALID_MIN_LENGTH -> {
@@ -66,7 +67,7 @@ class OnboardingPassphraseViewModel @Inject constructor(
     }
 
     private fun navigateToConfirmPassphraseScreen() =
-        navManager.navigateTo(OnboardingConfirmPassphraseScreenDestination(navArgs = ConfirmPassphraseNavArg(passphrase.value)))
+        navManager.navigateTo(OnboardingConfirmPassphraseScreenDestination(navArgs = ConfirmPassphraseNavArg(textFieldValue.value.text)))
 
     fun onClosePassphraseError() {
         _showPassphraseErrorToast.value = false

@@ -25,7 +25,7 @@ object CredentialMocks {
         isCredentialFromBetaIssuer = false,
     )
 
-    val cardState02 @Composable get() = CredentialCardState(
+    private val cardState02 @Composable get() = CredentialCardState(
         credentialId = 0L,
         title = "Lernfahrausweis A",
         subtitle = "Lilly Mustermann",
@@ -37,7 +37,7 @@ object CredentialMocks {
         isCredentialFromBetaIssuer = false,
     )
 
-    val cardState03 @Composable get() = CredentialCardState(
+    private val cardState03 @Composable get() = CredentialCardState(
         credentialId = 0L,
         title = "Lernfahrausweis B",
         subtitle = "Max Mustermann with a very looong name that does not fit in the card",
@@ -49,15 +49,22 @@ object CredentialMocks {
         isCredentialFromBetaIssuer = false,
     )
 
+    private val cardState04 @Composable get() = cardState01.copy(isCredentialFromBetaIssuer = true)
+    private val cardState05 @Composable get() = cardState02.copy(isCredentialFromBetaIssuer = true)
+    private val cardState06 @Composable get() = cardState03.copy(isCredentialFromBetaIssuer = true)
+
     val cardStates by lazy {
         sequenceOf(
             ComposableWrapper { cardState01 },
             ComposableWrapper { cardState02 },
             ComposableWrapper { cardState03 },
+            ComposableWrapper { cardState04 },
+            ComposableWrapper { cardState05 },
+            ComposableWrapper { cardState06 },
         )
     }
 
-    val preview01 by lazy {
+    private val preview01 by lazy {
         CredentialPreview(
             credentialId = 9438,
             title = "Title 1",
@@ -69,7 +76,7 @@ object CredentialMocks {
         )
     }
 
-    val preview02 by lazy {
+    private val preview02 by lazy {
         CredentialPreview(
             credentialId = 9440,
             title = "Title 2",
@@ -81,7 +88,7 @@ object CredentialMocks {
         )
     }
 
-    val preview03 by lazy {
+    private val preview03 by lazy {
         CredentialPreview(
             credentialId = 9440,
             title = "Title 3 that is somehow a little bit too long for comfort",

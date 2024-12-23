@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.feature.changeLogin.presentation
 
+import androidx.compose.ui.text.input.TextFieldValue
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.ConfirmNewPassphraseNavArg
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
@@ -27,30 +28,30 @@ class EnterNewPassphraseViewModel @Inject constructor(
     override val topBarState = TopBarState.Details(navManager::navigateUp, R.string.tk_global_newpassword)
     override val fullscreenState = FullscreenState.Insets
 
-    private val _passphrase = MutableStateFlow("")
-    val passphrase = _passphrase.asStateFlow()
+    private val _textFieldValue = MutableStateFlow(TextFieldValue(""))
+    val textFieldValue = _textFieldValue.asStateFlow()
 
     private var _passphraseInputFieldState: MutableStateFlow<PassphraseInputFieldState> =
         MutableStateFlow(PassphraseInputFieldState.Typing)
     val passphraseInputFieldState = _passphraseInputFieldState.asStateFlow()
 
     private var _isNextButtonEnabled =
-        MutableStateFlow(validatePassphrase(passphrase.value) == PassphraseValidationState.VALID)
+        MutableStateFlow(validatePassphrase(textFieldValue.value.text) == PassphraseValidationState.VALID)
     val isNextButtonEnabled = _isNextButtonEnabled.asStateFlow()
 
-    fun onUpdatePassphrase(passphrase: String) {
+    fun onTextFieldValueChange(textFieldValue: TextFieldValue) {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
-        _passphrase.value = passphrase
-        _isNextButtonEnabled.value = validatePassphrase(passphrase) == PassphraseValidationState.VALID
+        _textFieldValue.value = textFieldValue
+        _isNextButtonEnabled.value = validatePassphrase(textFieldValue.text) == PassphraseValidationState.VALID
     }
 
     fun onCheckPassphrase() {
         if (isNextButtonEnabled.value) {
             navigateToConfirmNewPassphraseScreen()
-            _passphrase.value = ""
+            _textFieldValue.value = TextFieldValue("")
         }
     }
 
     private fun navigateToConfirmNewPassphraseScreen() =
-        navManager.navigateTo(ConfirmNewPassphraseScreenDestination(navArgs = ConfirmNewPassphraseNavArg(passphrase.value)))
+        navManager.navigateTo(ConfirmNewPassphraseScreenDestination(navArgs = ConfirmNewPassphraseNavArg(textFieldValue.value.text)))
 }

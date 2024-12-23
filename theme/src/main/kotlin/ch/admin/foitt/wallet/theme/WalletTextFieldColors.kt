@@ -8,8 +8,12 @@ object WalletTextFieldColors {
 
     @Composable
     fun textFieldColors() = TextFieldDefaults.colors().copy(
-        errorTextColor = WalletTheme.colorScheme.error,
-        errorTrailingIconColor = WalletTheme.colorScheme.onSurfaceVariant
+        focusedContainerColor = WalletTheme.colorScheme.background,
+        unfocusedContainerColor = WalletTheme.colorScheme.background,
+        errorContainerColor = WalletTheme.colorScheme.background,
+        errorTextColor = WalletTheme.colorScheme.onSurfaceVariant,
+        errorCursorColor = WalletTheme.colorScheme.onSurfaceVariant,
+        errorTrailingIconColor = WalletTheme.colorScheme.onSurfaceVariant,
     )
 
     @Composable

@@ -17,7 +17,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-serialization:$kotlinVersion")
 
-    implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.6")
+    implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.7")
     implementation("com.mikepenz.aboutlibraries.plugin:aboutlibraries-plugin:11.2.2") // keep in sync with version in [libs.versions.toml]
     implementation("com.dynatrace.tools.android:gradle-plugin:8.295.1.1006")
 }

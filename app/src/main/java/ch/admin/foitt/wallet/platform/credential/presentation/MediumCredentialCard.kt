@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -50,6 +51,12 @@ fun MediumCredentialCard(
         // calculate height based on the ratio but max 500dp
         val preferredHeight = min(maxWidth.div(0.68f), 500.dp)
         val textColor = credentialCardState.textColor
+        if (credentialCardState.isCredentialFromBetaIssuer) {
+            DemoWatermark(
+                modifier = Modifier.height(min(maxHeight, preferredHeight)).widthIn(max = 340.dp),
+                color = textColor,
+            )
+        }
         MediumCredentialCardLayout(
             modifier = Modifier
                 .then(

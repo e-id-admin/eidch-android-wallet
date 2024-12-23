@@ -20,21 +20,28 @@ internal class VerifyJwtSignatureImpl @Inject constructor(
     private val publicKeyVerifier: PublicKeyVerifier,
     private val resolveDid: ResolveDid,
 ) : VerifyJwtSignature {
-    override suspend fun invoke(issuerDid: String, signedJwt: SignedJWT): Result<Unit, VerifyJwtError> = coroutineBinding {
-        val didDoc = resolveDid(issuerDid)
+    override suspend fun invoke(did: String, kid: String, signedJwt: SignedJWT): Result<Unit, VerifyJwtError> = coroutineBinding {
+        val didDoc = resolveDid(did)
             .mapError { error -> error.toVerifyJwtError() }
             .bind()
-        val issuerJwks = didDoc.getIssuerJwks()
-        verifySignature(issuerJwks, signedJwt).bind()
+        val publicKey = didDoc.getPublicKey(keyIdentifier = kid).bind()
+        verifySignature(publicKey, signedJwt).bind()
     }
 
-    private fun DidDoc.getIssuerJwks() = getVerificationMethod().mapNotNull { verificationMethod ->
-        verificationMethod.publicKeyJwk
+    private fun DidDoc.getPublicKey(keyIdentifier: String): Result<Jwk, VcSdJwtError.InvalidJwt> {
+        val publicKey = getVerificationMethod()
+            .firstOrNull { it.id.contentEquals(keyIdentifier) }?.publicKeyJwk
+
+        return publicKey?.let {
+            Ok(it)
+        } ?: Err(VcSdJwtError.InvalidJwt)
     }
 
-    private fun verifySignature(publicKeys: List<Jwk>, signedJWT: SignedJWT): Result<Unit, VcSdJwtError.InvalidJwt> = publicKeys.any {
-        publicKeyVerifier.matchSignature(it, signedJWT)
-    }.let {
-        if (it) Ok(Unit) else Err(VcSdJwtError.InvalidJwt)
+    private fun verifySignature(publicKey: Jwk, signedJWT: SignedJWT): Result<Unit, VcSdJwtError.InvalidJwt> {
+        return if (publicKeyVerifier.matchSignature(publicKey, signedJWT)) {
+            Ok(Unit)
+        } else {
+            Err(VcSdJwtError.InvalidJwt)
+        }
     }
 }

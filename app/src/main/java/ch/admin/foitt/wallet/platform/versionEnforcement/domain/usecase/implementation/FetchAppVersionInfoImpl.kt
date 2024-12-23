@@ -3,21 +3,21 @@ package ch.admin.foitt.wallet.platform.versionEnforcement.domain.usecase.impleme
 import androidx.annotation.CheckResult
 import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedDisplay
 import ch.admin.foitt.wallet.platform.utils.AppVersion
-import ch.admin.foitt.wallet.platform.utils.BuildConfigProvider
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.model.AppVersionInfo
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.model.VersionEnforcement
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.repository.VersionEnforcementRepository
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.usecase.FetchAppVersionInfo
+import ch.admin.foitt.wallet.platform.versionEnforcement.domain.usecase.GetAppVersion
 import com.github.michaelbull.result.mapBoth
 import javax.inject.Inject
 
 internal class FetchAppVersionInfoImpl @Inject constructor(
-    buildConfigProvider: BuildConfigProvider,
     private val versionEnforcementRepository: VersionEnforcementRepository,
+    private val getAppVersion: GetAppVersion,
     private val getLocalizedDisplay: GetLocalizedDisplay,
 ) : FetchAppVersionInfo {
 
-    val version by lazy { buildConfigProvider.appVersion }
+    val version by lazy { getAppVersion() }
 
     @CheckResult
     override suspend fun invoke(): AppVersionInfo =

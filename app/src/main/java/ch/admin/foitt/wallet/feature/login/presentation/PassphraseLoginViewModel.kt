@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.feature.login.presentation
 
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -66,8 +67,8 @@ class PassphraseLoginViewModel @Inject constructor(
         AppVersionInfo.Unknown,
     )
 
-    private val _passphrase = MutableStateFlow("")
-    val passphrase = _passphrase.asStateFlow()
+    private val _textFieldValue = MutableStateFlow(TextFieldValue(""))
+    val textFieldValue = _textFieldValue.asStateFlow()
 
     private var _passphraseInputFieldState: MutableStateFlow<PassphraseInputFieldState> =
         MutableStateFlow(PassphraseInputFieldState.Typing)
@@ -95,14 +96,14 @@ class PassphraseLoginViewModel @Inject constructor(
         _showBiometricLoginButton.value = canUseBiometricsForLogin() == CanUseBiometricsForLoginResult.Usable && !biometricsLocked
     }
 
-    fun onUpdatePassphrase(passphrase: String) {
+    fun onTextFieldValueChange(textFieldValue: TextFieldValue) {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
-        _passphrase.value = passphrase
+        _textFieldValue.value = textFieldValue
     }
 
     fun onLoginWithPassphrase() {
         viewModelScope.launch {
-            _passphraseInputFieldState.value = loginWithPassphrase(passphrase = passphrase.value).mapBoth(
+            _passphraseInputFieldState.value = loginWithPassphrase(passphrase = textFieldValue.value.text).mapBoth(
                 success = {
                     resetLockout()
                     PassphraseInputFieldState.Success

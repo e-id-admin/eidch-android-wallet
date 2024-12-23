@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,6 +18,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
@@ -32,6 +32,7 @@ import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.utils.OnResumeEventHandler
 import ch.admin.foitt.wallet.platform.utils.TestTags
 import ch.admin.foitt.wallet.theme.Sizes
+import ch.admin.foitt.wallet.theme.WalletTextFieldColors
 import ch.admin.foitt.wallet.theme.WalletTexts
 import ch.admin.foitt.wallet.theme.WalletTheme
 import com.ramcosta.composedestinations.annotation.Destination
@@ -56,26 +57,26 @@ fun ConfirmNewPassphraseScreen(viewModel: ConfirmNewPassphraseViewModel) {
     }
 
     ConfirmNewPassphraseScreenContent(
-        passphrase = viewModel.passphrase.collectAsStateWithLifecycle().value,
+        textFieldValue = viewModel.textFieldValue.collectAsStateWithLifecycle().value,
         passphraseInputFieldState = viewModel.passphraseInputFieldState.collectAsStateWithLifecycle().value,
         isNextButtonEnabled = viewModel.isNextButtonEnabled.collectAsStateWithLifecycle().value,
         hideSupportText = viewModel.hideSupportText.collectAsStateWithLifecycle().value,
         remainingConfirmationAttempts = viewModel.remainingConfirmationAttempts.collectAsStateWithLifecycle().value,
         isLoading = isLoading,
-        onUpdatePassphrase = viewModel::onUpdatePassphrase,
+        onTextFieldValueChange = viewModel::onTextFieldValueChange,
         onCheckPassphrase = viewModel::onCheckPassphrase,
     )
 }
 
 @Composable
 private fun ConfirmNewPassphraseScreenContent(
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
     isNextButtonEnabled: Boolean,
     hideSupportText: Boolean,
     remainingConfirmationAttempts: Int,
     isLoading: Boolean,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
     when (currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass) {
@@ -86,11 +87,11 @@ private fun ConfirmNewPassphraseScreenContent(
             verticalArrangement = Arrangement.Top,
             content = {
                 CompactContent(
-                    passphrase = passphrase,
+                    textFieldValue = textFieldValue,
                     passphraseInputFieldState = passphraseInputFieldState,
                     hideSupportText = hideSupportText,
                     remainingConfirmationAttempts = remainingConfirmationAttempts,
-                    onUpdatePassphrase = onUpdatePassphrase,
+                    onTextFieldValueChange = onTextFieldValueChange,
                     onCheckPassphrase = onCheckPassphrase
                 )
             },
@@ -111,12 +112,12 @@ private fun ConfirmNewPassphraseScreenContent(
             verticalArrangement = Arrangement.Top,
             content = {
                 LargeContent(
-                    passphrase = passphrase,
+                    textFieldValue = textFieldValue,
                     passphraseInputFieldState = passphraseInputFieldState,
                     isNextButtonEnabled = isNextButtonEnabled,
                     hideSupportText = hideSupportText,
                     remainingConfirmationAttempts = remainingConfirmationAttempts,
-                    onUpdatePassphrase = onUpdatePassphrase,
+                    onTextFieldValueChange = onTextFieldValueChange,
                     onCheckPassphrase = onCheckPassphrase
                 )
             },
@@ -127,19 +128,19 @@ private fun ConfirmNewPassphraseScreenContent(
 
 @Composable
 private fun CompactContent(
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
     hideSupportText: Boolean,
     remainingConfirmationAttempts: Int,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
     Spacer(modifier = Modifier.height(Sizes.s04))
     PassphraseInputComponent(
         modifier = Modifier.fillMaxWidth(),
-        colors = textFieldColors(),
+        colors = WalletTextFieldColors.textFieldColors(),
         passphraseInputFieldState = passphraseInputFieldState,
-        passphrase = passphrase,
+        textFieldValue = textFieldValue,
         label = {
             Label(
                 passphraseInputFieldState = passphraseInputFieldState,
@@ -154,19 +155,19 @@ private fun CompactContent(
         },
         keyboardImeAction = ImeAction.Next,
         onKeyboardAction = onCheckPassphrase,
-        onPassphraseChange = onUpdatePassphrase,
+        onTextFieldValueChange = onTextFieldValueChange,
         onAnimationFinished = {},
     )
 }
 
 @Composable
 private fun LargeContent(
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
     isNextButtonEnabled: Boolean,
     hideSupportText: Boolean,
     remainingConfirmationAttempts: Int,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
     Spacer(modifier = Modifier.height(Sizes.s04))
@@ -175,9 +176,9 @@ private fun LargeContent(
     ) {
         PassphraseInputComponent(
             modifier = Modifier.weight(1f),
-            colors = textFieldColors(),
+            colors = WalletTextFieldColors.textFieldColors(),
             passphraseInputFieldState = passphraseInputFieldState,
-            passphrase = passphrase,
+            textFieldValue = textFieldValue,
             label = {
                 Label(
                     passphraseInputFieldState = passphraseInputFieldState,
@@ -192,7 +193,7 @@ private fun LargeContent(
             },
             keyboardImeAction = ImeAction.Next,
             onKeyboardAction = onCheckPassphrase,
-            onPassphraseChange = onUpdatePassphrase,
+            onTextFieldValueChange = onTextFieldValueChange,
             onAnimationFinished = {},
         )
         Spacer(modifier = Modifier.width(Sizes.s08))
@@ -204,20 +205,10 @@ private fun LargeContent(
 }
 
 @Composable
-private fun textFieldColors() = TextFieldDefaults.colors().copy(
-    focusedContainerColor = WalletTheme.colorScheme.background,
-    unfocusedContainerColor = WalletTheme.colorScheme.background,
-    errorContainerColor = WalletTheme.colorScheme.background,
-    errorTextColor = WalletTheme.colorScheme.onSurfaceVariant,
-    errorCursorColor = WalletTheme.colorScheme.onSurfaceVariant,
-    errorTrailingIconColor = WalletTheme.colorScheme.onSurfaceVariant,
-)
-
-@Composable
 private fun Label(
     passphraseInputFieldState: PassphraseInputFieldState,
 ) = WalletTexts.BodyLarge(
-    text = stringResource(R.string.tk_changepassword_step1_note1),
+    text = stringResource(R.string.tk_changepassword_step3_note1),
     color = if (passphraseInputFieldState == PassphraseInputFieldState.Error) {
         WalletTheme.colorScheme.error
     } else {
@@ -241,7 +232,7 @@ private fun SupportingText(
 private fun BottomButton(
     enabled: Boolean,
     onCheckPassphrase: () -> Unit
-) = Buttons.FilledPrimaryFixed(
+) = Buttons.FilledPrimary(
     modifier = Modifier.testTag(TestTags.CONTINUE_BUTTON.name),
     text = stringResource(R.string.tk_global_continue),
     enabled = enabled,
@@ -253,13 +244,13 @@ private fun BottomButton(
 private fun ConfirmNewPassphraseScreenPreview() {
     WalletTheme {
         ConfirmNewPassphraseScreenContent(
-            passphrase = "abc123",
+            textFieldValue = TextFieldValue("abc123"),
             passphraseInputFieldState = PassphraseInputFieldState.Error,
             isNextButtonEnabled = true,
             hideSupportText = false,
             remainingConfirmationAttempts = 4,
             isLoading = false,
-            onUpdatePassphrase = {},
+            onTextFieldValueChange = {},
             onCheckPassphrase = {},
         )
     }

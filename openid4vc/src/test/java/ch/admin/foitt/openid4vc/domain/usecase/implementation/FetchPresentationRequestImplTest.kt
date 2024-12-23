@@ -6,6 +6,7 @@ import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationReq
 import ch.admin.foitt.openid4vc.domain.repository.PresentationRequestRepository
 import ch.admin.foitt.openid4vc.domain.usecase.FetchPresentationRequest
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockPresentationRequest
+import ch.admin.foitt.openid4vc.util.SafeJsonTestInstance
 import ch.admin.foitt.openid4vc.util.assertErrorType
 import ch.admin.foitt.openid4vc.util.assertOk
 import ch.admin.foitt.openid4vc.utils.SafeJson
@@ -17,9 +18,7 @@ import io.mockk.coVerifyOrder
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -31,16 +30,7 @@ import java.net.URL
 
 class FetchPresentationRequestImplTest {
 
-    @OptIn(ExperimentalSerializationApi::class)
-    private val testJson = Json {
-        ignoreUnknownKeys = true
-        explicitNulls = false
-        coerceInputValues = true
-    }
-
-    private val testSafeJson: SafeJson = SafeJson(
-        json = testJson,
-    )
+    private val testSafeJson: SafeJson = SafeJsonTestInstance.safeJson
 
     private val testUrl = URL("https://example.com")
 

@@ -45,7 +45,8 @@ class ValidateTokenStatusListImpl @Inject constructor(
             check(credentialJson.jsonObject[JWTClaimNames.ISSUER]?.jsonPrimitive?.content == issuerDid) { "Issuers does not match" }
 
             verifyJwtSignature(
-                issuerDid = issuerDid,
+                did = issuerDid,
+                kid = signedJwt.header.keyID,
                 signedJwt = signedJwt,
             ).mapError(VerifyJwtError::toValidateTokenStatusListError)
                 .bind()

@@ -13,5 +13,8 @@ interface CredentialIssuerDisplayDao {
     fun insertAll(credentialIssuerDisplays: Collection<CredentialIssuerDisplay>)
 
     @Query("SELECT * FROM credentialissuerdisplay WHERE credentialId = :credentialId")
-    fun getCredentialIssuerDisplaysById(credentialId: Long): Flow<List<CredentialIssuerDisplay>>
+    fun getCredentialIssuerDisplaysByIdFlow(credentialId: Long): Flow<List<CredentialIssuerDisplay>>
+
+    @Query("SELECT * FROM credentialissuerdisplay WHERE credentialId = :credentialId")
+    fun getCredentialIssuerDisplaysById(credentialId: Long): List<CredentialIssuerDisplay>
 }

@@ -33,7 +33,6 @@ mockk = "1.13.12"
 nimbus-jose-jwt = "9.37.3"
 room = "2.6.1"
 runner = "1.6.2"
-secrets-gradle = "2.0.1"
 security-crypto = "1.0.0"
 slf4j-android = "1.7.36"
 slf4j-nop = "2.0.13"
@@ -125,4 +124,3 @@ ktor = ["ktor-client-core", "ktor-client-content-negotiation", "ktor-client-okht
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "devtools-ksp" }
 junit5 = { id = "de.mannodermaus.android-junit5", version.ref = "junit5-mannodermaus" }
-secrets-gradle = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "secrets-gradle" }

@@ -9,6 +9,7 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.openLink
+import ch.admin.foitt.walletcomposedestinations.destinations.BetaIdScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.ImpressumScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.LanguageScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.LicencesScreenDestination
@@ -39,4 +40,6 @@ class SettingsViewModel @Inject constructor(
     fun onImpressumScreen() = navManager.navigateTo(ImpressumScreenDestination)
 
     fun onLicencesScreen() = navManager.navigateTo(LicencesScreenDestination)
+
+    fun onBetaIdScreen() = navManager.navigateTo(BetaIdScreenDestination)
 }

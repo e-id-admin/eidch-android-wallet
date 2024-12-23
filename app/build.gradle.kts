@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.devtools.ksp)
     alias(libs.plugins.junit5)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.secrets.gradle)
 }
 
 android {
@@ -18,7 +17,7 @@ android {
         testApplicationId = "ch.admin.foitt.swiyu.test"
         versionCode = Integer.parseInt(properties.getOrDefault("APP_VERSION_CODE", "1") as String)
         versionName = properties.getOrDefault("APP_VERSION_NAME", "1.0.0") as String
-        manifestPlaceholders["appLabel"] = "PublicBetaWallet"
+        manifestPlaceholders["appLabel"] = "swiyu"
         manifestPlaceholders["deepLinkCredentialOfferScheme"] = schemeCredentialOffer
         manifestPlaceholders["deepLinkPresentationRequestScheme"] = schemePresentationRequest
 
@@ -62,18 +61,18 @@ android {
         create("dev") {
             dimension = "environment"
             applicationIdSuffix = ".dev"
-            manifestPlaceholders["appLabel"] = "(DEV) PublicBetaWallet"
+            manifestPlaceholders["appLabel"] = "(DEV) swiyu"
         }
 
         create("ref") {
             dimension = "environment"
             applicationIdSuffix = ".ref"
-            manifestPlaceholders["appLabel"] = "(REF) PublicBetaWallet"
+            manifestPlaceholders["appLabel"] = "(REF) swiyu"
         }
 
         create("abn") {
             dimension = "environment"
-            manifestPlaceholders["appLabel"] = "(ABN) PublicBetaWallet"
+            manifestPlaceholders["appLabel"] = "(ABN) swiyu"
         }
 
         create("prod") {
@@ -93,11 +92,6 @@ android {
         )
         arg("room.generateKotlin", "true")
     }
-}
-
-secrets {
-    // File containing default/PROD urls
-    defaultPropertiesFileName = "defaults.properties"
 }
 
 dependencies {

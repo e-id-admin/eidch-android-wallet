@@ -37,7 +37,7 @@ fun ScreenContainer(
 ) {
     val currentConfig = LocalConfiguration.current
     val scrollBehavior = if (currentConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-        TopAppBarDefaults.enterAlwaysScrollBehavior(
+        TopAppBarDefaults.pinnedScrollBehavior(
             state = rememberTopAppBarState(),
         )
     } else {

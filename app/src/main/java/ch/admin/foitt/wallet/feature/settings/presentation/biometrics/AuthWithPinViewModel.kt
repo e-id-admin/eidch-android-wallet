@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.feature.settings.presentation.biometrics
 
 import androidx.annotation.StringRes
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
@@ -42,8 +43,8 @@ class AuthWithPinViewModel @Inject constructor(
     private val navArgs = AuthWithPinScreenDestination.argsFrom(savedStateHandle)
     val enableBiometrics = navArgs.enable
 
-    private val _passphrase = MutableStateFlow("")
-    val passphrase = _passphrase.asStateFlow()
+    private val _textFieldValue = MutableStateFlow(TextFieldValue(""))
+    val textFieldValue = _textFieldValue.asStateFlow()
 
     private var _passphraseInputFieldState: MutableStateFlow<PassphraseInputFieldState> =
         MutableStateFlow(PassphraseInputFieldState.Typing)
@@ -55,14 +56,14 @@ class AuthWithPinViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
-    fun onUpdatePassphrase(passphrase: String) {
+    fun onTextFieldValueChange(textFieldValue: TextFieldValue) {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
-        _passphrase.value = passphrase
+        _textFieldValue.value = textFieldValue
     }
 
     fun onCheckPassphrase() {
         viewModelScope.launch {
-            authenticateWithPassphrase(passphrase = passphrase.value).mapBoth(
+            authenticateWithPassphrase(passphrase = textFieldValue.value.text).mapBoth(
                 success = {
                     if (!enableBiometrics) {
                         resetBiometrics()
@@ -84,7 +85,7 @@ class AuthWithPinViewModel @Inject constructor(
     private fun handlePassphraseSuccess() {
         if (enableBiometrics) {
             navManager.navigateToAndClearCurrent(
-                EnableBiometricsScreenDestination(navArgs = EnableBiometricsNavArg(pin = passphrase.value))
+                EnableBiometricsScreenDestination(navArgs = EnableBiometricsNavArg(pin = textFieldValue.value.text))
             )
         } else {
             navManager.popBackStack()

@@ -1,6 +1,10 @@
-![24 github_banner-publicbeta v0 2](https://github.com/e-id-admin/eidch-ios-wallet/blob/main/24.github_banner-publicbeta.v0.2.jpg)
+![Public Beta banner](https://github.com/e-id-admin/eidch-public-beta/blob/main/assets/github-banner-publicbeta.jpg)
 
-# Public Beta Wallet - Android
+# swiyu - Android wallet
+
+<div align="left">
+<img src="app/src/main/ic_launcher-playstore.png" width="200" />
+</div>
 
 An official Swiss Government project made by the [Federal Office of Information Technology, Systems and Telecommunication FOITT](https://www.bit.admin.ch/)
 as part of the electronic identity (E-ID) project.

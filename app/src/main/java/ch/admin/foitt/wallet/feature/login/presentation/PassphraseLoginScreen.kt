@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
@@ -74,13 +75,13 @@ fun PassphraseLoginScreen(
     }
 
     PassphraseLoginScreenContent(
-        passphrase = viewModel.passphrase.collectAsStateWithLifecycle().value,
+        textFieldValue = viewModel.textFieldValue.collectAsStateWithLifecycle().value,
         passphraseInputFieldState = viewModel.passphraseInputFieldState.collectAsStateWithLifecycle().value,
         loginAttemptsLeft = viewModel.loginAttemptsLeft.collectAsStateWithLifecycle().value,
         showPassphraseErrorToast = viewModel.showPassphraseErrorToast.collectAsStateWithLifecycle().value,
         showBiometricsLoginButton = viewModel.showBiometricLoginButton.collectAsStateWithLifecycle().value,
         isLoading = isLoading,
-        onUpdatePassphrase = viewModel::onUpdatePassphrase,
+        onTextFieldValueChange = viewModel::onTextFieldValueChange,
         onLoginWithPassphrase = viewModel::onLoginWithPassphrase,
         onLoginWithBiometrics = viewModel::onLoginWithBiometrics,
         onClosePassphraseError = viewModel::onClosePassphraseError,
@@ -90,13 +91,13 @@ fun PassphraseLoginScreen(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PassphraseLoginScreenContent(
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
     loginAttemptsLeft: Int,
     showPassphraseErrorToast: Boolean,
     showBiometricsLoginButton: Boolean,
     isLoading: Boolean,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onLoginWithPassphrase: () -> Unit,
     onLoginWithBiometrics: () -> Unit,
     onClosePassphraseError: () -> Unit,
@@ -109,11 +110,11 @@ private fun PassphraseLoginScreenContent(
             verticalArrangement = Arrangement.Top,
             content = {
                 CompactContent(
-                    passphrase = passphrase,
+                    textFieldValue = textFieldValue,
                     passphraseInputFieldState = passphraseInputFieldState,
                     loginAttemptsLeft = loginAttemptsLeft,
                     isLoading = isLoading,
-                    onUpdatePassphrase = onUpdatePassphrase,
+                    onTextFieldValueChange = onTextFieldValueChange,
                     onLoginWithPassphrase = onLoginWithPassphrase,
                 )
             },
@@ -150,12 +151,12 @@ private fun PassphraseLoginScreenContent(
             modifier = Modifier.imePadding(),
             content = {
                 LargeContent(
-                    passphrase = passphrase,
+                    textFieldValue = textFieldValue,
                     passphraseInputFieldState = passphraseInputFieldState,
                     loginAttemptsLeft = loginAttemptsLeft,
                     showBiometricsLoginButton = showBiometricsLoginButton,
                     isLoading = isLoading,
-                    onUpdatePassphrase = onUpdatePassphrase,
+                    onTextFieldValueChange = onTextFieldValueChange,
                     onLoginWithPassphrase = onLoginWithPassphrase,
                     onLoginWithBiometrics = onLoginWithBiometrics,
                 )
@@ -178,11 +179,11 @@ private fun PassphraseLoginScreenContent(
 
 @Composable
 private fun CompactContent(
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
     loginAttemptsLeft: Int,
     isLoading: Boolean,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onLoginWithPassphrase: () -> Unit,
 ) {
     Spacer(modifier = Modifier.height(Sizes.s12))
@@ -191,11 +192,11 @@ private fun CompactContent(
     PassphraseInputComponent(
         modifier = Modifier.fillMaxWidth(),
         passphraseInputFieldState = passphraseInputFieldState,
-        passphrase = passphrase,
+        textFieldValue = textFieldValue,
         colors = WalletTextFieldColors.textFieldColorsFixed(),
         keyboardImeAction = ImeAction.Go,
         onKeyboardAction = onLoginWithPassphrase,
-        onPassphraseChange = onUpdatePassphrase,
+        onTextFieldValueChange = onTextFieldValueChange,
         placeholder = {
             Placeholder()
         },
@@ -211,12 +212,12 @@ private fun CompactContent(
 
 @Composable
 private fun LargeContent(
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
     loginAttemptsLeft: Int,
     showBiometricsLoginButton: Boolean,
     isLoading: Boolean,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onLoginWithPassphrase: () -> Unit,
     onLoginWithBiometrics: () -> Unit,
 ) {
@@ -229,11 +230,11 @@ private fun LargeContent(
         PassphraseInputComponent(
             modifier = Modifier.weight(1f),
             passphraseInputFieldState = passphraseInputFieldState,
-            passphrase = passphrase,
+            textFieldValue = textFieldValue,
             colors = WalletTextFieldColors.textFieldColorsFixed(),
             keyboardImeAction = ImeAction.Go,
             onKeyboardAction = onLoginWithPassphrase,
-            onPassphraseChange = onUpdatePassphrase,
+            onTextFieldValueChange = onTextFieldValueChange,
             placeholder = {
                 Placeholder()
             },
@@ -326,13 +327,13 @@ private fun SupportingText(
 private fun PassphraseLoginScreenPreview() {
     WalletTheme {
         PassphraseLoginScreenContent(
-            passphrase = "abc123",
+            textFieldValue = TextFieldValue("abc123"),
             passphraseInputFieldState = PassphraseInputFieldState.Typing,
             loginAttemptsLeft = 5,
             showPassphraseErrorToast = true,
             showBiometricsLoginButton = true,
             isLoading = false,
-            onUpdatePassphrase = {},
+            onTextFieldValueChange = {},
             onLoginWithPassphrase = {},
             onLoginWithBiometrics = {},
             onClosePassphraseError = {},

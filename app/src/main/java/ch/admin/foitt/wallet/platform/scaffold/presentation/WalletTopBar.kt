@@ -201,7 +201,7 @@ private fun TopAppBarTransparent(
     navigationIcon = {
         BackButton(
             iconTint = WalletTheme.colorScheme.onGradientFixed,
-            showButtonBackground = true,
+            showButtonBackground = false,
             onUp = onUp,
         )
     },

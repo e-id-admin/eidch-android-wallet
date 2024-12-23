@@ -2,13 +2,13 @@ package ch.admin.foitt.wallet.feature.credentialOffer.presentation
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.model.CredentialOffer
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.usecase.GetCredentialOffer
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.model.CredentialOfferUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
 import ch.admin.foitt.wallet.platform.appSetupState.domain.usecase.SaveFirstCredentialWasAdded
-import ch.admin.foitt.wallet.platform.composables.presentation.adapter.GetDrawableFromUri
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
-import ch.admin.foitt.wallet.platform.credential.presentation.model.IssuerUiState
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateCredentialStatus
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
@@ -17,7 +17,6 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.extension.navigateUpOrToRoot
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
-import ch.admin.foitt.wallet.platform.utils.toPainter
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialOfferScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialWrongDataScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.DeclineCredentialOfferScreenDestination
@@ -39,8 +38,8 @@ class CredentialOfferViewModel @Inject constructor(
     private val navManager: NavigationManager,
     private val updateCredentialStatus: UpdateCredentialStatus,
     private val getCredentialCardState: GetCredentialCardState,
-    private val getDrawableFromUri: GetDrawableFromUri,
     private val saveFirstCredentialWasAdded: SaveFirstCredentialWasAdded,
+    private val getActorUiState: GetActorUiState,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
 ) : ScreenViewModel(setTopBarState, setFullscreenState) {
@@ -53,18 +52,24 @@ class CredentialOfferViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
-    val credentialOfferUiState: StateFlow<CredentialOfferUiState> = getCredentialOffer(credentialId).map { result ->
-        result.mapBoth(
-            success = { credentialOffer ->
-                _isLoading.value = false
-                credentialOffer?.toCredentialOfferUiState()
-            },
-            failure = {
-                navigateToErrorScreen()
-                CredentialOfferUiState.EMPTY
-            },
-        )
-    }.filterNotNull()
+    private val credentialOffer: StateFlow<CredentialOffer?> = getCredentialOffer(credentialId)
+        .map { result ->
+            result.mapBoth(
+                success = { credentialOffer ->
+                    _isLoading.value = false
+                    credentialOffer
+                },
+                failure = {
+                    navigateToErrorScreen()
+                    null
+                }
+            )
+        }.toStateFlow(null)
+
+    val credentialOfferUiState: StateFlow<CredentialOfferUiState> = credentialOffer.map { credentialOffer ->
+        credentialOffer?.toUiState()
+    }
+        .filterNotNull()
         .toStateFlow(CredentialOfferUiState.EMPTY)
 
     init {
@@ -73,12 +78,12 @@ class CredentialOfferViewModel @Inject constructor(
         }
     }
 
-    private suspend fun CredentialOffer.toCredentialOfferUiState() = CredentialOfferUiState(
-        credential = getCredentialCardState(this.credential),
-        issuer = IssuerUiState(
-            name = this.actorName,
-            painter = getDrawableFromUri(this.actorLogo)?.toPainter(),
+    private suspend fun CredentialOffer.toUiState(): CredentialOfferUiState = CredentialOfferUiState(
+        issuer = getActorUiState(
+            actorDisplayData = this.issuerDisplayData,
+            defaultName = R.string.tk_credential_offer_issuer_name_unknown,
         ),
+        credential = getCredentialCardState(this.credential),
         claims = this.claims,
     )
 
@@ -90,9 +95,14 @@ class CredentialOfferViewModel @Inject constructor(
     }
 
     fun onDeclineClicked() {
-        navManager.navigateTo(
-            DeclineCredentialOfferScreenDestination(credentialId = credentialId)
-        )
+        credentialOffer.value?.let { credentialOffer ->
+            navManager.navigateTo(
+                DeclineCredentialOfferScreenDestination(
+                    credentialId = credentialId,
+                    issuerDisplayData = credentialOffer.issuerDisplayData,
+                )
+            )
+        } ?: navigateToErrorScreen()
     }
 
     private fun navigateToErrorScreen() {

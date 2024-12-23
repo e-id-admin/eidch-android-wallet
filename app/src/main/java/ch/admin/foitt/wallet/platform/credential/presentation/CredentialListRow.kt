@@ -63,6 +63,7 @@ fun CredentialListRow(
             credentialState.status?.let {
                 CredentialStatus(
                     status = credentialState.status,
+                    isCredentialFromBetaIssuer = credentialState.isCredentialFromBetaIssuer,
                 )
             }
         }
@@ -82,7 +83,10 @@ fun CredentialListRow(
 }
 
 @Composable
-private fun CredentialStatus(status: CredentialStatus) {
+private fun CredentialStatus(
+    status: CredentialStatus,
+    isCredentialFromBetaIssuer: Boolean,
+) {
     val color = when (status) {
         CredentialStatus.VALID,
         CredentialStatus.UNSUPPORTED,
@@ -98,6 +102,13 @@ private fun CredentialStatus(status: CredentialStatus) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (isCredentialFromBetaIssuer) {
+            WalletTexts.Body(
+                text = stringResource(id = R.string.tk_global_credential_status_demo),
+                color = WalletTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.width(Sizes.s02))
+        }
         Icon(
             painter = painterResource(id = status.getIcon()),
             contentDescription = null,

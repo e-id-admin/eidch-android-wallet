@@ -1,8 +1,6 @@
 package ch.admin.foitt.wallet.platform.invitation.domain.usecase.implementation
 
 import androidx.annotation.CheckResult
-import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.ClientNameDisplay
-import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.LogoUriDisplay
 import ch.admin.foitt.wallet.platform.invitation.domain.model.ProcessInvitationResult
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.HandleInvitationProcessingSuccess
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.CredentialOfferNavArg
@@ -44,8 +42,6 @@ class HandleInvitationProcessingSuccessImpl @Inject constructor(
             PresentationRequestNavArg(
                 presentationRequest.credential,
                 presentationRequest.request,
-                ClientNameDisplay.fromClientName(presentationRequest.request.clientMetaData?.clientNameList).toTypedArray(),
-                LogoUriDisplay.fromLogoUri(presentationRequest.request.clientMetaData?.logoUriList).toTypedArray()
             )
         )
     )
@@ -57,8 +53,6 @@ class HandleInvitationProcessingSuccessImpl @Inject constructor(
             PresentationCredentialListNavArg(
                 presentationRequest.credentials.toTypedArray(),
                 presentationRequest.request,
-                ClientNameDisplay.fromClientName(presentationRequest.request.clientMetaData?.clientNameList).toTypedArray(),
-                LogoUriDisplay.fromLogoUri(presentationRequest.request.clientMetaData?.logoUriList).toTypedArray()
             )
         )
     )

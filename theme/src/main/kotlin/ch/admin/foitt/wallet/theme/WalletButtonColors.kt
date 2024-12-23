@@ -50,6 +50,14 @@ object WalletButtonColors {
     )
 
     @Composable
+    fun secondaryContainerFixed(): ButtonColors = ButtonDefaults.buttonColors(
+        containerColor = WalletTheme.colorScheme.secondaryContainerFixed,
+        contentColor = WalletTheme.colorScheme.onSecondaryContainerFixed,
+        disabledContainerColor = WalletTheme.colorScheme.onSurfaceFixed.copy(alpha = 0.12f),
+        disabledContentColor = WalletTheme.colorScheme.onSurfaceFixed,
+    )
+
+    @Composable
     fun tertiary(): ButtonColors = ButtonDefaults.buttonColors(
         containerColor = WalletTheme.colorScheme.tertiary,
         contentColor = WalletTheme.colorScheme.onTertiary,

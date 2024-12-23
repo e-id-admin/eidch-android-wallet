@@ -172,7 +172,7 @@ class ValidatePresentationRequestImplTest {
     }
 
     private fun setupDefaultMocks() {
-        coEvery { mockVerifyJwtSignature(any(), any()) } returns Ok(Unit)
+        coEvery { mockVerifyJwtSignature(any(), any(), any()) } returns Ok(Unit)
 
         every { mockJsonPresentationRequest.responseUri } returns RESPONSE_URI
         every { mockJsonPresentationRequest.responseType } returns VALID_RESPONSE_TYPE

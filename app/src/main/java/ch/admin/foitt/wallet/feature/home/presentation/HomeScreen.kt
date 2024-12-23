@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.composables.Buttons
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.LazyColumn
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
 import ch.admin.foitt.wallet.platform.composables.presentation.nonFocusableAccessibilityAnchor
@@ -69,6 +70,7 @@ fun HomeScreen(
         onQrScan = viewModel::onQrScan,
         onMenu = viewModel::onMenu,
         onRefresh = viewModel::onRefresh,
+        onClickBetaId = viewModel::onClickBetaId
     )
 }
 
@@ -79,6 +81,7 @@ private fun HomeScreenContent(
     onQrScan: () -> Unit,
     onMenu: () -> Unit,
     onRefresh: () -> Unit,
+    onClickBetaId: () -> Unit,
     windowWidthClass: WindowWidthSizeClass = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass,
 ) = WalletLayouts.HomeContainer(
     onScan = onQrScan,
@@ -96,7 +99,8 @@ private fun HomeScreenContent(
             onRefresh = onRefresh,
         )
         HomeScreenState.NoCredential -> NoCredentialContent(
-            stickyBottomHeightDp
+            stickyBottomHeightDp,
+            onClickBetaId = onClickBetaId
         )
     }
 }
@@ -104,6 +108,7 @@ private fun HomeScreenContent(
 @Composable
 private fun BoxScope.NoCredentialContent(
     contentBottomPadding: Dp,
+    onClickBetaId: () -> Unit,
 ) = Column(
     horizontalAlignment = Alignment.CenterHorizontally,
     modifier = Modifier
@@ -119,15 +124,21 @@ private fun BoxScope.NoCredentialContent(
     NoCredentialIcon()
     Spacer(modifier = Modifier.height(Sizes.s06))
     WalletTexts.TitleLarge(
-        text = stringResource(id = R.string.tk_home_emptyhome_title),
+        text = stringResource(id = R.string.tk_getBetaId_firstUse_title),
         textAlign = TextAlign.Center,
         modifier = Modifier
             .nonFocusableAccessibilityAnchor()
     )
     Spacer(modifier = Modifier.height(Sizes.s02))
     WalletTexts.Body(
-        text = stringResource(id = R.string.tk_home_emptyhome_body),
+        text = stringResource(id = R.string.tk_getBetaId_firstUse_body),
         textAlign = TextAlign.Center,
+    )
+    Spacer(modifier = Modifier.height(Sizes.s10))
+    Buttons.FilledTertiary(
+        text = stringResource(R.string.tk_global_getbetaid_primarybutton),
+        onClick = onClickBetaId,
+        startIcon = painterResource(id = R.drawable.wallet_ic_next_button)
     )
 }
 
@@ -224,6 +235,7 @@ private fun HomeScreenCompactPreview(
             onQrScan = {},
             onMenu = {},
             onRefresh = {},
+            onClickBetaId = {},
         )
     }
 }
@@ -241,6 +253,7 @@ private fun HomeScreenLargePreview(
             onQrScan = {},
             onMenu = {},
             onRefresh = {},
+            onClickBetaId = {},
         )
     }
 }

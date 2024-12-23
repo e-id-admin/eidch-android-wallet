@@ -10,19 +10,21 @@ data class PresentationRequestUiState(
     val requestedClaims: List<CredentialClaimData>,
 ) {
     companion object {
-        val EMPTY = PresentationRequestUiState(
-            credential = CredentialCardState(
-                credentialId = -1,
-                status = CredentialStatus.UNKNOWN,
-                title = "",
-                subtitle = null,
-                logo = null,
-                backgroundColor = Color.Unspecified,
-                textColor = Color.Unspecified,
-                borderColor = Color.Unspecified,
-                isCredentialFromBetaIssuer = false,
-            ),
-            requestedClaims = emptyList(),
-        )
+        val EMPTY by lazy {
+            PresentationRequestUiState(
+                credential = CredentialCardState(
+                    credentialId = -1,
+                    status = CredentialStatus.UNKNOWN,
+                    title = "",
+                    subtitle = null,
+                    logo = null,
+                    backgroundColor = Color.Unspecified,
+                    textColor = Color.Unspecified,
+                    borderColor = Color.Unspecified,
+                    isCredentialFromBetaIssuer = false,
+                ),
+                requestedClaims = emptyList(),
+            )
+        }
     }
 }

@@ -6,5 +6,6 @@ import com.github.michaelbull.result.Result
 import kotlinx.coroutines.flow.Flow
 
 interface CredentialIssuerDisplayRepo {
-    fun getIssuerDisplays(credentialId: Long): Flow<Result<List<CredentialIssuerDisplay>, CredentialIssuerDisplayRepositoryError>>
+    fun getIssuerDisplaysFlow(credentialId: Long): Flow<Result<List<CredentialIssuerDisplay>, CredentialIssuerDisplayRepositoryError>>
+    suspend fun getIssuerDisplays(credentialId: Long): Result<List<CredentialIssuerDisplay>, CredentialIssuerDisplayRepositoryError>
 }

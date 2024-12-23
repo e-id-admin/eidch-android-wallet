@@ -111,12 +111,12 @@ data class WalletTypography(
                     lineHeight = 28.sp,
                     hyphens = Hyphens.Auto,
                 ),
-                titleMedium = TextStyle(
-                    fontFamily = abcDiatype,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 16.sp,
-                    lineHeight = 22.sp,
-                    hyphens = Hyphens.Auto,
+                titleMedium = baseTextStyle.merge(
+                    TextStyle(
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp,
+                        lineHeight = 22.sp,
+                    )
                 ),
                 titleSmall = baseTextStyle.merge(
                     TextStyle(

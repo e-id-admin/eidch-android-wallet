@@ -57,29 +57,31 @@ class VerifyJwtImplTest {
 
     @Test
     fun `Verifying jwt which is valid returns Ok`(): Unit = runTest {
-        val result = useCase(ISSUER, mockSignedJWT)
+        val result = useCase(
+            did = ISSUER_ID1,
+            kid = KID_ID1,
+            signedJwt = mockSignedJWT
+        )
 
         result.assertOk()
     }
 
     @Test
     fun `Verifying jwt which has one matching public key from list returns Ok`(): Unit = runTest {
-        every { mockPublicKeyVerifier.matchSignature(any(), any()) } returns false
-        every { mockPublicKeyVerifier.matchSignature(mockJwk2, mockSignedJWT) } returns true
         every { mockDidDoc.getVerificationMethod() } returns listOf(mockVerificationMethod1, mockVerificationMethod2)
+        every { mockPublicKeyVerifier.matchSignature(mockJwk1, mockSignedJWT) } returns true
 
-        val result = useCase(ISSUER, mockSignedJWT)
+        val result = useCase(did = ISSUER_ID1, kid = KID_ID1, signedJwt = mockSignedJWT)
 
         result.assertOk()
     }
 
     @Test
     fun `Verifying jwt which has no matching public key from list returns InvalidJwt`(): Unit = runTest {
-        every { mockPublicKeyVerifier.matchSignature(any(), any()) } returns false
-        every { mockPublicKeyVerifier.matchSignature(mockJwk1, mockSignedJWT) } returns true
         every { mockDidDoc.getVerificationMethod() } returns listOf(mockVerificationMethod2, mockVerificationMethod3)
+        every { mockPublicKeyVerifier.matchSignature(mockJwk1, mockSignedJWT) } returns true
 
-        val result = useCase(ISSUER, mockSignedJWT)
+        val result = useCase(did = ISSUER_ID1, kid = KID_ID1, signedJwt = mockSignedJWT)
 
         result.assertErrorType(VcSdJwtError.InvalidJwt::class)
     }
@@ -88,7 +90,7 @@ class VerifyJwtImplTest {
     fun `Verifying jwt with only null jwk keys returns InvalidJwt`(): Unit = runTest {
         every { mockDidDoc.getVerificationMethod() } returns listOf(mockVerificationMethod3)
 
-        val result = useCase(ISSUER, mockSignedJWT)
+        val result = useCase(did = ISSUER_ID1, kid = "", signedJwt = mockSignedJWT)
 
         result.assertErrorType(VcSdJwtError.InvalidJwt::class)
     }
@@ -97,39 +99,57 @@ class VerifyJwtImplTest {
     fun `Verifying jwt with empty public key list returns InvalidJwt`(): Unit = runTest {
         every { mockDidDoc.getVerificationMethod() } returns listOf()
 
-        val result = useCase(ISSUER, mockSignedJWT)
+        val result = useCase(did = ISSUER_ID1, kid = "", signedJwt = mockSignedJWT)
 
         result.assertErrorType(VcSdJwtError.InvalidJwt::class)
     }
 
+    @Test
+    fun `Verifying jwt uses correct public key from list`(): Unit = runTest {
+        every { mockPublicKeyVerifier.matchSignature(any(), any()) } returns false
+        every { mockPublicKeyVerifier.matchSignature(mockJwk2, any()) } returns true
+
+        val result = useCase(did = ISSUER_ID1, kid = KID_ID2, signedJwt = mockSignedJWT)
+
+        result.assertOk()
+    }
+
     companion object {
-        const val ISSUER = "issuer"
+        private const val ISSUER_ID1 = "issuer1"
+        private const val KID_ID1 = "kid1"
         private val mockJwk1 = Jwk(
-            alg = "alg",
-            kid = "kid",
-            kty = "kty",
-            crv = "crv",
-            x = "x",
-            y = "y",
+            alg = "alg1",
+            kid = KID_ID1,
+            kty = "kty1",
+            crv = "crv1",
+            x = "x1",
+            y = "y1",
         )
 
-        private val mockJwk2 = mockJwk1.copy(crv = "crv2", x = "x2", y = "y2")
-
         private val mockVerificationMethod1 = VerificationMethod(
-            id = "id1",
+            id = KID_ID1,
             verificationType = "type",
             controller = "controller",
             publicKeyJwk = mockJwk1,
             publicKeyMultibase = "multibase",
         )
-        private val mockVerificationMethod2 = mockVerificationMethod1.copy(id = "id2", publicKeyJwk = mockJwk2)
+
+        private const val KID_ID2 = "issuer2#kid2"
+        private val mockJwk2 = mockJwk1.copy(kid = KID_ID2)
+        private val mockVerificationMethod2 = VerificationMethod(
+            id = KID_ID2,
+            verificationType = "type",
+            controller = "controller",
+            publicKeyJwk = mockJwk2,
+            publicKeyMultibase = "multibase",
+        )
 
         private val mockVerificationMethod3 = mockVerificationMethod1.copy(id = "id3", publicKeyJwk = null)
 
         private val mockVerificationMethods = listOf(
             mockVerificationMethod1,
-            mockVerificationMethod1,
-            mockVerificationMethod1,
+            mockVerificationMethod2,
+            mockVerificationMethod3,
             mockVerificationMethod1,
         )
     }

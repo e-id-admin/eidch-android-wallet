@@ -6,9 +6,9 @@ import ch.admin.foitt.wallet.feature.credentialDetail.domain.model.CredentialDet
 import ch.admin.foitt.wallet.feature.credentialDetail.domain.usecase.GetCredentialDetailFlow
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.composables.VisibleBottomSheet
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.model.CredentialDetailUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.presentation.adapter.GetDrawableFromUri
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
-import ch.admin.foitt.wallet.platform.credential.presentation.model.IssuerUiState
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateCredentialStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialIssuerDisplay
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
@@ -19,6 +19,7 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.DeleteCredential
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.utils.toPainter
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialDetailScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialWrongDataScreenDestination
@@ -130,8 +131,9 @@ class CredentialDetailViewModel @Inject constructor(
         navManager.navigateTo(CredentialWrongDataScreenDestination)
     }
 
-    private suspend fun CredentialIssuerDisplay.toIssuerUiState() = IssuerUiState(
+    private suspend fun CredentialIssuerDisplay.toIssuerUiState() = ActorUiState(
         name = name,
-        painter = getDrawableFromUri(image)?.toPainter()
+        painter = getDrawableFromUri(image)?.toPainter(),
+        trustStatus = TrustStatus.UNKNOWN,
     )
 }

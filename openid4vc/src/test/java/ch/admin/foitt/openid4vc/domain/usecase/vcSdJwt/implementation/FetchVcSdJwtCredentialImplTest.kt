@@ -57,7 +57,16 @@ class FetchVcSdJwtCredentialImplTest {
             verifyJwtSignature = mockVerifyJwtSignature,
         )
 
-        success()
+        every { mockCredentialOffer.credentialIssuer } returns CREDENTIAL_ISSUER
+
+        coEvery {
+            mockFetchVerifiableCredential(mockCredentialConfig, mockCredentialOffer)
+        } returns Ok(mockVerifiableCredential)
+
+        mockkConstructor(SdJwt::class)
+        every { constructedWith<SdJwt>(EqMatcher(PAYLOAD)).json } returns mockJson
+
+        coEvery { mockVerifyJwtSignature(any(), any(), any()) } returns Ok(Unit)
     }
 
     @AfterEach
@@ -67,6 +76,8 @@ class FetchVcSdJwtCredentialImplTest {
 
     @Test
     fun `Fetching jwt vc json credential which is valid returns a credential`(): Unit = runTest {
+        every { constructedWith<SdJwt>(EqMatcher(PAYLOAD)).issuer } returns "issuer"
+        every { constructedWith<SdJwt>(EqMatcher(PAYLOAD)).signedJWT.header.keyID } returns "keyId"
         val result = useCase(mockCredentialConfig, mockCredentialOffer)
 
         val credential = result.assertOk()
@@ -78,8 +89,10 @@ class FetchVcSdJwtCredentialImplTest {
 
     @Test
     fun `Fetching jwt vc json credential which is invalid returns an error`(): Unit = runTest {
+        every { constructedWith<SdJwt>(EqMatcher(PAYLOAD)).issuer } returns "issuer"
+        every { constructedWith<SdJwt>(EqMatcher(PAYLOAD)).signedJWT.header.keyID } returns "keyId"
         coEvery {
-            mockVerifyJwtSignature(any(), any())
+            mockVerifyJwtSignature(any(), any(), any())
         } returns Err(VcSdJwtError.InvalidJwt)
 
         val result = useCase(mockCredentialConfig, mockCredentialOffer)
@@ -102,30 +115,15 @@ class FetchVcSdJwtCredentialImplTest {
 
     @Test
     fun `Fetching jwt vc json credential maps errors from verifying jwt`(): Unit = runTest {
-        val exception = IllegalStateException()
+        every { constructedWith<SdJwt>(EqMatcher(PAYLOAD)).issuer } returns "issuer"
+        every { constructedWith<SdJwt>(EqMatcher(PAYLOAD)).signedJWT.header.keyID } returns "keyId"
         coEvery {
-            mockVerifyJwtSignature(any(), any())
-        } returns Err(VcSdJwtError.Unexpected(exception))
+            mockVerifyJwtSignature(any(), any(), any())
+        } returns Err(VcSdJwtError.InvalidJwt)
 
         val result = useCase(mockCredentialConfig, mockCredentialOffer)
 
-        val error = result.assertErrorType(CredentialOfferError.Unexpected::class)
-        assertEquals(exception, error.cause)
-    }
-
-    private fun success() {
-        every { mockCredentialOffer.credentialIssuer } returns CREDENTIAL_ISSUER
-
-        coEvery {
-            mockFetchVerifiableCredential(mockCredentialConfig, mockCredentialOffer)
-        } returns Ok(mockVerifiableCredential)
-
-        mockkConstructor(SdJwt::class)
-        every { constructedWith<SdJwt>(EqMatcher(PAYLOAD)).json } returns mockJson
-
-        coEvery {
-            mockVerifyJwtSignature(any(), any())
-        } returns Ok(Unit)
+        result.assertErrorType(CredentialOfferError.IntegrityCheckFailed::class)
     }
 
     private companion object {

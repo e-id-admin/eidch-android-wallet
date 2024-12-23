@@ -2,8 +2,7 @@ package ch.admin.foitt.wallet.feature.presentationRequest
 
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JsonPresentationRequest
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JwtPresentationRequest
-import ch.admin.foitt.openid4vc.domain.model.sdjwt.SdJwt
+import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.PresentationCredentialDisplayData
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.PresentationRequestError
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.repository.PresentationRequestRepository
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.GetPresentationRequestCredentialListFlow
@@ -15,8 +14,6 @@ import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialWithDisplays
 import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedDisplay
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatement
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.FetchTrustStatementFromDid
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
 import com.github.michaelbull.result.Err
@@ -24,7 +21,6 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.getError
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.firstOrNull
@@ -48,9 +44,6 @@ class GetPresentationRequestCredentialListFlowImplTest {
     lateinit var mockIsCredentialFromBetaIssuerImpl: IsCredentialFromBetaIssuerImpl
 
     @MockK
-    lateinit var mockFetchTrustStatementFromDid: FetchTrustStatementFromDid
-
-    @MockK
     lateinit var mockCredentialWithDisplays1: CredentialWithDisplays
 
     @MockK
@@ -62,9 +55,6 @@ class GetPresentationRequestCredentialListFlowImplTest {
     @MockK
     lateinit var mockJsonPresentationRequest: JsonPresentationRequest
 
-    @MockK
-    lateinit var mockJwtPresentationRequest: JwtPresentationRequest
-
     private lateinit var getPresentationRequestCredentialListFlow: GetPresentationRequestCredentialListFlow
 
     @BeforeEach
@@ -75,7 +65,6 @@ class GetPresentationRequestCredentialListFlowImplTest {
             mockPresentationRequestRepository,
             mockGetLocalizedDisplay,
             mockIsCredentialFromBetaIssuerImpl,
-            mockFetchTrustStatementFromDid,
         )
 
         setupDefaultMocks()
@@ -90,11 +79,11 @@ class GetPresentationRequestCredentialListFlowImplTest {
     fun `Getting the presentation request credential list flow returns a flow with one credential preview`() = runTest {
         val result = getPresentationRequestCredentialListFlow(
             compatibleCredentials = arrayOf(mockCompatibleCredential),
-            presentationRequest = mockJwtPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
-        val credentialPreviews = result?.assertOk()
+        val displayData: PresentationCredentialDisplayData? = result?.assertOk()
+        val credentialPreviews = displayData?.credentials
         assertEquals(1, credentialPreviews?.size)
         assertEquals(COMPATIBLE_CREDENTIAL_ID, credentialPreviews?.first()?.credentialId)
     }
@@ -103,64 +92,40 @@ class GetPresentationRequestCredentialListFlowImplTest {
     fun `Getting the presentation request credential list flow with a jwt presentation request does fetch the trust statement`() = runTest {
         val result = getPresentationRequestCredentialListFlow(
             compatibleCredentials = arrayOf(mockCompatibleCredential),
-            presentationRequest = mockJwtPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
         result?.assertOk()
-
-        coVerify(exactly = 2) {
-            mockFetchTrustStatementFromDid(any())
-        }
     }
 
     @Test
     fun `Getting the presentation request credential list flow with a jwt presentation request but invalid clientIdScheme does not fetch the trust statement`() = runTest {
-        coEvery { mockJwtPresentationRequest.clientIdScheme } returns null
-
         val result = getPresentationRequestCredentialListFlow(
             compatibleCredentials = arrayOf(mockCompatibleCredential),
-            presentationRequest = mockJwtPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
         result?.assertOk()
-
-        coVerify(exactly = 0) {
-            mockFetchTrustStatementFromDid(any())
-        }
     }
 
     @Test
     fun `Getting the presentation request flow credential list with a jwt presentation request but invalid clientIdScheme (not 'did') does not fetch the trust statement`() = runTest {
-        coEvery { mockJwtPresentationRequest.clientIdScheme } returns "somethingThatIsNotDid"
-
         val result = getPresentationRequestCredentialListFlow(
             compatibleCredentials = arrayOf(mockCompatibleCredential),
-            presentationRequest = mockJwtPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
         result?.assertOk()
-
-        coVerify(exactly = 0) {
-            mockFetchTrustStatementFromDid(any())
-        }
     }
 
     @Test
     fun `Getting the presentation request credential list flow with a json presentation request does not fetch the trust statement`() = runTest {
         val result = getPresentationRequestCredentialListFlow(
             compatibleCredentials = arrayOf(mockCompatibleCredential),
-            presentationRequest = mockJsonPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
         result?.assertOk()
-
-        coVerify(exactly = 0) {
-            mockFetchTrustStatementFromDid(any())
-        }
     }
 
     @Test
@@ -172,7 +137,6 @@ class GetPresentationRequestCredentialListFlowImplTest {
 
         val result = getPresentationRequestCredentialListFlow(
             compatibleCredentials = arrayOf(mockCompatibleCredential),
-            presentationRequest = mockJwtPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
@@ -187,7 +151,6 @@ class GetPresentationRequestCredentialListFlowImplTest {
 
         val result = getPresentationRequestCredentialListFlow(
             compatibleCredentials = arrayOf(mockCompatibleCredential),
-            presentationRequest = mockJwtPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
@@ -208,11 +171,7 @@ class GetPresentationRequestCredentialListFlowImplTest {
 
         coEvery { mockIsCredentialFromBetaIssuerImpl(any()) } returns false
 
-        coEvery { mockFetchTrustStatementFromDid(CLIENT_ID) } returns Ok(TrustStatement(SdJwt(PAYLOAD)))
-
         coEvery { mockCompatibleCredential.credentialId } returns COMPATIBLE_CREDENTIAL_ID
-        coEvery { mockJwtPresentationRequest.clientIdScheme } returns CLIENT_ID_SCHEME
-        coEvery { mockJwtPresentationRequest.clientId } returns CLIENT_ID
     }
 
     private companion object {

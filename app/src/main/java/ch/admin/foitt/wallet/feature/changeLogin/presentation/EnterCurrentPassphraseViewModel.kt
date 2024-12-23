@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.feature.changeLogin.presentation
 
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.changeLogin.domain.Constants.MAX_CURRENT_PASSPHRASE_ATTEMPTS
@@ -45,15 +46,15 @@ class EnterCurrentPassphraseViewModel @Inject constructor(
     override val topBarState = TopBarState.Details(navManager::navigateUp, R.string.tk_global_changepassword)
     override val fullscreenState = FullscreenState.Insets
 
-    private val _passphrase = MutableStateFlow("")
-    val passphrase = _passphrase.asStateFlow()
+    private val _textFieldValue = MutableStateFlow(TextFieldValue(text = ""))
+    val textFieldValue = _textFieldValue.asStateFlow()
 
     private var _passphraseInputFieldState: MutableStateFlow<PassphraseInputFieldState> =
         MutableStateFlow(PassphraseInputFieldState.Typing)
     val passphraseInputFieldState = _passphraseInputFieldState.asStateFlow()
 
     private var _isNextButtonEnabled =
-        MutableStateFlow(validatePassphrase(passphrase.value) == PassphraseValidationState.VALID)
+        MutableStateFlow(validatePassphrase(textFieldValue.value.text) == PassphraseValidationState.VALID)
     val isNextButtonEnabled = _isNextButtonEnabled.asStateFlow()
 
     private val _remainingAuthAttempts = MutableStateFlow(getCurrentPassphraseAttempts())
@@ -72,21 +73,21 @@ class EnterCurrentPassphraseViewModel @Inject constructor(
             isLoading
     }.toStateFlow(true)
 
-    fun onUpdatePassphrase(passphrase: String) {
+    fun onTextFieldValueChange(textFieldValue: TextFieldValue) {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
-        _passphrase.value = passphrase
-        _isNextButtonEnabled.value = validatePassphrase(passphrase) == PassphraseValidationState.VALID
+        _textFieldValue.value = textFieldValue
+        _isNextButtonEnabled.value = validatePassphrase(textFieldValue.text) == PassphraseValidationState.VALID
     }
 
     fun onCheckPassphrase() {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
         if (isNextButtonEnabled.value) {
             viewModelScope.launch {
-                authenticateWithPassphrase(passphrase = passphrase.value).mapBoth(
+                authenticateWithPassphrase(passphrase = textFieldValue.value.text).mapBoth(
                     success = {
                         _passphraseInputFieldState.value = PassphraseInputFieldState.Success
                         deleteCurrentPassphraseAttempts()
-                        _passphrase.value = ""
+                        _textFieldValue.value = TextFieldValue("")
                         navigateToEnterNewPassphraseScreen()
                     },
                     failure = { error ->

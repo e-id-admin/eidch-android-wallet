@@ -36,8 +36,6 @@ class PresentationFailureViewModel @Inject constructor(
         direction = PresentationRequestScreenDestination(
             compatibleCredential = compatibleCredential,
             presentationRequest = presentationRequest,
-            clientNameDisplay = navArgs.clientNameDisplay,
-            uriDisplay = navArgs.uriDisplay
         )
     )
 

@@ -1,7 +1,9 @@
 package ch.admin.foitt.wallet.platform.trustRegistry.data
 
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatementRepositoryError
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toTrustStatementRepositoryError
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.repository.TrustStatementRepository
+import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.mapError
 import io.ktor.client.HttpClient
@@ -13,8 +15,7 @@ import javax.inject.Inject
 class TrustStatementRepositoryImpl @Inject constructor(
     private val httpClient: HttpClient,
 ) : TrustStatementRepository {
-
-    override suspend fun fetchTrustStatements(url: URL) =
+    override suspend fun fetchTrustStatements(url: URL): Result<List<String>, TrustStatementRepositoryError> =
         runSuspendCatching<List<String>> {
             httpClient.get(url).body()
         }.mapError(Throwable::toTrustStatementRepositoryError)

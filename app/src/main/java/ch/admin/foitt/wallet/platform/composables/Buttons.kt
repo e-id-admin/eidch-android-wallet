@@ -133,6 +133,25 @@ object Buttons {
     )
 
     @Composable
+    fun FilledSecondaryContainerFixed(
+        text: String,
+        onClick: () -> Unit,
+        modifier: Modifier = Modifier,
+        startIcon: Painter? = null,
+        endIcon: Painter? = null,
+        enabled: Boolean = true,
+    ) = BaseButton(
+        text = text,
+        onClick = onClick,
+        modifier = modifier,
+        startIcon = startIcon,
+        endIcon = endIcon,
+        enabled = enabled,
+        isActive = false,
+        colors = WalletButtonColors.secondaryContainerFixed(),
+    )
+
+    @Composable
     fun FilledTertiary(
         text: String,
         onClick: () -> Unit,

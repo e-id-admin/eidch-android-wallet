@@ -47,6 +47,7 @@ import ch.admin.foitt.wallet.feature.credentialDetail.presentation.composables.C
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.composables.MenuBottomSheet
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.composables.VisibleBottomSheet
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.model.CredentialDetailUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.HiddenScrollToButton
 import ch.admin.foitt.wallet.platform.composables.HiddenScrollToTopButton
 import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
@@ -61,10 +62,10 @@ import ch.admin.foitt.wallet.platform.composables.presentation.topSafeDrawing
 import ch.admin.foitt.wallet.platform.credential.presentation.LargeCredentialCard
 import ch.admin.foitt.wallet.platform.credential.presentation.credentialClaimItems
 import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialMocks
-import ch.admin.foitt.wallet.platform.credential.presentation.model.IssuerUiState
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.CredentialDetailNavArg
 import ch.admin.foitt.wallet.platform.preview.AllCompactScreensPreview
 import ch.admin.foitt.wallet.platform.preview.AllLargeScreensPreview
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTheme
 import com.ramcosta.composedestinations.annotation.Destination
@@ -339,9 +340,10 @@ private fun ExampleScreen(windowWidthClass: WindowWidthSizeClass) {
         credentialDetail = CredentialDetailUiState(
             credential = CredentialMocks.cardState01,
             claims = CredentialMocks.claimList,
-            issuer = IssuerUiState(
+            issuer = ActorUiState(
                 name = "Issuer",
                 painter = painterResource(id = R.drawable.pilot_ic_strassenverkehrsamt),
+                trustStatus = TrustStatus.TRUSTED,
             )
         ),
         windowWidthClass = windowWidthClass,

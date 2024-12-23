@@ -23,6 +23,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.InterceptPlatformTextInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -33,9 +34,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -55,7 +58,7 @@ import kotlin.math.sin
 fun PassphraseInputComponent(
     modifier: Modifier = Modifier,
     passphraseInputFieldState: PassphraseInputFieldState = PassphraseInputFieldState.Typing,
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputAltText: String = "input your passphrase",
     enabled: Boolean = true,
     colors: TextFieldColors = WalletTextFieldColors.textFieldColors(),
@@ -64,7 +67,7 @@ fun PassphraseInputComponent(
     label: (@Composable () -> Unit)? = null,
     placeholder: @Composable () -> Unit = {},
     supportingText: @Composable () -> Unit = {},
-    onPassphraseChange: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onAnimationFinished: (Boolean) -> Unit,
 ) {
     // Workaround to set https://developer.android.com/reference/android/view/inputmethod/EditorInfo#IME_FLAG_NO_PERSONALIZED_LEARNING flag
@@ -105,6 +108,16 @@ fun PassphraseInputComponent(
         TextField(
             modifier = modifier
                 .focusRequester(focusRequester)
+                .onFocusChanged { focusState ->
+                    if (focusState.isFocused) {
+                        onTextFieldValueChange(
+                            TextFieldValue(
+                                text = textFieldValue.text,
+                                selection = TextRange(textFieldValue.text.length, textFieldValue.text.length)
+                            )
+                        )
+                    }
+                }
                 .offset {
                     createShakingOffset(amplitude = 10.dp.roundToPx(), errorAnimatable = errorAnimatable)
                 }
@@ -112,7 +125,7 @@ fun PassphraseInputComponent(
                     contentDescription = passphraseInputAltText
                 }
                 .testTag(TestTags.PIN_FIELD.name),
-            value = passphrase,
+            value = textFieldValue,
             enabled = enabled,
             singleLine = true,
             isError = passphraseInputFieldState is PassphraseInputFieldState.Error,
@@ -154,7 +167,7 @@ fun PassphraseInputComponent(
             label = label,
             placeholder = placeholder,
             supportingText = supportingText,
-            onValueChange = onPassphraseChange
+            onValueChange = onTextFieldValueChange
         )
     }
 }
@@ -196,9 +209,9 @@ internal object NoPersonalizedLearningHelper {
 private fun PassphraseInputComponentPreview() {
     WalletTheme {
         PassphraseInputComponent(
-            passphrase = "abc123",
+            textFieldValue = TextFieldValue("abc123"),
             onKeyboardAction = {},
-            onPassphraseChange = {},
+            onTextFieldValueChange = {},
             onAnimationFinished = {},
         )
     }

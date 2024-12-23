@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
@@ -45,11 +46,11 @@ fun OnboardingPassphraseScreen(
     viewModel: OnboardingPassphraseViewModel,
 ) {
     OnboardingPassphraseScreenContent(
-        passphrase = viewModel.passphrase.collectAsStateWithLifecycle().value,
+        textFieldValue = viewModel.textFieldValue.collectAsStateWithLifecycle().value,
         passphraseInputFieldState = viewModel.passphraseInputFieldState.collectAsStateWithLifecycle().value,
         showPassphraseErrorToast = viewModel.showPassphraseErrorToast.collectAsStateWithLifecycle().value,
         isValidating = viewModel.isValidating.collectAsStateWithLifecycle().value,
-        onUpdatePassphrase = viewModel::onUpdatePassphrase,
+        onTextFieldValueChange = viewModel::onTextFieldValueChange,
         onCheckPassphrase = viewModel::onCheckPassphrase,
         onClosePassphraseError = viewModel::onClosePassphraseError,
     )
@@ -59,11 +60,11 @@ fun OnboardingPassphraseScreen(
 @Composable
 private fun OnboardingPassphraseScreenContent(
     walletTopBarViewModel: WalletTopBarViewModel = hiltViewModel(),
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
     showPassphraseErrorToast: Boolean,
     isValidating: Boolean,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
     onClosePassphraseError: () -> Unit,
 ) {
@@ -83,9 +84,9 @@ private fun OnboardingPassphraseScreenContent(
             verticalArrangement = Arrangement.Top,
             content = {
                 CompactContent(
-                    passphrase = passphrase,
+                    textFieldValue = textFieldValue,
                     passphraseInputFieldState = passphraseInputFieldState,
-                    onUpdatePassphrase = onUpdatePassphrase,
+                    onTextFieldValueChange = onTextFieldValueChange,
                     onCheckPassphrase = onCheckPassphrase
                 )
             },
@@ -120,9 +121,9 @@ private fun OnboardingPassphraseScreenContent(
             verticalArrangement = Arrangement.Top,
             content = {
                 LargeContent(
-                    passphrase = passphrase,
+                    textFieldValue = textFieldValue,
                     passphraseInputFieldState = passphraseInputFieldState,
-                    onUpdatePassphrase = onUpdatePassphrase,
+                    onTextFieldValueChange = onTextFieldValueChange,
                     onCheckPassphrase = onCheckPassphrase
                 )
             },
@@ -141,32 +142,32 @@ private fun OnboardingPassphraseScreenContent(
 
 @Composable
 private fun CompactContent(
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
     Spacer(modifier = Modifier.height(Sizes.s12))
     PassphraseInputComponent(
         modifier = Modifier.fillMaxWidth(),
         passphraseInputFieldState = passphraseInputFieldState,
-        passphrase = passphrase,
+        textFieldValue = textFieldValue,
         colors = WalletTextFieldColors.textFieldColorsFixed(),
         placeholder = {
             Placeholder()
         },
         keyboardImeAction = ImeAction.Next,
         onKeyboardAction = onCheckPassphrase,
-        onPassphraseChange = onUpdatePassphrase,
+        onTextFieldValueChange = onTextFieldValueChange,
         onAnimationFinished = {},
     )
 }
 
 @Composable
 private fun LargeContent(
-    passphrase: String,
+    textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
-    onUpdatePassphrase: (String) -> Unit,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
     Spacer(modifier = Modifier.height(Sizes.s04))
@@ -176,14 +177,14 @@ private fun LargeContent(
         PassphraseInputComponent(
             modifier = Modifier.weight(1f),
             passphraseInputFieldState = passphraseInputFieldState,
-            passphrase = passphrase,
+            textFieldValue = textFieldValue,
             colors = WalletTextFieldColors.textFieldColorsFixed(),
             placeholder = {
                 Placeholder()
             },
             keyboardImeAction = ImeAction.Next,
             onKeyboardAction = onCheckPassphrase,
-            onPassphraseChange = onUpdatePassphrase,
+            onTextFieldValueChange = onTextFieldValueChange,
             onAnimationFinished = {},
         )
         Spacer(modifier = Modifier.width(Sizes.s08))
@@ -232,11 +233,11 @@ private fun OnboardingPassphraseScreenPreview() {
     WalletTheme {
         OnboardingPassphraseScreenContent(
             walletTopBarViewModel = getPreviewWalletTopBarViewModel(R.string.tk_global_enterpassword),
-            passphrase = "abc123",
+            textFieldValue = TextFieldValue("abc123"),
             passphraseInputFieldState = PassphraseInputFieldState.Error,
             showPassphraseErrorToast = true,
             isValidating = false,
-            onUpdatePassphrase = {},
+            onTextFieldValueChange = {},
             onCheckPassphrase = {},
             onClosePassphraseError = {},
         )

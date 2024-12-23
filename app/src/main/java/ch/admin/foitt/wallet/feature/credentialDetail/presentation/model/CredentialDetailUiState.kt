@@ -1,15 +1,16 @@
 package ch.admin.foitt.wallet.feature.credentialDetail.presentation.model
 
 import androidx.compose.ui.graphics.Color
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
-import ch.admin.foitt.wallet.platform.credential.presentation.model.IssuerUiState
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimData
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 
 data class CredentialDetailUiState(
     val credential: CredentialCardState,
     val claims: List<CredentialClaimData>,
-    val issuer: IssuerUiState,
+    val issuer: ActorUiState,
 ) {
     companion object {
         val EMPTY = CredentialDetailUiState(
@@ -25,7 +26,7 @@ data class CredentialDetailUiState(
                 isCredentialFromBetaIssuer = false
             ),
             claims = emptyList(),
-            issuer = IssuerUiState("", null),
+            issuer = ActorUiState("", null, TrustStatus.UNKNOWN),
         )
     }
 }

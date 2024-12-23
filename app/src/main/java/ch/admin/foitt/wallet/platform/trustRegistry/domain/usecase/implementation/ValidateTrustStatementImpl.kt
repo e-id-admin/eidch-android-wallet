@@ -6,11 +6,13 @@ import ch.admin.foitt.openid4vc.domain.model.sdjwt.SdJwt
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VerifyJwtError
 import ch.admin.foitt.openid4vc.domain.usecase.VerifyJwtSignature
 import ch.admin.foitt.openid4vc.utils.validity
+import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatement
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ValidateTrustStatementError
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toValidateTrustStatementError
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.ValidateTrustStatement
-import ch.admin.foitt.wallet.platform.utils.BuildConfigProvider
+import ch.admin.foitt.wallet.platform.utils.JsonParsingError
+import ch.admin.foitt.wallet.platform.utils.SafeJson
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.coroutines.runSuspendCatching
@@ -22,59 +24,64 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import javax.inject.Inject
 
-class ValidateTrustStatementImpl @Inject constructor(
-    private val buildConfigProvider: BuildConfigProvider,
+internal class ValidateTrustStatementImpl @Inject constructor(
+    private val environmentSetupRepo: EnvironmentSetupRepository,
     private val verifyJwtSignature: VerifyJwtSignature,
+    private val safeJson: SafeJson,
 ) : ValidateTrustStatement {
     override suspend operator fun invoke(
-        trustStatementSdJwt: String
+        trustStatementRawSdJwt: String
     ): Result<TrustStatement, ValidateTrustStatementError> = coroutineBinding {
         runSuspendCatching {
-            val trustStatement = SdJwt(trustStatementSdJwt)
-            val signedTrustStatement = trustStatement.signedJWT
+            val trustStatementSdJwt = SdJwt(trustStatementRawSdJwt)
+            val trustStatementSignedJwt = trustStatementSdJwt.signedJWT
 
-            check(trustStatement.hasTrustedDid()) {
+            check(trustStatementSdJwt.hasTrustedDid()) {
                 errorMessageStart + "issuer did is not trusted"
             }
 
             // Header checks
-            check(signedTrustStatement.hasSupportedType()) {
+            check(trustStatementSignedJwt.hasSupportedType()) {
                 errorMessageStart + "type is unsupported"
             }
-            check(signedTrustStatement.hasSupportedAlgorithm()) {
+            check(trustStatementSignedJwt.hasSupportedAlgorithm()) {
                 errorMessageStart + "algorithm is unsupported"
             }
 
             verifyJwtSignature(
-                issuerDid = trustStatement.issuer,
-                signedJwt = signedTrustStatement,
+                did = trustStatementSignedJwt.jwtClaimsSet.issuer,
+                kid = trustStatementSignedJwt.header.keyID,
+                signedJwt = trustStatementSignedJwt,
             )
                 .mapError(VerifyJwtError::toValidateTrustStatementError)
                 .bind()
 
             // Claim checks
-            trustStatement.checkClaimNotNull(JWTClaimNames.ISSUED_AT)
+            trustStatementSdJwt.checkClaimNotNull(JWTClaimNames.ISSUED_AT)
 
-            trustStatement.checkClaimNotNull(JWTClaimNames.NOT_BEFORE)
+            trustStatementSdJwt.checkClaimNotNull(JWTClaimNames.NOT_BEFORE)
 
-            trustStatement.checkClaimNotNull(JWTClaimNames.EXPIRATION_TIME)
+            trustStatementSdJwt.checkClaimNotNull(JWTClaimNames.EXPIRATION_TIME)
 
-            check(signedTrustStatement.validity == CredentialValidity.VALID) {
-                "$errorMessageStart is ${signedTrustStatement.validity}"
+            check(trustStatementSignedJwt.validity == CredentialValidity.VALID) {
+                "$errorMessageStart is ${trustStatementSignedJwt.validity}"
             }
 
-            trustStatement.checkClaimValue(VC_TYPE_KEY, VC_TYPE_VALUE)
+            trustStatementSdJwt.checkClaimValue(VC_TYPE_KEY, VC_TYPE_VALUE)
 
-            trustStatement.checkClaimNotNull(JWTClaimNames.SUBJECT)
+            trustStatementSdJwt.checkClaimNotNull(JWTClaimNames.SUBJECT)
 
             // Specific trust statements claims
-            trustStatement.checkClaimNotNull(VC_ORGNAME_KEY)
+            trustStatementSdJwt.checkClaimNotNull(VC_ORGNAME_KEY)
 
-            trustStatement.checkClaimNotNull(VC_LOGOURI_KEY)
+            trustStatementSdJwt.checkClaimNotNull(VC_LOGOURI_KEY)
 
-            trustStatement.checkClaimNotNull(VC_PREFLANG_KEY)
+            trustStatementSdJwt.checkClaimNotNull(VC_PREFLANG_KEY)
 
-            TrustStatement(sdJwt = trustStatement)
+            val trustStatementObject = safeJson.safeDecodeElementTo<TrustStatement>(trustStatementSdJwt.json)
+                .mapError(JsonParsingError::toValidateTrustStatementError)
+                .bind()
+            trustStatementObject
         }
             .mapError(Throwable::toValidateTrustStatementError)
             .bind()
@@ -82,7 +89,7 @@ class ValidateTrustStatementImpl @Inject constructor(
 
     private fun SdJwt.getRawClaimValue(claimKey: String): JsonElement? = json.jsonObject[claimKey]
 
-    private fun SdJwt.hasTrustedDid() = buildConfigProvider.trustedDids.contains(issuer)
+    private fun SdJwt.hasTrustedDid() = environmentSetupRepo.trustedDids.contains(issuer)
 
     private fun SignedJWT.hasSupportedType() = header.type.type == SDJWT_TYPE_VALUE
 

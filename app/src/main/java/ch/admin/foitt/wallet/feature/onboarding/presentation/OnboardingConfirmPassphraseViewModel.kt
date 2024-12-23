@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.feature.onboarding.presentation
 
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
@@ -53,8 +54,8 @@ class OnboardingConfirmPassphraseViewModel @Inject constructor(
     private val _isInitializing = MutableStateFlow(false)
     val isInitializing = _isInitializing.asStateFlow()
 
-    private val _passphrase = MutableStateFlow("")
-    val passphrase = _passphrase.asStateFlow()
+    private val _textFieldValue = MutableStateFlow(TextFieldValue(""))
+    val textFieldValue = _textFieldValue.asStateFlow()
 
     private var _passphraseInputFieldState: MutableStateFlow<PassphraseInputFieldState> =
         MutableStateFlow(PassphraseInputFieldState.Typing)
@@ -70,15 +71,15 @@ class OnboardingConfirmPassphraseViewModel @Inject constructor(
     private val _showSupportText = MutableStateFlow(remainingConfirmationAttempts.value < MAX_CONFIRMATION_ATTEMPTS)
     val showSupportText = _showSupportText.asStateFlow()
 
-    fun onUpdatePassphrase(passphrase: String) {
+    fun onTextFieldValueChange(textFieldValue: TextFieldValue) {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
-        _passphrase.value = passphrase
+        _textFieldValue.value = textFieldValue
     }
 
     fun onCheckPassphrase() {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
         when {
-            passphrase.value == originalPassphrase -> onValidPassphrase(passphrase.value)
+            textFieldValue.value.text == originalPassphrase -> onValidPassphrase(textFieldValue.value.text)
             else -> onInvalidPassphrase()
         }
     }
@@ -91,7 +92,7 @@ class OnboardingConfirmPassphraseViewModel @Inject constructor(
         } else {
             initializePassphrase(passphrase)
         }
-        _passphrase.value = ""
+        _textFieldValue.value = TextFieldValue("")
     }
 
     private fun initializePassphrase(passphrase: String) = viewModelScope.launch {

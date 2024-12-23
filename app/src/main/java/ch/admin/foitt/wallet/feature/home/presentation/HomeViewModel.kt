@@ -12,6 +12,7 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.trackCompletion
+import ch.admin.foitt.walletcomposedestinations.destinations.BetaIdScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialDetailScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.ErrorScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.QrScanPermissionScreenDestination
@@ -85,5 +86,9 @@ class HomeViewModel @Inject constructor(
 
     private fun navigateToErrorScreen() {
         navManager.navigateToAndClearCurrent(ErrorScreenDestination)
+    }
+
+    fun onClickBetaId() {
+        navManager.navigateTo(BetaIdScreenDestination)
     }
 }

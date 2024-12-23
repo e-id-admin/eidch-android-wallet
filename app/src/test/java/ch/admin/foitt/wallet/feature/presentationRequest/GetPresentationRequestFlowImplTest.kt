@@ -3,7 +3,6 @@ package ch.admin.foitt.wallet.feature.presentationRequest
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JsonPresentationRequest
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JwtPresentationRequest
-import ch.admin.foitt.openid4vc.domain.model.sdjwt.SdJwt
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.PresentationRequestError
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.repository.PresentationRequestRepository
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.implementation.GetPresentationRequestFlowImpl
@@ -20,8 +19,6 @@ import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedDisplay
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimData
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.MapToCredentialClaimData
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatement
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.FetchTrustStatementFromDid
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
 import com.github.michaelbull.result.Err
@@ -29,7 +26,6 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.getError
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.firstOrNull
@@ -54,9 +50,6 @@ class GetPresentationRequestFlowImplTest {
 
     @MockK
     lateinit var mockIsCredentialFromBetaIssuerImpl: IsCredentialFromBetaIssuerImpl
-
-    @MockK
-    lateinit var mockFetchTrustStatementFromDid: FetchTrustStatementFromDid
 
     @MockK
     lateinit var mockCredentialWithDisplaysAndClaims: CredentialWithDisplaysAndClaims
@@ -93,7 +86,6 @@ class GetPresentationRequestFlowImplTest {
             mockGetLocalizedDisplay,
             mockMapToCredentialClaimData,
             mockIsCredentialFromBetaIssuerImpl,
-            mockFetchTrustStatementFromDid,
         )
 
         setupDefaultMocks()
@@ -114,74 +106,6 @@ class GetPresentationRequestFlowImplTest {
 
         assertNotNull(result)
         result?.assertOk()
-    }
-
-    @Test
-    fun `Getting the presentation request flow with a jwt presentation request does fetch the trust statement`() = runTest {
-        val result = getPresentationRequestFlow(
-            id = CREDENTIAL_ID1,
-            requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockJwtPresentationRequest,
-        ).firstOrNull()
-
-        assertNotNull(result)
-        result?.assertOk()
-
-        coVerify(exactly = 1) {
-            mockFetchTrustStatementFromDid(any())
-        }
-    }
-
-    @Test
-    fun `Getting the presentation request flow with a jwt presentation request but invalid clientIdScheme does not fetch the trust statement`() = runTest {
-        coEvery { mockJwtPresentationRequest.clientIdScheme } returns null
-
-        val result = getPresentationRequestFlow(
-            id = CREDENTIAL_ID1,
-            requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockJwtPresentationRequest,
-        ).firstOrNull()
-
-        assertNotNull(result)
-        result?.assertOk()
-
-        coVerify(exactly = 0) {
-            mockFetchTrustStatementFromDid(any())
-        }
-    }
-
-    @Test
-    fun `Getting the presentation request flow with a jwt presentation request but invalid clientIdScheme (not 'did') does not fetch the trust statement`() = runTest {
-        coEvery { mockJwtPresentationRequest.clientIdScheme } returns "somethingThatIsNotDid"
-
-        val result = getPresentationRequestFlow(
-            id = CREDENTIAL_ID1,
-            requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockJwtPresentationRequest,
-        ).firstOrNull()
-
-        assertNotNull(result)
-        result?.assertOk()
-
-        coVerify(exactly = 0) {
-            mockFetchTrustStatementFromDid(any())
-        }
-    }
-
-    @Test
-    fun `Getting the presentation request flow with a json presentation request does not fetch the trust statement`() = runTest {
-        val result = getPresentationRequestFlow(
-            id = CREDENTIAL_ID1,
-            requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockJsonPresentationRequest,
-        ).firstOrNull()
-
-        assertNotNull(result)
-        result?.assertOk()
-
-        coVerify(exactly = 0) {
-            mockFetchTrustStatementFromDid(any())
-        }
     }
 
     @Test
@@ -255,8 +179,6 @@ class GetPresentationRequestFlowImplTest {
             mockMapToCredentialClaimData(mockCredentialClaim, listOf(mockCredentialClaimDisplay))
         } returns Ok(mockClaimData)
         coEvery { mockIsCredentialFromBetaIssuerImpl(CREDENTIAL_ID1) } returns false
-
-        coEvery { mockFetchTrustStatementFromDid(CLIENT_ID) } returns Ok(TrustStatement(SdJwt(PAYLOAD)))
 
         coEvery { mockRequestedField.key } returns CLAIM_KEY
         coEvery { mockJwtPresentationRequest.clientIdScheme } returns CLIENT_ID_SCHEME

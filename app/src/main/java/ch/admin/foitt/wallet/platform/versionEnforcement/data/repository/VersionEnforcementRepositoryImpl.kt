@@ -1,6 +1,6 @@
 package ch.admin.foitt.wallet.platform.versionEnforcement.data.repository
 
-import ch.admin.foitt.wallet.BuildConfig
+import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.model.FetchVersionEnforcementError
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.model.VersionEnforcement
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.model.VersionEnforcementError
@@ -20,10 +20,11 @@ import javax.inject.Inject
 
 class VersionEnforcementRepositoryImpl @Inject constructor(
     private val httpClient: HttpClient,
+    private val environmentSetupRepo: EnvironmentSetupRepository
 ) : VersionEnforcementRepository {
     override suspend fun fetchLatestHighPriority(): Result<VersionEnforcement?, FetchVersionEnforcementError> =
         runSuspendCatching {
-            val list = httpClient.get(BuildConfig.APP_VERSION_ENFORCEMENT_URL) {
+            val list = httpClient.get(environmentSetupRepo.appVersionEnforcementUrl) {
                 contentType(ContentType.Application.Json)
             }.body<List<VersionEnforcement>>()
             list.sortedByDescending { parseDate(it.created) }

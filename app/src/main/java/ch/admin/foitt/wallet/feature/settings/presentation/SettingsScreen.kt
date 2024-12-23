@@ -24,6 +24,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel
 ) {
     SettingsScreenContent(
+        onBetaIdScreen = viewModel::onBetaIdScreen,
         onSecurityScreen = viewModel::onSecurityScreen,
         onLanguageScreen = viewModel::onLanguageScreen,
         onHelp = viewModel::onHelp,
@@ -35,6 +36,7 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsScreenContent(
+    onBetaIdScreen: () -> Unit,
     onSecurityScreen: () -> Unit,
     onLanguageScreen: () -> Unit,
     onHelp: () -> Unit,
@@ -52,7 +54,7 @@ private fun SettingsScreenContent(
                 bottom = Sizes.s04,
             )
     ) {
-        SettingsSection(onSecurityScreen, onLanguageScreen)
+        SettingsSection(onBetaIdScreen, onSecurityScreen, onLanguageScreen)
         Spacer(modifier = Modifier.height(Sizes.s10))
 
         SupportSection(onHelp, onContact)
@@ -64,9 +66,16 @@ private fun SettingsScreenContent(
 
 @Composable
 private fun SettingsSection(
+    onBetaIdScreen: () -> Unit,
     onSecurityScreen: () -> Unit,
     onLanguageScreen: () -> Unit,
 ) {
+    WalletListItems.SimpleListItem(
+        leadingIcon = R.drawable.wallet_ic_settings_beta_id,
+        title = stringResource(id = R.string.tk_menu_homeList_menu_add),
+        onItemClick = onBetaIdScreen,
+        trailingIcon = R.drawable.pilot_ic_settings_next,
+    )
     WalletListItems.SimpleListItem(
         leadingIcon = R.drawable.pilot_ic_security,
         title = stringResource(id = R.string.settings_security),
@@ -124,6 +133,7 @@ private fun InfoSection(onImpressumScreen: () -> Unit, onLicencesScreen: () -> U
 fun SettingsScreenPreview() {
     WalletTheme {
         SettingsScreenContent(
+            onBetaIdScreen = {},
             onSecurityScreen = {},
             onLanguageScreen = {},
             onHelp = {},

@@ -25,11 +25,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
-import ch.admin.foitt.wallet.platform.composables.InvitationHeader
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.InvitationHeader
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
-import ch.admin.foitt.wallet.platform.credential.presentation.model.IssuerUiState
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.CredentialOfferDeclinedNavArg
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTexts
 import ch.admin.foitt.wallet.theme.WalletTheme
@@ -55,19 +56,21 @@ fun CredentialOfferDeclinedScreen(
 @Composable
 private fun CredentialOfferDeclinedScreenContent(
     isLoading: Boolean,
-    issuer: IssuerUiState,
+    issuer: ActorUiState,
 ) = Box(
     modifier = Modifier.fillMaxSize(),
 ) {
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
     ) {
         Spacer(modifier = Modifier.height(Sizes.s06))
         InvitationHeader(
-            modifier = Modifier.padding(top = Sizes.s01, start = Sizes.s06, end = Sizes.s06),
+            modifier = Modifier.padding(horizontal = Sizes.s04),
             inviterName = issuer.name,
             inviterImage = issuer.painter,
-            message = stringResource(id = R.string.credential_offer_invitation),
+            trustStatus = issuer.trustStatus,
         )
         Spacer(modifier = Modifier.height(Sizes.s06))
         Sheet(
@@ -114,9 +117,10 @@ private fun CredentialOfferDeclinedScreenContentPreview() {
     WalletTheme {
         CredentialOfferDeclinedScreenContent(
             isLoading = false,
-            issuer = IssuerUiState(
+            issuer = ActorUiState(
                 name = "Test Issuer",
-                painter = painterResource(id = R.drawable.wallet_ic_scan_person)
+                painter = painterResource(id = R.drawable.wallet_ic_scan_person),
+                trustStatus = TrustStatus.TRUSTED
             ),
         )
     }

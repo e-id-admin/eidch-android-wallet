@@ -1,3 +1,8 @@
 package ch.admin.foitt.wallet.platform.navArgs.domain.model
 
-data class DeclineCredentialOfferNavArg(val credentialId: Long)
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
+
+data class DeclineCredentialOfferNavArg(
+    val credentialId: Long,
+    val issuerDisplayData: ActorDisplayData,
+)

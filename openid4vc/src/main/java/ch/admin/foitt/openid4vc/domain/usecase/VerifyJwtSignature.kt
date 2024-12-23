@@ -7,5 +7,5 @@ import com.nimbusds.jwt.SignedJWT
 
 interface VerifyJwtSignature {
     @CheckResult
-    suspend operator fun invoke(issuerDid: String, signedJwt: SignedJWT): Result<Unit, VerifyJwtError>
+    suspend operator fun invoke(did: String, kid: String, signedJwt: SignedJWT): Result<Unit, VerifyJwtError>
 }

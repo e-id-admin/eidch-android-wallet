@@ -48,7 +48,8 @@ internal class FetchVcSdJwtCredentialImpl @Inject constructor(
             .bind()
 
         verifyJwtSignature(
-            issuerDid = issuerDid,
+            did = issuerDid,
+            kid = signedJwt.header.keyID,
             signedJwt = signedJwt,
         ).mapError(VerifyJwtError::toFetchCredentialError)
             .bind()

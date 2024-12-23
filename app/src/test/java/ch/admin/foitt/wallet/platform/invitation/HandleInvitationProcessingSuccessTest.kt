@@ -1,8 +1,6 @@
 package ch.admin.foitt.wallet.platform.invitation
 
-import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.ClientNameDisplay
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.CompatibleCredential
-import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.LogoUriDisplay
 import ch.admin.foitt.wallet.platform.credentialPresentation.mock.MockPresentationRequest
 import ch.admin.foitt.wallet.platform.invitation.domain.model.ProcessInvitationResult
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.HandleInvitationProcessingSuccess
@@ -85,14 +83,10 @@ class HandleInvitationProcessingSuccessTest {
             mockPresentationRequestResult to PresentationRequestScreenDestination(
                 mockPresentationRequestResult.credential,
                 mockPresentationRequestResult.request,
-                arrayListOf<ClientNameDisplay>().toTypedArray(),
-                arrayListOf<LogoUriDisplay>().toTypedArray()
             ),
             mockPresentationRequestListResult to PresentationCredentialListScreenDestination(
                 mockPresentationRequestListResult.credentials.toTypedArray(),
                 mockPresentationRequestListResult.request,
-                arrayListOf<ClientNameDisplay>().toTypedArray(),
-                arrayListOf<LogoUriDisplay>().toTypedArray()
             ),
         )
     }

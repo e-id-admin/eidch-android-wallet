@@ -43,10 +43,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.model.CredentialOfferUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.InvitationHeader
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.Buttons
 import ch.admin.foitt.wallet.platform.composables.HiddenScrollToButton
 import ch.admin.foitt.wallet.platform.composables.HiddenScrollToTopButton
-import ch.admin.foitt.wallet.platform.composables.InvitationHeader
 import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
 import ch.admin.foitt.wallet.platform.composables.presentation.HeightReportingLayout
 import ch.admin.foitt.wallet.platform.composables.presentation.horizontalSafeDrawing
@@ -55,11 +56,12 @@ import ch.admin.foitt.wallet.platform.credential.presentation.MediumCredentialCa
 import ch.admin.foitt.wallet.platform.credential.presentation.credentialClaimItems
 import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialMocks
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
-import ch.admin.foitt.wallet.platform.credential.presentation.model.IssuerUiState
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.CredentialOfferNavArg
 import ch.admin.foitt.wallet.platform.preview.AllCompactScreensPreview
 import ch.admin.foitt.wallet.platform.preview.AllLargeScreensPreview
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.theme.Sizes
+import ch.admin.foitt.wallet.theme.WalletTexts
 import ch.admin.foitt.wallet.theme.WalletTheme
 import com.ramcosta.composedestinations.annotation.Destination
 
@@ -73,9 +75,10 @@ fun CredentialOfferScreen(
     BackHandler {
         viewModel.onDeclineClicked()
     }
+
     CredentialOfferScreenContent(
         isLoading = viewModel.isLoading.collectAsStateWithLifecycle().value,
-        credentialOffer = viewModel.credentialOfferUiState.collectAsStateWithLifecycle().value,
+        credentialOfferUiState = viewModel.credentialOfferUiState.collectAsStateWithLifecycle().value,
         onAccept = viewModel::onAcceptClicked,
         onDecline = viewModel::onDeclineClicked,
         onWrongData = viewModel::onWrongDataClicked,
@@ -85,7 +88,7 @@ fun CredentialOfferScreen(
 @Composable
 private fun CredentialOfferScreenContent(
     isLoading: Boolean,
-    credentialOffer: CredentialOfferUiState,
+    credentialOfferUiState: CredentialOfferUiState,
     onAccept: () -> Unit,
     onDecline: () -> Unit,
     onWrongData: () -> Unit,
@@ -93,14 +96,14 @@ private fun CredentialOfferScreenContent(
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     if (windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT) {
         CompactContent(
-            credentialOffer = credentialOffer,
+            credentialOffer = credentialOfferUiState,
             onAccept = onAccept,
             onDecline = onDecline,
             onWrongData = onWrongData,
         )
     } else {
         LargeContent(
-            credentialOffer = credentialOffer,
+            credentialOffer = credentialOfferUiState,
             onAccept = onAccept,
             onDecline = onDecline,
             onWrongData = onWrongData,
@@ -135,14 +138,23 @@ private fun CompactContent(
             Spacer(Modifier.windowInsetsTopHeight(WindowInsets.safeDrawing))
         }
         item {
+            Spacer(modifier = Modifier.height(Sizes.s06))
             InvitationHeader(
-                modifier = Modifier.padding(vertical = Sizes.s02, horizontal = Sizes.s06),
+                modifier = Modifier.padding(horizontal = Sizes.s04),
                 inviterName = credentialOffer.issuer.name,
                 inviterImage = credentialOffer.issuer.painter,
-                message = pluralStringResource(id = R.plurals.tk_receive_approval_android_subtitle, count = 1, 1),
+                trustStatus = credentialOffer.issuer.trustStatus,
             )
             Spacer(modifier = Modifier.height(Sizes.s06))
         }
+        item {
+            WalletTexts.BodyLarge(
+                text = pluralStringResource(id = R.plurals.tk_receive_approval_android_subtitle, count = 1, 1),
+                modifier = Modifier.padding(horizontal = Sizes.s04)
+            )
+            Spacer(modifier = Modifier.height(Sizes.s04))
+        }
+
         item {
             CredentialBoxWithButtons(
                 credential = credentialOffer.credential,
@@ -283,9 +295,17 @@ private fun DetailsWithHeader(
                         ),
                         inviterName = credentialOffer.issuer.name,
                         inviterImage = credentialOffer.issuer.painter,
-                        message = pluralStringResource(id = R.plurals.tk_receive_approval_android_subtitle, count = 1, 1),
+                        trustStatus = credentialOffer.issuer.trustStatus,
                     )
                 }
+            }
+
+            item {
+                WalletTexts.BodyLarge(
+                    text = pluralStringResource(id = R.plurals.tk_receive_approval_android_subtitle, count = 1, 1),
+                    modifier = Modifier.padding(horizontal = Sizes.s04)
+                )
+                Spacer(modifier = Modifier.height(Sizes.s04))
             }
 
             credentialClaimItems(
@@ -386,10 +406,11 @@ private fun CredentialOfferScreenPreview() {
     WalletTheme {
         CredentialOfferScreenContent(
             isLoading = false,
-            credentialOffer = CredentialOfferUiState(
-                issuer = IssuerUiState(
+            credentialOfferUiState = CredentialOfferUiState(
+                issuer = ActorUiState(
                     name = "Test Issuer",
-                    painter = painterResource(id = R.drawable.pilot_ic_strassenverkehrsamt)
+                    painter = painterResource(id = R.drawable.pilot_ic_strassenverkehrsamt),
+                    trustStatus = TrustStatus.TRUSTED,
                 ),
                 credential = CredentialMocks.cardState01,
                 claims = CredentialMocks.claimList,
@@ -407,9 +428,10 @@ private fun CredentialOfferLargeContentPreview() {
     WalletTheme {
         LargeContent(
             credentialOffer = CredentialOfferUiState(
-                issuer = IssuerUiState(
+                issuer = ActorUiState(
                     name = "Test Issuer",
-                    painter = painterResource(id = R.drawable.pilot_ic_strassenverkehrsamt)
+                    painter = painterResource(id = R.drawable.pilot_ic_strassenverkehrsamt),
+                    trustStatus = TrustStatus.TRUSTED,
                 ),
                 credential = CredentialMocks.cardState01,
                 claims = CredentialMocks.claimList,

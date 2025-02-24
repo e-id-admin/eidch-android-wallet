@@ -13,6 +13,7 @@
         </trust-anchors>
     </domain-config>
     <domain-config>
+        <domain includeSubdomains="true">trust-infra.swiyu-int.admin.ch</domain>
         <domain includeSubdomains="true">trust-infra.swiyu.admin.ch</domain>
         <trust-anchors>
             <certificates src="@raw/root_admin_ch" />

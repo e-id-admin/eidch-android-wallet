@@ -5,4 +5,6 @@ interface EnvironmentSetupRepository {
     val trustRegistryMapping: Map<String, String>
     val trustedDids: List<String>
     val baseTrustDomainRegex: Regex
+    val betaIdRequestEnabled: Boolean
+    val eIdRequestEnabled: Boolean
 }

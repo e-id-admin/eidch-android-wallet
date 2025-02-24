@@ -75,12 +75,12 @@ private fun WalletTopAppBarContent(
             onSettings = onSettings
         )
 
-        is TopBarState.DetailsWithCustomSettings -> TopBarBackArrow(
+        is TopBarState.DetailsWithCloseButton -> TopBarBackArrow(
             titleId = topBarState.titleId,
             onUp = topBarState.onUp,
             actionButton = {
-                SettingsButton(
-                    onSettings = topBarState.onSettings,
+                CloseButton(
+                    onClose = topBarState.onClose
                 )
             },
         )
@@ -132,7 +132,7 @@ private fun TopBarTitle() {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.pilot_ic_swisscross_small),
+            painter = painterResource(id = R.drawable.ic_swiss_cross_small),
             tint = Color.Unspecified,
             contentDescription = null,
         )
@@ -172,9 +172,11 @@ internal fun TopBarBackArrow(
                 showButtonBackground = showButtonBackground,
                 onUp = onUp,
                 iconTint = colors.navigationIconContentColor,
-                modifier = Modifier.semantics {
-                    traversalIndex = 1f
-                }.testTag(TestTags.BACK_BUTTON.name)
+                modifier = Modifier
+                    .semantics {
+                        traversalIndex = 1f
+                    }
+                    .testTag(TestTags.BACK_BUTTON.name)
             )
         },
         actions = {
@@ -193,7 +195,9 @@ private fun TopAppBarTransparent(
 ) = TopAppBar(
     title = {
         WalletTexts.TitleTopBar(
-            modifier = Modifier.nonFocusableAccessibilityAnchor().testTag(TestTags.TOP_BAR_TITLE.name),
+            modifier = Modifier
+                .nonFocusableAccessibilityAnchor()
+                .testTag(TestTags.TOP_BAR_TITLE.name),
             text = stringResource(id = titleId),
             color = WalletTheme.colorScheme.onGradientFixed,
         )
@@ -234,6 +238,15 @@ private fun SettingsButton(
     onClick = onSettings,
     icon = R.drawable.pilot_ic_menu,
     contentDescription = stringResource(id = R.string.settings_title),
+)
+
+@Composable
+private fun CloseButton(
+    onClose: () -> Unit,
+) = TopBarButton(
+    onClick = onClose,
+    icon = R.drawable.wallet_ic_cross,
+    contentDescription = stringResource(id = R.string.tk_global_closedetails_alt),
 )
 
 @Composable

@@ -7,7 +7,7 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.VcSdJwtCre
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-open class AnyCredentialRequest {
+sealed class AnyCredentialRequest {
     @Serializable
     data class CredentialDefinition(
         @SerialName("types")

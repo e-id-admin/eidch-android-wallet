@@ -47,7 +47,7 @@ private fun OnboardingSuccessScreenContent(
         },
         stickyBottomContent = {
             Buttons.FilledPrimary(
-                text = stringResource(id = R.string.onboarding_ready_buttonText),
+                text = stringResource(id = R.string.tk_global_continue),
                 onClick = onNext,
                 modifier = Modifier.testTag(TestTags.CONTINUE_BUTTON.name)
             )
@@ -55,11 +55,11 @@ private fun OnboardingSuccessScreenContent(
     ) {
         Spacer(modifier = Modifier.height(Sizes.s06))
         WalletTexts.TitleScreen(
-            text = stringResource(id = R.string.onboarding_ready_primary),
+            text = stringResource(id = R.string.tk_onboarding_allset_title),
         )
         Spacer(modifier = Modifier.height(Sizes.s06))
         WalletTexts.BodyLarge(
-            text = stringResource(id = R.string.onboarding_ready_secondary),
+            text = stringResource(id = R.string.tk_onboarding_allset_body),
             modifier = Modifier.fillMaxWidth(),
         )
     }

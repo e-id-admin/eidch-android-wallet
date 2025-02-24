@@ -1,23 +1,7 @@
 package ch.admin.foitt.wallet.platform.navArgs.domain.model
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 
-@Serializable
 data class PresentationValidationErrorNavArg(
-    @SerialName("sent_fields")
-    val sentFields: Array<String>,
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as PresentationValidationErrorNavArg
-
-        return sentFields.contentEquals(other.sentFields)
-    }
-
-    override fun hashCode(): Int {
-        return sentFields.contentHashCode()
-    }
-}
+    val issuerDisplayData: ActorDisplayData,
+)

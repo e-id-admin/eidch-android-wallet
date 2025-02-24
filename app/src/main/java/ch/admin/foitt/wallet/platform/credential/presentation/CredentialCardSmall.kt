@@ -37,7 +37,7 @@ fun CredentialCardSmall(
 ) {
     if (credentialState.isCredentialFromBetaIssuer) {
         DemoWatermark(
-            color = credentialState.textColor,
+            color = credentialState.contentColor,
             large = false,
         )
     }
@@ -54,7 +54,7 @@ fun CredentialCardSmall(
                 painter = logo,
                 contentDescription = null,
                 modifier = Modifier.size(Sizes.credentialSmallIconSize),
-                tint = Color.Unspecified,
+                tint = credentialState.contentColor,
             )
         }
     }

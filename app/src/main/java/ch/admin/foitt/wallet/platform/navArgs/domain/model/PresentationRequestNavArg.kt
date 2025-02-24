@@ -6,4 +6,5 @@ import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.Compat
 data class PresentationRequestNavArg(
     val compatibleCredential: CompatibleCredential,
     val presentationRequest: PresentationRequest,
+    val shouldFetchTrustStatement: Boolean,
 )

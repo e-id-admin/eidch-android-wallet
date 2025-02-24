@@ -1,6 +1,6 @@
 package ch.admin.foitt.wallet.feature.qrscan.mock
 
-import ch.admin.foitt.wallet.feature.qrscan.domain.repository.CameraIntroRepository
+import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.repository.CameraIntroRepository
 
 class InMemoryCameraIntroRepository : CameraIntroRepository {
     var value = false

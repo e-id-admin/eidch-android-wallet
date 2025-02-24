@@ -47,6 +47,7 @@ import ch.admin.foitt.wallet.platform.composables.SpacerBottom
 import ch.admin.foitt.wallet.platform.composables.SpacerTop
 import ch.admin.foitt.wallet.platform.composables.presentation.HeightReportingLayout
 import ch.admin.foitt.wallet.platform.composables.presentation.horizontalSafeDrawing
+import ch.admin.foitt.wallet.platform.composables.presentation.scrollingBehavior
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTheme
 
@@ -91,12 +92,17 @@ object WalletLayouts {
     @Composable
     fun LargeContainer(
         modifier: Modifier = Modifier,
-        onBottomHeightMeasured: (Dp) -> Unit,
-        stickyBottomPadding: PaddingValues = stickyBottomPaddingValuesLandscape,
-        stickyBottomContent: (@Composable () -> Unit)?,
+        cardScreenRatio: Float = getCardScreenRatio(),
+        contentHeightDimension: Dimension = Dimension.fillToConstraints,
+        contentScrollState: ScrollState,
+        isStickyStartScrollable: Boolean = false,
         stickyStartPadding: PaddingValues = stickStartPaddingValuesLandscape,
         stickyStartContent: @Composable ColumnScope.() -> Unit,
-        contentScrollState: ScrollState,
+        stickyBottomPadding: PaddingValues = stickyBottomPaddingValuesLandscape,
+        stickyBottomHorizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(Sizes.s02, Alignment.End),
+        stickyBottomBackgroundColor: Color = Color.Transparent,
+        stickyBottomContent: (@Composable () -> Unit)?,
+        onBottomHeightMeasured: (Dp) -> Unit,
         content: @Composable ColumnScope.() -> Unit,
     ) = ConstraintLayout(
         modifier = modifier
@@ -109,8 +115,6 @@ object WalletLayouts {
             stickyBottomRef,
         ) = createRefs()
 
-        val cardScreenRatio = getCardScreenRatio()
-
         SpacerTop(
             backgroundColor = WalletTheme.colorScheme.surfaceTransparent,
             modifier = Modifier.constrainAs(topSpacerRef) {
@@ -121,10 +125,22 @@ object WalletLayouts {
 
         Column(
             modifier = Modifier
-                .scrollable(
-                    contentScrollState,
-                    orientation = Orientation.Vertical,
-                    reverseDirection = true,
+                .then(
+                    if (isStickyStartScrollable) {
+                        Modifier
+                            .scrollingBehavior(
+                                useStatusBarInsets = false,
+                                contentPadding = PaddingValues(),
+                                scrollState = contentScrollState,
+                            )
+                            .scrollable(
+                                contentScrollState,
+                                orientation = Orientation.Vertical,
+                                reverseDirection = true,
+                            )
+                    } else {
+                        Modifier
+                    }
                 )
                 .padding(stickyStartPadding)
                 .constrainAs(stickyStartRef) {
@@ -145,7 +161,7 @@ object WalletLayouts {
                     bottom.linkTo(parent.bottom)
                     start.linkTo(stickyStartRef.end)
                     end.linkTo(parent.end)
-                    height = Dimension.fillToConstraints
+                    height = contentHeightDimension
                     width = Dimension.fillToConstraints
                 }
         ) {
@@ -173,11 +189,11 @@ object WalletLayouts {
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(WalletTheme.colorScheme.surface.copy(alpha = 0.85f))
+                            .background(stickyBottomBackgroundColor)
                             .padding(stickyBottomPadding)
                             .navigationBarsPadding()
                             .focusGroup(),
-                        horizontalArrangement = Arrangement.spacedBy(Sizes.s02, Alignment.End),
+                        horizontalArrangement = stickyBottomHorizontalArrangement,
                         verticalArrangement = Arrangement.spacedBy(Sizes.s02, Alignment.Top),
                         maxItemsInEachRow = 2,
                     ) {
@@ -192,11 +208,14 @@ object WalletLayouts {
     @Composable
     fun CompactContainer(
         modifier: Modifier = Modifier,
-        onBottomHeightMeasured: ((Dp) -> Unit)?,
-        stickyBottomPadding: PaddingValues = stickyBottomPaddingValuesPortrait,
-        stickyBottomContent: (@Composable () -> Unit)?,
         useStatusBarInsets: Boolean,
         useNavigationBarInsets: Boolean,
+        contentHeightDimension: Dimension = Dimension.fillToConstraints,
+        stickyBottomPadding: PaddingValues = stickyBottomPaddingValuesPortrait,
+        stickyBottomHorizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(Sizes.s02, Alignment.End),
+        stickyBottomBackgroundColor: Color = Color.Transparent,
+        stickyBottomContent: (@Composable () -> Unit)?,
+        onBottomHeightMeasured: ((Dp) -> Unit)?,
         content: @Composable BoxScope.() -> Unit,
     ) = ConstraintLayout(
         modifier = modifier
@@ -225,7 +244,7 @@ object WalletLayouts {
                         bottom.linkTo(parent.bottom)
                     } ?: bottom.linkTo(stickyBottomRef.top)
 
-                    height = Dimension.fillToConstraints
+                    height = contentHeightDimension
                 }
         ) {
             content()
@@ -253,12 +272,12 @@ object WalletLayouts {
             ) {
                 FlowRow(
                     modifier = Modifier
-                        .background(WalletTheme.colorScheme.surface.copy(alpha = 0.85f))
+                        .background(stickyBottomBackgroundColor)
                         .fillMaxWidth()
                         .padding(stickyBottomPadding)
                         .navigationBarsPadding()
                         .focusGroup(),
-                    horizontalArrangement = Arrangement.spacedBy(Sizes.s02, Alignment.End),
+                    horizontalArrangement = stickyBottomHorizontalArrangement,
                     verticalArrangement = Arrangement.spacedBy(Sizes.s02, Alignment.Top),
                     maxItemsInEachRow = 2,
                 ) {
@@ -268,6 +287,9 @@ object WalletLayouts {
         }
     }
 
+    /**
+     * used for layouts with text input (e.g. passphrase screens)
+     */
     @Composable
     fun CompactContainerFloatingBottom(
         modifier: Modifier = Modifier,
@@ -353,6 +375,9 @@ object WalletLayouts {
         }
     }
 
+    /**
+     * used for layouts with text input (e.g. passphrase screens)
+     */
     @Composable
     fun LargeContainerFloatingBottom(
         modifier: Modifier = Modifier,

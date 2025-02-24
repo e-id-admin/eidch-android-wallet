@@ -125,12 +125,13 @@ object WalletTexts {
     fun TitleMedium(
         text: String,
         modifier: Modifier = Modifier,
-        color: Color = WalletTheme.colorScheme.onBackground,
+        textAlign: TextAlign = TextAlign.Start,
+        color: Color = WalletTheme.colorScheme.onSurface,
     ) = Text(
         text = text,
         color = color,
         style = WalletTheme.typography.titleMedium,
-        textAlign = TextAlign.Start,
+        textAlign = textAlign,
         overflow = TextOverflow.Ellipsis,
         modifier = modifier,
     )
@@ -168,7 +169,7 @@ object WalletTexts {
     fun LabelMedium(
         text: String,
         modifier: Modifier = Modifier,
-        color: Color = MaterialTheme.colorScheme.textLabels,
+        color: Color = MaterialTheme.colorScheme.onSurface,
     ) = Text(
         text = text,
         color = color,
@@ -182,7 +183,7 @@ object WalletTexts {
     fun LabelMedium(
         text: AnnotatedString,
         modifier: Modifier = Modifier,
-        color: Color = MaterialTheme.colorScheme.textLabels,
+        color: Color = MaterialTheme.colorScheme.onSurface,
     ) = Text(
         text = text,
         color = color,
@@ -196,7 +197,7 @@ object WalletTexts {
     fun LabelSmall(
         text: String,
         modifier: Modifier = Modifier,
-        color: Color = MaterialTheme.colorScheme.textLabels,
+        color: Color = MaterialTheme.colorScheme.onSurface,
     ) = Text(
         text = text,
         color = color,

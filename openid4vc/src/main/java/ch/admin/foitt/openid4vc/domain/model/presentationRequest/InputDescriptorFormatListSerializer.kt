@@ -42,8 +42,6 @@ internal class InputDescriptorFormatListSerializer : KSerializer<List<InputDescr
             when {
                 key == VcSdJwt.VC_SD_JWT_KEY && value is JsonObject ->
                     VcSdJwt.deserialize(value)
-                key == VcSdJwt.JWT_VC_KEY && value is JsonObject ->
-                    VcSdJwt.deserialize(value)
                 else -> error("Unsupported input descriptor format: $decoder")
             }
         }

@@ -5,7 +5,6 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchCredentialErro
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchVerifiableCredentialError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.VcSdJwtCredentialConfiguration
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.toFetchCredentialError
-import ch.admin.foitt.openid4vc.domain.model.sdjwt.SdJwt
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtCredential
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VerifyJwtError
 import ch.admin.foitt.openid4vc.domain.usecase.FetchVerifiableCredential
@@ -32,25 +31,24 @@ internal class FetchVcSdJwtCredentialImpl @Inject constructor(
             .bind()
 
         val credential = VcSdJwtCredential(
-            signingKeyId = verifiableCredential.signingKeyId,
-            signingAlgorithm = verifiableCredential.signingAlgorithm,
+            keyBindingIdentifier = verifiableCredential.keyBindingIdentifier,
+            keyBindingAlgorithm = verifiableCredential.keyBindingAlgorithm,
             payload = verifiableCredential.credential,
         )
 
-        val sdJwt = SdJwt(credential.payload)
         val issuerDid = runSuspendCatching {
-            sdJwt.issuer
+            credential.issuer
         }.mapError(Throwable::toFetchCredentialError)
             .bind()
-        val signedJwt = runSuspendCatching {
-            sdJwt.signedJWT
+        val keyId = runSuspendCatching {
+            credential.kid
         }.mapError(Throwable::toFetchCredentialError)
             .bind()
 
         verifyJwtSignature(
             did = issuerDid,
-            kid = signedJwt.header.keyID,
-            signedJwt = signedJwt,
+            kid = keyId,
+            jwt = credential,
         ).mapError(VerifyJwtError::toFetchCredentialError)
             .bind()
 

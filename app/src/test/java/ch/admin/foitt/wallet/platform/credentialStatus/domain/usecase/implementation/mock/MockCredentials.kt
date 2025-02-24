@@ -10,15 +10,16 @@ object MockCredentials {
     private const val signingAlgorithm = "ES512"
     private val format = CredentialFormat.VC_SD_JWT
 
-    val validCredential = Credential(
+    private val validCredential = Credential(
         id = 0,
         status = CredentialStatus.VALID,
-        privateKeyIdentifier = keyIdentifier,
+        keyBindingIdentifier = keyIdentifier,
         payload = payload,
         format = format,
         createdAt = 1700463600000,
         updatedAt = null,
-        signingAlgorithm = signingAlgorithm,
+        keyBindingAlgorithm = signingAlgorithm,
+        issuer = "issuer"
     )
 
     val credentials = listOf(

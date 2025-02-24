@@ -6,6 +6,6 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.SigningAlg
 data class VerifiableCredential(
     val format: CredentialFormat,
     val credential: String,
-    val signingKeyId: String?,
-    val signingAlgorithm: SigningAlgorithm?,
+    val keyBindingIdentifier: String?,
+    val keyBindingAlgorithm: SigningAlgorithm?,
 )

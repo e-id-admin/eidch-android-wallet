@@ -19,9 +19,8 @@ class OnboardingLocalDataScreen(composeTestRule: ComposeContentTestRule) : Onboa
     }
 
     fun navigateToScreen() {
-        val presentScreen = OnboardingPresentScreen(composeTestRule)
-        presentScreen.navigateToScreen()
-        presentScreen.nextScreen()
+        val introScreen = OnboardingIntroScreen(composeTestRule)
+        introScreen.nextScreen()
         isDisplayed()
     }
 

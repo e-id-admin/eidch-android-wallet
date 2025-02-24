@@ -5,7 +5,6 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOfferErro
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.repository.CredentialOfferRepository
 import ch.admin.foitt.openid4vc.domain.usecase.CreateCredentialRequestProofJwt
-import ch.admin.foitt.openid4vc.domain.usecase.CreateDidJwk
 import ch.admin.foitt.openid4vc.domain.usecase.DeleteKeyPair
 import ch.admin.foitt.openid4vc.domain.usecase.GenerateKeyPair
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockCredentialOffer.jwtProof
@@ -22,6 +21,7 @@ import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockIssuerCre
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockIssuerCredentialConfiguration.credentialConfigurationWithoutProofTypesSupported
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockIssuerCredentialConfiguration.vcSdJwtCredentialConfiguration
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockKeyPairs.VALID_KEY_PAIR
+import ch.admin.foitt.openid4vc.util.assertErr
 import ch.admin.foitt.openid4vc.util.assertErrorType
 import ch.admin.foitt.openid4vc.util.assertOk
 import com.github.michaelbull.result.Err
@@ -48,9 +48,6 @@ class FetchVerifiableCredentialImplTest {
     private lateinit var mockGenerateKeyPair: GenerateKeyPair
 
     @MockK
-    private lateinit var mockCreateDidJwk: CreateDidJwk
-
-    @MockK
     private lateinit var mockCreateCredentialRequestProofJwt: CreateCredentialRequestProofJwt
 
     @MockK
@@ -62,12 +59,11 @@ class FetchVerifiableCredentialImplTest {
     fun setUp() {
         MockKAnnotations.init(this)
 
-        success()
+        initDefaultMocks()
 
         fetchCredentialUseCase = FetchVerifiableCredentialImpl(
             mockCredentialOfferRepository,
             mockGenerateKeyPair,
-            mockCreateDidJwk,
             mockCreateCredentialRequestProofJwt,
             mockDeleteKeyPair,
         )
@@ -93,8 +89,7 @@ class FetchVerifiableCredentialImplTest {
             mockCredentialOfferRepository.fetchIssuerCredentialInformation(any(), any())
             mockGenerateKeyPair(any())
             mockCredentialOfferRepository.fetchAccessToken(any(), any())
-            mockCreateDidJwk(any(), any(), any())
-            mockCreateCredentialRequestProofJwt(any(), any(), any(), any())
+            mockCreateCredentialRequestProofJwt(any(), any(), any())
             mockCredentialOfferRepository.fetchCredential(any(), any(), any(), any())
         }
 
@@ -148,9 +143,9 @@ class FetchVerifiableCredentialImplTest {
 
     @SuppressLint("CheckResult")
     @Test
-    fun `when creating the did jwk fails return an unsupported cryptographic suite error and delete the key pair, token not fetched`() = runTest {
+    fun `when creating the CredentialRequestProof fails return an unsupported cryptographic suite error and delete the key pair, token not fetched`() = runTest {
         coEvery {
-            mockCreateDidJwk(any(), any(), false)
+            mockCreateCredentialRequestProofJwt(any(), any(), any())
         } returns Err(CredentialOfferError.UnsupportedCryptographicSuite)
 
         fetchCredentialUseCase(
@@ -160,10 +155,6 @@ class FetchVerifiableCredentialImplTest {
 
         coVerify {
             mockDeleteKeyPair(any())
-        }
-
-        coVerify(exactly = 0) {
-            mockCreateCredentialRequestProofJwt(any(), any(), any(), any())
         }
     }
 
@@ -176,22 +167,14 @@ class FetchVerifiableCredentialImplTest {
         )
 
         result.assertOk()
-
-        coVerify {
-            mockCreateDidJwk(VALID_KEY_PAIR.keyPair, VALID_KEY_PAIR.algorithm, false)
-        }
     }
 
     @Test
-    fun `when no cryptographic binding method is given use did jwk`() = runTest {
+    fun `return error when proof but no cryptographic binding method is given`() = runTest {
         fetchCredentialUseCase(
             credentialConfiguration = vcSdJwtCredentialConfiguration.copy(cryptographicBindingMethodsSupported = emptyList()),
             credentialOffer = offerWithPreAuthorizedCode,
-        ).assertOk()
-
-        coVerify {
-            mockCreateDidJwk(VALID_KEY_PAIR.keyPair, VALID_KEY_PAIR.algorithm, false)
-        }
+        ).assertErr()
     }
 
     @Test
@@ -200,10 +183,6 @@ class FetchVerifiableCredentialImplTest {
             credentialConfiguration = vcSdJwtCredentialConfiguration.copy(cryptographicBindingMethodsSupported = null),
             credentialOffer = offerWithPreAuthorizedCode,
         ).assertOk()
-
-        coVerify {
-            mockCreateDidJwk(VALID_KEY_PAIR.keyPair, VALID_KEY_PAIR.algorithm, false)
-        }
     }
 
     @Test
@@ -256,7 +235,7 @@ class FetchVerifiableCredentialImplTest {
     @Test
     fun `if an error is thrown when creating a proof, it should return an unexpected error and delete the key pair`() = runTest {
         coEvery {
-            mockCreateCredentialRequestProofJwt(any(), any(), any(), any())
+            mockCreateCredentialRequestProofJwt(any(), any(), any())
         } returns Err(CredentialOfferError.Unexpected(IllegalStateException()))
 
         fetchCredentialUseCase(
@@ -295,40 +274,25 @@ class FetchVerifiableCredentialImplTest {
         ).assertOk()
 
         coVerify(exactly = 0) {
-            mockCreateDidJwk(any(), any(), any())
-            mockCreateCredentialRequestProofJwt(any(), any(), any(), any())
+            mockCreateCredentialRequestProofJwt(any(), any(), any())
         }
 
         assertAll(
             "Assert all VerifiableCredential properties",
             { assertEquals(CredentialFormat.VC_SD_JWT, result.format) },
             { assertEquals("credential", result.credential) },
-            { assertEquals(null, result.signingKeyId) },
-            { assertEquals(null, result.signingAlgorithm) }
+            { assertEquals(null, result.keyBindingIdentifier) },
+            { assertEquals(null, result.keyBindingAlgorithm) }
         )
     }
 
-    private val jwk = """
-    {
-        "crv": "P-256",
-        "kty": "EC",
-        "x": "Q7HpY9d8GlvGqfHtw-9jLLPZaIX9Lc91Q-Hfsz_WbBo",
-        "y": "647ttGFFCBoy17NspJszfIW2pEwuzqdep69Av5Mprb8"
-    }
-    """
-
-    private fun success() {
+    private fun initDefaultMocks() {
         coEvery {
             mockGenerateKeyPair(any())
         } returns Ok(VALID_KEY_PAIR)
 
         coEvery {
-            mockCreateDidJwk(any(), any(), false)
-        } returns Ok(jwk)
-//        } returns Ok("did:jwk:publicKey")
-
-        coEvery {
-            mockCreateCredentialRequestProofJwt(any(), any(), any(), any())
+            mockCreateCredentialRequestProofJwt(any(), any(), any())
         } returns Ok(jwtProof)
 
         coEvery {

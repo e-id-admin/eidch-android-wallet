@@ -6,10 +6,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ch.admin.foitt.wallet.feature.qrscan.domain.model.PermissionState
-import ch.admin.foitt.wallet.feature.qrscan.presentation.permission.PermissionBlockedScreenContent
-import ch.admin.foitt.wallet.feature.qrscan.presentation.permission.PermissionIntroScreenContent
-import ch.admin.foitt.wallet.feature.qrscan.presentation.permission.PermissionRationalScreenContent
+import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.model.PermissionState
+import ch.admin.foitt.wallet.platform.cameraPermissionHandler.presentation.PermissionBlockedScreenContent
+import ch.admin.foitt.wallet.platform.cameraPermissionHandler.presentation.PermissionIntroScreenContent
+import ch.admin.foitt.wallet.platform.cameraPermissionHandler.presentation.PermissionRationalScreenContent
 import ch.admin.foitt.wallet.platform.preview.WalletComponentPreview
 import ch.admin.foitt.wallet.platform.utils.LocalActivity
 import ch.admin.foitt.wallet.theme.WalletTheme

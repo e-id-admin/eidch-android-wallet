@@ -1,24 +1,14 @@
 package ch.admin.foitt.wallet.feature.presentationRequest.presentation
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
-import ch.admin.foitt.wallet.platform.composables.Buttons
-import ch.admin.foitt.wallet.platform.composables.presentation.layout.ScrollableColumn
-import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
+import ch.admin.foitt.wallet.platform.credential.presentation.CredentialActionFeedbackCardError
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.PresentationValidationErrorNavArg
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
-import ch.admin.foitt.wallet.theme.Sizes
-import ch.admin.foitt.wallet.theme.WalletTexts
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.theme.WalletTheme
 import com.ramcosta.composedestinations.annotation.Destination
 
@@ -27,49 +17,28 @@ import com.ramcosta.composedestinations.annotation.Destination
     navArgsDelegate = PresentationValidationErrorNavArg::class,
 )
 fun PresentationValidationErrorScreen(viewModel: PresentationValidationErrorViewModel) {
+    val verifierUiState = viewModel.verifierUiState.collectAsStateWithLifecycle().value
+
     PresentationValidationErrorContent(
-        fields = viewModel.fields,
+        verifierUiState = verifierUiState,
         onClose = viewModel::onClose,
     )
 }
 
 @Composable
 private fun PresentationValidationErrorContent(
-    fields: List<String>,
+    verifierUiState: ActorUiState,
     onClose: () -> Unit,
-) = WalletLayouts.ScrollableColumn(
-    stickyBottomContent = {
-        Buttons.Outlined(
-            text = stringResource(id = R.string.global_error_backToHome_button),
-            endIcon = painterResource(id = R.drawable.pilot_ic_next_button),
-            onClick = onClose,
-        )
-    },
-    scrollableContent = { ScrollableContent(fields) },
-)
-
-@Composable
-private fun ScrollableContent(fields: List<String>) {
-    Column {
-        Image(
-            modifier = Modifier.fillMaxWidth(),
-            painter = painterResource(id = R.drawable.pilote_ic_presentation_validation_error),
-            contentDescription = null,
-            alignment = Alignment.Center,
-            contentScale = ContentScale.Fit,
-        )
-        Spacer(modifier = Modifier.height(Sizes.s04))
-        WalletTexts.TitleScreen(
-            text = stringResource(id = R.string.presentation_validationError_title),
-        )
-        Spacer(modifier = Modifier.height(Sizes.s06))
-        WalletTexts.Body(
-            text = stringResource(id = R.string.presentation_validationError_message),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(modifier = Modifier.height(Sizes.s04))
-        SubmittedDataBox(fields = fields)
-    }
+) {
+    CredentialActionFeedbackCardError(
+        issuer = verifierUiState,
+        contentTextFirstParagraphText = R.string.tk_present_verifierError_title,
+        contentTextSecondParagraphText = R.string.tk_present_verifierError_subtitle,
+        contentIcon = R.drawable.wallet_ic_error_general,
+        iconAlwaysVisible = true,
+        primaryButtonText = R.string.tk_global_close,
+        onPrimaryButton = onClose,
+    )
 }
 
 @Composable
@@ -77,7 +46,11 @@ private fun ScrollableContent(fields: List<String>) {
 private fun PresentationValidationErrorPreview() {
     WalletTheme {
         PresentationValidationErrorContent(
-            fields = listOf("name", "firstname", "country", "age", "employment"),
+            verifierUiState = ActorUiState(
+                name = "My Verifier Name",
+                painter = painterResource(R.drawable.wallet_ic_error_general),
+                trustStatus = TrustStatus.TRUSTED,
+            ),
             onClose = {},
         )
     }

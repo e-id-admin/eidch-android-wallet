@@ -1,12 +1,12 @@
 package ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.mock
 
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialPreview
+import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialDisplayStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
-import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 
 internal object MockCredentialDisplay {
     const val CREDENTIAL_ID = 2L
-    val CREDENTIAL_STATUS = CredentialStatus.VALID
+    val CREDENTIAL_STATUS = CredentialDisplayStatus.Valid
     const val TITLE = "credentialTitle"
     const val SUBTITLE = "credentialSubtitle"
     const val BACKGROUND_COLOR = "credentialBackgroundColor"

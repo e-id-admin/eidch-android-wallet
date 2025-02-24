@@ -43,6 +43,7 @@ data class WalletColorScheme(
     val surfaceContainerHighest: Color,
     val surfaceContainerLow: Color,
     val surfaceContainerLowest: Color,
+
     // Custom theme colors
     val shaderTransparent: Color,
     val onShaderTransparent: Color,
@@ -69,6 +70,9 @@ data class WalletColorScheme(
     val lightErrorFixed: Color,
     val onLightErrorFixed: Color,
     val onWhiteTransparentFixed: Color,
+
+    val errorBackgroundLight: Color,
+    val errorBackgroundDark: Color
 ) {
     @Stable
     internal val materialColorScheme: ColorScheme by lazy {
@@ -111,6 +115,7 @@ data class WalletColorScheme(
             surfaceContainerLowest = surfaceContainerLowest,
         )
     }
+
     companion object {
         @Stable
         internal val light by lazy {
@@ -176,7 +181,10 @@ data class WalletColorScheme(
                 errorFixed = WalletColors.red40,
                 lightErrorFixed = WalletColors.red95,
                 onLightErrorFixed = WalletColors.red40,
-                onWhiteTransparentFixed = WalletColors.white
+                onWhiteTransparentFixed = WalletColors.white,
+
+                errorBackgroundLight = WalletColors.red49,
+                errorBackgroundDark = WalletColors.red16
             )
         }
 
@@ -245,6 +253,9 @@ data class WalletColorScheme(
                 lightErrorFixed = WalletColors.red95,
                 onLightErrorFixed = WalletColors.red40,
                 onWhiteTransparentFixed = WalletColors.white,
+
+                errorBackgroundLight = WalletColors.red49,
+                errorBackgroundDark = WalletColors.red16
             )
         }
     }

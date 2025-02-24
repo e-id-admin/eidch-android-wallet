@@ -1,6 +1,5 @@
 package ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.implementation
 
-import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialStatusError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.TokenStatusListProperties
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.FetchStatusFromTokenStatusList
@@ -25,9 +24,6 @@ class FetchCredentialStatusImplTest {
     private lateinit var mockFetchStatusFromTokenStatusList: FetchStatusFromTokenStatusList
 
     @MockK
-    private lateinit var mockAnyCredential: AnyCredential
-
-    @MockK
     private lateinit var mockTokenStatusListProperties: TokenStatusListProperties
 
     private lateinit var useCase: FetchCredentialStatusImpl
@@ -48,7 +44,7 @@ class FetchCredentialStatusImplTest {
 
     @Test
     fun `Fetching credential status for token status list returns credential status`() = runTest {
-        val result = useCase(mockAnyCredential, mockTokenStatusListProperties)
+        val result = useCase(credendialIssuer, mockTokenStatusListProperties)
 
         val status = result.assertOk()
         assertEquals(credentialStatus, status)
@@ -59,7 +55,7 @@ class FetchCredentialStatusImplTest {
         val exception = IllegalStateException()
         coEvery { mockFetchStatusFromTokenStatusList(any(), any()) } returns Err(CredentialStatusError.Unexpected(exception))
 
-        val result = useCase(mockAnyCredential, mockTokenStatusListProperties)
+        val result = useCase(credendialIssuer, mockTokenStatusListProperties)
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertEquals(exception, error.cause)
@@ -67,11 +63,12 @@ class FetchCredentialStatusImplTest {
 
     private fun success() {
         coEvery {
-            mockFetchStatusFromTokenStatusList(mockAnyCredential, mockTokenStatusListProperties)
+            mockFetchStatusFromTokenStatusList(credendialIssuer, mockTokenStatusListProperties)
         } returns Ok(credentialStatus)
     }
 
     private companion object {
         val credentialStatus = CredentialStatus.VALID
+        const val credendialIssuer = "credentialIssuer"
     }
 }

@@ -2,14 +2,13 @@ package ch.admin.foitt.wallet.platform.invitation
 
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOffer
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.Grant
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JsonPresentationRequest
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationDefinition
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestContainer
 import ch.admin.foitt.wallet.platform.invitation.domain.model.InvitationError
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.GetCredentialOfferFromUri
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.GetPresentationRequestFromUri
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.ValidateInvitation
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.implementation.ValidateInvitationImpl
+import ch.admin.foitt.wallet.util.assertSuccessType
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.get
@@ -41,23 +40,8 @@ class ValidateInvitationImplTest {
         grants = Grant(),
     )
 
-    private val mockPresentationRequest = JsonPresentationRequest(
-        presentationRequest = PresentationRequest(
-            nonce = "",
-            presentationDefinition = PresentationDefinition(
-                id = "",
-                inputDescriptors = listOf(),
-                purpose = "purpose",
-                name = "name",
-            ),
-            responseUri = "",
-            responseMode = "",
-            clientId = "clientId",
-            clientIdScheme = "clientIdScheme",
-            responseType = "responseType",
-            clientMetaData = null
-        )
-    )
+    @MockK
+    private lateinit var mockPresentationRequestContainer: PresentationRequestContainer
 
     private lateinit var validateInvitationUseCase: ValidateInvitation
 
@@ -71,7 +55,7 @@ class ValidateInvitationImplTest {
         )
 
         coEvery { mockGetCredentialOfferFromUri.invoke(uri = any()) } returns Ok(mockCredentialOffer)
-        coEvery { mockGetPresentationRequestFromUri.invoke(uri = any()) } returns Ok(mockPresentationRequest)
+        coEvery { mockGetPresentationRequestFromUri.invoke(uri = any()) } returns Ok(mockPresentationRequestContainer)
     }
 
     @AfterEach
@@ -108,7 +92,8 @@ class ValidateInvitationImplTest {
             mockGetCredentialOfferFromUri.invoke(uri = any())
         }
 
-        assertEquals(mockPresentationRequest, useCaseResult.get())
+        val presentationRequestContainer = useCaseResult.assertSuccessType(PresentationRequestContainer::class)
+        assertEquals(mockPresentationRequestContainer, presentationRequestContainer)
     }
 
     @Test
@@ -133,7 +118,7 @@ class ValidateInvitationImplTest {
     fun `a credential offer validation failure should return an error`() = runTest {
         coEvery {
             mockGetCredentialOfferFromUri.invoke(uri = any())
-        } returns Err(InvitationError.DeserializationFailed)
+        } returns Err(InvitationError.CredentialOfferDeserializationFailed)
 
         val input = "openid-credential-offer://whatever"
         val useCaseResult = validateInvitationUseCase(input = input)

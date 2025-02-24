@@ -50,7 +50,7 @@ object MockPresentationRequest {
 
     const val invalidJwt = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.5EQDWnS78bM4ZPTgZ2HKbAAbTrkTdBH5JPbmfw34Dp1gOjrfiwVHYcYh7trwSreAA8VVQoQ_No6vCr3oRqkzRg"
 
-    const val invalidJson = "{\"sub\": \"1234567890\",\n\"name\": \"John Doe\",\n\"iat\": 1516239022\n\"}"
+    const val invalidJsonString = "{\"sub\": \"1234567890\",\n\"name\": \"John Doe\",\n\"iat\": 1516239022\n\"}"
 
     //region Presentation request source
     /* header

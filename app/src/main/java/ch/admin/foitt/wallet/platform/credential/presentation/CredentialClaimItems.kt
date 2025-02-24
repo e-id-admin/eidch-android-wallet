@@ -33,17 +33,18 @@ import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimData
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimImage
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimText
 import ch.admin.foitt.wallet.theme.Sizes
+import ch.admin.foitt.wallet.theme.WalletTheme
 import coil.compose.AsyncImage
 
 fun LazyListScope.credentialClaimItems(
     @StringRes title: Int,
     claims: List<CredentialClaimData>,
-    issuer: String,
-    issuerIcon: Painter?,
-    onWrongData: () -> Unit,
+    issuer: String? = null,
+    issuerIcon: Painter? = null,
+    onWrongData: (() -> Unit)? = null,
 ) {
     item {
-        ListItemHeader(title = title)
+        ListItemHeader(title = title, number = claims.size)
     }
 
     items(claims) { claim ->
@@ -60,20 +61,24 @@ fun LazyListScope.credentialClaimItems(
         ItemDivider()
     }
 
-    item {
-        ListItemHeader(
-            modifier = Modifier.padding(top = Sizes.s06),
-            title = R.string.tk_displaydelete_displaycredential1_title5,
-        )
-        IssuerItem(issuer, issuerIcon)
-        ItemDivider()
+    issuer?.let {
+        item {
+            ListItemHeader(
+                modifier = Modifier.padding(top = Sizes.s06),
+                title = R.string.tk_displaydelete_displaycredential1_title5,
+            )
+            IssuerItem(issuer, issuerIcon)
+            ItemDivider()
+        }
     }
 
-    item {
-        Spacer(modifier = Modifier.height(Sizes.s10))
-        HorizontalDivider(Modifier.fillMaxWidth())
-        WrongDataItem(onWrongData)
-        ItemDivider()
+    onWrongData?.let {
+        item {
+            Spacer(modifier = Modifier.height(Sizes.s10))
+            HorizontalDivider(Modifier.fillMaxWidth())
+            WrongDataItem(onWrongData)
+            ItemDivider()
+        }
     }
 }
 
@@ -102,12 +107,12 @@ private fun ItemDivider() {
 }
 
 @Composable
-private fun ListItemHeader(modifier: Modifier = Modifier, title: Int) {
+private fun ListItemHeader(modifier: Modifier = Modifier, title: Int, number: Int = 0) {
     Column(modifier = modifier) {
         ListItem(
             modifier = Modifier.semantics { heading() },
             headlineContent = {
-                Text(text = stringResource(id = title))
+                Text(text = String.format(stringResource(id = title), number))
             }
         )
         HorizontalDivider(Modifier.fillMaxWidth())
@@ -121,7 +126,13 @@ private fun IssuerItem(
 ) {
     ListItem(
         headlineContent = { Text(text = issuer) },
-        leadingContent = { Avatar(imagePainter = issuerIcon, size = AvatarSize.SMALL) },
+        leadingContent = {
+            Avatar(
+                imagePainter = issuerIcon,
+                size = AvatarSize.SMALL,
+                imageTint = WalletTheme.colorScheme.onSurface,
+            )
+        },
     )
 }
 
@@ -131,7 +142,7 @@ private fun WrongDataItem(onWrongData: () -> Unit) {
         modifier = Modifier
             .clickable(onClick = onWrongData)
             .spaceBarKeyClickable(onWrongData),
-        headlineContent = { Text(text = stringResource(id = R.string.tk_global_wrong_data)) },
+        headlineContent = { Text(text = stringResource(id = R.string.tk_global_wrongdata)) },
         leadingContent = {
             Icon(
                 painter = painterResource(id = R.drawable.wallet_ic_wrong_data),

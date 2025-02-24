@@ -1,9 +1,8 @@
 package ch.admin.foitt.wallet.platform.invitation
 
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestContainer
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestError
 import ch.admin.foitt.openid4vc.domain.usecase.FetchPresentationRequest
-import ch.admin.foitt.wallet.platform.credentialPresentation.mock.MockPresentationRequest
 import ch.admin.foitt.wallet.platform.invitation.domain.model.InvitationError
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.GetPresentationRequestFromUri
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.implementation.GetPresentationRequestFromUriImpl
@@ -29,7 +28,8 @@ class GetPresentationRequestFromUriTest {
     @MockK
     private lateinit var mockFetchPresentationRequest: FetchPresentationRequest
 
-    private val emptyPresentationRequest = MockPresentationRequest.presentationRequest
+    @MockK
+    private lateinit var mockPresentationRequestContainer: PresentationRequestContainer
 
     private val validPresentationUrl =
         URI("https://example.org/get_request_object/88cf0d95-54c9-465f-9b97-0ba782314700")
@@ -44,7 +44,7 @@ class GetPresentationRequestFromUriTest {
             fetchPresentationRequest = mockFetchPresentationRequest,
         )
 
-        coEvery { mockFetchPresentationRequest.invoke(url = any()) } returns Ok(emptyPresentationRequest)
+        coEvery { mockFetchPresentationRequest.invoke(url = any()) } returns Ok(mockPresentationRequestContainer)
     }
 
     @AfterEach
@@ -62,7 +62,7 @@ class GetPresentationRequestFromUriTest {
             mockFetchPresentationRequest.invoke(url = any())
         }
 
-        assertTrue(useCaseResult.get() is PresentationRequest)
+        assertTrue(useCaseResult.get() is PresentationRequestContainer)
     }
 
     @Test

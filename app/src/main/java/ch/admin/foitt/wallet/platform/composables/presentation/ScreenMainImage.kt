@@ -19,10 +19,10 @@ import ch.admin.foitt.wallet.theme.WalletTheme
 
 @Composable
 fun ScreenMainImage(
+    modifier: Modifier = Modifier,
     @DrawableRes iconRes: Int,
     @DrawableRes backgroundRes: Int,
     iconWidthFraction: Float = 0.4f,
-    modifier: Modifier = Modifier
 ) = Box(
     modifier = modifier
         .clip(WalletTheme.shapes.extraLarge)
@@ -38,19 +38,19 @@ fun ScreenMainImage(
         contentScale = ContentScale.Crop,
     )
     Image(
-        painter = painterResource(id = iconRes),
-        contentDescription = null,
         modifier = Modifier
             .align(Alignment.Center)
-            .fillMaxWidth(iconWidthFraction)
+            .fillMaxWidth(iconWidthFraction),
+        painter = painterResource(id = iconRes),
+        contentDescription = null
     )
 }
 
 @Composable
 fun ScreenMainImage(
+    modifier: Modifier = Modifier,
     @DrawableRes iconRes: Int,
     backgroundColor: Color,
-    modifier: Modifier = Modifier
 ) = Box(
     modifier = modifier
         .fillMaxSize()
@@ -58,10 +58,10 @@ fun ScreenMainImage(
         .background(backgroundColor),
 ) {
     Image(
-        painter = painterResource(id = iconRes),
-        contentDescription = null,
         modifier = Modifier
             .align(Alignment.Center)
             .fillMaxWidth(0.4f),
+        painter = painterResource(id = iconRes),
+        contentDescription = null,
     )
 }

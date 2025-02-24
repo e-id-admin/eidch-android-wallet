@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.feature.home.presentation
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -70,7 +71,8 @@ fun HomeScreen(
         onQrScan = viewModel::onQrScan,
         onMenu = viewModel::onMenu,
         onRefresh = viewModel::onRefresh,
-        onClickBetaId = viewModel::onClickBetaId
+        onGetBetaId = viewModel::onGetBetaId,
+        onGetEId = viewModel::onGetEId,
     )
 }
 
@@ -81,7 +83,8 @@ private fun HomeScreenContent(
     onQrScan: () -> Unit,
     onMenu: () -> Unit,
     onRefresh: () -> Unit,
-    onClickBetaId: () -> Unit,
+    onGetBetaId: () -> Unit,
+    onGetEId: () -> Unit,
     windowWidthClass: WindowWidthSizeClass = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass,
 ) = WalletLayouts.HomeContainer(
     onScan = onQrScan,
@@ -98,9 +101,12 @@ private fun HomeScreenContent(
             onCredentialClick = screenState.onCredentialClick,
             onRefresh = onRefresh,
         )
-        HomeScreenState.NoCredential -> NoCredentialContent(
-            stickyBottomHeightDp,
-            onClickBetaId = onClickBetaId
+        is HomeScreenState.NoCredential -> NoCredentialContent(
+            contentBottomPadding = stickyBottomHeightDp,
+            showBetaIdRequestButton = screenState.showBetaIdRequestButton,
+            showEIdRequestButton = screenState.showEIdRequestButton,
+            onRequestBetaId = onGetBetaId,
+            onRequestEId = onGetEId,
         )
     }
 }
@@ -108,7 +114,10 @@ private fun HomeScreenContent(
 @Composable
 private fun BoxScope.NoCredentialContent(
     contentBottomPadding: Dp,
-    onClickBetaId: () -> Unit,
+    showEIdRequestButton: Boolean,
+    showBetaIdRequestButton: Boolean,
+    onRequestEId: () -> Unit,
+    onRequestBetaId: () -> Unit,
 ) = Column(
     horizontalAlignment = Alignment.CenterHorizontally,
     modifier = Modifier
@@ -134,12 +143,28 @@ private fun BoxScope.NoCredentialContent(
         text = stringResource(id = R.string.tk_getBetaId_firstUse_body),
         textAlign = TextAlign.Center,
     )
-    Spacer(modifier = Modifier.height(Sizes.s10))
-    Buttons.FilledTertiary(
-        text = stringResource(R.string.tk_global_getbetaid_primarybutton),
-        onClick = onClickBetaId,
-        startIcon = painterResource(id = R.drawable.wallet_ic_next_button)
-    )
+    if (showBetaIdRequestButton || showEIdRequestButton) {
+        Spacer(modifier = Modifier.height(Sizes.s10))
+        Column(
+            verticalArrangement = Arrangement.spacedBy(Sizes.s04),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (showEIdRequestButton) {
+                Buttons.FilledTertiary(
+                    text = stringResource(R.string.tk_global_getEid_greenButton),
+                    onClick = onRequestEId,
+                    startIcon = painterResource(id = R.drawable.wallet_ic_next_button)
+                )
+            }
+            if (showBetaIdRequestButton) {
+                Buttons.FilledTertiary(
+                    text = stringResource(R.string.tk_global_getbetaid_primarybutton),
+                    onClick = onRequestBetaId,
+                    startIcon = painterResource(id = R.drawable.wallet_ic_next_button)
+                )
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -213,7 +238,7 @@ private class HomePreviewParams : PreviewParameterProvider<ComposableWrapper<Hom
                 onCredentialClick = {},
             )
         },
-        ComposableWrapper { HomeScreenState.NoCredential },
+        ComposableWrapper { HomeScreenState.NoCredential(showBetaIdRequestButton = true, showEIdRequestButton = true) },
     )
 }
 
@@ -235,7 +260,8 @@ private fun HomeScreenCompactPreview(
             onQrScan = {},
             onMenu = {},
             onRefresh = {},
-            onClickBetaId = {},
+            onGetBetaId = {},
+            onGetEId = {},
         )
     }
 }
@@ -253,7 +279,8 @@ private fun HomeScreenLargePreview(
             onQrScan = {},
             onMenu = {},
             onRefresh = {},
-            onClickBetaId = {},
+            onGetBetaId = {},
+            onGetEId = {},
         )
     }
 }

@@ -5,6 +5,7 @@ import ch.admin.foitt.wallet.feature.home.domain.usecase.GetHomeDataFlow
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialPreview
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateAllCredentialStatuses
+import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
@@ -14,6 +15,7 @@ import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.trackCompletion
 import ch.admin.foitt.walletcomposedestinations.destinations.BetaIdScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialDetailScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.EIdIntroScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.ErrorScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.QrScanPermissionScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.SettingsScreenDestination
@@ -32,6 +34,7 @@ class HomeViewModel @Inject constructor(
     getHomeDataFlow: GetHomeDataFlow,
     private val getCredentialCardState: GetCredentialCardState,
     private val updateAllCredentialStatuses: UpdateAllCredentialStatuses,
+    private val environmentSetupRepository: EnvironmentSetupRepository,
     private val navManager: NavigationManager,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
@@ -63,7 +66,10 @@ class HomeViewModel @Inject constructor(
                     onCredentialClick = ::onCredentialPreviewClick,
                 )
             }
-            else -> HomeScreenState.NoCredential
+            else -> HomeScreenState.NoCredential(
+                showBetaIdRequestButton = environmentSetupRepository.betaIdRequestEnabled,
+                showEIdRequestButton = environmentSetupRepository.eIdRequestEnabled,
+            )
         }
     }
 
@@ -88,7 +94,11 @@ class HomeViewModel @Inject constructor(
         navManager.navigateToAndClearCurrent(ErrorScreenDestination)
     }
 
-    fun onClickBetaId() {
+    fun onGetEId() {
+        navManager.navigateTo(EIdIntroScreenDestination)
+    }
+
+    fun onGetBetaId() {
         navManager.navigateTo(BetaIdScreenDestination)
     }
 }

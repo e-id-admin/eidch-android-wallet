@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package ch.admin.foitt.wallet.platform.composables.presentation
 
 import android.os.SystemClock
@@ -51,6 +53,20 @@ fun Modifier.scrollingBehavior(
     }
     // Padding added to the scrollable content
     .padding(contentPadding)
+
+@Composable
+fun Modifier.scrollingBehavior(
+    useStatusBarInsets: Boolean,
+    scrollState: ScrollState,
+) = this
+    .verticalScroll(scrollState)
+    .run {
+        if (useStatusBarInsets) {
+            this.statusBarsPadding()
+        } else {
+            this
+        }
+    }
 
 /**
  * Acts as an anchor for talk back which is always focused when view is first composed. Counters the problem that buttons that do not

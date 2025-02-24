@@ -8,7 +8,7 @@ import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.toGetPrese
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.repository.PresentationRequestRepository
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.GetPresentationRequestCredentialListFlow
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialPreview
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.IsCredentialFromBetaIssuerImpl
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.IsCredentialFromBetaIssuer
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.CompatibleCredential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
 import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedDisplay
@@ -24,7 +24,7 @@ import javax.inject.Inject
 class GetPresentationRequestCredentialListFlowImpl @Inject constructor(
     private val presentationRequestRepository: PresentationRequestRepository,
     private val getLocalizedDisplay: GetLocalizedDisplay,
-    private val isCredentialFromBetaIssuer: IsCredentialFromBetaIssuerImpl,
+    private val isCredentialFromBetaIssuer: IsCredentialFromBetaIssuer,
 ) : GetPresentationRequestCredentialListFlow {
     override fun invoke(
         compatibleCredentials: Array<CompatibleCredential>,

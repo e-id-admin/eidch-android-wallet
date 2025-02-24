@@ -13,13 +13,11 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.mapError
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.Instant
 import javax.inject.Inject
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class CredentialRepoImpl @Inject constructor(
     daoProvider: DaoProvider,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher

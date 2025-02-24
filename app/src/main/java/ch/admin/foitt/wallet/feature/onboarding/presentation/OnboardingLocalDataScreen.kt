@@ -1,8 +1,11 @@
 package ch.admin.foitt.wallet.feature.onboarding.presentation
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.onboarding.presentation.composables.OnboardingScreenContent
@@ -13,6 +16,7 @@ import ch.admin.foitt.wallet.platform.composables.presentation.layout.Scrollable
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.utils.TestTags
+import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTheme
 import com.ramcosta.composedestinations.annotation.Destination
 
@@ -26,6 +30,7 @@ fun OnboardingLocalDataScreen(
         onSwipeBackWard = viewModel::onBack,
     ) {
         OnboardingLocalDataScreenContent(
+            onMoreInformation = viewModel::onMoreInformation,
             onNext = viewModel::onNext,
         )
     }
@@ -33,6 +38,7 @@ fun OnboardingLocalDataScreen(
 
 @Composable
 private fun OnboardingLocalDataScreenContent(
+    onMoreInformation: () -> Unit,
     onNext: () -> Unit,
 ) = WalletLayouts.ScrollableColumnWithPicture(
     stickyStartContent = {
@@ -45,15 +51,20 @@ private fun OnboardingLocalDataScreenContent(
     stickyBottomContent = {
         Buttons.FilledPrimary(
             modifier = Modifier.testTag(TestTags.CONTINUE_BUTTON.name),
-            text = stringResource(id = R.string.global_continue),
+            text = stringResource(id = R.string.tk_global_continue),
             onClick = onNext,
         )
     }
 ) {
     OnboardingScreenContent(
-        title = stringResource(id = R.string.onboarding_security_primary),
-        subtitle = stringResource(id = R.string.onboarding_security_secondary),
-        details = stringResource(id = R.string.onboarding_security_details),
+        title = stringResource(id = R.string.tk_onboarding_yourdata_title),
+        subtitle = stringResource(id = R.string.tk_onboarding_yourdata_body),
+    )
+    Spacer(modifier = Modifier.height(Sizes.s06))
+    Buttons.TextLink(
+        text = stringResource(id = R.string.tk_onboarding_yourdata_link_text),
+        onClick = onMoreInformation,
+        endIcon = painterResource(id = R.drawable.wallet_ic_chevron),
     )
 }
 
@@ -62,6 +73,7 @@ private fun OnboardingLocalDataScreenContent(
 private fun OnboardingLocalDataScreenPreview() {
     WalletTheme {
         OnboardingLocalDataScreenContent(
+            onMoreInformation = {},
             onNext = {},
         )
     }

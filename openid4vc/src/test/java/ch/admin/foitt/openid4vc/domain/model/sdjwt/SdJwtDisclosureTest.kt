@@ -7,11 +7,13 @@ import ch.admin.foitt.openid4vc.domain.model.sdjwt.mock.FlatSdJwt
 import ch.admin.foitt.openid4vc.domain.model.sdjwt.mock.SdJwtSeparator
 import io.mockk.MockKAnnotations
 import io.mockk.unmockkAll
+import kotlinx.serialization.SerializationException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.text.ParseException
 
 class SdJwtDisclosureTest {
 
@@ -70,21 +72,15 @@ class SdJwtDisclosureTest {
 
     @Test
     fun `Creating selective disclosure with invalid signedJWT throws exception`() {
-        sdJwt = SdJwt("header.body.signature$SdJwtSeparator")
-        val requiredFieldKeys = listOf(FlatSdJwt.KEY_1)
-
-        assertThrows<Exception> {
-            sdJwt.createSelectiveDisclosure(requiredFieldKeys)
+        assertThrows<ParseException> {
+            SdJwt("header.body.signature$SdJwtSeparator")
         }
     }
 
     @Test
     fun `Creating selective disclosure of a flat SdJwt with invalid claims throws exception`() {
-        sdJwt = SdJwt("${FlatSdJwt.JWT}${SdJwtSeparator}invalid$SdJwtSeparator")
-        val requiredFieldKeys = listOf(FlatSdJwt.KEY_1)
-
-        assertThrows<Exception> {
-            sdJwt.createSelectiveDisclosure(requiredFieldKeys)
+        assertThrows<SerializationException> {
+            SdJwt("${FlatSdJwt.JWT}${SdJwtSeparator}invalid$SdJwtSeparator")
         }
     }
 

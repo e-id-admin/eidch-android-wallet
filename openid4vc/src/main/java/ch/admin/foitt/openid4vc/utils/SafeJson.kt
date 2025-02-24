@@ -5,6 +5,8 @@ import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.mapError
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -20,6 +22,12 @@ internal class SafeJson @Inject constructor(
 
     inline fun <reified T> safeEncodeObjectToString(objectToEncode: T): Result<String, JsonParsingError> = runSuspendCatching {
         json.encodeToString(objectToEncode)
+    }.mapError(Throwable::toJsonError)
+
+    fun safeDecodeToJsonObject(
+        string: String,
+    ): Result<JsonObject, JsonParsingError> = runSuspendCatching {
+        json.parseToJsonElement(string).jsonObject
     }.mapError(Throwable::toJsonError)
 }
 

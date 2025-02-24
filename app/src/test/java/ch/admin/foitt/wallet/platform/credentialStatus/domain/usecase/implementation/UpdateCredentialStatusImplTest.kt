@@ -1,7 +1,6 @@
 package ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.implementation
 
-import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
-import ch.admin.foitt.openid4vc.domain.model.anycredential.CredentialValidity
+import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtCredential
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetAnyCredential
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialStatusError
@@ -11,7 +10,7 @@ import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateCred
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialRepo
-import ch.admin.foitt.wallet.util.SafeJsonTestInstance.safeJson
+import ch.admin.foitt.wallet.util.SafeJsonTestInstance
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
 import com.github.michaelbull.result.Err
@@ -19,12 +18,10 @@ import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.JsonElement
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -43,12 +40,6 @@ class UpdateCredentialStatusImplTest {
     @MockK
     private lateinit var mockFetchCredentialStatus: FetchCredentialStatus
 
-    @MockK
-    private lateinit var mockAnyCredential: AnyCredential
-
-    @MockK
-    private lateinit var mockJsonElement: JsonElement
-
     private lateinit var useCase: UpdateCredentialStatus
 
     @BeforeEach
@@ -60,10 +51,10 @@ class UpdateCredentialStatusImplTest {
             credentialRepository = mockCredentialRepository,
             getAnyCredential = mockGetAnyCredential,
             fetchCredentialStatus = mockFetchCredentialStatus,
-            safeJson = safeJson,
+            safeJson = SafeJsonTestInstance.safeJson,
         )
 
-        success()
+        setupDefaultMocks()
     }
 
     @AfterEach
@@ -74,7 +65,7 @@ class UpdateCredentialStatusImplTest {
     @Test
     fun `Updating the status of a valid credential updates the status to the result of the status list check`() = runTest(testDispatcher) {
         val newStatus = CredentialStatus.SUSPENDED
-        coEvery { mockFetchCredentialStatus(mockAnyCredential, credentialStatusProperties) } returns Ok(newStatus)
+        coEvery { mockFetchCredentialStatus(any(), credentialStatusProperties) } returns Ok(newStatus)
 
         useCase(CREDENTIAL_ID).assertOk()
 
@@ -84,34 +75,33 @@ class UpdateCredentialStatusImplTest {
     }
 
     @Test
-    fun `Updating credential status when credential is expired updates the status to expired`() =
-        runTest(testDispatcher) {
-            every { mockAnyCredential.validity } returns CredentialValidity.EXPIRED
+    fun `Updating credential status when credential is expired does not update anything`() = runTest(testDispatcher) {
+        coEvery { mockGetAnyCredential(CREDENTIAL_ID) } returns Ok(expiredVcSdJwtCredential)
 
-            useCase(CREDENTIAL_ID).assertOk()
+        useCase(CREDENTIAL_ID).assertOk()
 
-            coVerify {
-                mockCredentialRepository.updateStatusByCredentialId(CREDENTIAL_ID, CredentialStatus.EXPIRED)
-            }
+        coVerify(exactly = 0) {
+            mockFetchCredentialStatus.invoke(any(), any())
+            mockCredentialRepository.updateStatusByCredentialId(any(), any())
         }
+    }
 
     @Test
-    fun `Updating credential status when credential is not yet valid updates the status to unknown`() =
-        runTest(testDispatcher) {
-            every { mockAnyCredential.validity } returns CredentialValidity.NOT_YET_VALID
+    fun `Updating credential status when credential is not yet valid does not update anything`() = runTest(testDispatcher) {
+        coEvery { mockGetAnyCredential(CREDENTIAL_ID) } returns Ok(notYetValidVcSdJwtCredential)
 
-            useCase(CREDENTIAL_ID).assertOk()
+        useCase(CREDENTIAL_ID).assertOk()
 
-            coVerify {
-                mockCredentialRepository.updateStatusByCredentialId(CREDENTIAL_ID, CredentialStatus.UNKNOWN)
-            }
+        coVerify(exactly = 0) {
+            mockFetchCredentialStatus.invoke(any(), any())
+            mockCredentialRepository.updateStatusByCredentialId(any(), any())
         }
+    }
 
     @Test
     fun `Updating credential status for an unknown credential status does not update the status`() = runTest(testDispatcher) {
-        every { mockAnyCredential.validity } returns CredentialValidity.VALID
         coEvery {
-            mockFetchCredentialStatus(mockAnyCredential, credentialStatusProperties)
+            mockFetchCredentialStatus(any(), credentialStatusProperties)
         } returns Ok(CredentialStatus.UNKNOWN)
 
         useCase(CREDENTIAL_ID).assertOk()
@@ -143,7 +133,7 @@ class UpdateCredentialStatusImplTest {
 
     @Test
     fun `Updating credential status where properties parsing fails does not update the status`() = runTest(testDispatcher) {
-        every { mockJsonElement.toString() } returns "invalid"
+        coEvery { mockGetAnyCredential(CREDENTIAL_ID) } returns Ok(vcSdJwtCredentialWithInvalidStatusClaim)
 
         useCase(CREDENTIAL_ID).assertOk()
 
@@ -176,36 +166,53 @@ class UpdateCredentialStatusImplTest {
         assertEquals(exception.message, error.cause?.message)
     }
 
-    private fun success() {
-        every { mockAnyCredential.id } returns CREDENTIAL_ID
-        every { mockAnyCredential.json } returns mockJsonElement
-        every { mockJsonElement.toString() } returns STATUS_PROPERTIES
-        every { mockAnyCredential.validity } returns CredentialValidity.VALID
-
-        coEvery { mockGetAnyCredential(CREDENTIAL_ID) } returns Ok(mockAnyCredential)
-        coEvery { mockFetchCredentialStatus(mockAnyCredential, credentialStatusProperties) } returns Ok(CredentialStatus.VALID)
+    private fun setupDefaultMocks() {
+        coEvery { mockGetAnyCredential(CREDENTIAL_ID) } returns Ok(validVcSdJwtCredential)
+        coEvery { mockFetchCredentialStatus(any(), credentialStatusProperties) } returns Ok(CredentialStatus.VALID)
         coEvery { mockCredentialRepository.updateStatusByCredentialId(CREDENTIAL_ID, any()) } returns Ok(CREDENTIAL_ID.toInt())
     }
 
     private companion object {
         const val CREDENTIAL_ID = 1L
 
-        const val STATUS_PROPERTIES = """{
-   "status":{
-      "status_list":{
-         "idx":0,
-         "uri":"uri"
-      }
-   }
-}"""
-        val credentialStatusProperties =
-            TokenStatusListProperties(
-                TokenStatusListProperties.Status(
-                    TokenStatusListProperties.Status.StatusList(
-                        index = 0,
-                        uri = "uri"
-                    )
-                )
+        val validVcSdJwtCredential = VcSdJwtCredential(
+            id = CREDENTIAL_ID,
+            keyBindingIdentifier = null,
+            keyBindingAlgorithm = null,
+            payload = "ewogICJhbGciOiJFUzUxMiIsCiAgInR5cCI6IkpXVCIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJfc2QiOlsKICAgICJZUkxmNjA2Y2x3dDQtaGp5R3plNDl5U0ZpNlZDbXdiOW41aHdiNFZVSlNZIiwiUWh1dklNUWQ1THlYOGdPUjN3ZVZ6U1kweUdaR0dIZFZYWTBFLU5oaFVmdyIKICBdLAogICJfc2RfYWxnIjoic2hhLTI1NiIsCiAgImlhdCI6MCwKICAibmJmIjoxLAogICJleHAiOjE5MjQ5ODgzOTksCiAgImlzcyI6Imlzc3VlciIsCiAgInZjdCI6InZjdCIsCiAgInN0YXR1cyI6ewogICJzdGF0dXNfbGlzdCI6ewogICJpZHgiOjAsCiAgInVyaSI6InVyaSIKICB9CiAgfQp9.ZXdvZ0lDSmhiR2NpT2lKRlV6VXhNaUlzQ2lBZ0luUjVjQ0k2SWtwWFZDSXNDaUFnSW10cFpDSTZJbXRsZVVsa0lncDkuLkFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUd3V2pRQUFaWDhnZmJkT1k2ZldJYWFicVBaT2RvUGpMYUp1SGZGcElwR3RBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFLM2xoLXlaeGxrZVRqWUVYT2xLMFptQUpiLUFKX0RhSzNBTlgxbDlWa3dF"
+        )
+
+        val expiredVcSdJwtCredential = VcSdJwtCredential(
+            id = CREDENTIAL_ID,
+            keyBindingIdentifier = null,
+            keyBindingAlgorithm = null,
+            payload = "ewogICJhbGciOiJFUzUxMiIsCiAgInR5cCI6IkpXVCIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJfc2QiOlsKICAgICJZUkxmNjA2Y2x3dDQtaGp5R3plNDl5U0ZpNlZDbXdiOW41aHdiNFZVSlNZIiwKICAgICJRaHV2SU1RZDVMeVg4Z09SM3dlVnpTWTB5R1pHR0hkVlhZMEUtTmhoVWZ3IgogIF0sCiAgIl9zZF9hbGciOiJzaGEtMjU2IiwKICAiaWF0IjowLAogICJuYmYiOjEsCiAgImV4cCI6MCwKICAiaXNzIjoiaXNzdWVyIiwKICAidmN0IjoidmN0IiwKICAic3RhdHVzIjp7CiAgICAic3RhdHVzX2xpc3QiOnsKICAgICAgImlkeCI6MCwKICAgICAgInVyaSI6InVyaSIKICAgIH0KICB9Cn0.ZXdvZ0lDSmhiR2NpT2lKRlV6VXhNaUlzQ2lBZ0luUjVjQ0k2SWtwWFZDSXNDaUFnSW10cFpDSTZJbXRsZVVsa0lncDkuLkFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQVBLWkdqd3lWajZFNTNET2VnWXVGdjJPLVlES2YzM280WDhON3lwYVd1aVlBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFMN1RNX0p6Qy1IdE1RU21sM2luTEZ1aU0xWEZHRVN3ZGc2TWY5cGlLX3JZ"
+        )
+
+        val notYetValidVcSdJwtCredential = VcSdJwtCredential(
+            id = CREDENTIAL_ID,
+            keyBindingIdentifier = null,
+            keyBindingAlgorithm = null,
+            payload = "ewogICJhbGciOiJFUzUxMiIsCiAgInR5cCI6IkpXVCIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJfc2QiOlsKICAgICJZUkxmNjA2Y2x3dDQtaGp5R3plNDl5U0ZpNlZDbXdiOW41aHdiNFZVSlNZIiwKICAgICJRaHV2SU1RZDVMeVg4Z09SM3dlVnpTWTB5R1pHR0hkVlhZMEUtTmhoVWZ3IgogIF0sCiAgIl9zZF9hbGciOiJzaGEtMjU2IiwKICAiaWF0IjowLAogICJuYmYiOjE5MjQ5ODgzOTksCiAgImV4cCI6MTkyNDk4ODM5OSwKICAiaXNzIjoiaXNzdWVyIiwKICAidmN0IjoidmN0IiwKICAic3RhdHVzIjp7CiAgICAic3RhdHVzX2xpc3QiOnsKICAgICAgImlkeCI6MCwKICAgICAgInVyaSI6InVyaSIKICAgIH0KICB9Cn0.ZXdvZ0lDSmhiR2NpT2lKRlV6VXhNaUlzQ2lBZ0luUjVjQ0k2SWtwWFZDSXNDaUFnSW10cFpDSTZJbXRsZVVsa0lncDkuLkFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFLLUw5a3lVRGxRTy1pNVY0MHZyLUwzdHdUc2h4SHItSUhxbDdlenFIQm9BQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFDUXdrS1luUk9FOGRTREZkdTBzbG1PME5CVWFZTGpOd2xPbXFGSnlRLVJw"
+        )
+
+        /*
+        ...
+        "status":"something"
+        ...
+         */
+        val vcSdJwtCredentialWithInvalidStatusClaim = VcSdJwtCredential(
+            id = CREDENTIAL_ID,
+            keyBindingIdentifier = null,
+            keyBindingAlgorithm = null,
+            payload = "ewogICJhbGciOiJFUzUxMiIsCiAgInR5cCI6IkpXVCIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJfc2QiOlsKICAgICJZUkxmNjA2Y2x3dDQtaGp5R3plNDl5U0ZpNlZDbXdiOW41aHdiNFZVSlNZIiwKICAgICJRaHV2SU1RZDVMeVg4Z09SM3dlVnpTWTB5R1pHR0hkVlhZMEUtTmhoVWZ3IgogIF0sCiAgIl9zZF9hbGciOiJzaGEtMjU2IiwKICAiaWF0IjowLAogICJuYmYiOjEsCiAgImV4cCI6MTkyNDk4ODM5OSwKICAiaXNzIjoiaXNzdWVyIiwKICAidmN0IjoidmN0IiwKICAic3RhdHVzIjoic29tZXRoaW5nIgp9.ZXdvZ0lDSmhiR2NpT2lKRlV6VXhNaUlzQ2lBZ0luUjVjQ0k2SWtwWFZDSXNDaUFnSW10cFpDSTZJbXRsZVVsa0lncDkuLkFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUxFOVpEWTF5QmVHNm9HS2gtdU56dFlfR0RYX3ItbWdmbWc3VlcxbzgtYmZBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFJVmwyNFZZRjRJeVNNZmhtSEhUTFc4bTRJU1pOWXhlaXZJenBSd0pxZld0"
+        )
+
+        val credentialStatusProperties = TokenStatusListProperties(
+            TokenStatusListProperties.StatusList(
+                index = 0,
+                uri = "uri"
             )
+        )
     }
 }

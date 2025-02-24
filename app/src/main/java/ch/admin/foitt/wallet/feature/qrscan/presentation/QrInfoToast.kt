@@ -13,11 +13,9 @@ fun QrToastHint(
     onClose: () -> Unit,
 ) = QrInfoToast(
     modifier = modifier,
-    headline = R.string.qrScanner_toast_hint_title,
-    text = R.string.qrScanner_toast_hint_message,
-    linkText = null,
+    headline = R.string.tk_qrscanner_scanning_title,
+    text = R.string.tk_qrscanner_scanning_body,
     iconStart = R.drawable.wallet_ic_qr,
-    onLink = { },
     onClose = onClose,
 )
 
@@ -25,14 +23,59 @@ fun QrToastHint(
 fun QrToastInvalidQr(
     modifier: Modifier = Modifier,
     onClose: () -> Unit,
-    onLink: (linkRes: Int) -> Unit,
 ) = QrInfoToast(
     modifier = modifier,
-    headline = R.string.qrScanner_toast_invalidQr_title,
-    text = R.string.qrScanner_toast_invalidQr_message,
-    linkText = R.string.qrScanner_toast_invalidQr_link_text,
+    headline = R.string.tk_error_invalidqrcode_title,
+    text = R.string.tk_error_invalidqrcode_body,
     iconStart = R.drawable.wallet_ic_qr,
-    onLink = { onLink(R.string.qrScanner_toast_invalidQr_link) },
+    onClose = onClose,
+)
+
+@Composable
+fun QrToastInvalidCredentialOffer(
+    modifier: Modifier = Modifier,
+    onClose: () -> Unit,
+) = QrInfoToast(
+    modifier = modifier,
+    headline = R.string.tk_error_invitationcredential_title,
+    text = R.string.tk_error_invitationcredential_body,
+    iconStart = R.drawable.wallet_ic_toast_credential,
+    onClose = onClose,
+)
+
+@Composable
+fun QrToastUnknownIssuer(
+    modifier: Modifier = Modifier,
+    onClose: () -> Unit,
+) = QrInfoToast(
+    modifier = modifier,
+    headline = R.string.tk_error_issuer_notregistered_title,
+    text = R.string.tk_error_issuer_notregistered_body,
+    iconStart = R.drawable.wallet_ic_questionmark,
+    onClose = onClose,
+)
+
+@Composable
+fun QrToastUnknownVerifier(
+    modifier: Modifier = Modifier,
+    onClose: () -> Unit,
+) = QrInfoToast(
+    modifier = modifier,
+    headline = R.string.tk_error_verifier_notregistered_title,
+    text = R.string.tk_error_verifier_notregistered_body,
+    iconStart = R.drawable.wallet_ic_questionmark,
+    onClose = onClose,
+)
+
+@Composable
+fun QrToastExpiredCredentialOffer(
+    modifier: Modifier = Modifier,
+    onClose: () -> Unit,
+) = QrInfoToast(
+    modifier = modifier,
+    headline = R.string.tk_error_notusable_title,
+    text = R.string.tk_error_notusable_body,
+    iconStart = R.drawable.wallet_ic_qr,
     onClose = onClose,
 )
 
@@ -42,11 +85,9 @@ fun QrToastEmptyWallet(
     onClose: () -> Unit,
 ) = QrInfoToast(
     modifier = modifier,
-    headline = R.string.qrScanner_toast_emptyWallet_title,
-    text = R.string.qrScanner_toast_emptyWallet_message,
-    linkText = null,
-    iconStart = R.drawable.wallet_ic_questionmark,
-    onLink = { },
+    headline = R.string.tk_error_emptywallet_title,
+    text = R.string.tk_error_emptywallet_body,
+    iconStart = R.drawable.wallet_ic_toast_credential,
     onClose = onClose,
 )
 
@@ -54,14 +95,11 @@ fun QrToastEmptyWallet(
 fun QrToastNoCompatibleCredential(
     modifier: Modifier = Modifier,
     onClose: () -> Unit,
-    onLink: (linkRes: Int) -> Unit,
 ) = QrInfoToast(
     modifier = modifier,
-    headline = R.string.qrScanner_toast_noCompatibleCredential_title,
-    text = R.string.qrScanner_toast_noCompatibleCredential_message,
-    linkText = R.string.qrScanner_toast_noCompatibleCredential_link_text,
-    iconStart = R.drawable.wallet_ic_account,
-    onLink = { onLink(R.string.qrScanner_toast_noCompatibleCredential_link) },
+    headline = R.string.tk_error_nosuchcredential_title,
+    text = R.string.tk_error_nosuchcredential_body,
+    iconStart = R.drawable.wallet_ic_toast_credential,
     onClose = onClose,
 )
 
@@ -71,25 +109,9 @@ fun QrToastNetworkError(
     onClose: () -> Unit,
 ) = QrInfoToast(
     modifier = modifier,
-    headline = R.string.qrScanner_toast_networkError_title,
-    text = R.string.qrScanner_toast_networkError_message,
-    linkText = null,
-    iconStart = R.drawable.wallet_ic_wifi,
-    onLink = { },
-    onClose = onClose,
-)
-
-@Composable
-fun QrToastUnexpectedError(
-    modifier: Modifier = Modifier,
-    onClose: () -> Unit,
-) = QrInfoToast(
-    modifier = modifier,
-    headline = R.string.qrScanner_toast_unexpectedError_title,
-    text = R.string.qrScanner_toast_unexpectedError_message,
-    linkText = null,
-    iconStart = R.drawable.wallet_ic_questionmark,
-    onLink = { },
+    headline = R.string.tk_error_connectionproblem_title,
+    text = R.string.tk_error_connectionproblem_body,
+    iconStart = R.drawable.wallet_ic_wifi_crossed,
     onClose = onClose,
 )
 
@@ -99,11 +121,9 @@ fun QrToastInvalidPresentation(
     onClose: () -> Unit,
 ) = QrInfoToast(
     modifier = modifier,
-    headline = R.string.qrScanner_toast_invalidPresentation_title,
-    text = R.string.qrScanner_toast_invalidPresentation_message,
-    linkText = null,
+    headline = R.string.tk_error_invalidrequest_title,
+    text = R.string.tk_error_invalidrequest_body,
     iconStart = R.drawable.wallet_ic_questionmark,
-    onLink = { },
     onClose = onClose,
 )
 
@@ -112,18 +132,16 @@ private fun QrInfoToast(
     modifier: Modifier = Modifier,
     @StringRes headline: Int,
     @StringRes text: Int,
-    @StringRes linkText: Int?,
     @DrawableRes iconStart: Int,
-    onLink: () -> Unit,
     onClose: () -> Unit,
 ) = Toast(
     modifier = modifier,
     headline = headline,
     text = text,
-    linkText = linkText,
+    linkText = null,
     iconEndContentDescription = R.string.qrScanner_toast_close_button,
     iconStart = iconStart,
     iconEnd = R.drawable.wallet_ic_cross,
-    onLink = onLink,
+    onLink = { },
     onIconEnd = onClose,
 )

@@ -31,7 +31,8 @@ internal class GetOrCreateSecretKeyImpl @Inject constructor(
         }
 
         // Key not found, we create it
-        createSecretKey(keystoreKeyConfig)
+        val secretKey = createSecretKey(keystoreKeyConfig)
+        secretKey
     }.mapError { throwable ->
         GetOrCreateSecretKeyError.Unexpected(throwable)
     }

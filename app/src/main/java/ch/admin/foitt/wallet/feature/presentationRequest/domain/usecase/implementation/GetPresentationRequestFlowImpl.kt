@@ -9,7 +9,7 @@ import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.toGetPrese
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.repository.PresentationRequestRepository
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.GetPresentationRequestFlow
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialPreview
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.IsCredentialFromBetaIssuerImpl
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.IsCredentialFromBetaIssuer
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.PresentationRequestField
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimWithDisplays
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
@@ -32,7 +32,7 @@ class GetPresentationRequestFlowImpl @Inject constructor(
     private val presentationRequestRepository: PresentationRequestRepository,
     private val getLocalizedDisplay: GetLocalizedDisplay,
     private val mapToCredentialClaimData: MapToCredentialClaimData,
-    private val isCredentialFromBetaIssuer: IsCredentialFromBetaIssuerImpl,
+    private val isCredentialFromBetaIssuer: IsCredentialFromBetaIssuer,
 ) : GetPresentationRequestFlow {
     override fun invoke(
         id: Long,

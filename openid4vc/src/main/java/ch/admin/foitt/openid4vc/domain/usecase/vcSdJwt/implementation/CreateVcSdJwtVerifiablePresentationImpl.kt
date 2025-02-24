@@ -26,7 +26,6 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.jsonObject
 import java.time.Instant
 import javax.inject.Inject
 
@@ -46,13 +45,13 @@ internal class CreateVcSdJwtVerifiablePresentationImpl @Inject constructor(
             }.mapError(Throwable::toCreateVcSdJwtVerifiablePresentationError)
                 .bind()
 
-            if (credential.signingKeyId != null) {
+            if (credential.keyBindingIdentifier != null) {
                 val base64UrlEncodedSdHash = runSuspendCatching {
                     sdJwtWithDisclosures.createDigest(HASH_ALGORITHM)
                 }.mapError(Throwable::toCreateVcSdJwtVerifiablePresentationError)
                     .bind()
 
-                val keyPair = getKeyPair(credential.signingKeyId, ANDROID_KEY_STORE)
+                val keyPair = getKeyPair(credential.keyBindingIdentifier, ANDROID_KEY_STORE)
                     .mapError(GetKeyPairError::toCreateVcSdJwtVerifiablePresentationError)
                     .bind()
 
@@ -74,7 +73,7 @@ internal class CreateVcSdJwtVerifiablePresentationImpl @Inject constructor(
         base64UrlEncodedSdHash: String,
         presentationRequest: PresentationRequest,
     ): SignedJWT {
-        val jwtHeader = JWSHeader.Builder(credential.signingAlgorithm?.toJWSAlgorithm())
+        val jwtHeader = JWSHeader.Builder(credential.keyBindingAlgorithm?.toJWSAlgorithm())
             .type(JOSEObjectType(HEADER_TYPE))
             .build()
         val jwtBody = JWTClaimsSet.Builder()
@@ -89,7 +88,7 @@ internal class CreateVcSdJwtVerifiablePresentationImpl @Inject constructor(
 
     private fun getKeyBindingJwk(credential: VcSdJwtCredential): Result<Jwk, CreateVcSdJwtVerifiablePresentationError> {
         val cnf = runSuspendCatching {
-            credential.json.jsonObject[CLAIM_KEY_CNF]
+            credential.cnf
         }.mapError(Throwable::toCreateVcSdJwtVerifiablePresentationError)
 
         return safeJson.safeDecodeStringTo<Jwk>(cnf.value.toString())
@@ -99,7 +98,6 @@ internal class CreateVcSdJwtVerifiablePresentationImpl @Inject constructor(
     companion object {
         const val HASH_ALGORITHM = "SHA-256"
         const val HEADER_TYPE = "kb+jwt"
-        const val CLAIM_KEY_CNF = "cnf"
         const val CLAIM_KEY_SD_HASH = "sd_hash"
         const val CLAIM_KEY_AUD = "aud"
         const val CLAIM_KEY_NONCE = "nonce"

@@ -1,0 +1,9 @@
+package ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository
+
+import ch.admin.foitt.wallet.platform.database.domain.model.EIdRequestCase
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestCaseRepositoryError
+import com.github.michaelbull.result.Result
+
+interface EIdRequestCaseRepository {
+    suspend fun saveEIdRequestCase(case: EIdRequestCase): Result<Unit, EIdRequestCaseRepositoryError>
+}

@@ -7,7 +7,9 @@ import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationReq
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtCredential
 import ch.admin.foitt.openid4vc.domain.usecase.GetKeyPair
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockKeyPairs.VALID_KEY_PAIR
+import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.CreateVcSdJwtVerifiablePresentation
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.CreateVcSdJwtVerifiablePresentationImpl.Companion.HASH_ALGORITHM
+import ch.admin.foitt.openid4vc.util.SafeJsonTestInstance
 import ch.admin.foitt.openid4vc.util.SafeJsonTestInstance.safeJson
 import ch.admin.foitt.openid4vc.util.assertErrorType
 import ch.admin.foitt.openid4vc.util.assertOk
@@ -25,7 +27,6 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -45,7 +46,7 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
     @MockK
     private lateinit var mockPresentationRequest: PresentationRequest
 
-    private lateinit var useCase: CreateVcSdJwtVerifiablePresentationImpl
+    private lateinit var useCase: CreateVcSdJwtVerifiablePresentation
 
     @BeforeEach
     fun setUp() {
@@ -68,9 +69,8 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
     @Test
     fun `Creating VcSdJwtVerifiablePresentation without holder binding returns the presentation Jwt without key binding`() =
         runTest(testDispatcher) {
-            every { mockCredential.json } returns Json.parseToJsonElement(CREDENTIAL_JSON_WITHOUT_HOLDER_BINDING)
             every { mockCredential.createVerifiableCredential(mockRequestedFields) } returns SD_JWT_WITH_DISCLOSURES
-            every { mockCredential.signingKeyId } returns null
+            every { mockCredential.keyBindingIdentifier } returns null
 
             val result = useCase(
                 credential = mockCredential,
@@ -83,6 +83,8 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
 
     @Test
     fun `Creating VcSdJwtVerifiablePresentation with holder binding returns the presentation Jwt with proof`() = runTest(testDispatcher) {
+        every { mockCredential.cnf } returns SafeJsonTestInstance.json.parseToJsonElement(CREDENTIAL_CNF_CLAIM_JSON)
+
         val result = useCase(
             credential = mockCredential,
             requestedFields = mockRequestedFields,
@@ -143,9 +145,8 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
     }
 
     private fun success() {
-        every { mockCredential.signingKeyId } returns SIGNING_KEY_ID
-        every { mockCredential.signingAlgorithm } returns SIGNING_ALGORITHM
-        every { mockCredential.json } returns Json.parseToJsonElement(CREDENTIAL_JSON_WITH_HOLDER_BINDING)
+        every { mockCredential.keyBindingIdentifier } returns SIGNING_KEY_ID
+        every { mockCredential.keyBindingAlgorithm } returns SIGNING_ALGORITHM
         every { mockCredential.createVerifiableCredential(mockRequestedFields) } returns HOLDER_BINDING_SD_JWT_WITH_DISCLOSURES
         every { mockPresentationRequest.responseUri } returns RESPONSE_URI
 
@@ -168,8 +169,7 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
         const val NONCE = "nonce"
         const val RESPONSE_URI = "responseUri"
 
-        const val CREDENTIAL_JSON_WITH_HOLDER_BINDING = """{"cnf":{"kty":"EC","crv":"P-256","x":"x","y":"y"}}"""
-        const val CREDENTIAL_JSON_WITHOUT_HOLDER_BINDING = """{"key": "value"}"""
+        const val CREDENTIAL_CNF_CLAIM_JSON = """{"kty":"EC","crv":"P-256","x":"x","y":"y"}"""
 
         const val CREDENTIAL_PAYLOAD_WITHOUT_HOLDER_BINDING =
             "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIKfQ.ewogICAgICAgICAgIl9zZCI6IFsKICAgICAgICAgICAgIi1VMzJ6SEtkUTZYWTJ1TUNLNF9nOEJEZjJMSUs1VnZFYjVtR0RhZkFhRFUiLAogICAgICAgICAgICAiNXl4eWZRVHhiYlpxQlZSZ3BSNlZQdHd2Vl8tRU5mb2hEU3FfV25TMWxJbyIKICAgICAgICAgIF0sCiAgICAgICAgICAibmJmIjogMTcyMjQ5OTIwMCwKICAgICAgICAgICJfc2RfYWxnIjogInNoYS0yNTYiLAogICAgICAgICAgImV4cCI6IDE3NjcxNjgwMDAsCiAgICAgICAgICAiaWF0IjogMTcyOTI1ODQyMAogICAgICAgIH0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJS2ZRLi5vcEc2TjJ6eFdRYzdwQjZKbjYwNU96bC16N0Y5VFhGeE1MUVRWOWdwUnplcnBvekNGZm1SazctaFZNbjFtUEo2aDhTbElwUlNTMGE1UXNYTElRdGU2Zw"

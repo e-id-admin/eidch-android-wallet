@@ -1,17 +1,18 @@
 package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JsonPresentationRequest
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JwtPresentationRequest
+import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestContainer
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestError
 import ch.admin.foitt.openid4vc.domain.repository.PresentationRequestRepository
 import ch.admin.foitt.openid4vc.domain.usecase.FetchPresentationRequest
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockPresentationRequest
 import ch.admin.foitt.openid4vc.util.SafeJsonTestInstance
 import ch.admin.foitt.openid4vc.util.assertErrorType
-import ch.admin.foitt.openid4vc.util.assertOk
+import ch.admin.foitt.openid4vc.util.assertSuccessType
 import ch.admin.foitt.openid4vc.utils.SafeJson
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.get
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerifyOrder
@@ -21,7 +22,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.SerializationException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -59,10 +59,13 @@ class FetchPresentationRequestImplTest {
             mockPresentationRequestRepository.fetchPresentationRequest(any())
         } returns Ok(MockPresentationRequest.validJson)
 
-        val result = useCase(testUrl).assertOk()
+        val expectedJson = testSafeJson.safeDecodeToJsonObject(MockPresentationRequest.validJson).get()
 
-        assertTrue(result is JsonPresentationRequest)
-        assertEquals("zW0qUvtH3AczW8MTTSebAFrSbQsqSjc5", result.nonce)
+        val result = useCase(testUrl)
+
+        val presentationRequestContainer = result.assertSuccessType(PresentationRequestContainer.Json::class)
+
+        assertEquals(expectedJson, presentationRequestContainer.json)
 
         coVerifyOrder {
             mockPresentationRequestRepository.fetchPresentationRequest(any())
@@ -75,10 +78,12 @@ class FetchPresentationRequestImplTest {
             mockPresentationRequestRepository.fetchPresentationRequest(any())
         } returns Ok(MockPresentationRequest.validJwt)
 
-        val result = useCase(testUrl).assertOk()
+        val expectedJwt = Jwt(MockPresentationRequest.validJwt)
 
-        assertTrue(result is JwtPresentationRequest)
-        assertEquals("I02FibLF4k5EsfDO2jgjDooP4A/ZukQ3", result.nonce)
+        val result = useCase(testUrl)
+
+        val presentationContainer = result.assertSuccessType(PresentationRequestContainer.Jwt::class)
+        assertEquals(expectedJwt.payloadString, presentationContainer.jwt.payloadString)
 
         coVerifyOrder {
             mockPresentationRequestRepository.fetchPresentationRequest(any())
@@ -98,23 +103,24 @@ class FetchPresentationRequestImplTest {
     @ParameterizedTest
     @ValueSource(
         strings = [
-            "aaaa",
-            MockPresentationRequest.invalidJwt,
+            "abc",
+            "aaa.bbb.ccc",
+            "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmF.5EQDWn",
         ]
     )
-    fun `An invalid jwt presentation request return an error`(jwt: String): Unit = runTest {
-        coEvery { mockPresentationRequestRepository.fetchPresentationRequest(any()) } returns Ok(jwt)
+    fun `An invalid jwt presentation request return an error`(wrongJwt: String): Unit = runTest {
+        coEvery { mockPresentationRequestRepository.fetchPresentationRequest(any()) } returns Ok(wrongJwt)
 
         val result = useCase.invoke(testUrl)
         val error = result.assertErrorType(PresentationRequestError.Unexpected::class)
-        assert(error.throwable is SerializationException)
+        assert(error.throwable is IllegalArgumentException)
     }
 
     @Test
     fun `An invalid json presentation request return an error`(): Unit = runTest {
         coEvery {
             mockPresentationRequestRepository.fetchPresentationRequest(any())
-        } returns Ok(MockPresentationRequest.invalidJson)
+        } returns Ok(MockPresentationRequest.invalidJsonString)
         val result = useCase.invoke(testUrl)
         val error = result.assertErrorType(PresentationRequestError.Unexpected::class)
         assert(error.throwable is SerializationException)

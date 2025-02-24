@@ -42,6 +42,7 @@ class HandleInvitationProcessingSuccessImpl @Inject constructor(
             PresentationRequestNavArg(
                 presentationRequest.credential,
                 presentationRequest.request,
+                presentationRequest.shouldCheckTrustStatement,
             )
         )
     )
@@ -53,6 +54,7 @@ class HandleInvitationProcessingSuccessImpl @Inject constructor(
             PresentationCredentialListNavArg(
                 presentationRequest.credentials.toTypedArray(),
                 presentationRequest.request,
+                presentationRequest.shouldCheckTrustStatement,
             )
         )
     )

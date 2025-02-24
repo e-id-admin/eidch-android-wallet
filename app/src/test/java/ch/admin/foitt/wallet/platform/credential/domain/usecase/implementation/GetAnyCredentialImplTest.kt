@@ -47,19 +47,20 @@ class GetAnyCredentialImplTest {
     fun `Getting any credential matching vc+sd_jwt credential returns it`() = runTest {
         val mockCredential = Credential(
             id = CREDENTIAL_ID,
-            privateKeyIdentifier = PRIVATE_KEY_ID,
+            keyBindingIdentifier = KEY_BINDING_ID,
             payload = PAYLOAD,
             format = CredentialFormat.VC_SD_JWT,
-            signingAlgorithm = SIGNING_ALGORITHM.stdName,
+            keyBindingAlgorithm = KEY_BINDING_ALGORITHM.stdName,
+            issuer = "issuer"
         )
         coEvery { mockCredentialRepository.getById(CREDENTIAL_ID) } returns Ok(mockCredential)
 
         val credential = useCase(CREDENTIAL_ID).assertOk()!!
 
         assertEquals(CREDENTIAL_ID, credential.id)
-        assertEquals(PRIVATE_KEY_ID, credential.signingKeyId)
+        assertEquals(KEY_BINDING_ID, credential.keyBindingIdentifier)
         assertEquals(PAYLOAD, credential.payload)
-        assertEquals(SIGNING_ALGORITHM, credential.signingAlgorithm)
+        assertEquals(KEY_BINDING_ALGORITHM, credential.keyBindingAlgorithm)
         assertTrue(credential is VcSdJwtCredential)
     }
 
@@ -76,10 +77,11 @@ class GetAnyCredentialImplTest {
     fun `Getting any credential with other format returns an error`() = runTest {
         val mockCredential = Credential(
             id = CREDENTIAL_ID,
-            privateKeyIdentifier = PRIVATE_KEY_ID,
+            keyBindingIdentifier = KEY_BINDING_ID,
             payload = PAYLOAD,
             format = CredentialFormat.UNKNOWN,
-            signingAlgorithm = SIGNING_ALGORITHM.stdName,
+            keyBindingAlgorithm = KEY_BINDING_ALGORITHM.stdName,
+            issuer = "issuer"
         )
         coEvery { mockCredentialRepository.getById(CREDENTIAL_ID) } returns Ok(mockCredential)
 
@@ -92,10 +94,11 @@ class GetAnyCredentialImplTest {
     fun `Getting any credential with unknown signing algorithm returns an error`() = runTest {
         val mockCredential = Credential(
             id = CREDENTIAL_ID,
-            privateKeyIdentifier = PRIVATE_KEY_ID,
+            keyBindingIdentifier = KEY_BINDING_ID,
             payload = PAYLOAD,
             format = CredentialFormat.UNKNOWN,
-            signingAlgorithm = "other",
+            keyBindingAlgorithm = "other",
+            issuer = "issuer"
         )
         coEvery { mockCredentialRepository.getById(CREDENTIAL_ID) } returns Ok(mockCredential)
 
@@ -117,8 +120,8 @@ class GetAnyCredentialImplTest {
 
     private companion object {
         const val CREDENTIAL_ID = 1L
-        const val PRIVATE_KEY_ID = "privateKeyIdentifier"
-        const val PAYLOAD = "payload"
-        val SIGNING_ALGORITHM = SigningAlgorithm.ES512
+        const val KEY_BINDING_ID = "privateKeyIdentifier"
+        const val PAYLOAD = "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJpc3MiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJ2Y3QiOiJ2Y3QiCn0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJc0NpQWdJbXRwWkNJNkltdGxlVWxrSWdwOS4uNHNwTXBzWE1nYlNyY0lqMFdNbXJNYXdhcVRzeG9GWmItcjdwTWlubEhvZklRRUhhS2pzV1J0dENzUTkyd0tfa3RpaDQta2VCdjdVbkc2MkRPa2NDbGc"
+        val KEY_BINDING_ALGORITHM = SigningAlgorithm.ES512
     }
 }

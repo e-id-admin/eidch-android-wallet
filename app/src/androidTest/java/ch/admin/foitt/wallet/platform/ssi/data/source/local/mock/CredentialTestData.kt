@@ -29,22 +29,24 @@ object CredentialTestData {
     val credential1 = Credential(
         id = 1,
         status = CredentialStatus.VALID,
-        privateKeyIdentifier = IDENTIFIER,
+        keyBindingIdentifier = IDENTIFIER,
         payload = PAYLOAD,
         format = FORMAT,
         createdAt = 1,
         updatedAt = 1,
-        signingAlgorithm = SIGNING_ALGORITHM,
+        keyBindingAlgorithm = SIGNING_ALGORITHM,
+        issuer = "issuer"
     )
     val credential2 = Credential(
         id = 2,
         status = CredentialStatus.VALID,
-        privateKeyIdentifier = IDENTIFIER,
+        keyBindingIdentifier = IDENTIFIER,
         payload = PAYLOAD,
         format = FORMAT,
         createdAt = 2,
         updatedAt = 2,
-        signingAlgorithm = SIGNING_ALGORITHM,
+        keyBindingAlgorithm = SIGNING_ALGORITHM,
+        issuer = "issuer"
     )
 
     val credentialClaim1 = CredentialClaim(id = 1, credentialId = 1, key = KEY, value = VALUE, valueType = null)

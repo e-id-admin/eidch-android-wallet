@@ -1,14 +1,12 @@
 package ch.admin.foitt.wallet.feature.qrscan.presentation
 
 import android.content.Context
-import androidx.annotation.StringRes
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestErrorBody
 import ch.admin.foitt.openid4vc.domain.usecase.DeclinePresentation
 import ch.admin.foitt.wallet.feature.qrscan.infra.QrScanner
-import ch.admin.foitt.wallet.feature.qrscan.presentation.permission.hasCameraPermission
 import ch.admin.foitt.wallet.platform.invitation.domain.model.InvitationError
 import ch.admin.foitt.wallet.platform.invitation.domain.model.ProcessInvitationError
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.HandleInvitationProcessingSuccess
@@ -18,8 +16,8 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
+import ch.admin.foitt.wallet.platform.scaffold.extension.hasCameraPermission
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
-import ch.admin.foitt.wallet.platform.utils.openLink
 import ch.admin.foitt.walletcomposedestinations.destinations.QrScanPermissionScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.QrScannerScreenDestination
 import com.github.michaelbull.result.onFailure
@@ -69,7 +67,7 @@ class QrScannerViewModel @Inject constructor(
     fun onInitScan(previewView: PreviewView) {
         qrScanner.registerScanner(previewView).onFailure { throwable ->
             _infoState.update { QrInfoState.UnexpectedError }
-            Timber.e(t = throwable, message = "Failure while registering scanner")
+            Timber.e(t = throwable, message = "ValidationFailure while registering scanner")
         }
     }
 
@@ -134,8 +132,6 @@ class QrScannerViewModel @Inject constructor(
         qrScanner.resumeScanner()
     }
 
-    fun onLink(@StringRes link: Int) = appContext.openLink(link)
-
     private fun initQrInfoHint(): QrInfoState {
         return if (firstCredentialWasAdded) {
             QrInfoState.Empty
@@ -145,17 +141,17 @@ class QrScannerViewModel @Inject constructor(
     }
 
     private fun ProcessInvitationError.toQrInfoState() = when (this) {
-        InvitationError.InvalidInput,
-        InvitationError.InvalidCredentialInvitation -> QrInfoState.InvalidQr
-
+        InvitationError.InvalidInput -> QrInfoState.InvalidQr
+        InvitationError.InvalidCredentialOffer -> QrInfoState.InvalidCredentialOffer
+        InvitationError.CredentialOfferExpired -> QrInfoState.ExpiredCredentialOffer
         InvitationError.NoCompatibleCredential -> QrInfoState.NoCompatibleCredential
         InvitationError.EmptyWallet -> QrInfoState.EmptyWallet
         InvitationError.NetworkError -> QrInfoState.NetworkError
-
         InvitationError.InvalidPresentationRequest,
         is InvitationError.InvalidPresentation -> QrInfoState.InvalidPresentation
-
         InvitationError.Unexpected -> QrInfoState.UnexpectedError
+        InvitationError.UnknownIssuer -> QrInfoState.UnknownIssuer
+        InvitationError.UnknownVerifier -> QrInfoState.UnknownVerifier
     }
 
     private fun declinePresentationRequest(uri: String) = viewModelScope.launch {

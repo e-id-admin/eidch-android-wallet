@@ -22,8 +22,6 @@ class ResolveDidImpl @Inject constructor(
             val url = URL(did.getUrl())
             val didLog = repo.fetchDidLog(url).bind()
             did.resolve(didLog)
-        }.mapError { throwable ->
-            throwable.toResolveDidError()
-        }.bind()
+        }.mapError(Throwable::toResolveDidError).bind()
     }
 }

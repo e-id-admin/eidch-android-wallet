@@ -65,7 +65,7 @@ class GetCompatibleCredentialsImpl @Inject constructor(
         credential: AnyCredential
     ) = when (compatibleFormat) {
         is InputDescriptorFormat.VcSdJwt ->
-            credential.signingAlgorithm?.let {
+            credential.keyBindingAlgorithm?.let {
                 compatibleFormat.kbJwtAlgorithms?.contains(it) == true
             } ?: compatibleFormat.kbJwtAlgorithms.isNullOrEmpty()
     }

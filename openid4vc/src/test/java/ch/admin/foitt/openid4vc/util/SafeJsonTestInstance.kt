@@ -7,7 +7,7 @@ import kotlinx.serialization.json.Json
 internal object SafeJsonTestInstance {
 
     @OptIn(ExperimentalSerializationApi::class)
-    private var json = Json {
+    var json = Json {
         ignoreUnknownKeys = true
         explicitNulls = false
     }

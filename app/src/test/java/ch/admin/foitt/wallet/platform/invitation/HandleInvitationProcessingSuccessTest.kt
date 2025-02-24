@@ -71,11 +71,13 @@ class HandleInvitationProcessingSuccessTest {
         private val mockPresentationRequestResult = ProcessInvitationResult.PresentationRequest(
             mockCompatibleCredential,
             mockPresentationRequest,
+            shouldCheckTrustStatement = true,
         )
 
         private val mockPresentationRequestListResult = ProcessInvitationResult.PresentationRequestCredentialList(
             listOf(mockCompatibleCredential),
             mockPresentationRequest,
+            shouldCheckTrustStatement = true,
         )
 
         private val definedSuccessDestinations: Map<ProcessInvitationResult, Direction> = mapOf(
@@ -83,10 +85,12 @@ class HandleInvitationProcessingSuccessTest {
             mockPresentationRequestResult to PresentationRequestScreenDestination(
                 mockPresentationRequestResult.credential,
                 mockPresentationRequestResult.request,
+                shouldFetchTrustStatement = true,
             ),
             mockPresentationRequestListResult to PresentationCredentialListScreenDestination(
                 mockPresentationRequestListResult.credentials.toTypedArray(),
                 mockPresentationRequestListResult.request,
+                shouldFetchTrustStatement = true,
             ),
         )
     }

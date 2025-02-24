@@ -43,7 +43,7 @@ class PresentationCredentialListViewModel @Inject constructor(
     setFullscreenState: SetFullscreenState,
 ) : ScreenViewModel(setTopBarState, setFullscreenState) {
     override val topBarState = TopBarState.None
-    override val fullscreenState = FullscreenState.Insets
+    override val fullscreenState = FullscreenState.Fullscreen
 
     private val navArgs = PresentationCredentialListScreenDestination.argsFrom(savedStateHandle)
 
@@ -89,6 +89,7 @@ class PresentationCredentialListViewModel @Inject constructor(
                 navArgs = PresentationRequestNavArg(
                     navArgs.compatibleCredentials[index],
                     navArgs.presentationRequest,
+                    navArgs.shouldFetchTrustStatement,
                 )
             )
         )
@@ -97,7 +98,10 @@ class PresentationCredentialListViewModel @Inject constructor(
     fun onBack() = navManager.navigateUpOrToRoot()
 
     private suspend fun updateVerifierDisplayData() {
-        val verifierDisplayData: ActorDisplayData = fetchVerifierDisplayData(navArgs.presentationRequest)
+        val verifierDisplayData: ActorDisplayData = fetchVerifierDisplayData(
+            presentationRequest = navArgs.presentationRequest,
+            shouldFetchTrustStatement = navArgs.shouldFetchTrustStatement,
+        )
         _verifierDisplayData.value = verifierDisplayData
     }
 

@@ -1,6 +1,5 @@
 package ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.implementation
 
-import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialStatusError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.TokenStatusList
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.TokenStatusListProperties
@@ -37,9 +36,6 @@ class FetchStatusFromTokenStatusListImplTest {
     private lateinit var mockParseTokenStatusList: ParseTokenStatusList
 
     @MockK
-    private lateinit var mockAnyCredential: AnyCredential
-
-    @MockK
     private lateinit var mockStatusList: TokenStatusList
 
     @MockK
@@ -63,22 +59,13 @@ class FetchStatusFromTokenStatusListImplTest {
         unmockkAll()
     }
 
-    @Test
-    fun `Fetching token status for null status returns credential status unknown`(): Unit = runTest {
-        every { mockTokenStatusListProperties.status } returns null
-
-        val status = useCase(mockAnyCredential, mockTokenStatusListProperties).assertOk()
-
-        assertEquals(CredentialStatus.UNKNOWN, status)
-    }
-
     @ParameterizedTest
     @MethodSource("generateStatusMapping")
     fun `Token status code should map to correct CredentialStatus`(statusMap: Pair<Int, CredentialStatus>): Unit = runTest {
         setDefaultMockedReturns()
         coEvery { mockParseTokenStatusList(mockStatusList, INDEX) } returns Ok(statusMap.first)
 
-        val status = useCase(mockAnyCredential, mockTokenStatusListProperties).assertOk()
+        val status = useCase(CREDENTIAL_ISSUER, mockTokenStatusListProperties).assertOk()
 
         assertEquals(statusMap.second, status)
     }
@@ -91,7 +78,7 @@ class FetchStatusFromTokenStatusListImplTest {
             mockCredentialStatusRepository.fetchTokenStatusListJwt(any())
         } returns Err(CredentialStatusError.Unexpected(exception))
 
-        val result = useCase(mockAnyCredential, mockTokenStatusListProperties)
+        val result = useCase(CREDENTIAL_ISSUER, mockTokenStatusListProperties)
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertEquals(exception.message, error.cause?.message)
@@ -103,7 +90,7 @@ class FetchStatusFromTokenStatusListImplTest {
         val exception = IllegalStateException("message")
         coEvery { mockParseTokenStatusList(any(), any()) } returns Err(CredentialStatusError.Unexpected(exception))
 
-        val result = useCase(mockAnyCredential, mockTokenStatusListProperties)
+        val result = useCase(CREDENTIAL_ISSUER, mockTokenStatusListProperties)
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertEquals(exception.message, error.cause?.message)
@@ -115,18 +102,18 @@ class FetchStatusFromTokenStatusListImplTest {
         val exception = IllegalStateException("message")
         coEvery { mockValidateTokenStatusList(any(), any(), any()) } returns Err(CredentialStatusError.Unexpected(exception))
 
-        val result = useCase(mockAnyCredential, mockTokenStatusListProperties)
+        val result = useCase(CREDENTIAL_ISSUER, mockTokenStatusListProperties)
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertEquals(exception.message, error.cause?.message)
     }
 
     private fun setDefaultMockedReturns(statusValue: Int = 0) {
-        every { mockTokenStatusListProperties.status?.statusList?.index } returns INDEX
-        every { mockTokenStatusListProperties.status?.statusList?.uri } returns URI
+        every { mockTokenStatusListProperties.statusList.index } returns INDEX
+        every { mockTokenStatusListProperties.statusList.uri } returns URI
 
         coEvery { mockCredentialStatusRepository.fetchTokenStatusListJwt(URI) } returns Ok(JWT)
-        coEvery { mockValidateTokenStatusList(mockAnyCredential, JWT, URI) } returns
+        coEvery { mockValidateTokenStatusList(CREDENTIAL_ISSUER, JWT, URI) } returns
             Ok(TokenStatusListResponse(statusList = mockStatusList))
         coEvery { mockParseTokenStatusList(mockStatusList, INDEX) } returns Ok(statusValue)
     }
@@ -135,6 +122,7 @@ class FetchStatusFromTokenStatusListImplTest {
         const val INDEX = 1
         const val URI = "uri"
         const val JWT = "jwt"
+        const val CREDENTIAL_ISSUER = "credentialIssuer"
 
         @JvmStatic
         fun generateStatusMapping() = listOf(

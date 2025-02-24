@@ -92,28 +92,28 @@ private fun BiometricsImage(screenState: RegisterBiometricsScreenState) = when (
 private fun BiometricsBodyContent(screenState: RegisterBiometricsScreenState) = when (screenState) {
     RegisterBiometricsScreenState.Initial -> {}
     RegisterBiometricsScreenState.Available -> OnboardingBiometricsContent(
-        title = R.string.onboarding_biometric_android_primary,
-        description = R.string.onboarding_biometric_android_secondary,
-        infoText = R.string.onboarding_biometric_android_permission_reason,
+        title = R.string.tk_onboarding_biometricandroid1_title,
+        description = R.string.tk_onboarding_biometricandroid1_body,
+        infoText = R.string.tk_onboarding_biometricandroid1_smallbody,
     )
 
     RegisterBiometricsScreenState.Lockout,
     RegisterBiometricsScreenState.Error -> OnboardingBiometricsContent(
-        title = R.string.onboarding_biometric_android_unavailable_primary,
-        description = R.string.onboarding_biometric_android_unavailable_secondary,
-        infoText = R.string.onboarding_biometric_android_unavailable_tertiary,
+        title = R.string.tk_onboarding_biometricandroid1_title,
+        description = R.string.tk_onboarding_biometricandroid5_body,
+        infoText = R.string.tk_onboarding_biometricandroid5_body,
     )
 
     RegisterBiometricsScreenState.DisabledOnDevice -> OnboardingBiometricsContent(
-        title = R.string.onboarding_biometric_android_disabled_primary,
-        description = R.string.onboarding_biometric_android_disabledOnDevice_secondary,
-        infoText = R.string.onboarding_biometric_android_disabled_tertiary,
+        title = R.string.tk_onboarding_biometricandroid1_title,
+        description = R.string.tk_onboarding_biometricandroid4_body,
+        infoText = R.string.tk_onboarding_biometricandroid3_smallbody,
     )
 
     RegisterBiometricsScreenState.DisabledForApp -> OnboardingBiometricsContent(
-        title = R.string.onboarding_biometric_android_disabled_primary,
-        description = R.string.onboarding_biometric_android_disabledForApp_secondary,
-        infoText = R.string.onboarding_biometric_android_disabled_tertiary,
+        title = R.string.tk_onboarding_biometricandroid3_title,
+        description = R.string.tk_onboarding_biometricandroid3_body,
+        infoText = R.string.tk_onboarding_biometricandroid3_smallbody,
     )
 }
 
@@ -126,34 +126,34 @@ private fun BiometricsButtons(
 ) = when (screenState) {
     RegisterBiometricsScreenState.Available -> {
         Buttons.TonalSecondary(
-            text = stringResource(id = R.string.onboarding_biometric_android_withoutButton),
+            text = stringResource(id = R.string.tk_global_no),
             onClick = onSkip,
         )
         Buttons.FilledPrimary(
-            text = stringResource(id = R.string.onboarding_biometric_android_withButton),
+            text = stringResource(id = R.string.tk_onboarding_biometricandroid1_primarybutton),
             onClick = onTriggerPrompt,
         )
     }
     RegisterBiometricsScreenState.DisabledForApp -> {
         Buttons.TonalSecondary(
-            text = stringResource(id = R.string.onboarding_biometric_android_inactive_withoutButton),
+            text = stringResource(id = R.string.tk_global_no),
             onClick = onSkip,
             modifier = Modifier.testTag(TestTags.NO_BIOMETRICS_BUTTON.name)
         )
         Buttons.FilledPrimary(
-            text = stringResource(id = R.string.onboarding_biometric_android_inactive_settingsButton),
+            text = stringResource(id = R.string.tk_global_tothesettings),
             onClick = onOpenSettings,
             modifier = Modifier.testTag(TestTags.TO_SETTING_BUTTON.name)
         )
     }
     RegisterBiometricsScreenState.DisabledOnDevice -> {
         Buttons.TonalSecondary(
-            text = stringResource(id = R.string.onboarding_biometric_android_inactive_withoutButton),
+            text = stringResource(id = R.string.tk_global_no),
             onClick = onSkip,
             modifier = Modifier.testTag(TestTags.NO_BIOMETRICS_BUTTON.name)
         )
         Buttons.FilledPrimary(
-            text = stringResource(id = R.string.onboarding_biometric_android_inactive_settingsButton),
+            text = stringResource(id = R.string.tk_global_tothesettings),
             onClick = onOpenSettings,
             modifier = Modifier.testTag(TestTags.TO_SETTING_BUTTON.name)
         )
@@ -161,7 +161,7 @@ private fun BiometricsButtons(
     RegisterBiometricsScreenState.Error,
     RegisterBiometricsScreenState.Lockout -> {
         Buttons.FilledPrimary(
-            text = stringResource(id = R.string.onboarding_biometric_android_unavailable_withoutButton),
+            text = stringResource(id = R.string.tk_global_continue),
             onClick = onSkip,
         )
     }

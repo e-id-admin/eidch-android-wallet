@@ -3,12 +3,15 @@ package ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation
 import ch.admin.eid.didresolver.didtoolbox.DidDoc
 import ch.admin.eid.didresolver.didtoolbox.Jwk
 import ch.admin.eid.didresolver.didtoolbox.VerificationMethod
+import ch.admin.eid.didresolver.didtoolbox.VerificationType
+import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtError
 import ch.admin.foitt.openid4vc.domain.usecase.ResolveDid
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.VerifyJwtSignatureImpl
-import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.PublicKeyVerifier
+import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.VerifyPublicKey
 import ch.admin.foitt.openid4vc.util.assertErrorType
 import ch.admin.foitt.openid4vc.util.assertOk
+import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.nimbusds.jwt.SignedJWT
 import io.mockk.MockKAnnotations
@@ -23,10 +26,10 @@ import org.junit.jupiter.api.Test
 
 class VerifyJwtImplTest {
     @MockK
-    private lateinit var mockPublicKeyVerifier: PublicKeyVerifier
+    private lateinit var mockResolveDid: ResolveDid
 
     @MockK
-    private lateinit var mockResolveDid: ResolveDid
+    private lateinit var mockJwt: Jwt
 
     @MockK
     private lateinit var mockSignedJWT: SignedJWT
@@ -34,19 +37,23 @@ class VerifyJwtImplTest {
     @MockK
     private lateinit var mockDidDoc: DidDoc
 
+    @MockK
+    private lateinit var mockVerifyPublicKey: VerifyPublicKey
+
     private lateinit var useCase: VerifyJwtSignatureImpl
 
     @BeforeEach
     fun setUp() {
         MockKAnnotations.init(this)
 
+        every { mockJwt.signedJwt } returns mockSignedJWT
         coEvery { mockResolveDid.invoke(any()) } returns Ok(mockDidDoc)
         every { mockDidDoc.getVerificationMethod() } returns mockVerificationMethods
-        every { mockPublicKeyVerifier.matchSignature(any(), any()) } returns true
+        every { mockVerifyPublicKey(any(), any()) } returns Ok(Unit)
 
         useCase = VerifyJwtSignatureImpl(
-            publicKeyVerifier = mockPublicKeyVerifier,
             resolveDid = mockResolveDid,
+            verifyPublicKey = mockVerifyPublicKey
         )
     }
 
@@ -60,7 +67,7 @@ class VerifyJwtImplTest {
         val result = useCase(
             did = ISSUER_ID1,
             kid = KID_ID1,
-            signedJwt = mockSignedJWT
+            jwt = mockJwt,
         )
 
         result.assertOk()
@@ -69,9 +76,10 @@ class VerifyJwtImplTest {
     @Test
     fun `Verifying jwt which has one matching public key from list returns Ok`(): Unit = runTest {
         every { mockDidDoc.getVerificationMethod() } returns listOf(mockVerificationMethod1, mockVerificationMethod2)
-        every { mockPublicKeyVerifier.matchSignature(mockJwk1, mockSignedJWT) } returns true
+        every { mockVerifyPublicKey(mockJwk1, any()) } returns Ok(Unit)
+        every { mockVerifyPublicKey(mockJwk2, any()) } returns Err(Unit)
 
-        val result = useCase(did = ISSUER_ID1, kid = KID_ID1, signedJwt = mockSignedJWT)
+        val result = useCase(did = ISSUER_ID1, kid = KID_ID1, jwt = mockJwt)
 
         result.assertOk()
     }
@@ -79,9 +87,10 @@ class VerifyJwtImplTest {
     @Test
     fun `Verifying jwt which has no matching public key from list returns InvalidJwt`(): Unit = runTest {
         every { mockDidDoc.getVerificationMethod() } returns listOf(mockVerificationMethod2, mockVerificationMethod3)
-        every { mockPublicKeyVerifier.matchSignature(mockJwk1, mockSignedJWT) } returns true
+        every { mockVerifyPublicKey(mockJwk1, any()) } returns Err(Unit)
+        every { mockVerifyPublicKey(mockJwk2, any()) } returns Err(Unit)
 
-        val result = useCase(did = ISSUER_ID1, kid = KID_ID1, signedJwt = mockSignedJWT)
+        val result = useCase(did = ISSUER_ID1, kid = KID_ID1, jwt = mockJwt)
 
         result.assertErrorType(VcSdJwtError.InvalidJwt::class)
     }
@@ -90,7 +99,7 @@ class VerifyJwtImplTest {
     fun `Verifying jwt with only null jwk keys returns InvalidJwt`(): Unit = runTest {
         every { mockDidDoc.getVerificationMethod() } returns listOf(mockVerificationMethod3)
 
-        val result = useCase(did = ISSUER_ID1, kid = "", signedJwt = mockSignedJWT)
+        val result = useCase(did = ISSUER_ID1, kid = "", jwt = mockJwt)
 
         result.assertErrorType(VcSdJwtError.InvalidJwt::class)
     }
@@ -99,17 +108,14 @@ class VerifyJwtImplTest {
     fun `Verifying jwt with empty public key list returns InvalidJwt`(): Unit = runTest {
         every { mockDidDoc.getVerificationMethod() } returns listOf()
 
-        val result = useCase(did = ISSUER_ID1, kid = "", signedJwt = mockSignedJWT)
+        val result = useCase(did = ISSUER_ID1, kid = "", jwt = mockJwt)
 
         result.assertErrorType(VcSdJwtError.InvalidJwt::class)
     }
 
     @Test
     fun `Verifying jwt uses correct public key from list`(): Unit = runTest {
-        every { mockPublicKeyVerifier.matchSignature(any(), any()) } returns false
-        every { mockPublicKeyVerifier.matchSignature(mockJwk2, any()) } returns true
-
-        val result = useCase(did = ISSUER_ID1, kid = KID_ID2, signedJwt = mockSignedJWT)
+        val result = useCase(did = ISSUER_ID1, kid = KID_ID2, jwt = mockJwt)
 
         result.assertOk()
     }
@@ -128,7 +134,7 @@ class VerifyJwtImplTest {
 
         private val mockVerificationMethod1 = VerificationMethod(
             id = KID_ID1,
-            verificationType = "type",
+            verificationType = VerificationType.ED25519_VERIFICATION_KEY2020,
             controller = "controller",
             publicKeyJwk = mockJwk1,
             publicKeyMultibase = "multibase",
@@ -138,7 +144,7 @@ class VerifyJwtImplTest {
         private val mockJwk2 = mockJwk1.copy(kid = KID_ID2)
         private val mockVerificationMethod2 = VerificationMethod(
             id = KID_ID2,
-            verificationType = "type",
+            verificationType = VerificationType.ED25519_VERIFICATION_KEY2020,
             controller = "controller",
             publicKeyJwk = mockJwk2,
             publicKeyMultibase = "multibase",

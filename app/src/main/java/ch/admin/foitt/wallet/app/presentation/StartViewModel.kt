@@ -9,7 +9,9 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
+import ch.admin.foitt.wallet.platform.utils.suspendUntilNonNull
 import ch.admin.foitt.walletcomposedestinations.destinations.OnboardingIntroScreenDestination
+import com.github.michaelbull.result.coroutines.runSuspendCatching
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,9 +30,16 @@ class StartViewModel @Inject constructor(
 
     fun navigateToFirstScreen() {
         viewModelScope.launch {
-            when (onboardingStateRepository.getOnboardingState()) {
-                true -> navManager.navigateToAndClearCurrent(navigateToLogin())
-                false -> navManager.navigateToAndClearCurrent(OnboardingIntroScreenDestination)
+            runSuspendCatching {
+                // Depending on the (test) devices, navigation may not yet be ready at that point.
+                // So we wait a bit.
+                suspendUntilNonNull {
+                    navManager.currentDestination
+                }
+                when (onboardingStateRepository.getOnboardingState()) {
+                    true -> navManager.navigateToAndClearCurrent(navigateToLogin())
+                    false -> navManager.navigateToAndClearCurrent(OnboardingIntroScreenDestination)
+                }
             }
         }
     }

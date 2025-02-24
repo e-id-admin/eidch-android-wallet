@@ -55,10 +55,11 @@ class GetAnyCredentialsImplTest {
     fun `Getting any credentials with one vc+sd_jwt available returns it`() = runTest {
         val mockCredential = Credential(
             id = CREDENTIAL_ID,
-            privateKeyIdentifier = PRIVATE_KEY_ID,
+            keyBindingIdentifier = KEY_BINDING_IDENTIFIER,
             payload = PAYLOAD,
             format = CredentialFormat.VC_SD_JWT,
-            signingAlgorithm = SIGNING_ALGORITHM.stdName,
+            keyBindingAlgorithm = KEY_BINDING_ALGORITHM.stdName,
+            issuer = "issuer"
         )
         coEvery { mockCredentialRepository.getAll() } returns Ok(listOf(mockCredential))
 
@@ -67,9 +68,9 @@ class GetAnyCredentialsImplTest {
         assertEquals(1, result.size)
         val credential = result.first()
         assertEquals(CREDENTIAL_ID, credential.id)
-        assertEquals(PRIVATE_KEY_ID, credential.signingKeyId)
+        assertEquals(KEY_BINDING_IDENTIFIER, credential.keyBindingIdentifier)
         assertEquals(PAYLOAD, credential.payload)
-        assertEquals(SIGNING_ALGORITHM, credential.signingAlgorithm)
+        assertEquals(KEY_BINDING_ALGORITHM, credential.keyBindingAlgorithm)
         assertTrue(credential is VcSdJwtCredential)
     }
 
@@ -77,17 +78,19 @@ class GetAnyCredentialsImplTest {
     fun `Getting any credentials with two vc+sd_jwt available returns both`() = runTest {
         val mockCredential = Credential(
             id = CREDENTIAL_ID,
-            privateKeyIdentifier = PRIVATE_KEY_ID,
+            keyBindingIdentifier = KEY_BINDING_IDENTIFIER,
             payload = PAYLOAD,
             format = CredentialFormat.VC_SD_JWT,
-            signingAlgorithm = SIGNING_ALGORITHM.stdName,
+            keyBindingAlgorithm = KEY_BINDING_ALGORITHM.stdName,
+            issuer = "issuer"
         )
         val mockCredential2 = Credential(
             id = CREDENTIAL_ID_2,
-            privateKeyIdentifier = PRIVATE_KEY_ID_2,
+            keyBindingIdentifier = KEY_BINDING_IDENTIFIER_2,
             payload = PAYLOAD_2,
             format = CredentialFormat.VC_SD_JWT,
-            signingAlgorithm = SIGNING_ALGORITHM_2.stdName,
+            keyBindingAlgorithm = KEY_BINDING_ALGORITHM_2.stdName,
+            issuer = "issuer"
         )
         coEvery { mockCredentialRepository.getAll() } returns Ok(listOf(mockCredential, mockCredential2))
 
@@ -96,15 +99,15 @@ class GetAnyCredentialsImplTest {
         assertEquals(2, result.size)
 
         assertEquals(CREDENTIAL_ID, result[0].id)
-        assertEquals(PRIVATE_KEY_ID, result[0].signingKeyId)
+        assertEquals(KEY_BINDING_IDENTIFIER, result[0].keyBindingIdentifier)
         assertEquals(PAYLOAD, result[0].payload)
-        assertEquals(SIGNING_ALGORITHM, result[0].signingAlgorithm)
+        assertEquals(KEY_BINDING_ALGORITHM, result[0].keyBindingAlgorithm)
         assertTrue(result[0] is VcSdJwtCredential)
 
         assertEquals(CREDENTIAL_ID_2, result[1].id)
-        assertEquals(PRIVATE_KEY_ID_2, result[1].signingKeyId)
+        assertEquals(KEY_BINDING_IDENTIFIER_2, result[1].keyBindingIdentifier)
         assertEquals(PAYLOAD_2, result[1].payload)
-        assertEquals(SIGNING_ALGORITHM_2, result[0].signingAlgorithm)
+        assertEquals(KEY_BINDING_ALGORITHM_2, result[0].keyBindingAlgorithm)
         assertTrue(result[1] is VcSdJwtCredential)
     }
 
@@ -112,10 +115,11 @@ class GetAnyCredentialsImplTest {
     fun `Getting any credentials with other format available returns an empty list`() = runTest {
         val mockCredential = Credential(
             id = CREDENTIAL_ID,
-            privateKeyIdentifier = PRIVATE_KEY_ID,
+            keyBindingIdentifier = KEY_BINDING_IDENTIFIER,
             payload = PAYLOAD,
             format = CredentialFormat.UNKNOWN,
-            signingAlgorithm = SIGNING_ALGORITHM.stdName,
+            keyBindingAlgorithm = KEY_BINDING_ALGORITHM.stdName,
+            issuer = "issuer"
         )
         coEvery { mockCredentialRepository.getAll() } returns Ok(listOf(mockCredential))
 
@@ -127,10 +131,11 @@ class GetAnyCredentialsImplTest {
     fun `Getting any credentials with unknown signing algorithm returns an empty list`() = runTest {
         val mockCredential = Credential(
             id = CREDENTIAL_ID,
-            privateKeyIdentifier = PRIVATE_KEY_ID,
+            keyBindingIdentifier = KEY_BINDING_IDENTIFIER,
             payload = PAYLOAD,
             format = CredentialFormat.VC_SD_JWT,
-            signingAlgorithm = "other",
+            keyBindingAlgorithm = "other",
+            issuer = "issuer"
         )
         coEvery { mockCredentialRepository.getAll() } returns Ok(listOf(mockCredential))
 
@@ -152,11 +157,11 @@ class GetAnyCredentialsImplTest {
     private companion object {
         const val CREDENTIAL_ID = 1L
         const val CREDENTIAL_ID_2 = 2L
-        const val PRIVATE_KEY_ID = "privateKeyIdentifier"
-        const val PRIVATE_KEY_ID_2 = "privateKeyIdentifier2"
-        const val PAYLOAD = "payload"
-        const val PAYLOAD_2 = "payload2"
-        val SIGNING_ALGORITHM = SigningAlgorithm.ES512
-        val SIGNING_ALGORITHM_2 = SigningAlgorithm.ES512
+        const val KEY_BINDING_IDENTIFIER = "privateKeyIdentifier"
+        const val KEY_BINDING_IDENTIFIER_2 = "privateKeyIdentifier2"
+        const val PAYLOAD = "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJpc3MiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJ2Y3QiOiJ2Y3QiCn0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJc0NpQWdJbXRwWkNJNkltdGxlVWxrSWdwOS4uNHNwTXBzWE1nYlNyY0lqMFdNbXJNYXdhcVRzeG9GWmItcjdwTWlubEhvZklRRUhhS2pzV1J0dENzUTkyd0tfa3RpaDQta2VCdjdVbkc2MkRPa2NDbGc"
+        const val PAYLOAD_2 = "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJpc3MiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJ2Y3QiOiJ2Y3QiCn0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJc0NpQWdJbXRwWkNJNkltdGxlVWxrSWdwOS4uNHNwTXBzWE1nYlNyY0lqMFdNbXJNYXdhcVRzeG9GWmItcjdwTWlubEhvZklRRUhhS2pzV1J0dENzUTkyd0tfa3RpaDQta2VCdjdVbkc2MkRPa2NDbGc"
+        val KEY_BINDING_ALGORITHM = SigningAlgorithm.ES512
+        val KEY_BINDING_ALGORITHM_2 = SigningAlgorithm.ES512
     }
 }

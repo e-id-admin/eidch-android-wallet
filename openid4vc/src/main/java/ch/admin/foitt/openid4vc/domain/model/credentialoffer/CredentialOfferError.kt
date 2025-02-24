@@ -20,13 +20,13 @@ interface CredentialOfferError {
         FetchCredentialByConfigError, FetchVerifiableCredentialError, FetchCredentialError
     data object UnsupportedCredentialFormat : FetchCredentialByConfigError
     data object IntegrityCheckFailed : FetchCredentialByConfigError, FetchCredentialError
+    data object UnknownIssuer : FetchCredentialByConfigError, FetchCredentialError
     data object NetworkInfoError :
         FetchIssuerCredentialInformationError,
         FetchCredentialByConfigError,
         FetchVerifiableCredentialError,
         FetchIssuerConfigurationError,
         FetchCredentialError
-
     data class Unexpected(val cause: Throwable?) :
         FetchIssuerCredentialInformationError,
         FetchCredentialByConfigError,
@@ -52,6 +52,7 @@ internal fun FetchCredentialError.toFetchCredentialByConfigError(): FetchCredent
     is CredentialOfferError.UnsupportedCryptographicSuite -> this
     is CredentialOfferError.UnsupportedGrantType -> this
     is CredentialOfferError.UnsupportedProofType -> this
+    is CredentialOfferError.UnknownIssuer -> this
 }
 
 internal fun FetchVerifiableCredentialError.toFetchCredentialError(): FetchCredentialError = when (this) {
@@ -86,6 +87,7 @@ internal fun CreateDidJwkError.toFetchVerifiableCredentialError(): FetchVerifiab
 internal fun VerifyJwtError.toFetchCredentialError(): FetchCredentialError = when (this) {
     VcSdJwtError.InvalidJwt -> CredentialOfferError.IntegrityCheckFailed
     VcSdJwtError.NetworkError -> CredentialOfferError.NetworkInfoError
+    VcSdJwtError.IssuerValidationFailed -> CredentialOfferError.UnknownIssuer
     is VcSdJwtError.Unexpected -> CredentialOfferError.Unexpected(cause)
 }
 

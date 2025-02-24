@@ -65,7 +65,6 @@ fun QrScannerScreen(
         onInitScan = viewModel::onInitScan,
         onFlashLightToggle = viewModel::onFlashLight,
         onUp = viewModel::onUp,
-        onLink = viewModel::onLink,
         onCloseToast = viewModel::onCloseToast,
     )
 }
@@ -79,7 +78,6 @@ private fun QrScannerScreenContent(
     onInitScan: (PreviewView) -> Unit,
     onFlashLightToggle: () -> Unit,
     onUp: () -> Unit,
-    onLink: (link: Int) -> Unit,
     onCloseToast: () -> Unit,
 ) = Column(
     modifier = Modifier
@@ -112,7 +110,6 @@ private fun QrScannerScreenContent(
         )
         InfoBox(
             infoState = infoState,
-            onLink = onLink,
             onClose = onCloseToast,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
@@ -156,7 +153,6 @@ private fun Camera(
 @Composable
 private fun InfoBox(
     infoState: QrInfoState,
-    onLink: (link: Int) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier,
 ) = Box(
@@ -167,30 +163,18 @@ private fun InfoBox(
     FadingVisibility(visible = infoState != QrInfoState.Empty) {
         when (infoState) {
             QrInfoState.Empty -> {}
-            QrInfoState.Hint -> QrToastHint(
-                onClose = onClose,
-            )
-            QrInfoState.InvalidQr -> QrToastInvalidQr(
-                onClose = onClose,
-                onLink = onLink,
-            )
+            QrInfoState.Hint -> QrToastHint(onClose = onClose)
+            QrInfoState.InvalidCredentialOffer -> QrToastInvalidCredentialOffer(onClose = onClose)
             QrInfoState.Loading -> LoadingIndicator(modifier)
-            QrInfoState.NetworkError -> QrToastNetworkError(
-                onClose = onClose,
-            )
-            QrInfoState.NoCompatibleCredential -> QrToastNoCompatibleCredential(
-                onClose = onClose,
-                onLink = onLink,
-            )
-            QrInfoState.EmptyWallet -> QrToastEmptyWallet(
-                onClose = onClose,
-            )
-            QrInfoState.UnexpectedError -> QrToastUnexpectedError(
-                onClose = onClose,
-            )
-            QrInfoState.InvalidPresentation -> QrToastInvalidPresentation(
-                onClose = onClose,
-            )
+            QrInfoState.NetworkError -> QrToastNetworkError(onClose = onClose)
+            QrInfoState.NoCompatibleCredential -> QrToastNoCompatibleCredential(onClose = onClose)
+            QrInfoState.EmptyWallet -> QrToastEmptyWallet(onClose = onClose)
+            QrInfoState.InvalidPresentation -> QrToastInvalidPresentation(onClose = onClose)
+            QrInfoState.ExpiredCredentialOffer -> QrToastExpiredCredentialOffer(onClose = onClose)
+            QrInfoState.UnknownIssuer -> QrToastUnknownIssuer(onClose = onClose)
+            QrInfoState.UnknownVerifier -> QrToastUnknownVerifier(onClose = onClose)
+            QrInfoState.UnexpectedError,
+            QrInfoState.InvalidQr -> QrToastInvalidQr(onClose = onClose)
         }
     }
 }
@@ -301,7 +285,6 @@ private fun QrScannerPreview(
             onFlashLightToggle = {},
             infoState = previewParams.infoState,
             onUp = {},
-            onLink = {},
             onCloseToast = {},
             scanIsRunning = true,
         )

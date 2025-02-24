@@ -22,6 +22,7 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
+import ch.admin.foitt.wallet.platform.utils.launchWithDelayedLoading
 import ch.admin.foitt.wallet.platform.utils.trackCompletion
 import ch.admin.foitt.walletcomposedestinations.destinations.ErrorScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationDeclinedScreenDestination
@@ -57,7 +58,7 @@ class PresentationRequestViewModel @Inject constructor(
     setFullscreenState: SetFullscreenState,
 ) : ScreenViewModel(setTopBarState, setFullscreenState) {
     override val topBarState: TopBarState = TopBarState.None
-    override val fullscreenState = FullscreenState.Insets
+    override val fullscreenState = FullscreenState.Fullscreen
 
     private val navArgs = PresentationRequestScreenDestination.argsFrom(savedStateHandle)
     private val compatibleCredential = navArgs.compatibleCredential
@@ -96,6 +97,9 @@ class PresentationRequestViewModel @Inject constructor(
     private val _isSubmitting = MutableStateFlow(false)
     val isSubmitting = _isSubmitting.asStateFlow()
 
+    private val _showDelayReason = MutableStateFlow(false)
+    val showDelayReason = _showDelayReason.asStateFlow()
+
     init {
         viewModelScope.launch {
             updateVerifierDisplayData()
@@ -103,24 +107,28 @@ class PresentationRequestViewModel @Inject constructor(
     }
 
     fun submit() {
-        viewModelScope.launch {
-            submitPresentation(
-                presentationRequest = presentationRequest,
-                compatibleCredential = compatibleCredential,
-            ).mapBoth(
-                success = { navigateToSuccess() },
-                failure = { error ->
-                    when (error) {
-                        PresentationRequestError.InvalidUrl,
-                        PresentationRequestError.RawSdJwtParsingError,
-                        PresentationRequestError.NetworkError,
-                        is PresentationRequestError.Unexpected -> navigateToFailure()
-
-                        PresentationRequestError.ValidationError -> navigateToValidationError()
-                    }
-                },
-            )
-        }.trackCompletion(_isSubmitting)
+        viewModelScope.launchWithDelayedLoading(
+            isLoadingFlow = _showDelayReason,
+            delay = DELAY_REASON_DURATION
+        ) {
+            viewModelScope.launch {
+                submitPresentation(
+                    presentationRequest = presentationRequest,
+                    compatibleCredential = compatibleCredential,
+                ).mapBoth(
+                    success = { navigateToSuccess() },
+                    failure = { error ->
+                        when (error) {
+                            PresentationRequestError.InvalidUrl,
+                            PresentationRequestError.RawSdJwtParsingError,
+                            PresentationRequestError.NetworkError,
+                            is PresentationRequestError.Unexpected -> navigateToFailure()
+                            PresentationRequestError.ValidationError -> navigateToValidationError()
+                        }
+                    },
+                )
+            }.trackCompletion(_isSubmitting)
+        }
     }
 
     fun onDecline() {
@@ -132,11 +140,18 @@ class PresentationRequestViewModel @Inject constructor(
                 Timber.w("Decline presentation error: $error")
             }
         }
-        navManager.navigateToAndClearCurrent(PresentationDeclinedScreenDestination)
+        navManager.navigateToAndClearCurrent(
+            direction = PresentationDeclinedScreenDestination(
+                issuerDisplayData = _verifierDisplayData.value,
+            )
+        )
     }
 
     private suspend fun updateVerifierDisplayData() {
-        val verifierDisplayData: ActorDisplayData = fetchVerifierDisplayData(navArgs.presentationRequest)
+        val verifierDisplayData: ActorDisplayData = fetchVerifierDisplayData(
+            navArgs.presentationRequest,
+            navArgs.shouldFetchTrustStatement,
+        )
         _verifierDisplayData.value = verifierDisplayData
     }
 
@@ -144,6 +159,7 @@ class PresentationRequestViewModel @Inject constructor(
         navManager.navigateToAndClearCurrent(
             direction = PresentationSuccessScreenDestination(
                 sentFields = getSentFields(),
+                issuerDisplayData = _verifierDisplayData.value,
             )
         )
     }
@@ -151,7 +167,7 @@ class PresentationRequestViewModel @Inject constructor(
     private fun navigateToValidationError() {
         navManager.navigateToAndClearCurrent(
             direction = PresentationValidationErrorScreenDestination(
-                sentFields = getSentFields(),
+                issuerDisplayData = _verifierDisplayData.value
             )
         )
     }
@@ -165,6 +181,8 @@ class PresentationRequestViewModel @Inject constructor(
         PresentationFailureScreenDestination(
             compatibleCredential = compatibleCredential,
             presentationRequest = presentationRequest,
+            issuerDisplayData = _verifierDisplayData.value,
+            shouldFetchTrustStatement = navArgs.shouldFetchTrustStatement,
         )
     )
 
@@ -177,5 +195,9 @@ class PresentationRequestViewModel @Inject constructor(
             credential = getCredentialCardState(credential),
             requestedClaims = requestedClaims,
         )
+    }
+
+    companion object {
+        private const val DELAY_REASON_DURATION = 5000L
     }
 }

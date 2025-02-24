@@ -10,13 +10,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTheme
 
 @Composable
-fun Avatar(imagePainter: Painter?, size: AvatarSize) {
+fun Avatar(
+    imagePainter: Painter?,
+    size: AvatarSize,
+    imageTint: Color? = null,
+) {
     Box(
         modifier = Modifier
             .size(size.toDp())
@@ -29,7 +36,10 @@ fun Avatar(imagePainter: Painter?, size: AvatarSize) {
             Image(
                 painter = imagePainter,
                 contentScale = ContentScale.Fit,
-                contentDescription = null
+                contentDescription = null,
+                colorFilter = imageTint?.let {
+                    ColorFilter.tint(imageTint)
+                }
             )
         }
     }
@@ -42,9 +52,9 @@ private fun AvatarSize.toDp() = when (this) {
 }
 
 private val AvatarSize.internalPadding get() = when (this) {
-    AvatarSize.SMALL -> Sizes.s01
-    AvatarSize.MEDIUM -> Sizes.s02
-    AvatarSize.LARGE -> Sizes.s03
+    AvatarSize.SMALL -> 7.dp
+    AvatarSize.MEDIUM -> 10.dp
+    AvatarSize.LARGE -> 14.dp
 }
 
 enum class AvatarSize {

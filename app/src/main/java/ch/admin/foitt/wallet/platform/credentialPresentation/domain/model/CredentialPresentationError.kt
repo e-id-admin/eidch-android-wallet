@@ -6,6 +6,8 @@ import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.model.GetAnyCredentialsError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
+import ch.admin.foitt.wallet.platform.utils.JsonError
+import ch.admin.foitt.wallet.platform.utils.JsonParsingError
 import timber.log.Timber
 
 internal interface CredentialPresentationError {
@@ -14,10 +16,13 @@ internal interface CredentialPresentationError {
     data class InvalidPresentation(val responseUri: String) :
         ProcessPresentationRequestError,
         ValidatePresentationRequestError
+    data object UnknownVerifier : ValidatePresentationRequestError, ProcessPresentationRequestError
+    data object NetworkError : ValidatePresentationRequestError, ProcessPresentationRequestError
     data class Unexpected(val cause: Throwable?) :
         ProcessPresentationRequestError,
         GetCompatibleCredentialsError,
-        GetRequestedFieldsError
+        GetRequestedFieldsError,
+        ValidatePresentationRequestError
 }
 
 sealed interface ProcessPresentationRequestError
@@ -27,6 +32,9 @@ sealed interface GetRequestedFieldsError
 
 internal fun ValidatePresentationRequestError.toProcessPresentationRequestError(): ProcessPresentationRequestError = when (this) {
     is CredentialPresentationError.InvalidPresentation -> this
+    is CredentialPresentationError.Unexpected -> this
+    is CredentialPresentationError.UnknownVerifier -> this
+    is CredentialPresentationError.NetworkError -> this
 }
 
 internal fun CredentialRepositoryError.toProcessPresentationRequestError(): ProcessPresentationRequestError = when (this) {
@@ -56,7 +64,17 @@ internal fun Throwable.toGetRequestedFieldsError(): GetRequestedFieldsError {
 }
 
 internal fun VerifyJwtError.toValidatePresentationRequestError(responseUri: String): ValidatePresentationRequestError = when (this) {
-    VcSdJwtError.NetworkError,
+    VcSdJwtError.NetworkError -> CredentialPresentationError.NetworkError
     VcSdJwtError.InvalidJwt,
     is VcSdJwtError.Unexpected -> CredentialPresentationError.InvalidPresentation(responseUri)
+    VcSdJwtError.IssuerValidationFailed -> CredentialPresentationError.UnknownVerifier
+}
+
+internal fun Throwable.toValidatePresentationRequestError(responseUri: String): ValidatePresentationRequestError {
+    Timber.e(this)
+    return CredentialPresentationError.InvalidPresentation(responseUri)
+}
+
+internal fun JsonParsingError.toValidatePresentationRequestError(): ValidatePresentationRequestError = when (this) {
+    is JsonError.Unexpected -> CredentialPresentationError.Unexpected(throwable)
 }

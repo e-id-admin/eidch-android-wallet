@@ -6,13 +6,14 @@ import kotlinx.serialization.json.JsonElement
 
 interface AnyCredential {
     val id: Long?
-    val signingKeyId: String?
-    val signingAlgorithm: SigningAlgorithm?
+    val keyBindingIdentifier: String?
+    val keyBindingAlgorithm: SigningAlgorithm?
     val payload: String
     val format: CredentialFormat
     val json: JsonElement
     val claimsPath: String
     val validity: CredentialValidity
+    val issuer: String?
 
     fun createVerifiableCredential(requestedFieldKeys: List<String>): String
 }

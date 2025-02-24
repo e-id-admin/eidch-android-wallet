@@ -2,16 +2,16 @@ package ch.admin.foitt.wallet.platform.credential.presentation.model
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
+import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialDisplayStatus
 
 data class CredentialCardState(
     val credentialId: Long,
     val title: String?,
     val subtitle: String?,
-    val status: CredentialStatus?,
+    val status: CredentialDisplayStatus?,
     val logo: Painter?,
     val backgroundColor: Color,
-    val textColor: Color,
+    val contentColor: Color,
     val borderColor: Color,
     val isCredentialFromBetaIssuer: Boolean,
 ) {
@@ -24,7 +24,7 @@ data class CredentialCardState(
                 status = null,
                 logo = null,
                 backgroundColor = defaultCardColor,
-                textColor = defaultCardTextColor,
+                contentColor = defaultCardTextColor,
                 borderColor = defaultCardColor,
                 isCredentialFromBetaIssuer = false
             )
@@ -32,6 +32,5 @@ data class CredentialCardState(
 
         val defaultCardColor = Color(0xFF5E6D7E)
         val defaultCardTextColor = Color(0xFFF8FAFC)
-        const val lightLevels = 4f
     }
 }

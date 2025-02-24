@@ -7,12 +7,12 @@ import ch.admin.foitt.wallet.feature.home.screens.HomeScreen
 import ch.admin.foitt.wallet.feature.onboarding.screens.OnboardingBiometricScreen
 import ch.admin.foitt.wallet.feature.onboarding.screens.OnboardingIntroScreen
 import ch.admin.foitt.wallet.feature.onboarding.screens.OnboardingLocalDataScreen
-import ch.admin.foitt.wallet.feature.onboarding.screens.OnboardingPinExplanationScreen
+import ch.admin.foitt.wallet.feature.onboarding.screens.OnboardingPasswordExplanationScreen
 import ch.admin.foitt.wallet.feature.onboarding.screens.OnboardingPresentScreen
 import ch.admin.foitt.wallet.feature.onboarding.screens.OnboardingSuccessScreen
 import ch.admin.foitt.wallet.feature.onboarding.screens.OnboardingUserPrivacyScreen
-import ch.admin.foitt.wallet.feature.onboarding.screens.PinConfirmationScreen
-import ch.admin.foitt.wallet.feature.onboarding.screens.PinEntryScreen
+import ch.admin.foitt.wallet.feature.onboarding.screens.PasswordConfirmationScreen
+import ch.admin.foitt.wallet.feature.onboarding.screens.PasswordEntryScreen
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.test.runTest
@@ -47,16 +47,16 @@ class OnboardingIntroScreenTest {
         val introScreen = OnboardingIntroScreen(activityRule)
         introScreen.isDisplayed()
         introScreen.nextScreen()
-        val presentScreen = OnboardingPresentScreen(activityRule)
-        presentScreen.isDisplayed()
-        presentScreen.nextScreen()
         val localDataScreen = OnboardingLocalDataScreen(activityRule)
         localDataScreen.isDisplayed()
         localDataScreen.nextScreen()
+        val presentScreen = OnboardingPresentScreen(activityRule)
+        presentScreen.isDisplayed()
+        presentScreen.nextScreen()
         val userPrivacyScreen = OnboardingUserPrivacyScreen(activityRule)
         userPrivacyScreen.isDisplayed()
         userPrivacyScreen.accept()
-        val pinExplanationScreen = OnboardingPinExplanationScreen(activityRule)
+        val pinExplanationScreen = OnboardingPasswordExplanationScreen(activityRule)
         pinExplanationScreen.isDisplayed()
         pinExplanationScreen.nextScreen()
     }
@@ -66,24 +66,24 @@ class OnboardingIntroScreenTest {
         val introScreen = OnboardingIntroScreen(activityRule)
         introScreen.isDisplayed()
         introScreen.nextScreen()
-        val presentScreen = OnboardingPresentScreen(activityRule)
-        presentScreen.isDisplayed()
-        presentScreen.nextScreen()
         val localDataScreen = OnboardingLocalDataScreen(activityRule)
         localDataScreen.isDisplayed()
         localDataScreen.nextScreen()
+        val presentScreen = OnboardingPresentScreen(activityRule)
+        presentScreen.isDisplayed()
+        presentScreen.nextScreen()
         val userPrivacyScreen = OnboardingUserPrivacyScreen(activityRule)
         userPrivacyScreen.isDisplayed()
         userPrivacyScreen.accept()
-        val pinExplanationScreen = OnboardingPinExplanationScreen(activityRule)
+        val pinExplanationScreen = OnboardingPasswordExplanationScreen(activityRule)
         pinExplanationScreen.isDisplayed()
         pinExplanationScreen.clickBack()
         userPrivacyScreen.isDisplayed()
         userPrivacyScreen.clickBack()
-        localDataScreen.isDisplayed()
-        localDataScreen.clickBack()
         presentScreen.isDisplayed()
         presentScreen.clickBack()
+        localDataScreen.isDisplayed()
+        localDataScreen.clickBack()
         introScreen.isDisplayed()
 
     }
@@ -93,14 +93,14 @@ class OnboardingIntroScreenTest {
         val introScreen = OnboardingIntroScreen(activityRule)
         introScreen.isDisplayed()
         introScreen.nextScreen()
-        val presentScreen = OnboardingPresentScreen(activityRule)
-        presentScreen.isDisplayed()
-        presentScreen.nextScreen()
         val localDataScreen = OnboardingLocalDataScreen(activityRule)
         localDataScreen.isDisplayed()
-        localDataScreen.swipeBack()
+        localDataScreen.nextScreen()
+        val presentScreen = OnboardingPresentScreen(activityRule)
         presentScreen.isDisplayed()
         presentScreen.swipeBack()
+        localDataScreen.isDisplayed()
+        localDataScreen.swipeBack()
         introScreen.isDisplayed()
         introScreen.swipeBack()
         introScreen.isDisplayed()
@@ -111,7 +111,7 @@ class OnboardingIntroScreenTest {
         val userPrivacyScreen = OnboardingUserPrivacyScreen(activityRule)
         userPrivacyScreen.navigateToScreen()
         userPrivacyScreen.decline()
-        val pinExplanationScreen = OnboardingPinExplanationScreen(activityRule)
+        val pinExplanationScreen = OnboardingPasswordExplanationScreen(activityRule)
         pinExplanationScreen.isDisplayed()
     }
 
@@ -120,7 +120,7 @@ class OnboardingIntroScreenTest {
         val userPrivacyScreen = OnboardingUserPrivacyScreen(activityRule)
         userPrivacyScreen.navigateToScreen()
         userPrivacyScreen.decline()
-        val pinExplanationScreen = OnboardingPinExplanationScreen(activityRule)
+        val pinExplanationScreen = OnboardingPasswordExplanationScreen(activityRule)
         pinExplanationScreen.isDisplayed()
         pinExplanationScreen.clickBack()
         userPrivacyScreen.isDisplayed()
@@ -131,13 +131,13 @@ class OnboardingIntroScreenTest {
     @Test
     fun test_full_onboarding_flow() = runTest {
         val passphrase = "123456"
-        val pinEntryScreen = PinEntryScreen(activityRule)
-        pinEntryScreen.navigateToScreen()
-        pinEntryScreen.enterPin(passphrase)
-        pinEntryScreen.nextScreen()
-        val pinConfirmationScreen = PinConfirmationScreen(activityRule)
-        pinConfirmationScreen.enterPin(passphrase)
-        pinEntryScreen.nextScreen()
+        val passwordEntryScreen = PasswordEntryScreen(activityRule)
+        passwordEntryScreen.navigateToScreen()
+        passwordEntryScreen.enterPin(passphrase)
+        passwordEntryScreen.nextScreen()
+        val passwordConfirmationScreen = PasswordConfirmationScreen(activityRule)
+        passwordConfirmationScreen.enterPin(passphrase)
+        passwordEntryScreen.nextScreen()
         val biometricScreen = OnboardingBiometricScreen(activityRule)
         biometricScreen.isDisplayed()
         biometricScreen.noBiometric()

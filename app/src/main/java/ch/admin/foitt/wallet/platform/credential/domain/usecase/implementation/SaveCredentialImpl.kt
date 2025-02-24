@@ -26,9 +26,9 @@ import com.jayway.jsonpath.JsonPath.using
 import com.jayway.jsonpath.Option
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -69,43 +69,38 @@ class SaveCredentialImpl @Inject constructor(
         credentialConfiguration: AnyCredentialConfiguration,
         credential: AnyCredential,
     ): Result<Map<CredentialClaim, List<Display>>, SaveCredentialError> = coroutineBinding {
-        val returnMap = mutableMapOf<CredentialClaim, List<Display>>()
         val metadataClaims = getMetadataClaims(credentialConfiguration = credentialConfiguration).bind()
 
-        val conf: Configuration = Configuration.builder().options(Option.SUPPRESS_EXCEPTIONS, Option.ALWAYS_RETURN_LIST).build()
-
-        val json = runSuspendCatching { credential.json }
+        val credentialJson = runSuspendCatching { credential.json }
             .mapError(Throwable::toSaveCredentialError)
             .bind()
+        val conf: Configuration = Configuration.builder().options(Option.SUPPRESS_EXCEPTIONS, Option.ALWAYS_RETURN_LIST).build()
         val credentialClaims: Map<String, String> = using(conf)
-            .parse(json)
+            .parse(credentialJson)
             .read<List<Map<String, JsonElement>>>(credential.claimsPath)
             .firstOrNull()
             ?.mapValues {
                 when (it.value) {
-                    is JsonPrimitive -> it.value.jsonPrimitive.content
+                    is JsonPrimitive -> it.value.jsonPrimitive.contentOrNull ?: ""
                     is JsonArray -> it.value.jsonArray.toString()
                     is JsonObject -> it.value.jsonObject.toString()
-                    is JsonNull -> ""
                 }
             } ?: emptyMap()
 
-        metadataClaims.forEach { (claimKey: String, claim: Claim) ->
-            val value = credentialClaims[claimKey] ?: return@forEach
-            val credentialClaim = CredentialClaim(
-                credentialId = credentialId,
-                key = claimKey,
-                value = value,
-                valueType = claim.valueType,
-                order = credentialConfiguration.order?.indexOf(claimKey) ?: -1
-            )
-
-            val claimDisplays = claim.display.addFallbackLanguageIfNecessary(claimKey)
-
-            returnMap[credentialClaim] = claimDisplays
-        }
-
-        returnMap
+        credentialClaims
+            .filterNot { reserved_claim_names.contains(it.key) }
+            .map { (claimKey, claimValue) ->
+                val metadata = metadataClaims[claimKey]
+                val credentialClaim = CredentialClaim(
+                    credentialId = credentialId,
+                    key = claimKey,
+                    value = claimValue,
+                    valueType = metadata?.valueType ?: DEFAULT_VALUE_TYPE,
+                    order = credentialConfiguration.order?.indexOf(claimKey) ?: -1
+                )
+                val claimDisplays = metadata?.display.addFallbackLanguageIfNecessary(claimKey)
+                credentialClaim to claimDisplays
+            }.toMap()
     }
 
     private fun getMetadataClaims(
@@ -122,21 +117,34 @@ class SaveCredentialImpl @Inject constructor(
         localizedCredentialDisplays: List<Display>,
         localizedClaims: Map<CredentialClaim, List<Display>>,
     ) = LocalizedCredentialOffer(
-        privateKeyIdentifier = credential.signingKeyId,
-        signingAlgorithm = credential.signingAlgorithm,
+        keyBindingIdentifier = credential.keyBindingIdentifier,
+        keyBindingAlgorithm = credential.keyBindingAlgorithm,
         payload = credential.payload,
         format = credential.format,
         issuerDisplays = localizedIssuerDisplays,
         credentialDisplays = localizedCredentialDisplays,
         claims = localizedClaims,
+        issuer = credential.issuer
     )
 
     private fun List<Display>?.addFallbackLanguageIfNecessary(name: String): List<Display> {
-        if (this == null) return listOf(Display(name = name, locale = DisplayLanguage.FALLBACK))
+        if (this == null) {
+            return listOf(Display(name = name, locale = DisplayLanguage.FALLBACK))
+        }
+
         return if (none { it.locale == DisplayLanguage.FALLBACK }) {
             this + Display(name = name, locale = DisplayLanguage.FALLBACK)
         } else {
             this
         }
+    }
+
+    companion object {
+        // Reserved claim names
+        // See https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-04.html#name-registered-jwt-claims and
+        // https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-10.html#section-5.1
+        private val reserved_claim_names =
+            listOf("iss", "nbf", "exp", "cnf", "vct", "status", "sub", "iat", "_sd_alg", "_sd")
+        private const val DEFAULT_VALUE_TYPE = "string"
     }
 }

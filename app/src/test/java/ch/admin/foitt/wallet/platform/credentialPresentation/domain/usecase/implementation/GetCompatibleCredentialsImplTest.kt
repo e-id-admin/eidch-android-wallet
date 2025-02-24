@@ -173,8 +173,8 @@ class GetCompatibleCredentialsImplTest {
             requestedFields2 = requestedFields2,
         )
 
-        every { mockCredential.signingAlgorithm } returns null
-        every { mockCredential2.signingAlgorithm } returns null
+        every { mockCredential.keyBindingAlgorithm } returns null
+        every { mockCredential2.keyBindingAlgorithm } returns null
         every { inputDescriptor.formats } returns listOf(inputDescriptorFormatVcSdJwtEmpty)
 
         val result = useCase(inputDescriptors).assertOk()
@@ -195,7 +195,7 @@ class GetCompatibleCredentialsImplTest {
             requestedFields2 = requestedFields2,
         )
 
-        every { mockCredential2.signingAlgorithm } returns SigningAlgorithm.ES512
+        every { mockCredential2.keyBindingAlgorithm } returns SigningAlgorithm.ES512
 
         val result = useCase(inputDescriptors).assertOk()
 
@@ -213,7 +213,7 @@ class GetCompatibleCredentialsImplTest {
             requestedFields2 = requestedFields2,
         )
 
-        every { mockCredential.signingAlgorithm } returns null
+        every { mockCredential.keyBindingAlgorithm } returns null
 
         val result = useCase(inputDescriptors).assertOk()
 
@@ -232,12 +232,12 @@ class GetCompatibleCredentialsImplTest {
         every { mockCredential.json.toString() } returns CREDENTIAL_JSON
         every { mockCredential.format } returns CredentialFormat.VC_SD_JWT
         every { mockCredential.payload } returns CREDENTIAL_PAYLOAD
-        every { mockCredential.signingAlgorithm } returns SigningAlgorithm.ES256
+        every { mockCredential.keyBindingAlgorithm } returns SigningAlgorithm.ES256
         every { mockCredential2.id } returns CREDENTIAL_ID_2
         every { mockCredential2.json.toString() } returns CREDENTIAL_JSON_2
         every { mockCredential2.format } returns CredentialFormat.VC_SD_JWT
         every { mockCredential2.payload } returns CREDENTIAL_PAYLOAD
-        every { mockCredential2.signingAlgorithm } returns SigningAlgorithm.ES256
+        every { mockCredential2.keyBindingAlgorithm } returns SigningAlgorithm.ES256
         every { inputDescriptor.formats } returns listOf(inputDescriptorFormatVcSdJwt)
         coEvery { mockGetAnyCredentials() } returns Ok(credentials)
         coEvery { mockGetRequestedFields(CREDENTIAL_JSON, inputDescriptors) } returns Ok(requestedFields)

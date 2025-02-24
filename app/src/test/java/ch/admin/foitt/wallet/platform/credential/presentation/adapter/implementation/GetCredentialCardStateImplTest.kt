@@ -55,7 +55,7 @@ class GetCredentialCardStateImplTest {
         val credentialPreview: CredentialPreview = MockCredentialDetail.credentialPreview
         val result = getCredentialCardState(credentialPreview = credentialPreview)
 
-        assertEquals(result.textColor, Color.Black, "black text used")
+        assertEquals(result.contentColor, Color.Black, "black text used")
     }
 
     @Test
@@ -66,7 +66,7 @@ class GetCredentialCardStateImplTest {
         val credentialPreview: CredentialPreview = MockCredentialDetail.credentialPreview
         val result = getCredentialCardState(credentialPreview = credentialPreview)
 
-        assertEquals(result.textColor, Color.White, "white text used")
+        assertEquals(result.contentColor, Color.White, "white text used")
     }
 
     @Test
@@ -77,6 +77,6 @@ class GetCredentialCardStateImplTest {
         val credentialPreview: CredentialPreview = MockCredentialDetail.credentialPreview
         val result = getCredentialCardState(credentialPreview = credentialPreview)
 
-        assertEquals(result.textColor, Color.Black, "black text used")
+        assertEquals(result.contentColor, Color.Black, "black text used")
     }
 }

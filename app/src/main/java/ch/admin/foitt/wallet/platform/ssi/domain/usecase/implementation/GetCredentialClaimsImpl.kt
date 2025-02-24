@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation
 
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
+import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.GetCredentialClaimsError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.toGetCredentialClaimsError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialClaimRepo
@@ -14,10 +15,8 @@ class GetCredentialClaimsImpl @Inject constructor(
     private val credentialClaimRepo: CredentialClaimRepo,
 ) : GetCredentialClaims {
     override suspend fun invoke(credentialId: Long): Result<List<CredentialClaim>, GetCredentialClaimsError> = coroutineBinding {
-        val claims = credentialClaimRepo.getByCredentialId(credentialId)
-            .mapError { error ->
-                error.toGetCredentialClaimsError()
-            }.bind()
-        claims
+        credentialClaimRepo.getByCredentialId(credentialId)
+            .mapError(CredentialClaimRepositoryError::toGetCredentialClaimsError)
+            .bind()
     }
 }

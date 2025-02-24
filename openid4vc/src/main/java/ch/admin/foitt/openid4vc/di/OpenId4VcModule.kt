@@ -41,11 +41,11 @@ import ch.admin.foitt.openid4vc.domain.usecase.implementation.VerifyJwtSignature
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.CreateVcSdJwtDescriptorMap
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.CreateVcSdJwtVerifiablePresentation
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.FetchVcSdJwtCredential
-import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.PublicKeyVerifier
+import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.VerifyPublicKey
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.CreateVcSdJwtDescriptorMapImpl
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.CreateVcSdJwtVerifiablePresentationImpl
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.FetchVcSdJwtCredentialImpl
-import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.PublicKeyVerifierImpl
+import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.VerifyPublicKeyImpl
 import ch.admin.foitt.openid4vc.utils.SafeJson
 import dagger.Binds
 import dagger.Module
@@ -62,6 +62,7 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.ClassDiscriminatorMode
 import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.time.Clock
@@ -101,6 +102,7 @@ internal class OpenId4VcModule {
             ignoreUnknownKeys = true
             explicitNulls = false
             coerceInputValues = true
+            classDiscriminatorMode = ClassDiscriminatorMode.NONE
         }
     }
 
@@ -223,9 +225,9 @@ internal interface OpenId4VCBindings {
     ): VerifyJwtSignature
 
     @Binds
-    fun bindPublicKeyVerifier(
-        verifier: PublicKeyVerifierImpl
-    ): PublicKeyVerifier
+    fun bindVerifyPublicKey(
+        verifier: VerifyPublicKeyImpl
+    ): VerifyPublicKey
 
     @Binds
     fun bindResolveDid(

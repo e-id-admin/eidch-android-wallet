@@ -23,16 +23,12 @@ sealed interface FetchTrustStatementFromDidError
 
 fun VerifyJwtError.toValidateTrustStatementError(): ValidateTrustStatementError = when (this) {
     VcSdJwtError.NetworkError,
-    VcSdJwtError.InvalidJwt -> TrustRegistryError.Unexpected(null)
+    VcSdJwtError.InvalidJwt,
+    VcSdJwtError.IssuerValidationFailed -> TrustRegistryError.Unexpected(null)
     is VcSdJwtError.Unexpected -> TrustRegistryError.Unexpected(cause)
 }
 
 fun Throwable.toGetTrustUrlFromDidError(): GetTrustUrlFromDidError {
-    Timber.e(this)
-    return TrustRegistryError.Unexpected(this)
-}
-
-fun Throwable.toFetchAnyCredentialTrustStatementError(): FetchAnyCredentialTrustStatementError {
     Timber.e(this)
     return TrustRegistryError.Unexpected(this)
 }
@@ -50,10 +46,6 @@ fun Throwable.toValidateTrustStatementError(): ValidateTrustStatementError {
 fun Throwable.toFetchTrustStatementFromDidError(): FetchTrustStatementFromDidError {
     Timber.e(this)
     return TrustRegistryError.Unexpected(this)
-}
-
-fun FetchTrustStatementFromDidError.toFetchAnyCredentialTrustStatementError(): FetchAnyCredentialTrustStatementError = when (this) {
-    is TrustRegistryError.Unexpected -> this
 }
 
 fun GetTrustUrlFromDidError.toFetchTrustStatementFromDidError(): FetchTrustStatementFromDidError = when (this) {

@@ -10,7 +10,6 @@ import kotlinx.serialization.json.putJsonArray
 
 internal fun InputDescriptorFormat.VcSdJwt.Companion.deserialize(inputDescriptorJson: JsonObject): InputDescriptorFormat.VcSdJwt {
     val sdJwtAlgorithms = inputDescriptorJson[SDJWT_ALGORITHM_KEY]
-        ?: inputDescriptorJson[JWT_VC_ALGORITHM_KEY]
 
     requireNotNull(sdJwtAlgorithms)
     val kbJwtAlgorithms = inputDescriptorJson[KBJWT_ALGORITHM_KB_KEY]

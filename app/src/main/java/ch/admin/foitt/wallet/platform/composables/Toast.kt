@@ -35,7 +35,7 @@ import ch.admin.foitt.wallet.theme.WalletTheme
 @Composable
 fun PassphraseValidationErrorToastFixed(
     modifier: Modifier = Modifier,
-    @StringRes text: Int = R.string.onboarding_pin_code_confirm_error,
+    @StringRes text: Int = R.string.tk_global_warning_alt,
     iconEndContentDescription: Int? = R.string.tk_global_closewarning_alt,
     onIconEnd: () -> Unit,
 ) = Toast(
@@ -54,7 +54,7 @@ fun PassphraseValidationErrorToastFixed(
 @Composable
 fun PassphraseValidationErrorToast(
     modifier: Modifier = Modifier,
-    @StringRes text: Int = R.string.onboarding_pin_code_confirm_error,
+    @StringRes text: Int = R.string.tk_global_warning_alt,
     iconEndContentDescription: Int? = R.string.tk_global_closewarning_alt,
     onIconEnd: () -> Unit,
 ) = Toast(
@@ -167,9 +167,9 @@ fun Toast(
 private fun ToastPreview() {
     WalletTheme {
         Toast(
-            headline = R.string.onboarding_pin_code_confirm_error,
-            text = R.string.onboarding_intro_secondary,
-            linkText = R.string.onboarding_pin_code_confirm_error,
+            headline = R.string.tk_global_warning_alt,
+            text = R.string.tk_onboarding_start_body,
+            linkText = R.string.tk_global_warning_alt,
             iconStart = R.drawable.wallet_ic_qr,
             iconEnd = R.drawable.wallet_ic_cross,
             onLink = { },
@@ -183,7 +183,7 @@ private fun ToastPreview() {
 private fun ErrorToastPreview() {
     WalletTheme {
         PassphraseValidationErrorToast(
-            text = R.string.onboarding_pin_code_confirm_error,
+            text = R.string.tk_global_warning_alt,
             onIconEnd = {},
         )
     }

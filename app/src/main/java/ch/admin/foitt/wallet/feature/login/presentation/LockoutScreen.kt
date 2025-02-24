@@ -132,9 +132,9 @@ private fun Content(
     WalletTexts.TitleSmall(
         text = pluralStringResource(
             id = if (countdown.second == LockoutViewModel.TimeUnit.MINUTES) {
-                R.plurals.tk_login_locked_body
+                R.plurals.tk_login_locked_body_android
             } else {
-                R.plurals.tk_login_locked_seconds
+                R.plurals.tk_login_locked_seconds_android
             },
             count = countdown.first.toInt(),
             formatArgs = arrayOf(countdown.first),

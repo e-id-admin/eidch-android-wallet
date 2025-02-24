@@ -15,7 +15,7 @@ class CredentialStatusPropertiesSerializer :
     override fun selectDeserializer(element: JsonElement): DeserializationStrategy<CredentialStatusProperties> {
         val jsonObject = element.jsonObject
         return when {
-            jsonObject.containsKey("status") -> TokenStatusListProperties.serializer()
+            jsonObject.containsKey("status_list") -> TokenStatusListProperties.serializer()
             else -> error("Unsupported credential status properties")
         }
     }
@@ -23,20 +23,14 @@ class CredentialStatusPropertiesSerializer :
 
 @Serializable
 data class TokenStatusListProperties(
-    @SerialName("status")
-    val status: Status? = null,
+    @SerialName("status_list")
+    val statusList: StatusList
 ) : CredentialStatusProperties {
     @Serializable
-    data class Status(
-        @SerialName("status_list")
-        val statusList: StatusList
-    ) {
-        @Serializable
-        data class StatusList(
-            @SerialName("idx")
-            val index: Int,
-            @SerialName("uri")
-            val uri: String
-        )
-    }
+    data class StatusList(
+        @SerialName("idx")
+        val index: Int,
+        @SerialName("uri")
+        val uri: String
+    )
 }

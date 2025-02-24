@@ -40,7 +40,7 @@ private fun CredentialWrongDataScreenContent(
 ) {
     Spacer(modifier = Modifier.height(Sizes.s06))
     WalletTexts.TitleLarge(
-        text = stringResource(id = R.string.tk_global_wrong_data),
+        text = stringResource(id = R.string.tk_global_wrongdata),
     )
     Spacer(modifier = Modifier.height(Sizes.s05))
     WalletTexts.BodyLarge(

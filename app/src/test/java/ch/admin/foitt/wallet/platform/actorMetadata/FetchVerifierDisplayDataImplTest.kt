@@ -2,8 +2,6 @@ package ch.admin.foitt.wallet.platform.actorMetadata
 
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.ClientMetaData
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.ClientName
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JsonPresentationRequest
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JwtPresentationRequest
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.LogoUri
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
@@ -34,10 +32,7 @@ class FetchVerifierDisplayDataImplTest {
     private lateinit var mockFetchTrustStatementFromDid: FetchTrustStatementFromDid
 
     @MockK
-    private lateinit var mockPresentationRequestJwt: JwtPresentationRequest
-
-    @MockK
-    private lateinit var mockPresentationRequestJson: JsonPresentationRequest
+    private lateinit var mockPresentationRequest: PresentationRequest
 
     @MockK
     private lateinit var mockTrustStatement01: TrustStatement
@@ -66,7 +61,10 @@ class FetchVerifierDisplayDataImplTest {
 
     @Test
     fun `A trust statement is fetched using the presentation request client id`(): Unit = runTest {
-        useCase(mockPresentationRequestJwt)
+        useCase(
+            presentationRequest = mockPresentationRequest,
+            shouldFetchTrustStatement = true,
+        )
 
         coVerifyOrder {
             mockFetchTrustStatementFromDid.invoke(did = clientId)
@@ -75,7 +73,10 @@ class FetchVerifierDisplayDataImplTest {
 
     @Test
     fun `A valid trust statement will display as trusted`(): Unit = runTest {
-        val displayData: ActorDisplayData = useCase(mockPresentationRequestJwt)
+        val displayData: ActorDisplayData = useCase(
+            presentationRequest = mockPresentationRequest,
+            shouldFetchTrustStatement = true,
+        )
 
         assertEquals(TrustStatus.TRUSTED, displayData.trustStatus)
     }
@@ -83,24 +84,20 @@ class FetchVerifierDisplayDataImplTest {
     @Test
     fun `An invalid trust statement will display as not trusted`(): Unit = runTest {
         coEvery { mockFetchTrustStatementFromDid.invoke(did = any()) } returns trustRegistryError
-        val displayData: ActorDisplayData = useCase(mockPresentationRequestJwt)
+        val displayData: ActorDisplayData = useCase(
+            presentationRequest = mockPresentationRequest,
+            shouldFetchTrustStatement = true,
+        )
 
         assertEquals(TrustStatus.NOT_TRUSTED, displayData.trustStatus)
     }
 
     @Test
-    fun `The trust statement is not fetched if the presentation request is not a jwt`(): Unit = runTest {
-        useCase(mockPresentationRequestJson)
-
-        coVerify(exactly = 0) {
-            mockFetchTrustStatementFromDid.invoke(did = any())
-        }
-    }
-
-    @Test
-    fun `The trust statement is not fetched if cliendIdScheme is not a Did`(): Unit = runTest {
-        coEvery { mockPresentationRequestJwt.clientIdScheme } returns "clientIdScheme"
-        useCase(mockPresentationRequestJwt)
+    fun `The trust statement is not fetched if the parameter is set to false`(): Unit = runTest {
+        useCase(
+            presentationRequest = mockPresentationRequest,
+            shouldFetchTrustStatement = false,
+        )
 
         coVerify(exactly = 0) {
             mockFetchTrustStatementFromDid.invoke(did = any())
@@ -109,7 +106,10 @@ class FetchVerifierDisplayDataImplTest {
 
     @Test
     fun `Valid trust statement data is shown first`(): Unit = runTest {
-        val displayData: ActorDisplayData = useCase(mockPresentationRequestJwt)
+        val displayData: ActorDisplayData = useCase(
+            presentationRequest = mockPresentationRequest,
+            shouldFetchTrustStatement = true,
+        )
 
         assertEquals(mockTrustedNamesDisplay, displayData.name)
         assertEquals(mockTrustedLogosDisplay, displayData.image)
@@ -118,7 +118,10 @@ class FetchVerifierDisplayDataImplTest {
     @Test
     fun `In case of invalid trust statement, falls back to the presentation request metadata`(): Unit = runTest {
         coEvery { mockFetchTrustStatementFromDid.invoke(did = any()) } returns trustRegistryError
-        val displayData: ActorDisplayData = useCase(mockPresentationRequestJwt)
+        val displayData: ActorDisplayData = useCase(
+            presentationRequest = mockPresentationRequest,
+            shouldFetchTrustStatement = true,
+        )
 
         assertEquals(mockMetadataNameDisplays, displayData.name)
         assertEquals(mockMetadataLogoDisplays, displayData.image)
@@ -127,21 +130,19 @@ class FetchVerifierDisplayDataImplTest {
     @Test
     fun `Missing both client metadata and trust statement leads to empty display data`(): Unit = runTest {
         coEvery { mockFetchTrustStatementFromDid.invoke(did = any()) } returns trustRegistryError
-        coEvery { mockPresentationRequestJwt.clientMetaData } returns null
+        coEvery { mockPresentationRequest.clientMetaData } returns null
 
-        val displayData: ActorDisplayData = useCase(mockPresentationRequestJwt)
+        val displayData: ActorDisplayData = useCase(
+            presentationRequest = mockPresentationRequest,
+            shouldFetchTrustStatement = true,
+        )
 
         assertEquals(emptyActorDisplayData, displayData)
     }
 
     fun defaultPresentationRequestMocks() {
-        coEvery { mockPresentationRequestJwt.clientId } returns clientId
-        coEvery { mockPresentationRequestJwt.clientMetaData } returns mockClientMetatdata
-        coEvery { mockPresentationRequestJwt.clientIdScheme } returns PresentationRequest.DID
-
-        coEvery { mockPresentationRequestJson.clientId } returns clientId
-        coEvery { mockPresentationRequestJson.clientMetaData } returns mockClientMetatdata
-        coEvery { mockPresentationRequestJson.clientIdScheme } returns PresentationRequest.DID
+        coEvery { mockPresentationRequest.clientId } returns clientId
+        coEvery { mockPresentationRequest.clientMetaData } returns mockClientMetatdata
     }
 
     //region mock data

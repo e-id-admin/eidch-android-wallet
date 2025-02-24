@@ -26,7 +26,7 @@ internal class GetCredentialCardStateImpl @Inject constructor(
             status = credentialPreview.status,
             borderColor = getColor(credentialPreview.backgroundColor) ?: CredentialCardState.defaultCardColor,
             backgroundColor = backgroundColor,
-            textColor = getBestContrastColor(backgroundColor),
+            contentColor = getBestContrastColor(backgroundColor),
             logo = getDrawableFromUri(credentialPreview.logoUri)?.toPainter(),
             isCredentialFromBetaIssuer = credentialPreview.isCredentialFromBetaIssuer
         )

@@ -11,6 +11,7 @@ import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialOfferRepos
 import ch.admin.foitt.wallet.util.SafeJsonTestInstance.safeJson
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
+import ch.admin.foitt.wallet.util.assertTrue
 import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -22,7 +23,9 @@ import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 
 class SaveCredentialImplTest {
 
@@ -76,14 +79,58 @@ class SaveCredentialImplTest {
         }
     }
 
+    @TestFactory
+    fun `should save all claims without reserved claim names`(): List<DynamicTest> {
+        coEvery { mockCredentialOfferRepository.saveCredentialOffer(any()) } returns Ok(1L)
+
+        return payloadTestData.map { testData ->
+            DynamicTest.dynamicTest(" should contain exactly these claims: ${testData.expectedClaims}") {
+                runTest {
+                    val anyCredential = VcSdJwtCredential(
+                        keyBindingIdentifier = "",
+                        keyBindingAlgorithm = SigningAlgorithm.ES256,
+                        payload = testData.payload
+                    )
+
+                    val vcSdJwtCredentialConfiguration = VcSdJwtCredentialConfiguration(
+                        identifier = "",
+                        claims = "{}",
+                        credentialSigningAlgValuesSupported = emptyList(),
+                        format = CredentialFormat.VC_SD_JWT,
+                        proofTypesSupported = emptyMap(),
+                        vct = "",
+                    )
+
+                    val result = saveCredentialUseCase(
+                        issuerInfo = mockIssuerInfo,
+                        anyCredential = anyCredential,
+                        credentialConfiguration = vcSdJwtCredentialConfiguration
+                    )
+
+                    result.assertOk()
+
+                    coVerify {
+                        mockCredentialOfferRepository.saveCredentialOffer(
+                            coWithArg { localizedCredentialOffer ->
+                                assertTrue(
+                                    localizedCredentialOffer.claims.keys.map { it.key }.toSet() == testData.expectedClaims
+                                ) { "Only expected claims should be saved" }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     @Test
     fun `should call CredentialOfferRepository#saveCredentialOffer exactly one time`() = runTest {
         coEvery { mockCredentialOfferRepository.saveCredentialOffer(any()) } returns Ok(1L)
 
         val anyCredential = VcSdJwtCredential(
-            signingKeyId = "",
-            signingAlgorithm = SigningAlgorithm.ES512,
-            payload = "eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJfc2QiOlsiWVJMZjYwNmNsd3Q0LWhqeUd6ZTQ5eVNGaTZWQ213YjluNWh3YjRWVUpTWSIsIlFodXZJTVFkNUx5WDhnT1Izd2VWelNZMHlHWkdHSGRWWFkwRS1OaGhVZnciXSwiX3NkX2FsZyI6InNoYS0yNTYiLCJpYXQiOjE2OTc4MDY2NzF9.APiUhTXMW6pro6Y_-aLQA120nUWK9liwf7FVCsLjiW7uKYHmjCDG3V2KGEwsjyTMjXmNWEwsamw7af-DfaCzjrOyABbG7KRfhLewJOK4UeviVbM7o8a4g0OmwzbXEFXjBVC75nY067BLvid_p6FwTxDIt9acmJtE1zW6u-HuXMFiTxPE",
+            keyBindingIdentifier = "",
+            keyBindingAlgorithm = SigningAlgorithm.ES512,
+            payload = "ewogICJhbGciOiJFUzUxMiIsCiAgInR5cCI6IkpXVCIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJfc2QiOlsKICAgICJZUkxmNjA2Y2x3dDQtaGp5R3plNDl5U0ZpNlZDbXdiOW41aHdiNFZVSlNZIiwKICAgICJRaHV2SU1RZDVMeVg4Z09SM3dlVnpTWTB5R1pHR0hkVlhZMEUtTmhoVWZ3IgogIF0sCiAgIl9zZF9hbGciOiJzaGEtMjU2IiwKICAiaWF0IjoxNjk3ODA2NjcxLAogICJpc3MiOiJpc3N1ZXIiLAogICJ2Y3QiOiJ2Y3QiCn0.ZXdvZ0lDSmhiR2NpT2lKRlV6VXhNaUlzQ2lBZ0luUjVjQ0k2SWtwWFZDSXNDaUFnSW10cFpDSTZJbXRsZVVsa0lncDkuLkFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUdOd0wySDZua2ZjdFNPT0NSU21HY080d3NGczNVZDJWR3phYkFySnpMSGJBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFDOFY2cGlRbDc3RnYwUVlUbTU4TmxJczMwZnNRdjc4aXRFUzNCSzR6ZnZI",
         )
 
         val vcSdJwtCredentialConfiguration = VcSdJwtCredentialConfiguration(
@@ -106,5 +153,22 @@ class SaveCredentialImplTest {
         coVerify(exactly = 1) {
             mockCredentialOfferRepository.saveCredentialOffer(any())
         }
+    }
+
+    private data class PayloadTestData(val expectedClaims: Set<String>, val payload: String)
+
+    companion object {
+        private val payloadTestData = listOf(
+            //  The following JWT payload contains two non-reserved claims "test1" and "test2"
+            PayloadTestData(
+                expectedClaims = setOf("test1", "test2"),
+                payload = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImtpZCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidGVzdDEiOiJUZXN0IiwidGVzdDIiOiJUZXN0MiIsImlhdCI6MTUxNjIzOTAyMiwiaXNzIjoiaXNzdWVyIiwidmN0IjoidmN0In0.tkJ0DaGgQSfCVRG7l1c_XdGMyR7Uov-krHkNaS_c_0xfLcdhswZQeAGxeO8Hnc_umxamUfJnlZCxLqoGZay5zA",
+            ),
+            //  The following JWT payload contains only claims with reserved claim names
+            PayloadTestData(
+                expectedClaims = emptySet(),
+                payload = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImtpZCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJpc3MiOiJpc3N1ZXIiLCJ2Y3QiOiJ2Y3QifQ.nLumVkn8MPalWhI2NnGHZFJgNpWrgWsVRx4jZ31vWuMpnxh9YE5qRJ0Dxy27rUHUAF-ibJzmyr5JSBo2zdR1SA",
+            ),
+        )
     }
 }

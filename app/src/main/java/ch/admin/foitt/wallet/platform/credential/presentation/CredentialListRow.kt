@@ -22,7 +22,7 @@ import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.composables.presentation.spaceBarKeyClickable
 import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialMocks
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
-import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
+import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialDisplayStatus
 import ch.admin.foitt.wallet.platform.preview.ComposableWrapper
 import ch.admin.foitt.wallet.platform.preview.WalletComponentPreview
 import ch.admin.foitt.wallet.theme.Sizes
@@ -84,16 +84,17 @@ fun CredentialListRow(
 
 @Composable
 private fun CredentialStatus(
-    status: CredentialStatus,
+    status: CredentialDisplayStatus,
     isCredentialFromBetaIssuer: Boolean,
 ) {
-    val color = when (status) {
-        CredentialStatus.VALID,
-        CredentialStatus.UNSUPPORTED,
-        CredentialStatus.UNKNOWN -> WalletTheme.colorScheme.onSurfaceVariant
-        CredentialStatus.EXPIRED,
-        CredentialStatus.REVOKED,
-        CredentialStatus.SUSPENDED -> WalletTheme.colorScheme.error
+    val contentColor = when (status) {
+        CredentialDisplayStatus.Valid,
+        CredentialDisplayStatus.Unsupported,
+        CredentialDisplayStatus.Unknown -> WalletTheme.colorScheme.onSurfaceVariant
+        is CredentialDisplayStatus.NotYetValid,
+        is CredentialDisplayStatus.Expired,
+        CredentialDisplayStatus.Revoked,
+        CredentialDisplayStatus.Suspended -> WalletTheme.colorScheme.error
     }
     val bodyTextHeight = with(LocalDensity.current) {
         WalletTheme.typography.bodyMedium.lineHeight.toDp()
@@ -112,7 +113,7 @@ private fun CredentialStatus(
         Icon(
             painter = painterResource(id = status.getIcon()),
             contentDescription = null,
-            tint = color,
+            tint = contentColor,
             modifier = Modifier.sizeIn(
                 maxWidth = bodyTextHeight,
                 maxHeight = bodyTextHeight,
@@ -120,8 +121,8 @@ private fun CredentialStatus(
         )
         Spacer(modifier = Modifier.size(Sizes.s01))
         WalletTexts.Body(
-            text = stringResource(id = status.getText()),
-            color = color,
+            text = status.getText(),
+            color = contentColor,
         )
     }
 }

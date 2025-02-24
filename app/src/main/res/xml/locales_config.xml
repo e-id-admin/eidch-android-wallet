@@ -4,5 +4,4 @@
     <locale android:name="en" />
     <locale android:name="fr" />
     <locale android:name="it" />
-    <locale android:name="rm" />
 </locale-config>

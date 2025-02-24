@@ -5,17 +5,17 @@ import android.content.Context
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewModelScope
-import ch.admin.foitt.wallet.feature.qrscan.domain.model.PermissionState
-import ch.admin.foitt.wallet.feature.qrscan.domain.usecase.CheckQrScanPermission
-import ch.admin.foitt.wallet.feature.qrscan.domain.usecase.ShouldAutoTriggerPermissionPrompt
-import ch.admin.foitt.wallet.feature.qrscan.presentation.permission.hasCameraPermission
-import ch.admin.foitt.wallet.feature.qrscan.presentation.permission.shouldShowRationale
 import ch.admin.foitt.wallet.platform.appSetupState.domain.usecase.GetFirstCredentialWasAdded
+import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.model.PermissionState
+import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.usecase.CheckCameraPermission
+import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.usecase.ShouldAutoTriggerPermissionPrompt
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
+import ch.admin.foitt.wallet.platform.scaffold.extension.hasCameraPermission
+import ch.admin.foitt.wallet.platform.scaffold.extension.shouldShowRationale
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.openAppDetailsSettings
 import ch.admin.foitt.walletcomposedestinations.destinations.QrScannerScreenDestination
@@ -31,7 +31,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class QrScanPermissionViewModel @Inject constructor(
-    private val checkQrScanPermission: CheckQrScanPermission,
+    private val checkCameraPermission: CheckCameraPermission,
     private val shouldAutoTriggerPermissionPrompt: ShouldAutoTriggerPermissionPrompt,
     private val getFirstCredentialWasAdded: GetFirstCredentialWasAdded,
     private val navManager: NavigationManager,
@@ -58,11 +58,11 @@ class QrScanPermissionViewModel @Inject constructor(
     }
 
     fun onCameraPermissionResult(permissionGranted: Boolean, activity: FragmentActivity) {
-        val shoulShowRationale = shouldShowRationale(activity)
+        val shouldShowRationale = shouldShowRationale(activity)
         viewModelScope.launch {
-            checkQrScanPermission(
+            checkCameraPermission(
                 permissionsAreGranted = permissionGranted,
-                rationaleShouldBeShown = shoulShowRationale,
+                rationaleShouldBeShown = shouldShowRationale,
                 promptWasTriggered = true,
             ).let { handleNewState(it) }
         }
@@ -86,7 +86,7 @@ class QrScanPermissionViewModel @Inject constructor(
                 autoPromptWasTriggered = true
                 onCameraPermissionPrompt()
             } else {
-                checkQrScanPermission(
+                checkCameraPermission(
                     permissionsAreGranted = hasPermission,
                     rationaleShouldBeShown = shouldShowRationale,
                     promptWasTriggered = false,

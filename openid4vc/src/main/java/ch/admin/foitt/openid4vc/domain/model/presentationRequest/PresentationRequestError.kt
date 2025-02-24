@@ -52,11 +52,6 @@ internal fun Throwable.toCreateVcSdJwtVerifiablePresentationError(): CreateVcSdJ
     return PresentationRequestError.Unexpected(this)
 }
 
-internal fun Throwable.toFetchPresentationRequestError(): FetchPresentationRequestError {
-    Timber.e(this)
-    return PresentationRequestError.Unexpected(this)
-}
-
 internal fun JsonParsingError.toCreateVcSdJwtVerifiablePresentationError(): CreateVcSdJwtVerifiablePresentationError = when (this) {
     is JsonError.Unexpected -> PresentationRequestError.Unexpected(throwable)
 }

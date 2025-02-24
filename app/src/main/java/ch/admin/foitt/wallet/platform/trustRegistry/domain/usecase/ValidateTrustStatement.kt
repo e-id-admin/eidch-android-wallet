@@ -5,5 +5,5 @@ import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ValidateTrustSt
 import com.github.michaelbull.result.Result
 
 fun interface ValidateTrustStatement {
-    suspend operator fun invoke(trustStatementRawSdJwt: String): Result<TrustStatement, ValidateTrustStatementError>
+    suspend operator fun invoke(trustStatementRawVcSdJwt: String): Result<TrustStatement, ValidateTrustStatementError>
 }

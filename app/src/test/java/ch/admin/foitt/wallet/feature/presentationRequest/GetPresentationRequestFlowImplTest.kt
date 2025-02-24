@@ -1,12 +1,12 @@
 package ch.admin.foitt.wallet.feature.presentationRequest
 
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JsonPresentationRequest
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JwtPresentationRequest
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest
+import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.PresentationRequestDisplayData
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.PresentationRequestError
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.repository.PresentationRequestRepository
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.implementation.GetPresentationRequestFlowImpl
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.IsCredentialFromBetaIssuerImpl
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.IsCredentialFromBetaIssuer
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.PresentationRequestField
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
@@ -49,7 +49,7 @@ class GetPresentationRequestFlowImplTest {
     lateinit var mockMapToCredentialClaimData: MapToCredentialClaimData
 
     @MockK
-    lateinit var mockIsCredentialFromBetaIssuerImpl: IsCredentialFromBetaIssuerImpl
+    lateinit var mockIsCredentialFromBetaIssuer: IsCredentialFromBetaIssuer
 
     @MockK
     lateinit var mockCredentialWithDisplaysAndClaims: CredentialWithDisplaysAndClaims
@@ -70,10 +70,7 @@ class GetPresentationRequestFlowImplTest {
     lateinit var mockRequestedField: PresentationRequestField
 
     @MockK
-    lateinit var mockJsonPresentationRequest: JsonPresentationRequest
-
-    @MockK
-    lateinit var mockJwtPresentationRequest: JwtPresentationRequest
+    lateinit var mockPresentationRequest: PresentationRequest
 
     private lateinit var getPresentationRequestFlow: GetPresentationRequestFlowImpl
 
@@ -85,7 +82,7 @@ class GetPresentationRequestFlowImplTest {
             mockPresentationRequestRepository,
             mockGetLocalizedDisplay,
             mockMapToCredentialClaimData,
-            mockIsCredentialFromBetaIssuerImpl,
+            mockIsCredentialFromBetaIssuer,
         )
 
         setupDefaultMocks()
@@ -101,11 +98,27 @@ class GetPresentationRequestFlowImplTest {
         val result = getPresentationRequestFlow(
             id = CREDENTIAL_ID1,
             requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockJwtPresentationRequest,
+            presentationRequest = mockPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
         result?.assertOk()
+    }
+
+    @Test
+    fun `A beta issuer credential is indicated in the result`(): Unit = runTest {
+        coEvery { mockIsCredentialFromBetaIssuer.invoke(credentialId = any()) } returns true
+
+        val result = getPresentationRequestFlow(
+            id = CREDENTIAL_ID1,
+            requestedFields = listOf(mockRequestedField),
+            presentationRequest = mockPresentationRequest,
+        ).firstOrNull()
+
+        assertNotNull(result)
+        val displayData: PresentationRequestDisplayData? = result?.assertOk()
+        val credentialPreview = displayData?.credential
+        assert(credentialPreview?.isCredentialFromBetaIssuer == true)
     }
 
     @Test
@@ -118,7 +131,7 @@ class GetPresentationRequestFlowImplTest {
         val result = getPresentationRequestFlow(
             id = CREDENTIAL_ID1,
             requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockJwtPresentationRequest,
+            presentationRequest = mockPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
@@ -134,7 +147,7 @@ class GetPresentationRequestFlowImplTest {
         val result = getPresentationRequestFlow(
             id = CREDENTIAL_ID1,
             requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockJwtPresentationRequest,
+            presentationRequest = mockPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
@@ -151,7 +164,7 @@ class GetPresentationRequestFlowImplTest {
         val result = getPresentationRequestFlow(
             id = CREDENTIAL_ID1,
             requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockJwtPresentationRequest,
+            presentationRequest = mockPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
@@ -178,15 +191,14 @@ class GetPresentationRequestFlowImplTest {
         coEvery {
             mockMapToCredentialClaimData(mockCredentialClaim, listOf(mockCredentialClaimDisplay))
         } returns Ok(mockClaimData)
-        coEvery { mockIsCredentialFromBetaIssuerImpl(CREDENTIAL_ID1) } returns false
+        coEvery { mockIsCredentialFromBetaIssuer(CREDENTIAL_ID1) } returns false
 
         coEvery { mockRequestedField.key } returns CLAIM_KEY
-        coEvery { mockJwtPresentationRequest.clientIdScheme } returns CLIENT_ID_SCHEME
-        coEvery { mockJwtPresentationRequest.clientId } returns CLIENT_ID
+        coEvery { mockPresentationRequest.clientIdScheme } returns CLIENT_ID_SCHEME
+        coEvery { mockPresentationRequest.clientId } returns CLIENT_ID
     }
 
     private companion object {
-        const val PAYLOAD = "payload"
         const val CLAIM_KEY = "claimKey"
         const val CLAIM_ORDER = 1
         const val CLIENT_ID = "clientId"
@@ -197,10 +209,11 @@ class GetPresentationRequestFlowImplTest {
         val credential1 = Credential(
             id = CREDENTIAL_ID1,
             status = CredentialStatus.VALID,
-            privateKeyIdentifier = "privateKeyIdentifier",
-            signingAlgorithm = "signingAlgo",
+            keyBindingIdentifier = "privateKeyIdentifier",
+            keyBindingAlgorithm = "signingAlgo",
             payload = "payload",
             format = CredentialFormat.VC_SD_JWT,
+            issuer = "issuer"
         )
 
         val credentialDisplay1 = CredentialDisplay(

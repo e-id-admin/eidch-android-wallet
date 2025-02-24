@@ -14,13 +14,11 @@ import ch.admin.foitt.wallet.platform.ssi.domain.usecase.DeleteCredential
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.GetCredentialClaimData
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.GetCredentialClaimDisplays
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.GetCredentialClaims
-import ch.admin.foitt.wallet.platform.ssi.domain.usecase.GetCredentialIssuerDisplayFlow
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.MapToCredentialClaimData
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.DeleteCredentialImpl
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.GetCredentialClaimDataImpl
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.GetCredentialClaimDisplaysImpl
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.GetCredentialClaimsImpl
-import ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.GetCredentialIssuerDisplayFlowImpl
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.MapToCredentialClaimDataImpl
 import dagger.Binds
 import dagger.Module
@@ -83,9 +81,4 @@ interface SsiModule {
     fun bindCredentialIssuerDisplayRepository(
         repo: CredentialIssuerDisplayRepoImpl
     ): CredentialIssuerDisplayRepo
-
-    @Binds
-    fun bindGetCredentialIssuerDisplayFlow(
-        useCase: GetCredentialIssuerDisplayFlowImpl
-    ): GetCredentialIssuerDisplayFlow
 }

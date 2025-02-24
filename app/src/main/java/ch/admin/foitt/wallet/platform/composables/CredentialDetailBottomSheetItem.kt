@@ -86,7 +86,7 @@ private fun CredentialDetailBottomSheetItemPreview(
                 color = color.value()
             )
             CredentialDetailBottomSheetItem(
-                icon = R.drawable.pilot_ic_clock,
+                icon = R.drawable.ic_swiss_cross_small,
                 title = "Some title",
                 onClick = {},
                 color = color.value()

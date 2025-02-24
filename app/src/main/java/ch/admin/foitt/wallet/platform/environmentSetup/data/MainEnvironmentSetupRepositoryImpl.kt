@@ -11,8 +11,15 @@ class MainEnvironmentSetupRepositoryImpl @Inject constructor() : EnvironmentSetu
         "identifier-reg.trust-infra.swiyu-int.admin.ch" to "trust-reg.trust-infra.swiyu-int.admin.ch"
     )
 
-    override val trustedDids: List<String> = listOf("to be defined")
+    @Suppress("MaximumLineLength")
+    override val trustedDids: List<String> = listOf(
+        "did:tdw:QmWrXWFEDenvoYWFXxSQGFCa6Pi22Cdsg2r6weGhY2ChiQ:identifier-reg.trust-infra.swiyu-int.admin.ch:api:v1:did:2e246676-209a-4c21-aceb-721f8a90b212",
+    )
 
     override val baseTrustDomainRegex =
         Regex("^did:tdw:[^:]+:([^:]+\\.swiyu(-int)?\\.admin\\.ch):[^:]+", setOf(RegexOption.MULTILINE))
+
+    override val betaIdRequestEnabled = true
+
+    override val eIdRequestEnabled = false
 }

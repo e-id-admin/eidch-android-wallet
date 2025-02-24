@@ -23,13 +23,13 @@ import com.ramcosta.composedestinations.annotation.Destination
 fun BetaIdScreen(
     viewModel: BetaIdViewModel,
 ) {
-    BetaIdScreenContent(
+    EIdIntroScreenContent(
         onBetaIdButtonClick = viewModel::onBetaIdButtonClick,
     )
 }
 
 @Composable
-private fun BetaIdScreenContent(
+private fun EIdIntroScreenContent(
     onBetaIdButtonClick: () -> Unit,
 ) {
     WalletLayouts.ScrollableColumnWithPicture(
@@ -63,7 +63,7 @@ private fun BetaIdScreenContent(
 @Composable
 private fun BetaIdScreenPreview() {
     WalletTheme {
-        BetaIdScreenContent(
+        EIdIntroScreenContent(
             onBetaIdButtonClick = {},
         )
     }

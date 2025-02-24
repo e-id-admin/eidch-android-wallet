@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialCardMocks
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
-import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
+import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialDisplayStatus
 import ch.admin.foitt.wallet.platform.preview.ComposableWrapper
 import ch.admin.foitt.wallet.platform.preview.WalletComponentPreview
 import ch.admin.foitt.wallet.theme.Gradients
@@ -45,9 +45,9 @@ fun LargeCredentialCard(
     color = credentialCardState.backgroundColor,
     contentColor = Color.Unspecified,
 ) {
-    val textColor = credentialCardState.textColor
+    val contentColor = credentialCardState.contentColor
     if (credentialCardState.isCredentialFromBetaIssuer) {
-        DemoWatermark(color = textColor)
+        DemoWatermark(color = contentColor)
     }
     Column(
         modifier = Modifier
@@ -59,12 +59,12 @@ fun LargeCredentialCard(
             }
             .padding(contentPaddingValues)
     ) {
-        CredentialContent(credentialCardState, textColor)
+        CredentialContent(credentialCardState, contentColor)
         Spacer(modifier = Modifier.weight(1f))
         Spacer(modifier = Modifier.height(Sizes.s04))
         Badges(
             credentialStatus = credentialCardState.status,
-            textColor = credentialCardState.textColor,
+            textColor = credentialCardState.contentColor,
             isCredentialFromBetaIssuer = credentialCardState.isCredentialFromBetaIssuer,
         )
     }
@@ -89,7 +89,7 @@ private fun CredentialContent(
                 painter = it,
                 contentDescription = null,
                 modifier = Modifier.size(Sizes.credentialLargeIconSize),
-                tint = Color.Unspecified,
+                tint = textColor,
             )
         }
     }
@@ -123,7 +123,7 @@ private fun CredentialText(
 @Composable
 private fun Badges(
     isCredentialFromBetaIssuer: Boolean,
-    credentialStatus: CredentialStatus?,
+    credentialStatus: CredentialDisplayStatus?,
     textColor: Color,
 ) = Row {
     if (isCredentialFromBetaIssuer) {

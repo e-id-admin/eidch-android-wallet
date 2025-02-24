@@ -8,11 +8,11 @@ sealed interface TopBarState {
     data object None : TopBarState
     data object Empty : TopBarState
 
-    data class DetailsWithCustomSettings(
+    data class DetailsWithCloseButton(
         val onUp: () -> Unit,
         @StringRes
         val titleId: Int?,
-        val onSettings: () -> Unit
+        val onClose: () -> Unit,
     ) : TopBarState
 
     data class Details(

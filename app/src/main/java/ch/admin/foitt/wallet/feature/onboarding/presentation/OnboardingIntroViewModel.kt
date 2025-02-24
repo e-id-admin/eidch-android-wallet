@@ -6,7 +6,7 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
-import ch.admin.foitt.walletcomposedestinations.destinations.OnboardingPresentScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.OnboardingLocalDataScreenDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -19,5 +19,5 @@ class OnboardingIntroViewModel @Inject constructor(
     override val topBarState = TopBarState.Empty
     override val fullscreenState = FullscreenState.Insets
 
-    fun onNext() = navManager.navigateTo(OnboardingPresentScreenDestination)
+    fun onNext() = navManager.navigateTo(OnboardingLocalDataScreenDestination)
 }

@@ -45,14 +45,14 @@ private fun OnboardingPassphraseExplanationScreenContent(
     stickyBottomContent = {
         Buttons.FilledPrimary(
             modifier = Modifier.testTag(TestTags.CONTINUE_BUTTON.name),
-            text = stringResource(id = R.string.onboarding_pin_code_enterCodeButton),
+            text = stringResource(id = R.string.tk_onboarding_securewithcode_primarybutton),
             onClick = onNext,
         )
     }
 ) {
     OnboardingScreenContent(
-        title = stringResource(id = R.string.onboarding_pin_code_primary),
-        subtitle = stringResource(id = R.string.onboarding_pin_code_secondary),
+        title = stringResource(id = R.string.tk_onboarding_securewithcode_title),
+        subtitle = stringResource(id = R.string.tk_onboarding_securewithcode_body),
     )
 }
 

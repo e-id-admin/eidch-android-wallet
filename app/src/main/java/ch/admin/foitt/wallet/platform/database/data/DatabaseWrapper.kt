@@ -10,6 +10,8 @@ import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDisplaysAn
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDisplaysDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithIssuerAndDisplaysDao
 import ch.admin.foitt.wallet.platform.database.data.dao.DaoProvider
+import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseDao
+import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestStateDao
 import ch.admin.foitt.wallet.platform.database.domain.model.ChangeDatabasePassphraseError
 import ch.admin.foitt.wallet.platform.database.domain.model.CreateDatabaseError
 import ch.admin.foitt.wallet.platform.database.domain.model.DatabaseError
@@ -158,5 +160,8 @@ internal class DatabaseWrapper @Inject constructor(
         getDaoFlow { it?.credentialWithDisplaysDao() }
     override val credentialWithIssuerAndDisplaysDaoFlow: StateFlow<CredentialWithIssuerAndDisplaysDao?> =
         getDaoFlow { it?.credentialWithIssuerAndDisplaysDao() }
+    override val eIdRequestCaseDaoFlow: StateFlow<EIdRequestCaseDao?> =
+        getDaoFlow { it?.eIdRequestCaseDao() }
+    override val eIdRequestStateDaoFlow: StateFlow<EIdRequestStateDao?> = getDaoFlow { it?.eIdRequestStateDao() }
     //endregion
 }

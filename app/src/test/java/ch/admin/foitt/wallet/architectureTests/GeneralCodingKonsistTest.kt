@@ -4,6 +4,7 @@ import ch.admin.foitt.wallet.app.MainActivity
 import ch.admin.foitt.wallet.app.WalletApplication
 import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.api.ext.list.functions
+import com.lemonappdev.konsist.api.ext.list.modifierprovider.withOpenModifier
 import com.lemonappdev.konsist.api.ext.list.properties
 import com.lemonappdev.konsist.api.ext.provider.hasAnnotationOf
 import com.lemonappdev.konsist.api.verify.assertFalse
@@ -57,6 +58,15 @@ class GeneralCodingKonsistTest {
             .properties()
             .assertFalse { it.hasAnnotationOf<Inject>() }
     }
+
+    @Test
+    fun `Serializable classes should not be open`() = Konsist
+        .scopeFromProject()
+        .classes()
+        .withOpenModifier()
+        .assertFalse(additionalMessage = "This will create undetected issues with subclasses") {
+            it.hasAnnotationWithName("Serializable")
+        }
 
     @TestFactory
     fun `check for 'blacklisted' methods or classes`(): Stream<DynamicTest> =

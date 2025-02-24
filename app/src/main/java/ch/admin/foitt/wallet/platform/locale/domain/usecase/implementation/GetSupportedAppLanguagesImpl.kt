@@ -20,7 +20,6 @@ class GetSupportedAppLanguagesImpl @Inject constructor(
         Locale("en"),
         Locale("fr"),
         Locale("it"),
-        Locale("rm")
     )
 
     override fun invoke(): List<Locale> {

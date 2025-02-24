@@ -24,7 +24,7 @@ fun CredentialCardContent(
     credentialCardState.title?.let {
         WalletTexts.MediumCredentialTitle(
             text = credentialCardState.title,
-            color = credentialCardState.textColor,
+            color = credentialCardState.contentColor,
             maxLines = 3,
             modifier = Modifier
                 .constrainAs(titleRef) {
@@ -38,7 +38,7 @@ fun CredentialCardContent(
     credentialCardState.subtitle?.let {
         WalletTexts.MediumCredentialSubtitle(
             text = credentialCardState.subtitle,
-            color = credentialCardState.textColor,
+            color = credentialCardState.contentColor,
             maxLines = 3,
             modifier = Modifier
                 .constrainAs(subtitleRef) {
@@ -52,7 +52,7 @@ fun CredentialCardContent(
 
     CredentialStatusBadge(
         status = credentialCardState.status,
-        textColor = credentialCardState.textColor,
+        textColor = credentialCardState.contentColor,
         modifier = Modifier.constrainAs(statusRef) {
             end.linkTo(parent.end)
             bottom.linkTo(parent.bottom)

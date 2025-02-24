@@ -16,6 +16,7 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.mapError
+import timber.log.Timber
 import java.net.URI
 import javax.inject.Inject
 
@@ -34,8 +35,11 @@ internal class ValidateInvitationImpl @Inject constructor(
             BuildConfig.SCHEME_CREDENTIAL_OFFER -> getCredentialOfferFromUri(invitationUri)
                 .mapError(GetCredentialOfferError::toValidateInvitationError)
                 .bind()
-            else -> Err(InvitationError.UnknownSchema("Unknown schema of uri: $input"))
-                .bind<Invitation>()
+            else -> {
+                Timber.d("Unknown schema of uri: $input")
+                Err(InvitationError.UnknownSchema)
+                    .bind<Invitation>()
+            }
         }
     }
 
@@ -43,6 +47,7 @@ internal class ValidateInvitationImpl @Inject constructor(
         runSuspendCatching {
             URI(input)
         }.mapError {
-            InvitationError.InvalidUri("Invalid uri: $input")
+            Timber.d("Invalid uri: $input")
+            InvitationError.InvalidUri
         }
 }

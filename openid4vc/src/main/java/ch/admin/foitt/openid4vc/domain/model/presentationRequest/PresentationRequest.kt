@@ -1,18 +1,16 @@
 package ch.admin.foitt.openid4vc.domain.model.presentationRequest
 
-import ch.admin.foitt.openid4vc.domain.model.Invitation
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.SigningAlgorithm
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest.Companion.DID
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-open class PresentationRequest(
+data class PresentationRequest(
     @SerialName("client_id")
     val clientId: String,
     @SerialName("client_id_scheme")
-    val clientIdScheme: String? = null,
+    val clientIdScheme: String?,
     @SerialName("response_type")
     val responseType: String,
     @SerialName("response_mode")
@@ -24,14 +22,8 @@ open class PresentationRequest(
     @SerialName("presentation_definition")
     val presentationDefinition: PresentationDefinition,
     @SerialName("client_metadata")
-    val clientMetaData: ClientMetaData? = null,
-) : Invitation {
-    companion object {
-        const val DID = "did"
-    }
-}
-
-fun PresentationRequest.shouldFetchTrustStatements() = this is JwtPresentationRequest && clientIdScheme != null && clientIdScheme == DID
+    val clientMetaData: ClientMetaData?,
+)
 
 @Serializable
 data class PresentationDefinition(
@@ -98,9 +90,6 @@ sealed class InputDescriptorFormat(open val name: String) {
             val VC_SD_JWT_KEY = CredentialFormat.VC_SD_JWT.format
             const val SDJWT_ALGORITHM_KEY = "sd-jwt_alg_values"
             const val KBJWT_ALGORITHM_KB_KEY = "kb-jwt_alg_values"
-
-            const val JWT_VC_KEY = "jwt_vc"
-            const val JWT_VC_ALGORITHM_KEY = "alg"
         }
     }
 }

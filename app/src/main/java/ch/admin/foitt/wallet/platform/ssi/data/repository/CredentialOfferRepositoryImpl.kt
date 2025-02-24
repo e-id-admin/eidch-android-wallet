@@ -49,10 +49,11 @@ class CredentialOfferRepositoryImpl @Inject constructor(
         localizedCredentialOffer: LocalizedCredentialOffer,
     ): Result<Long, CredentialOfferRepositoryError> = withContext(ioDispatcher) {
         val credential = createCredential(
-            privateKeyIdentifier = localizedCredentialOffer.privateKeyIdentifier,
-            signingAlgorithm = localizedCredentialOffer.signingAlgorithm,
+            privateKeyIdentifier = localizedCredentialOffer.keyBindingIdentifier,
+            signingAlgorithm = localizedCredentialOffer.keyBindingAlgorithm,
             payload = localizedCredentialOffer.payload,
             format = localizedCredentialOffer.format,
+            issuer = localizedCredentialOffer.issuer
         )
         val credentialIssuerDisplays = createCredentialIssuerDisplays(localizedCredentialOffer.issuerDisplays)
         val credDisplays = createCredentialDisplays(localizedCredentialOffer.credentialDisplays)
@@ -71,11 +72,13 @@ class CredentialOfferRepositoryImpl @Inject constructor(
         signingAlgorithm: SigningAlgorithm?,
         payload: String,
         format: CredentialFormat,
+        issuer: String?
     ) = Credential(
-        privateKeyIdentifier = privateKeyIdentifier,
-        signingAlgorithm = signingAlgorithm?.stdName,
+        keyBindingIdentifier = privateKeyIdentifier,
+        keyBindingAlgorithm = signingAlgorithm?.stdName,
         payload = payload,
         format = format,
+        issuer = issuer
     )
 
     private fun createCredentialIssuerDisplays(

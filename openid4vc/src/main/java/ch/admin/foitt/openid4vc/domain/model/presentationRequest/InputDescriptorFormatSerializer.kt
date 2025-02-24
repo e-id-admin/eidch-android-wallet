@@ -32,7 +32,6 @@ internal class InputDescriptorFormatSerializer : KSerializer<InputDescriptorForm
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement()
         val inputDescriptor = element.jsonObject[VcSdJwt.VC_SD_JWT_KEY]?.jsonObject
-            ?: element.jsonObject[VcSdJwt.JWT_VC_KEY]?.jsonObject
             ?: error("Unsupported input descriptor format: $decoder")
 
         return VcSdJwt.deserialize(inputDescriptor)

@@ -65,8 +65,14 @@ internal object MockCredentialOffer {
     private val ALGORITHM = SigningAlgorithm.ES512
     private val mockKeyPair = mockk<KeyPair>()
 
-    val validKeyPair = JWSKeyPair(
-        algorithm = ALGORITHM,
+    val validKeyPairES256 = JWSKeyPair(
+        algorithm = SigningAlgorithm.ES256,
+        keyPair = mockKeyPair,
+        keyId = KEY_ID,
+    )
+
+    val validKeyPairES512 = JWSKeyPair(
+        algorithm = SigningAlgorithm.ES512,
         keyPair = mockKeyPair,
         keyId = KEY_ID,
     )
@@ -86,7 +92,7 @@ internal object MockCredentialOffer {
     val validVerifiableCredential = VerifiableCredential(
         format = CredentialFormat.VC_SD_JWT,
         credential = CREDENTIAL,
-        signingKeyId = KEY_ID,
-        signingAlgorithm = ALGORITHM,
+        keyBindingIdentifier = KEY_ID,
+        keyBindingAlgorithm = ALGORITHM,
     )
 }

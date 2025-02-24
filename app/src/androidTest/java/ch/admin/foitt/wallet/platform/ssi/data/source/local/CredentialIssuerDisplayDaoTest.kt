@@ -52,8 +52,8 @@ class CredentialIssuerDisplayDaoTest {
         credentialDao.insert(credential2)
         credentialIssuerDisplayDao.insertAll(listOf(credentialIssuerDisplay1, credentialIssuerDisplay2))
 
-        val issuerDisplays = credentialIssuerDisplayDao.getCredentialIssuerDisplaysByIdFlow(credential2.id).firstOrNull()
+        val issuerDisplays = credentialIssuerDisplayDao.getCredentialIssuerDisplaysById(credential2.id)
 
-        assertEquals(credentialIssuerDisplay2, issuerDisplays?.first())
+        assertEquals(credentialIssuerDisplay2, issuerDisplays.first())
     }
 }

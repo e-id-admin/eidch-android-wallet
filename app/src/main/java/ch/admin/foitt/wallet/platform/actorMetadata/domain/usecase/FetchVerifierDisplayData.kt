@@ -4,5 +4,8 @@ import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationReq
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 
 fun interface FetchVerifierDisplayData {
-    suspend operator fun invoke(presentationRequest: PresentationRequest): ActorDisplayData
+    suspend operator fun invoke(
+        presentationRequest: PresentationRequest,
+        shouldFetchTrustStatement: Boolean,
+    ): ActorDisplayData
 }

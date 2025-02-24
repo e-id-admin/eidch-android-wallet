@@ -107,7 +107,7 @@ private fun Content(
         Image(
             modifier = Modifier.fillMaxWidth(0.6f),
             contentScale = ContentScale.Inside,
-            painter = painterResource(id = R.mipmap.pilot_ic_bit),
+            painter = painterResource(id = R.mipmap.ic_bit_info),
             contentDescription = null
         )
         Spacer(Modifier.height(Sizes.s12))

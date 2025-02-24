@@ -2,7 +2,7 @@ package ch.admin.foitt.wallet.platform.keystoreCrypto.domain.model
 
 import android.security.keystore.KeyProperties
 
-data class KeystoreKeyConfigAES constructor(
+data class KeystoreKeyConfigAES(
     override val encryptionKeyAlias: String,
     override val userAuthenticationRequired: Boolean,
     override val randomizedEncryptionRequired: Boolean,

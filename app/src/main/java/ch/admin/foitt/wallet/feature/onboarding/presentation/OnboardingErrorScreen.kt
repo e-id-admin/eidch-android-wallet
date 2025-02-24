@@ -46,18 +46,18 @@ private fun OnboardingErrorScreenContent(
         },
         stickyBottomContent = {
             Buttons.FilledPrimary(
-                text = stringResource(id = R.string.onboarding_notready_closeButton),
+                text = stringResource(id = R.string.tk_global_continue),
                 onClick = onClose,
             )
         },
     ) {
         Spacer(modifier = Modifier.height(Sizes.s06))
         WalletTexts.TitleScreen(
-            text = stringResource(R.string.onboarding_notready_primary)
+            text = stringResource(R.string.tk_onboarding_biometricandroid5_title)
         )
         Spacer(modifier = Modifier.height(Sizes.s06))
         WalletTexts.BodyLarge(
-            text = stringResource(id = R.string.onboarding_notready_secondary)
+            text = stringResource(id = R.string.tk_onboarding_biometricandroid5_body)
         )
     }
 }

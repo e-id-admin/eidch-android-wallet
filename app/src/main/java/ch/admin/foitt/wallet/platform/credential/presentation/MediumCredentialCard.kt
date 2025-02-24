@@ -50,11 +50,11 @@ fun MediumCredentialCard(
     BoxWithConstraints {
         // calculate height based on the ratio but max 500dp
         val preferredHeight = min(maxWidth.div(0.68f), 500.dp)
-        val textColor = credentialCardState.textColor
+        val contentColor = credentialCardState.contentColor
         if (credentialCardState.isCredentialFromBetaIssuer) {
             DemoWatermark(
                 modifier = Modifier.height(min(maxHeight, preferredHeight)).widthIn(max = 340.dp),
-                color = textColor,
+                color = contentColor,
             )
         }
         MediumCredentialCardLayout(
@@ -88,7 +88,7 @@ fun MediumCredentialCard(
                             modifier = Modifier
                                 .size(Sizes.credentialIconSize)
                                 .focusable(false),
-                            tint = Color.Unspecified,
+                            tint = contentColor,
                         )
                     }
                 }
@@ -97,7 +97,7 @@ fun MediumCredentialCard(
                 {
                     WalletTexts.MediumCredentialTitle(
                         text = it,
-                        color = textColor,
+                        color = contentColor,
                     )
                 }
             },
@@ -106,7 +106,7 @@ fun MediumCredentialCard(
                 {
                     WalletTexts.MediumCredentialSubtitle(
                         text = it,
-                        color = textColor.copy(alpha = 0.7f),
+                        color = contentColor.copy(alpha = 0.7f),
                     )
                 }
             },

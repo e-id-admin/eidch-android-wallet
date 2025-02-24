@@ -28,8 +28,8 @@ class DeleteCredentialImpl @Inject constructor(
             return@coroutineBinding
         }
 
-        if (credential.privateKeyIdentifier != null) {
-            deleteKeyStoreEntry(credential.privateKeyIdentifier)
+        if (credential.keyBindingIdentifier != null) {
+            deleteKeyStoreEntry(credential.keyBindingIdentifier)
         }
 
         credentialRepo.deleteById(credentialId)

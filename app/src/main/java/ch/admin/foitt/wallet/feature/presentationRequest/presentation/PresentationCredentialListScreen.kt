@@ -1,20 +1,31 @@
 package ch.admin.foitt.wallet.feature.presentationRequest.presentation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
@@ -24,8 +35,9 @@ import ch.admin.foitt.wallet.platform.actorMetadata.presentation.InvitationHeade
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.Buttons
 import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
-import ch.admin.foitt.wallet.platform.composables.SpacerBottom
-import ch.admin.foitt.wallet.platform.composables.SpacerTop
+import ch.admin.foitt.wallet.platform.composables.presentation.HeightReportingLayout
+import ch.admin.foitt.wallet.platform.composables.presentation.layout.LazyColumn
+import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
 import ch.admin.foitt.wallet.platform.credential.presentation.CredentialListRow
 import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialMocks
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
@@ -62,57 +74,41 @@ private fun PresentationCredentialListScreenContent(
     onCredentialSelected: (Int) -> Unit,
     onBack: () -> Unit,
 ) {
+    val bottomHeightDp = remember { mutableStateOf(0.dp) }
+
     ConstraintLayout(
         modifier = Modifier.fillMaxSize()
     ) {
         val (
-            topSpacerRef,
             mainContentRef,
-            bottomSpacerRef,
             buttonRef,
         ) = createRefs()
 
-        SpacerTop(
-            backgroundColor = MaterialTheme.colorScheme.background,
-            modifier = Modifier.constrainAs(topSpacerRef) {
-                top.linkTo(parent.top)
-            },
-            useStatusBarInsets = true,
-        )
         CompactCredentialList(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(start = Sizes.s04, end = Sizes.s04)
                 .constrainAs(mainContentRef) {
                     top.linkTo(parent.top)
-                    bottom.linkTo(buttonRef.top)
+                    bottom.linkTo(parent.bottom)
                     height = Dimension.fillToConstraints
                 },
-            contentPadding = PaddingValues(top = Sizes.s04, bottom = Sizes.s04), // add Spacers padding
+            contentPadding = PaddingValues(bottom = Sizes.s06 + bottomHeightDp.value),
             credentialStates = credentialCardStates,
             onCredentialSelected = onCredentialSelected,
             headerContent = {
                 ListHeader(verifierUiState = verifierUiState)
             },
         )
-        Buttons.Outlined(
+        CancelButton(
             modifier = Modifier
-                .padding(start = Sizes.s04, end = Sizes.s04, bottom = Sizes.s04)
-                .navigationBarsPadding()
+                .padding(bottom = Sizes.s06)
                 .constrainAs(buttonRef) {
-                    bottom.linkTo(parent.bottom)
+                    bottom.linkTo(parent.bottom, margin = Sizes.s04)
+                    end.linkTo(parent.end)
+                    start.linkTo(parent.start)
                 },
-            text = stringResource(id = R.string.global_back_home),
-            startIcon = painterResource(id = R.drawable.pilot_ic_back_button),
-            onClick = onBack,
-        )
-        SpacerBottom(
-            backgroundColor = MaterialTheme.colorScheme.background,
-            modifier = Modifier.constrainAs(bottomSpacerRef) {
-                bottom.linkTo(buttonRef.top)
-            },
-            useNavigationBarInsets = false,
+            onBack = onBack,
+            stickyBottomHeight = bottomHeightDp
         )
         LoadingOverlay(showOverlay = isLoading)
     }
@@ -122,12 +118,18 @@ private fun PresentationCredentialListScreenContent(
 private fun ListHeader(verifierUiState: ActorUiState) {
     Spacer(modifier = Modifier.height(Sizes.s06))
     InvitationHeader(
+        modifier = Modifier
+            .padding(start = Sizes.s04, end = Sizes.s04),
         inviterName = verifierUiState.name,
         inviterImage = verifierUiState.painter,
         trustStatus = verifierUiState.trustStatus,
     )
-    Spacer(modifier = Modifier.height(Sizes.s06))
-    WalletTexts.BodyLarge(text = stringResource(id = R.string.tk_present_multiplecredentials_title))
+    Spacer(modifier = Modifier.height(Sizes.s04))
+    WalletTexts.BodyLarge(
+        modifier = Modifier
+            .padding(start = Sizes.s04, end = Sizes.s04),
+        text = stringResource(id = R.string.tk_present_multiplecredentials_title)
+    )
     Spacer(modifier = Modifier.height(Sizes.s04))
 }
 
@@ -139,8 +141,9 @@ private fun CompactCredentialList(
     onCredentialSelected: (Int) -> Unit,
     headerContent: @Composable () -> Unit,
 ) {
-    LazyColumn(
-        modifier = modifier,
+    WalletLayouts.LazyColumn(
+        modifier = modifier
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
         contentPadding = contentPadding,
     ) {
         item {
@@ -156,6 +159,33 @@ private fun CompactCredentialList(
     }
 }
 
+@Composable
+private fun CancelButton(
+    modifier: Modifier = Modifier,
+    stickyBottomHeight: MutableState<Dp>,
+    onBack: () -> Unit,
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        HeightReportingLayout(
+            modifier = modifier,
+            onContentHeightMeasured = { height -> stickyBottomHeight.value = height },
+        ) {
+            Buttons.FilledPrimary(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(corner = CornerSize(Sizes.s16)))
+                    .background(WalletTheme.colorScheme.background)
+                    .padding(horizontal = Sizes.s04, vertical = Sizes.s03),
+                text = stringResource(R.string.global_cancel),
+                startIcon = painterResource(R.drawable.wallet_ic_cross),
+                onClick = onBack,
+            )
+        }
+    }
+}
+
 @WalletAllScreenPreview
 @Composable
 private fun PresentationCredentialListScreenPreview() {
@@ -163,7 +193,7 @@ private fun PresentationCredentialListScreenPreview() {
         PresentationCredentialListScreenContent(
             verifierUiState = ActorUiState(
                 name = "My verifier name",
-                painter = painterResource(R.drawable.pilot_ic_strassenverkehrsamt),
+                painter = painterResource(R.drawable.ic_swiss_cross_small),
                 trustStatus = TrustStatus.TRUSTED,
             ),
             credentialCardStates = CredentialMocks.cardStates.toList().map { it.value() },

@@ -1,7 +1,6 @@
 package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.VerifiableCredential
-import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CreateDidJwkError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOffer
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOfferError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialRequestProofJwt
@@ -13,7 +12,6 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.ProofType
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.toFetchVerifiableCredentialError
 import ch.admin.foitt.openid4vc.domain.repository.CredentialOfferRepository
 import ch.admin.foitt.openid4vc.domain.usecase.CreateCredentialRequestProofJwt
-import ch.admin.foitt.openid4vc.domain.usecase.CreateDidJwk
 import ch.admin.foitt.openid4vc.domain.usecase.DeleteKeyPair
 import ch.admin.foitt.openid4vc.domain.usecase.FetchVerifiableCredential
 import ch.admin.foitt.openid4vc.domain.usecase.GenerateKeyPair
@@ -27,7 +25,6 @@ import javax.inject.Inject
 internal class FetchVerifiableCredentialImpl @Inject constructor(
     private val credentialOfferRepository: CredentialOfferRepository,
     private val generateKeyPair: GenerateKeyPair,
-    private val createDidJwk: CreateDidJwk,
     private val createCredentialRequestProofJwt: CreateCredentialRequestProofJwt,
     private val deleteKeyPair: DeleteKeyPair,
 ) : FetchVerifiableCredential {
@@ -44,10 +41,11 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
             if (proofTypes.isNotEmpty() && proofTypes.keys.none { it == ProofType.JWT }) {
                 return@coroutineBinding Err(CredentialOfferError.UnsupportedProofType).bind<VerifiableCredential>()
             }
-        }
-        credentialConfiguration.cryptographicBindingMethodsSupported?.let {
-            if (it.isNotEmpty() && it.intersect(listOf("did:jwk", "did:tdw")).isEmpty()) {
-                return@coroutineBinding Err(CredentialOfferError.UnsupportedCryptographicSuite).bind<VerifiableCredential>()
+
+            credentialConfiguration.cryptographicBindingMethodsSupported?.let { bindingMethods ->
+                if (bindingMethods.intersect(supportedBindingMethods).isEmpty()) {
+                    return@coroutineBinding Err(CredentialOfferError.UnsupportedCryptographicSuite).bind<VerifiableCredential>()
+                }
             }
         }
 
@@ -73,15 +71,9 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
         var credentialRequestJwt: CredentialRequestProofJwt? = null
 
         if (keyPair != null) {
-            val jwk = createDidJwk(keyPair = keyPair.keyPair, algorithm = keyPair.algorithm, asDid = false)
-                .mapError(CreateDidJwkError::toFetchVerifiableCredentialError)
-                .onFailure { deleteKeyPair(keyPair.keyId) }
-                .bind()
-
             credentialRequestJwt = retryUseCase {
                 createCredentialRequestProofJwt(
                     keyPair = keyPair,
-                    jwk = jwk,
                     issuer = issuerEndpoint,
                     cNonce = tokenResponse.cNonce
                 )
@@ -101,8 +93,8 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
         VerifiableCredential(
             credential = credentialResponse.credential,
             format = credentialConfiguration.format,
-            signingKeyId = keyPair?.keyId,
-            signingAlgorithm = keyPair?.algorithm,
+            keyBindingIdentifier = keyPair?.keyId,
+            keyBindingAlgorithm = keyPair?.algorithm,
         )
     }
 
@@ -115,4 +107,8 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
         } else {
             Err(CredentialOfferError.UnsupportedGrantType)
         }
+
+    companion object {
+        private val supportedBindingMethods = listOf("did:jwk")
+    }
 }

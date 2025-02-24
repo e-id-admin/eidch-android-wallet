@@ -8,5 +8,8 @@ sealed interface HomeScreenState {
         val credentials: List<CredentialCardState>,
         val onCredentialClick: (Long) -> Unit,
     ) : HomeScreenState
-    data object NoCredential : HomeScreenState
+    data class NoCredential(
+        val showBetaIdRequestButton: Boolean,
+        val showEIdRequestButton: Boolean,
+    ) : HomeScreenState
 }

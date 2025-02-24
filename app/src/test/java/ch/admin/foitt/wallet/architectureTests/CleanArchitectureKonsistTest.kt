@@ -183,9 +183,9 @@ class CleanArchitectureKonsistTest {
         .withPackage(
             "..platform.credential.domain.usecase..",
             "..platform.sdjwt.domain.usecase..",
-//            "..platform.login.domain.usecase..",
-//            "..openid4vc.domain.usecase..",
-//            "..platform.ssi.domain.usecase..",
+            "..platform.login.domain.usecase..",
+            "..openid4vc.domain.usecase..",
+            "..platform.ssi.domain.usecase..",
         )
 
 //    private val mediumPrioUseCases = Konsist.scopeFromProduction()

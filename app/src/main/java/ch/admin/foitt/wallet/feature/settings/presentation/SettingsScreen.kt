@@ -24,11 +24,15 @@ fun SettingsScreen(
     viewModel: SettingsViewModel
 ) {
     SettingsScreenContent(
-        onBetaIdScreen = viewModel::onBetaIdScreen,
+        showEIdRequestButton = viewModel.showEIdRequestButton,
+        showBetaIdRequestButton = viewModel.showBetaIdRequestButton,
+        onRequestEId = viewModel::onRequestEId,
+        onRequestBetaId = viewModel::onRequestBetaId,
         onSecurityScreen = viewModel::onSecurityScreen,
         onLanguageScreen = viewModel::onLanguageScreen,
         onHelp = viewModel::onHelp,
         onContact = viewModel::onContact,
+        onFeedback = viewModel::onFeedback,
         onImpressumScreen = viewModel::onImpressumScreen,
         onLicencesScreen = viewModel::onLicencesScreen,
     )
@@ -36,11 +40,15 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsScreenContent(
-    onBetaIdScreen: () -> Unit,
+    showEIdRequestButton: Boolean,
+    showBetaIdRequestButton: Boolean,
+    onRequestEId: () -> Unit,
+    onRequestBetaId: () -> Unit,
     onSecurityScreen: () -> Unit,
     onLanguageScreen: () -> Unit,
     onHelp: () -> Unit,
     onContact: () -> Unit,
+    onFeedback: () -> Unit,
     onImpressumScreen: () -> Unit,
     onLicencesScreen: () -> Unit,
 ) {
@@ -54,10 +62,17 @@ private fun SettingsScreenContent(
                 bottom = Sizes.s04,
             )
     ) {
-        SettingsSection(onBetaIdScreen, onSecurityScreen, onLanguageScreen)
+        SettingsSection(
+            showEIdRequestButton = showEIdRequestButton,
+            showBetaIdRequestButton = showBetaIdRequestButton,
+            onRequestEId = onRequestEId,
+            onRequestBetaId = onRequestBetaId,
+            onSecurityScreen = onSecurityScreen,
+            onLanguageScreen = onLanguageScreen,
+        )
         Spacer(modifier = Modifier.height(Sizes.s10))
 
-        SupportSection(onHelp, onContact)
+        SupportSection(onHelp, onContact, onFeedback)
         Spacer(modifier = Modifier.height(Sizes.s10))
 
         InfoSection(onImpressumScreen, onLicencesScreen)
@@ -66,16 +81,29 @@ private fun SettingsScreenContent(
 
 @Composable
 private fun SettingsSection(
-    onBetaIdScreen: () -> Unit,
+    showEIdRequestButton: Boolean,
+    showBetaIdRequestButton: Boolean,
+    onRequestEId: () -> Unit,
+    onRequestBetaId: () -> Unit,
     onSecurityScreen: () -> Unit,
     onLanguageScreen: () -> Unit,
 ) {
-    WalletListItems.SimpleListItem(
-        leadingIcon = R.drawable.wallet_ic_settings_beta_id,
-        title = stringResource(id = R.string.tk_menu_homeList_menu_add),
-        onItemClick = onBetaIdScreen,
-        trailingIcon = R.drawable.pilot_ic_settings_next,
-    )
+    if (showEIdRequestButton) {
+        WalletListItems.SimpleListItem(
+            leadingIcon = R.drawable.wallet_ic_settings_credential,
+            title = stringResource(id = R.string.tk_menu_homeList_orderEid),
+            onItemClick = onRequestEId,
+            trailingIcon = R.drawable.pilot_ic_settings_next,
+        )
+    }
+    if (showBetaIdRequestButton) {
+        WalletListItems.SimpleListItem(
+            leadingIcon = R.drawable.wallet_ic_settings_credential,
+            title = stringResource(id = R.string.tk_menu_homeList_menu_add),
+            onItemClick = onRequestBetaId,
+            trailingIcon = R.drawable.pilot_ic_settings_next,
+        )
+    }
     WalletListItems.SimpleListItem(
         leadingIcon = R.drawable.pilot_ic_security,
         title = stringResource(id = R.string.settings_security),
@@ -94,7 +122,8 @@ private fun SettingsSection(
 @Composable
 private fun SupportSection(
     onHelp: () -> Unit,
-    onContact: () -> Unit
+    onContact: () -> Unit,
+    onFeedback: () -> Unit,
 ) {
     WalletListItems.SimpleListItem(
         leadingIcon = R.drawable.pilot_ic_help,
@@ -106,6 +135,12 @@ private fun SupportSection(
         leadingIcon = R.drawable.pilot_ic_contact,
         title = stringResource(id = R.string.settings_contact),
         onItemClick = onContact,
+        trailingIcon = R.drawable.pilot_ic_settings_link,
+    )
+    WalletListItems.SimpleListItem(
+        leadingIcon = R.drawable.wallet_ic_feedback,
+        title = stringResource(id = R.string.tk_menu_setting_wallet_feedback),
+        onItemClick = onFeedback,
         trailingIcon = R.drawable.pilot_ic_settings_link,
         showDivider = false,
     )
@@ -133,11 +168,15 @@ private fun InfoSection(onImpressumScreen: () -> Unit, onLicencesScreen: () -> U
 fun SettingsScreenPreview() {
     WalletTheme {
         SettingsScreenContent(
-            onBetaIdScreen = {},
+            showEIdRequestButton = true,
+            showBetaIdRequestButton = true,
+            onRequestEId = {},
+            onRequestBetaId = {},
             onSecurityScreen = {},
             onLanguageScreen = {},
             onHelp = {},
             onContact = {},
+            onFeedback = {},
             onImpressumScreen = {},
             onLicencesScreen = {},
         )

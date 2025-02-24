@@ -45,14 +45,14 @@ private fun OnboardingPresentScreenContent(
     stickyBottomContent = {
         Buttons.FilledPrimary(
             modifier = Modifier.testTag(TestTags.CONTINUE_BUTTON.name),
-            text = stringResource(id = R.string.global_continue),
+            text = stringResource(id = R.string.tk_global_continue),
             onClick = onNext,
         )
     }
 ) {
     OnboardingScreenContent(
-        title = stringResource(id = R.string.onboarding_present_primary),
-        subtitle = stringResource(id = R.string.onboarding_present_secondary),
+        title = stringResource(id = R.string.tk_onboarding_neverforget_title),
+        subtitle = stringResource(id = R.string.tk_onboarding_neverforget_body),
     )
 }
 

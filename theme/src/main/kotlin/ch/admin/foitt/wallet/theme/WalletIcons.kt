@@ -19,7 +19,7 @@ object WalletIcons {
     fun IconWithBackground(
         icon: Painter,
         iconTint: Color = MaterialTheme.colorScheme.primary,
-        backgroundColor: Color = PilotColors.grey08
+        backgroundColor: Color = WalletColors.grey96
     ) = Box(
         modifier = Modifier
             .size(Sizes.s08)

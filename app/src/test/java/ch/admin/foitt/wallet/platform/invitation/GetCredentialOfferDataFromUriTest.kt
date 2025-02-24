@@ -44,13 +44,15 @@ class GetCredentialOfferDataFromUriTest {
     @Test
     fun `invalid VC invitation should return an error`() {
         assertTrue(
-            getCredentialOfferUseCase(uri = URI("")).getError() is InvitationError.DeserializationFailed,
+            getCredentialOfferUseCase(uri = URI("")).getError() is InvitationError.CredentialOfferDeserializationFailed,
             "empty input should return an error"
         )
 
         // Known schema, no valid query
         assertTrue(
-            getCredentialOfferUseCase(uri = URI("openid-credential-offer://foo")).getError() is InvitationError.DeserializationFailed,
+            getCredentialOfferUseCase(
+                uri = URI("openid-credential-offer://foo")
+            ).getError() is InvitationError.CredentialOfferDeserializationFailed,
             "input without a query should return an error"
         )
 
@@ -58,7 +60,7 @@ class GetCredentialOfferDataFromUriTest {
         assertTrue(
             getCredentialOfferUseCase(
                 uri = URI("openid-credential-offer://?foo")
-            ).getError() is InvitationError.DeserializationFailed,
+            ).getError() is InvitationError.CredentialOfferDeserializationFailed,
             "input without a valid query should return an error"
         )
 
@@ -66,7 +68,7 @@ class GetCredentialOfferDataFromUriTest {
         assertTrue(
             getCredentialOfferUseCase(
                 uri = URI("openid-credential-offer://?foo=")
-            ).getError() is InvitationError.DeserializationFailed,
+            ).getError() is InvitationError.CredentialOfferDeserializationFailed,
             "input without a valid query should return an error"
         )
 
@@ -74,7 +76,7 @@ class GetCredentialOfferDataFromUriTest {
         assertTrue(
             getCredentialOfferUseCase(
                 uri = URI("openid-credential-offer://?foo=bar")
-            ).getError() is InvitationError.DeserializationFailed,
+            ).getError() is InvitationError.CredentialOfferDeserializationFailed,
             "input without a valid query should return an error"
         )
 
@@ -92,7 +94,7 @@ class GetCredentialOfferDataFromUriTest {
     @Test
     fun `Getting credential offer maps json parsing errors`() = runTest {
         val result = getCredentialOfferUseCase(INVALID_JSON_URI)
-        result.assertErrorType(InvitationError.DeserializationFailed::class)
+        result.assertErrorType(InvitationError.CredentialOfferDeserializationFailed::class)
     }
 
     companion object {

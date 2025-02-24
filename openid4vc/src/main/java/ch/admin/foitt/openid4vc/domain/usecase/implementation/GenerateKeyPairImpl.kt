@@ -38,20 +38,23 @@ internal class GenerateKeyPairImpl @Inject constructor(
         val supportedProofType = credentialConfiguration.proofTypesSupported.entries.firstOrNull {
             it.key != ProofType.UNKNOWN
         }?.value
-        val cryptographicSuite = supportedProofType?.signingAlgorithms?.firstOrNull()
-        return when (cryptographicSuite) {
-            null -> Err(CredentialOfferError.UnsupportedCryptographicSuite)
-            else -> Ok(cryptographicSuite)
+        val cryptographicSuite = supportedProofType?.signingAlgorithms ?: emptyList()
+        val preferredSigningAlgorithms = getPreferredSigningAlgorithms()
+        // algorithms from our preference list have priority over the algorithms from the issuer
+        val signingAlgorithms = preferredSigningAlgorithms.intersect(cryptographicSuite.toSet())
+
+        return when {
+            signingAlgorithms.isEmpty() -> Err(CredentialOfferError.UnsupportedCryptographicSuite)
+            else -> Ok(signingAlgorithms.first())
         }
     }
 
     private suspend fun createKeyPair(
         signingAlgorithm: SigningAlgorithm
-    ): Result<JWSKeyPair, FetchVerifiableCredentialError> = when (signingAlgorithm) {
-        SigningAlgorithm.ES512, SigningAlgorithm.ES256 -> {
-            retryUseCase {
-                createJWSKeyPair(signingAlgorithm, ANDROID_KEY_STORE)
-            }.mapError(CreateJWSKeyPairError::toCredentialOfferError)
-        }
-    }
+    ): Result<JWSKeyPair, FetchVerifiableCredentialError> = retryUseCase {
+        createJWSKeyPair(signingAlgorithm, ANDROID_KEY_STORE)
+    }.mapError(CreateJWSKeyPairError::toCredentialOfferError)
+
+    // priority list of preferred signing algorithms (first position = highest priority)
+    private fun getPreferredSigningAlgorithms() = listOf(SigningAlgorithm.ES256)
 }

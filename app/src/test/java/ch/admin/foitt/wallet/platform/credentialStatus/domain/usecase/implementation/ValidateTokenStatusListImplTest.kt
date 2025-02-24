@@ -1,6 +1,5 @@
 package ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.implementation
 
-import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
 import ch.admin.foitt.openid4vc.domain.usecase.VerifyJwtSignature
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialStatusError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.TokenStatusList
@@ -11,14 +10,11 @@ import ch.admin.foitt.wallet.util.assertOk
 import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -28,9 +24,6 @@ import java.lang.IllegalStateException
 import java.text.ParseException
 
 class ValidateTokenStatusListImplTest {
-
-    @MockK
-    private lateinit var mockAnyCredential: AnyCredential
 
     @MockK
     private lateinit var mockVerifyJwtSignature: VerifyJwtSignature
@@ -46,7 +39,7 @@ class ValidateTokenStatusListImplTest {
             verifyJwtSignature = mockVerifyJwtSignature,
         )
 
-        success()
+        coEvery { mockVerifyJwtSignature(did = any(), kid = any(), jwt = any()) } returns Ok(Unit)
     }
 
     @AfterEach
@@ -56,7 +49,7 @@ class ValidateTokenStatusListImplTest {
 
     @Test
     fun `Validating token status list which is valid returns response`(): Unit = runTest {
-        val result = useCase(mockAnyCredential, JWT, SUBJECT)
+        val result = useCase(ISSUER, JWT, SUBJECT)
 
         val response = result.assertOk()
         assertEquals(tokenResponse, response)
@@ -64,16 +57,14 @@ class ValidateTokenStatusListImplTest {
 
     @Test
     fun `Validating token status list which has no issuer returns error`(): Unit = runTest {
-        mockAnyCredential(null)
-
-        val result = useCase(mockAnyCredential, JWT_WITHOUT_ISSUER, SUBJECT)
+        val result = useCase(ISSUER, JWT_WITHOUT_ISSUER, SUBJECT)
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertInstanceOf<IllegalStateException>(error.cause)
     }
 
     @Test
     fun `Validating token status list which is not a JWT returns error`(): Unit = runTest {
-        val result = useCase(mockAnyCredential, "invalidJwt", SUBJECT)
+        val result = useCase(ISSUER, "invalidJwt", SUBJECT)
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertInstanceOf<ParseException>(error.cause)
@@ -81,9 +72,7 @@ class ValidateTokenStatusListImplTest {
 
     @Test
     fun `Validating token status list with wrong issuer returns error`(): Unit = runTest {
-        mockAnyCredential("otherIssuer")
-
-        val result = useCase(mockAnyCredential, JWT, SUBJECT)
+        val result = useCase("otherIssuer", JWT, SUBJECT)
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertInstanceOf<IllegalStateException>(error.cause)
@@ -91,7 +80,7 @@ class ValidateTokenStatusListImplTest {
 
     @Test
     fun `Validating token status list with wrong subject returns error`(): Unit = runTest {
-        val result = useCase(mockAnyCredential, JWT, "otherSubject")
+        val result = useCase(ISSUER, JWT, "otherSubject")
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertInstanceOf<IllegalStateException>(error.cause)
@@ -99,7 +88,7 @@ class ValidateTokenStatusListImplTest {
 
     @Test
     fun `Validating token status list with expired JWT returns error`(): Unit = runTest {
-        val result = useCase(mockAnyCredential, JWT_WITH_EXPIRATION_DATE_ZERO, SUBJECT)
+        val result = useCase(ISSUER, JWT_WITH_EXPIRATION_DATE_ZERO, SUBJECT)
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertInstanceOf<IllegalStateException>(error.cause)
@@ -107,7 +96,7 @@ class ValidateTokenStatusListImplTest {
 
     @Test
     fun `Validating token status list with invalid payload returns error`(): Unit = runTest {
-        val result = useCase(mockAnyCredential, JWT_WITHOUT_BITS, SUBJECT)
+        val result = useCase(ISSUER, JWT_WITHOUT_BITS, SUBJECT)
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertInstanceOf<SerializationException>(error.cause)
@@ -115,7 +104,7 @@ class ValidateTokenStatusListImplTest {
 
     @Test
     fun `Validating token status list with wrong type returns error`(): Unit = runTest {
-        val result = useCase(mockAnyCredential, JWT_WITH_WRONG_TYPE, SUBJECT)
+        val result = useCase(ISSUER, JWT_WITH_WRONG_TYPE, SUBJECT)
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertInstanceOf<IllegalStateException>(error.cause)
@@ -123,7 +112,7 @@ class ValidateTokenStatusListImplTest {
 
     @Test
     fun `Validating token status list with missing iat returns error`(): Unit = runTest {
-        val result = useCase(mockAnyCredential, JWT_WITHOUT_IAT, SUBJECT)
+        val result = useCase(ISSUER, JWT_WITHOUT_IAT, SUBJECT)
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertInstanceOf<IllegalStateException>(error.cause)
@@ -131,7 +120,7 @@ class ValidateTokenStatusListImplTest {
 
     @Test
     fun `Validating token status list with missing subject returns error`(): Unit = runTest {
-        val result = useCase(mockAnyCredential, JWT_WITHOUT_SUBJECT, SUBJECT)
+        val result = useCase(ISSUER, JWT_WITHOUT_SUBJECT, SUBJECT)
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertInstanceOf<IllegalStateException>(error.cause)
@@ -140,21 +129,10 @@ class ValidateTokenStatusListImplTest {
     @OptIn(ExperimentalSerializationApi::class)
     @Test
     fun `Validating token status list with missing status_list returns error`(): Unit = runTest {
-        val result = useCase(mockAnyCredential, JWT_WITHOUT_STATUS_LIST, SUBJECT)
+        val result = useCase(ISSUER, JWT_WITHOUT_STATUS_LIST, SUBJECT)
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertInstanceOf<SerializationException>(error.cause)
-    }
-
-    private fun success() {
-        mockAnyCredential(ISSUER)
-        coEvery { mockVerifyJwtSignature(did = any(), kid = any(), signedJwt = any()) } returns Ok(Unit)
-    }
-
-    private fun mockAnyCredential(issuer: String?) {
-        every { mockAnyCredential.json } returns buildJsonObject {
-            issuer?.let { put("iss", it) }
-        }
     }
 
     private companion object {
@@ -179,11 +157,12 @@ class ValidateTokenStatusListImplTest {
         const val JWT_WITHOUT_STATUS_LIST =
             "eyJhbGciOiJFUzI1NiIsImtpZCI6ImM0NDI5NzI4MGU1ZDNjYjVmOTE1ZjRiN2JiOGRjZWFjIiwidHlwIjoic3RhdHVzbGlzdCtqd3QifQ.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwiaXNzIjoiaXNzdWVyIiwic3ViIjoic3ViamVjdCIsInR0bCI6NDMyMDB9.K7nU10KOZAx-UIsd57pJeaCKjfdzJSRUj4RnvTpQyecteCZpt0aCR6VPwl4el1pc5sc8k3yPqKqy5jF5EL1t6A"
 /*
-JWT Header is: {
-                  "alg": "ES256",
-                  "kid": "c44297280e5d3cb5f915f4b7bb8dceac",
-                  "typ": "statuslist+jwt"
-                }
+JWT Header is:
+{
+    "alg": "ES256",
+    "kid": "c44297280e5d3cb5f915f4b7bb8dceac",
+    "typ": "statuslist+jwt"
+}
 JWT payload is: {
                   "exp": 2291720170,
                   "iat": 1686920170,

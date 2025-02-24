@@ -76,7 +76,7 @@ class AuthWithPinViewModel @Inject constructor(
                         Timber.e(error.cause, "Authentication with pin for biometrics failed")
                     }
                     _passphraseInputFieldState.value = PassphraseInputFieldState.Error
-                    showPinValidationError(R.string.onboarding_pin_code_error_tooManyAttempts)
+                    showPinValidationError(R.string.tk_onboarding_nopasswordmismatch_notification)
                 }
             )
         }.trackCompletion(_isLoading)

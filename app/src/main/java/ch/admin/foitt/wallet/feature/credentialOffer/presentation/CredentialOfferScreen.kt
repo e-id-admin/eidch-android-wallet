@@ -167,8 +167,6 @@ private fun CompactContent(
         credentialClaimItems(
             title = R.string.tk_displaydelete_displaycredential1_title2,
             claims = credentialOffer.claims,
-            issuer = credentialOffer.issuer.name,
-            issuerIcon = credentialOffer.issuer.painter,
             onWrongData = onWrongData,
         )
 
@@ -311,8 +309,6 @@ private fun DetailsWithHeader(
             credentialClaimItems(
                 title = R.string.tk_displaydelete_displaycredential1_title2,
                 claims = credentialOffer.claims,
-                issuer = credentialOffer.issuer.name,
-                issuerIcon = credentialOffer.issuer.painter,
                 onWrongData = onWrongData,
             )
             item {
@@ -409,7 +405,7 @@ private fun CredentialOfferScreenPreview() {
             credentialOfferUiState = CredentialOfferUiState(
                 issuer = ActorUiState(
                     name = "Test Issuer",
-                    painter = painterResource(id = R.drawable.pilot_ic_strassenverkehrsamt),
+                    painter = painterResource(id = R.drawable.ic_swiss_cross_small),
                     trustStatus = TrustStatus.TRUSTED,
                 ),
                 credential = CredentialMocks.cardState01,
@@ -430,7 +426,7 @@ private fun CredentialOfferLargeContentPreview() {
             credentialOffer = CredentialOfferUiState(
                 issuer = ActorUiState(
                     name = "Test Issuer",
-                    painter = painterResource(id = R.drawable.pilot_ic_strassenverkehrsamt),
+                    painter = painterResource(id = R.drawable.ic_swiss_cross_small),
                     trustStatus = TrustStatus.TRUSTED,
                 ),
                 credential = CredentialMocks.cardState01,

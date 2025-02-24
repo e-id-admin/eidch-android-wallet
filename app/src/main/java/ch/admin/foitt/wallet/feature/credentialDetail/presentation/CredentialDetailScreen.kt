@@ -342,7 +342,7 @@ private fun ExampleScreen(windowWidthClass: WindowWidthSizeClass) {
             claims = CredentialMocks.claimList,
             issuer = ActorUiState(
                 name = "Issuer",
-                painter = painterResource(id = R.drawable.pilot_ic_strassenverkehrsamt),
+                painter = painterResource(id = R.drawable.ic_swiss_cross_small),
                 trustStatus = TrustStatus.TRUSTED,
             )
         ),

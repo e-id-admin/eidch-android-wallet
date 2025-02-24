@@ -112,7 +112,7 @@ class NavigationManagerImpl @Inject constructor(
         navHost.get()?.navigate(
             direction = direction,
             navOptionsBuilder = navOptionsBuilder,
-        )
+        ) ?: Timber.w("NavAction navigate failed, navHost is null")
         printBackStack("navigate")
     }
 

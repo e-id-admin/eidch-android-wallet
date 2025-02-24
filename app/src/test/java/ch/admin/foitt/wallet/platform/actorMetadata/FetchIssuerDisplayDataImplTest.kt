@@ -18,6 +18,7 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
@@ -57,6 +58,7 @@ class FetchIssuerDisplayDataImplTest {
 
         coEvery { mockAnyCredential.payload } returns mockPayload
         coEvery { mockAnyCredential.format } returns CredentialFormat.VC_SD_JWT
+        coEvery { mockAnyCredential.issuer } returns mockDid
 
         coEvery { mockTrustStatement01.logoUri } returns mockTrustedLogos
         coEvery { mockTrustStatement01.orgName } returns mockTrustedNames
@@ -101,6 +103,18 @@ class FetchIssuerDisplayDataImplTest {
         val displayData: ActorDisplayData = useCase(credentialId01)
 
         assertEquals(TrustStatus.TRUSTED, displayData.trustStatus)
+    }
+
+    @Test
+    fun `No trust statement is fetched when issuer is not a did`(): Unit = runTest {
+        coEvery { mockAnyCredential.issuer } returns "not a did"
+        val displayData: ActorDisplayData = useCase(credentialId01)
+
+        assertEquals(TrustStatus.NOT_TRUSTED, displayData.trustStatus)
+
+        coVerify(exactly = 0) {
+            mockFetchTrustStatementFromDid.invoke(did = "not a did")
+        }
     }
 
     @Test
@@ -216,6 +230,7 @@ class FetchIssuerDisplayDataImplTest {
         "iss":"did:tdw:identifier"
     }
      */
-    private val mockPayload = "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIKfQ.ewogICJpc3MiOiJkaWQ6dGR3OmlkZW50aWZpZXIiCn0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJS2ZRLi5MNG13YUg1aV9KeXA1cVJtamc3VE9aSHM2VjlSa3E2TEVLTi1fRzFXTzlCazhHRjVXSjdzdFlpbGxNZjZWVGxtT1Fhd1prR21rMWdlNmFEX2FiNWg2QQ"
+    private val mockPayload =
+        "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJpc3MiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJ2Y3QiOiJ2Y3QiCn0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJc0NpQWdJbXRwWkNJNkltdGxlVWxrSWdwOS4uNHNwTXBzWE1nYlNyY0lqMFdNbXJNYXdhcVRzeG9GWmItcjdwTWlubEhvZklRRUhhS2pzV1J0dENzUTkyd0tfa3RpaDQta2VCdjdVbkc2MkRPa2NDbGc"
     //endregion
 }

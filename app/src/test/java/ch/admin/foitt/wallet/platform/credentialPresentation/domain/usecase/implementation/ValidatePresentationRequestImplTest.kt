@@ -1,38 +1,48 @@
 package ch.admin.foitt.wallet.platform.credentialPresentation.domain.usecase.implementation
 
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.Field
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.InputDescriptor
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JsonPresentationRequest
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.JwtPresentationRequest
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationDefinition
+import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestContainer
+import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtError
 import ch.admin.foitt.openid4vc.domain.usecase.VerifyJwtSignature
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.CredentialPresentationError
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.usecase.ValidatePresentationRequest
+import ch.admin.foitt.wallet.platform.credentialPresentation.mock.MockPresentationRequest
+import ch.admin.foitt.wallet.util.SafeJsonTestInstance
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
-import ch.admin.foitt.wallet.util.create
+import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
-import com.nimbusds.jwt.SignedJWT
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.SpyK
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class ValidatePresentationRequestImplTest {
 
-    @MockK
-    private lateinit var mockJwtPresentationRequest: JwtPresentationRequest
+    private val testSafeJson = SafeJsonTestInstance.safeJson
 
     @MockK
-    private lateinit var mockJsonPresentationRequest: JsonPresentationRequest
+    private lateinit var mockJwtPresentationContainer: PresentationRequestContainer.Jwt
+
+    @MockK
+    private lateinit var mockJsonPresentationContainer: PresentationRequestContainer.Json
 
     @MockK
     private lateinit var mockVerifyJwtSignature: VerifyJwtSignature
+
+    @SpyK
+    private var mockPresentationJwt: Jwt = Jwt(MockPresentationRequest.validJwt)
+
+    private var mockPresentationJson: JsonObject = MockPresentationRequest.presentationRequest.toJsonObject()
 
     private lateinit var useCase: ValidatePresentationRequest
 
@@ -40,8 +50,11 @@ class ValidatePresentationRequestImplTest {
     fun setUp() {
         MockKAnnotations.init(this)
         useCase = ValidatePresentationRequestImpl(
+            testSafeJson,
             mockVerifyJwtSignature
         )
+
+        MockPresentationRequest.presentationRequest.copy()
 
         setupDefaultMocks()
     }
@@ -53,205 +66,181 @@ class ValidatePresentationRequestImplTest {
 
     @Test
     fun `A valid json Presentation request returns Ok`() = runTest {
-        useCase(mockJsonPresentationRequest).assertOk()
+        useCase(mockJsonPresentationContainer).assertOk()
     }
 
     @Test
     fun `Json Presentation request with an invalid response_type (something else than 'vp_token') returns invalid presentation error`() =
         runTest {
-            every { mockJsonPresentationRequest.responseType } returns INVALID_RESPONSE_TYPE
+            val presentationJson = MockPresentationRequest.presentationRequest
+                .copy(responseType = INVALID_RESPONSE_TYPE)
+                .toJsonObject()
 
-            useCase(mockJsonPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+            coEvery { mockJsonPresentationContainer.json } returns presentationJson
+
+            useCase(mockJsonPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
         }
 
     @Test
     fun `Json Presentation request with an invalid response_mode (something else than 'direct_post') returns an invalid presentation error`() =
         runTest {
-            every { mockJsonPresentationRequest.responseMode } returns INVALID_RESPONSE_MODE
+            val presentationJson = MockPresentationRequest.presentationRequest
+                .copy(responseMode = INVALID_RESPONSE_MODE)
+                .toJsonObject()
+            coEvery { mockJsonPresentationContainer.json } returns presentationJson
 
-            useCase(mockJsonPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+            useCase(mockJsonPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
         }
 
     @Test
-    fun `Json Presentation request with client_id, but missing client_id_scheme returns invalid presentation error`() =
+    fun `Json Presentation request missing client_id_scheme returns invalid presentation error`(): Unit =
         runTest {
-            every { mockJsonPresentationRequest.clientIdScheme } returns null
+            val presentationJson = MockPresentationRequest.presentationRequest
+                .copy(clientIdScheme = null)
+                .toJsonObject()
+            coEvery { mockJsonPresentationContainer.json } returns presentationJson
 
-            useCase(mockJsonPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
-        }
-
-    @Test
-    fun `Json Presentation request with a DID as client_id, but not 'did' as client_id_scheme returns invalid presentation error`() =
-        runTest {
-            every { mockJsonPresentationRequest.clientIdScheme } returns INVALID_CLIENT_ID_SCHEME
-
-            useCase(mockJsonPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+            useCase(mockJsonPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
         }
 
     @Test
     fun `Json Presentation request with an invalid client_id_scheme (something else than 'did') returns invalid presentation error`() =
         runTest {
-            every { mockJsonPresentationRequest.clientIdScheme } returns INVALID_CLIENT_ID_SCHEME
+            val presentationJson = MockPresentationRequest.presentationRequest
+                .copy(clientIdScheme = INVALID_CLIENT_ID_SCHEME)
+                .toJsonObject()
+            coEvery { mockJsonPresentationContainer.json } returns presentationJson
 
-            useCase(mockJsonPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+            useCase(mockJsonPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
         }
 
     @Test
-    fun `Json Presentation request with a valid client_id_scheme, but invalid client_id (something that is no did) returns invalid presentation error`() =
+    fun `Json Presentation request with an invalid client_id (something that is no did) returns invalid presentation error`() =
         runTest {
-            every { mockJsonPresentationRequest.clientId } returns INVALID_CLIENT_ID
+            val presentationJson = MockPresentationRequest.presentationRequest
+                .copy(clientId = INVALID_CLIENT_ID)
+                .toJsonObject()
+            coEvery { mockJsonPresentationContainer.json } returns presentationJson
 
-            useCase(mockJsonPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+            useCase(mockJsonPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
         }
 
     @Test
     fun `A valid jwt Presentation request returns Ok`() = runTest {
-        useCase(mockJwtPresentationRequest).assertOk()
+        useCase(mockJwtPresentationContainer).assertOk()
     }
 
     @Test
     fun `Jwt Presentation request with an invalid response_type (something else than 'vp_token') returns invalid presentation error`() =
         runTest {
-            every { mockJwtPresentationRequest.responseType } returns INVALID_RESPONSE_TYPE
+            val presentationJson = MockPresentationRequest.presentationRequest
+                .copy(responseType = INVALID_RESPONSE_TYPE)
+                .toJsonObject()
 
-            useCase(mockJwtPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+            coEvery { mockPresentationJwt.payloadJson } returns presentationJson
+
+            useCase(mockJwtPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
         }
 
     @Test
     fun `Jwt Presentation request with an invalid response_mode (something else than 'direct_post') returns an invalid presentation error`() =
         runTest {
-            every { mockJwtPresentationRequest.responseMode } returns INVALID_RESPONSE_MODE
+            val presentationJson = MockPresentationRequest.presentationRequest
+                .copy(responseMode = INVALID_RESPONSE_MODE)
+                .toJsonObject()
+            coEvery { mockPresentationJwt.payloadJson } returns presentationJson
 
-            useCase(mockJwtPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+            useCase(mockJwtPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
         }
 
     @Test
-    fun `Jwt Presentation request with client_id, but missing client_id_scheme returns invalid presentation error`() =
+    fun `Jwt Presentation request missing client_id_scheme returns invalid presentation error`() =
         runTest {
-            every { mockJwtPresentationRequest.clientIdScheme } returns null
+            val presentationJson = MockPresentationRequest.presentationRequest
+                .copy(clientIdScheme = null)
+                .toJsonObject()
+            coEvery { mockPresentationJwt.payloadJson } returns presentationJson
 
-            useCase(mockJwtPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
-        }
-
-    @Test
-    fun `Jwt Presentation request with a DID as client_id, but not 'did' as client_id_scheme returns invalid presentation error`() =
-        runTest {
-            every { mockJwtPresentationRequest.clientIdScheme } returns INVALID_CLIENT_ID_SCHEME
-
-            useCase(mockJwtPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+            useCase(mockJwtPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
         }
 
     @Test
     fun `Jwt Presentation request with an invalid client_id_scheme (something else than 'did') returns invalid presentation error`() =
         runTest {
-            every { mockJwtPresentationRequest.clientIdScheme } returns INVALID_CLIENT_ID_SCHEME
+            val presentationJson = MockPresentationRequest.presentationRequest
+                .copy(clientIdScheme = INVALID_CLIENT_ID_SCHEME)
+                .toJsonObject()
+            coEvery { mockPresentationJwt.payloadJson } returns presentationJson
 
-            useCase(mockJwtPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+            useCase(mockJwtPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
         }
 
     @Test
-    fun `Jwt Presentation request with a valid client_id_scheme, but invalid client_id (something that is no did) returns invalid presentation error`() =
+    fun `Jwt Presentation request with an invalid client_id (something that is no did) returns invalid presentation error`(): Unit =
         runTest {
-            every { mockJwtPresentationRequest.clientId } returns INVALID_CLIENT_ID
+            val presentationJson = MockPresentationRequest.presentationRequest
+                .copy(clientId = INVALID_CLIENT_ID)
+                .toJsonObject()
+            coEvery { mockPresentationJwt.payloadJson } returns presentationJson
 
-            useCase(mockJwtPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+            useCase(mockJwtPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
         }
 
     @Test
     fun `Jwt Presentation request with an invalid jwt alg header return invalid presentation error `() = runTest {
-        every { mockJwtPresentationRequest.signedJWT } returns mockJwtInvalidAlgorithm
+        coEvery { mockPresentationJwt.algorithm } returns INVALID_JWT_ALGORITHM
 
-        useCase(mockJwtPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+        useCase(mockJwtPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
     }
 
     @Test
-    fun `Jwt Presentation request with an invalid jwt kid header return invalid presentation error `() = runTest {
-        every { mockJwtPresentationRequest.signedJWT } returns mockJwtInvalidKeyId
+    fun `Jwt Presentation request with a missing jwt kid header return invalid presentation error `(): Unit = runTest {
+        coEvery { mockPresentationJwt.keyId } returns null
 
-        useCase(mockJwtPresentationRequest).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+        useCase(mockJwtPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+    }
+
+    @Test
+    fun `Jwt Presentation request map invalid jwt signature to invalid presentation error`(): Unit = runTest {
+        coEvery {
+            mockVerifyJwtSignature.invoke(did = any(), kid = any(), jwt = mockPresentationJwt)
+        } returns Err(VcSdJwtError.InvalidJwt)
+
+        useCase(mockJwtPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+    }
+
+    @Test
+    fun `Jwt Presentation request map jwt issuer validation failure to unknown verifier error`(): Unit = runTest {
+        coEvery {
+            mockVerifyJwtSignature.invoke(did = any(), kid = any(), jwt = mockPresentationJwt)
+        } returns Err(VcSdJwtError.IssuerValidationFailed)
+
+        useCase(mockJwtPresentationContainer).assertErrorType(CredentialPresentationError.UnknownVerifier::class)
+    }
+
+    @Test
+    fun `Jwt Presentation request map network error during did resolution to network error`(): Unit = runTest {
+        coEvery {
+            mockVerifyJwtSignature.invoke(did = any(), kid = any(), jwt = mockPresentationJwt)
+        } returns Err(VcSdJwtError.NetworkError)
+
+        useCase(mockJwtPresentationContainer).assertErrorType(CredentialPresentationError.NetworkError::class)
     }
 
     private fun setupDefaultMocks() {
         coEvery { mockVerifyJwtSignature(any(), any(), any()) } returns Ok(Unit)
-
-        every { mockJsonPresentationRequest.responseUri } returns RESPONSE_URI
-        every { mockJsonPresentationRequest.responseType } returns VALID_RESPONSE_TYPE
-        every { mockJsonPresentationRequest.clientId } returns VALID_CLIENT_ID
-        every { mockJsonPresentationRequest.clientIdScheme } returns VALID_CLIENT_ID_SCHEME
-        every { mockJsonPresentationRequest.responseMode } returns VALID_RESPONSE_MODE
-        every { mockJsonPresentationRequest.presentationDefinition } returns mockPresentationDefinition
-
-        every { mockJwtPresentationRequest.responseUri } returns RESPONSE_URI
-        every { mockJwtPresentationRequest.responseType } returns VALID_RESPONSE_TYPE
-        every { mockJwtPresentationRequest.clientId } returns VALID_CLIENT_ID
-        every { mockJwtPresentationRequest.clientIdScheme } returns VALID_CLIENT_ID_SCHEME
-        every { mockJwtPresentationRequest.responseMode } returns VALID_RESPONSE_MODE
-        every { mockJwtPresentationRequest.presentationDefinition } returns mockPresentationDefinition
-        every { mockJwtPresentationRequest.signedJWT } returns mockValidJwt
+        coEvery { mockJwtPresentationContainer.jwt } returns mockPresentationJwt
+        coEvery { mockJsonPresentationContainer.json } returns mockPresentationJson
     }
 
+    private fun PresentationRequest.toJsonObject(): JsonObject =
+        testSafeJson.json.encodeToJsonElement(value = this).jsonObject
+
     private companion object {
-        const val VALID_RESPONSE_TYPE = "vp_token"
         const val INVALID_RESPONSE_TYPE = "invalid response_type"
-        const val VALID_RESPONSE_MODE = "direct_post"
         const val INVALID_RESPONSE_MODE = "invalid response_mode"
-        const val VALID_CLIENT_ID = "did:method:identifier"
         const val INVALID_CLIENT_ID = "invalid client_id"
-        const val VALID_CLIENT_ID_SCHEME = "did"
         const val INVALID_CLIENT_ID_SCHEME = "invalid client_id_scheme"
-        const val RESPONSE_URI = ""
-
-        val mockPresentationDefinition = PresentationDefinition(
-            id = "id",
-            name = "name",
-            inputDescriptors = listOf(
-                InputDescriptor.create(Field(path = listOf("path"))),
-            ),
-            purpose = "purpose",
-        )
-
-        /*
-        header:
-        {
-          "kid": "did:tdw:identifier",
-          "alg": "ES256"
-        }
-        payload:
-        {
-          "key": "value"
-        }
-         */
-        val mockValidJwt: SignedJWT = SignedJWT.parse(
-            "ewogICJraWQiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJhbGciOiJFUzI1NiIKfQ.ewogICJrZXkiOiJ2YWx1ZSIKfQ.ZXdvZ0lDSnJhV1FpT2lKa2FXUTZkR1IzT21sa1pXNTBhV1pwWlhJaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJS2ZRLi5wTVZ5TjFNU0hkOFBaMXJUWS00ZXZpTDJYQWZzUmtqajB0dUhVdlRLa09zYlFwNks0LVVXWTc5SHc0N1NCZ1pleEo5NW5pVXlTZ3lxVy1WeFlIRmRSZw"
-        )
-
-        /*
-        header:
-        {
-          "kid": "did:tdw:identifier",
-          "alg": "HS256"
-        }
-        payload:
-        {
-          "key": "value"
-        }
-         */
-        val mockJwtInvalidAlgorithm: SignedJWT = SignedJWT.parse(
-            "ewogICJraWQiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJhbGciOiJIUzI1NiIKfQ.ewogICJrZXkiOiJ2YWx1ZSIKfQ.ZXdvZ0lDSnJhV1FpT2lKa2FXUTZkR1IzT21sa1pXNTBhV1pwWlhJaUxBb2dJQ0poYkdjaU9pSklVekkxTmlJS2ZRLi5wVXA2Mk5ULUlvZXhXZnJ4VlVmcDNiTk9DcXFkYV9TbFUzWlFQdzdUdlpZ"
-        )
-
-        /*
-        header:
-        {
-          "alg": "ES256"
-        }
-        payload:
-        {
-          "key": "value"
-        }
-         */
-        val mockJwtInvalidKeyId: SignedJWT = SignedJWT.parse(
-            "ewogICJhbGciOiJFUzI1NiIKfQ.ewogICJrZXkiOiJ2YWx1ZSIKfQ.ZXdvZ0lDSmhiR2NpT2lKRlV6STFOaUlLZlEuLlF6ckpuU3J5OWdHQXllY0xPOHdablZ1RWxWWnJJbXNtVHNIRjFBQ2V5eHk1QW5NVUpVU0x2R2FfNndrUVdFOUlYN09FdnJ3X05CMXI2RldDbjFPZEtR"
-        )
+        const val INVALID_JWT_ALGORITHM = "HS256"
     }
 }

@@ -9,6 +9,7 @@ import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import timber.log.Timber
 import java.net.URL
 import javax.inject.Inject
 
@@ -19,5 +20,8 @@ class FetchDidLogRepositoryImpl @Inject constructor(
         httpClient.get(url) {
             accept(ContentType("application", "jsonl+json"))
         }.bodyAsText()
-    }.mapError { throwable -> ResolveDidError.NetworkError(throwable) }
+    }.mapError { throwable ->
+        Timber.d(t = throwable, message = "Did resolver network error")
+        ResolveDidError.NetworkError
+    }
 }

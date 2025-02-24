@@ -6,6 +6,7 @@ import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.Compat
 data class PresentationCredentialListNavArg(
     val compatibleCredentials: Array<CompatibleCredential>,
     val presentationRequest: PresentationRequest,
+    val shouldFetchTrustStatement: Boolean,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

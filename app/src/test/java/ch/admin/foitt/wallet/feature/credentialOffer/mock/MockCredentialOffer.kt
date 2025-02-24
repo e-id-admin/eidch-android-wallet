@@ -21,10 +21,11 @@ object MockCredentialOffer {
     private val credential = Credential(
         id = CREDENTIAL_ID,
         status = CredentialStatus.VALID,
-        privateKeyIdentifier = "privateKeyIdentifier",
+        keyBindingIdentifier = "privateKeyIdentifier",
         payload = "payload",
         format = CredentialFormat.VC_SD_JWT,
-        signingAlgorithm = SigningAlgorithm.ES256.stdName,
+        keyBindingAlgorithm = SigningAlgorithm.ES256.stdName,
+        issuer = "issuer"
     )
 
     val credentialDisplay1 = CredentialDisplay(

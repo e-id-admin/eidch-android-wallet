@@ -18,12 +18,16 @@ import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDetailsDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDisplaysAndClaimsDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDisplaysDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithIssuerAndDisplaysDao
+import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseDao
+import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestStateDao
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialIssuerDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.DatabaseError
+import ch.admin.foitt.wallet.platform.database.domain.model.EIdRequestCase
+import ch.admin.foitt.wallet.platform.database.domain.model.EIdRequestState
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.mapError
@@ -37,6 +41,8 @@ import timber.log.Timber
         CredentialClaim::class,
         CredentialClaimDisplay::class,
         CredentialIssuerDisplay::class,
+        EIdRequestCase::class,
+        EIdRequestState::class,
     ],
     version = DATABASE_VERSION,
     exportSchema = false
@@ -53,6 +59,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun credentialWithDisplaysAndClaimsDao(): CredentialWithDisplaysAndClaimsDao
     abstract fun credentialWithDisplaysDao(): CredentialWithDisplaysDao
     abstract fun credentialWithIssuerAndDisplaysDao(): CredentialWithIssuerAndDisplaysDao
+
+    abstract fun eIdRequestCaseDao(): EIdRequestCaseDao
+    abstract fun eIdRequestStateDao(): EIdRequestStateDao
 
     abstract fun decryptionTestDao(): DecryptionTestDao
 

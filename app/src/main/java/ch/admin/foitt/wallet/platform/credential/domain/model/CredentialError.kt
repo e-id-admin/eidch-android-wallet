@@ -23,6 +23,7 @@ sealed interface CredentialError {
     data object InvalidMetadataClaims : FetchCredentialError, SaveCredentialError
     data object DatabaseError : FetchCredentialError, SaveCredentialError
     data object NetworkError : FetchCredentialError
+    data object UnknownIssuer : FetchCredentialError
     data class Unexpected(val cause: Throwable?) :
         FetchCredentialError,
         SaveCredentialError,
@@ -51,6 +52,7 @@ fun FetchCredentialByConfigError.toFetchCredentialError(): FetchCredentialError 
     is OpenIdCredentialOfferError.UnsupportedCredentialIdentifier -> CredentialError.UnsupportedCredentialIdentifier
     is OpenIdCredentialOfferError.UnsupportedCredentialFormat -> CredentialError.UnsupportedCredentialFormat
     is OpenIdCredentialOfferError.Unexpected -> CredentialError.Unexpected(cause)
+    is OpenIdCredentialOfferError.UnknownIssuer -> CredentialError.UnknownIssuer
 }
 
 fun SaveCredentialError.toFetchCredentialError(): FetchCredentialError = when (this) {

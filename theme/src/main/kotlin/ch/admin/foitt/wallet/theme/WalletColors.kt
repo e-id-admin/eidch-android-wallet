@@ -45,8 +45,10 @@ internal object WalletColors {
     val green98 = Color(0xFFE5FFF8)
 
     val red15 = Color(0xFF540003)
+    val red16 = Color(0xFF5F0000)
     val red20 = Color(0xFF690005)
     val red40 = Color(0xFFC00012)
+    val red49 = Color(0xFFE94366)
     val red50 = Color(0xFFEA1C21)
     val red80 = Color(0xFFFFB4AB)
     val red95 = Color(0xFFFFEDEA)

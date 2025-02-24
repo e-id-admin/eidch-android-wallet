@@ -1,6 +1,6 @@
 package ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.implementation
 
-import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
+import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VerifyJwtError
 import ch.admin.foitt.openid4vc.domain.usecase.VerifyJwtSignature
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.TokenStatusListResponse
@@ -14,10 +14,6 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.mapError
-import com.nimbusds.jwt.JWTClaimNames
-import com.nimbusds.jwt.SignedJWT
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import java.time.Instant
 import javax.inject.Inject
 
@@ -26,32 +22,33 @@ class ValidateTokenStatusListImpl @Inject constructor(
     private val verifyJwtSignature: VerifyJwtSignature,
 ) : ValidateTokenStatusList {
     override suspend fun invoke(
-        anyCredential: AnyCredential,
+        credentialIssuer: String,
         statusListJwt: String,
         subject: String,
     ): Result<TokenStatusListResponse, ValidateTokenStatusStatusListError> = coroutineBinding {
         runSuspendCatching {
-            val signedJwt = SignedJWT.parse(statusListJwt)
-            val credentialJson = anyCredential.json
+            val jwt = Jwt(statusListJwt)
 
-            check(signedJwt.header.type.type == SUPPORTED_STATUS_TYPE) { "Status list token is not of proper type" }
-            checkNotNull(signedJwt.jwtClaimsSet.issueTime) { "Status list token iat claim is missing" }
-            check(subject == signedJwt.jwtClaimsSet.subject) { "Subject does not match" }
-            signedJwt.jwtClaimsSet.expirationTime?.let { expirationTime ->
-                check(expirationTime.toInstant().isAfter(Instant.now())) { "Status list token is expired" }
+            check(jwt.type == SUPPORTED_STATUS_TYPE) { "Status list token is not of proper type" }
+            checkNotNull(jwt.issuedAt) { "Status list token iat claim is missing" }
+            check(subject == jwt.subject) { "Subject does not match" }
+            jwt.expiredAt?.let { expirationTime ->
+                check(expirationTime.isAfter(Instant.now())) { "Status list token is expired" }
             }
 
-            val issuerDid: String = checkNotNull(signedJwt.jwtClaimsSet.issuer) { "Issuer is missing" }
-            check(credentialJson.jsonObject[JWTClaimNames.ISSUER]?.jsonPrimitive?.content == issuerDid) { "Issuers does not match" }
+            val jwtIssuer: String = checkNotNull(jwt.iss) { "Issuer is missing" }
+            check(credentialIssuer == jwtIssuer) { "Issuers do not match" }
+
+            val keyId = checkNotNull(jwt.keyId) { "keyId is missing" }
 
             verifyJwtSignature(
-                did = issuerDid,
-                kid = signedJwt.header.keyID,
-                signedJwt = signedJwt,
+                did = jwtIssuer,
+                kid = keyId,
+                jwt = jwt,
             ).mapError(VerifyJwtError::toValidateTokenStatusListError)
                 .bind()
 
-            parseResponse(signedJwt.payload.toString()).bind()
+            parseResponse(jwt.payloadString).bind()
         }.mapError(Throwable::toValidateTokenStatusStatusListError)
             .bind()
     }

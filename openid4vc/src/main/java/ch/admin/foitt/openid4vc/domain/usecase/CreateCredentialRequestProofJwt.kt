@@ -10,7 +10,6 @@ internal interface CreateCredentialRequestProofJwt {
     @CheckResult
     suspend operator fun invoke(
         keyPair: JWSKeyPair,
-        jwk: String,
         issuer: String,
         cNonce: String?,
     ): Result<CredentialRequestProofJwt, FetchVerifiableCredentialError>

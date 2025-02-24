@@ -27,14 +27,16 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import ch.admin.foitt.wallet.R
-import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
+import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialDisplayStatus
 import ch.admin.foitt.wallet.platform.preview.WalletComponentPreview
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTheme
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 @Composable
 internal fun CredentialStatusBadge(
-    status: CredentialStatus?,
+    status: CredentialDisplayStatus?,
     textColor: Color,
     modifier: Modifier = Modifier,
 ) = AnimatedContent(
@@ -46,7 +48,7 @@ internal fun CredentialStatusBadge(
     label = "fadingAnimation",
 ) { credentialStatus ->
     credentialStatus?.let {
-        val altText = stringResource(id = credentialStatus.getAltText())
+        val altText = credentialStatus.getAltText()
         Box(
             modifier = Modifier
                 .heightIn(min = Sizes.labelHeight)
@@ -55,24 +57,26 @@ internal fun CredentialStatusBadge(
                 }
                 .background(
                     color = when (credentialStatus) {
-                        CredentialStatus.VALID,
-                        CredentialStatus.UNSUPPORTED,
-                        CredentialStatus.UNKNOWN -> Color.Transparent
-                        CredentialStatus.EXPIRED,
-                        CredentialStatus.REVOKED,
-                        CredentialStatus.SUSPENDED -> WalletTheme.colorScheme.lightErrorFixed
+                        CredentialDisplayStatus.Valid,
+                        CredentialDisplayStatus.Unsupported,
+                        CredentialDisplayStatus.Unknown -> Color.Transparent
+                        is CredentialDisplayStatus.NotYetValid,
+                        is CredentialDisplayStatus.Expired,
+                        CredentialDisplayStatus.Revoked,
+                        CredentialDisplayStatus.Suspended -> WalletTheme.colorScheme.lightErrorFixed
                     },
                     shape = RoundedCornerShape(Sizes.s04)
                 )
                 .border(
                     Sizes.line01,
                     color = when (credentialStatus) {
-                        CredentialStatus.EXPIRED,
-                        CredentialStatus.REVOKED,
-                        CredentialStatus.SUSPENDED -> Color.Transparent
-                        CredentialStatus.VALID,
-                        CredentialStatus.UNSUPPORTED,
-                        CredentialStatus.UNKNOWN -> textColor
+                        is CredentialDisplayStatus.Expired,
+                        CredentialDisplayStatus.Revoked,
+                        is CredentialDisplayStatus.NotYetValid,
+                        CredentialDisplayStatus.Suspended -> Color.Transparent
+                        CredentialDisplayStatus.Valid,
+                        CredentialDisplayStatus.Unsupported,
+                        CredentialDisplayStatus.Unknown -> textColor
                     },
                     shape = RoundedCornerShape(Sizes.s04)
                 )
@@ -86,16 +90,17 @@ internal fun CredentialStatusBadge(
 
 @Composable
 private fun CredentialStatusLabel(
-    status: CredentialStatus,
+    status: CredentialDisplayStatus,
     textColor: Color
 ) {
     val color = when (status) {
-        CredentialStatus.VALID,
-        CredentialStatus.UNSUPPORTED,
-        CredentialStatus.UNKNOWN -> textColor
-        CredentialStatus.EXPIRED,
-        CredentialStatus.REVOKED,
-        CredentialStatus.SUSPENDED -> WalletTheme.colorScheme.onLightErrorFixed
+        CredentialDisplayStatus.Valid,
+        CredentialDisplayStatus.Unsupported,
+        CredentialDisplayStatus.Unknown -> textColor
+        is CredentialDisplayStatus.NotYetValid,
+        is CredentialDisplayStatus.Expired,
+        CredentialDisplayStatus.Revoked,
+        CredentialDisplayStatus.Suspended -> WalletTheme.colorScheme.onLightErrorFixed
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -107,47 +112,74 @@ private fun CredentialStatusLabel(
         )
         Spacer(modifier = Modifier.size(Sizes.s01))
         Text(
-            text = stringResource(id = status.getText()),
+            text = status.getText(),
             color = color,
             style = WalletTheme.typography.labelMedium,
         )
     }
 }
 
-internal fun CredentialStatus.getIcon() = when (this) {
-    CredentialStatus.VALID -> R.drawable.wallet_ic_checkmark
-    CredentialStatus.EXPIRED,
-    CredentialStatus.REVOKED -> R.drawable.wallet_ic_invalid
-    CredentialStatus.SUSPENDED -> R.drawable.wallet_ic_front_hand
-    CredentialStatus.UNSUPPORTED,
-    CredentialStatus.UNKNOWN -> R.drawable.wallet_ic_warning
+internal fun CredentialDisplayStatus.getIcon() = when (this) {
+    CredentialDisplayStatus.Valid -> R.drawable.wallet_ic_checkmark
+    is CredentialDisplayStatus.NotYetValid -> R.drawable.wallet_ic_hourglass
+    is CredentialDisplayStatus.Expired,
+    CredentialDisplayStatus.Revoked -> R.drawable.wallet_ic_invalid
+    CredentialDisplayStatus.Suspended -> R.drawable.wallet_ic_front_hand
+    CredentialDisplayStatus.Unsupported,
+    CredentialDisplayStatus.Unknown -> R.drawable.wallet_ic_warning
 }
 
-internal fun CredentialStatus.getText() = when (this) {
-    CredentialStatus.VALID -> R.string.tk_global_credential_status_valid
-    CredentialStatus.UNSUPPORTED,
-    CredentialStatus.UNKNOWN -> R.string.tk_global_credential_status_unknown
-    CredentialStatus.EXPIRED -> R.string.tk_global_credential_status_expired
-    CredentialStatus.REVOKED -> R.string.tk_global_credential_status_revoked
-    CredentialStatus.SUSPENDED -> R.string.tk_global_credential_status_suspended
+@Composable
+internal fun CredentialDisplayStatus.getText(): String = when (this) {
+    CredentialDisplayStatus.Valid -> stringResource(R.string.tk_global_credential_status_valid)
+    CredentialDisplayStatus.Unsupported,
+    CredentialDisplayStatus.Unknown -> stringResource(R.string.tk_global_credential_status_unknown)
+    is CredentialDisplayStatus.NotYetValid -> getNotYetValidText(validFrom, isAltText = false)
+    is CredentialDisplayStatus.Expired -> stringResource(R.string.tk_global_credential_status_invalid)
+    CredentialDisplayStatus.Revoked -> stringResource(R.string.tk_global_credential_status_revoked)
+    CredentialDisplayStatus.Suspended -> stringResource(R.string.tk_global_credential_status_suspended)
 }
 
-internal fun CredentialStatus.getAltText() = when (this) {
-    CredentialStatus.VALID -> R.string.tk_credential_status_valid_alt
-    CredentialStatus.UNSUPPORTED,
-    CredentialStatus.UNKNOWN -> R.string.tk_credential_status_unknown_alt
-    CredentialStatus.EXPIRED -> R.string.tk_credential_status_expired_alt
-    CredentialStatus.REVOKED -> R.string.tk_credential_status_revoked_alt
-    CredentialStatus.SUSPENDED -> R.string.tk_credential_status_suspended_alt
+@Composable
+private fun getNotYetValidText(validFrom: Instant, isAltText: Boolean): String {
+    val numberOfDays = ChronoUnit.DAYS.between(Instant.now(), validFrom)
+    val isValidInLessThan24h = numberOfDays < 1
+
+    return when {
+        isValidInLessThan24h && isAltText -> stringResource(R.string.tk_global_credential_status_soon_alt)
+        isValidInLessThan24h -> stringResource(R.string.tk_global_credential_status_soon)
+        isAltText -> stringResource(R.string.tk_global_credential_status_validindays_android_alt, numberOfDays)
+        else -> stringResource(R.string.tk_global_credential_status_validindays_android, numberOfDays)
+    }
 }
 
-private class CredentialStatusProvider : PreviewParameterProvider<CredentialStatus> {
-    override val values: Sequence<CredentialStatus> = CredentialStatus.entries.asSequence()
+@Composable
+internal fun CredentialDisplayStatus.getAltText(): String = when (this) {
+    CredentialDisplayStatus.Valid -> stringResource(R.string.tk_global_credential_status_valid_alt)
+    CredentialDisplayStatus.Unsupported,
+    CredentialDisplayStatus.Unknown -> stringResource(R.string.tk_global_credential_status_unknown_alt)
+    is CredentialDisplayStatus.NotYetValid -> getNotYetValidText(validFrom, isAltText = true)
+    is CredentialDisplayStatus.Expired -> stringResource(R.string.tk_global_credential_status_invalid_alt)
+    CredentialDisplayStatus.Revoked -> stringResource(R.string.tk_global_credential_status_revoked_alt)
+    CredentialDisplayStatus.Suspended -> stringResource(R.string.tk_global_credential_status_suspended_alt)
+}
+
+private class CredentialStatusProvider : PreviewParameterProvider<CredentialDisplayStatus> {
+    override val values: Sequence<CredentialDisplayStatus> = sequenceOf(
+        CredentialDisplayStatus.Valid,
+        CredentialDisplayStatus.Revoked,
+        CredentialDisplayStatus.Suspended,
+        CredentialDisplayStatus.Unsupported,
+        CredentialDisplayStatus.Unknown,
+        CredentialDisplayStatus.Expired(expiredAt = Instant.MIN),
+        CredentialDisplayStatus.NotYetValid(validFrom = Instant.now().plusSeconds(3000000)),
+        CredentialDisplayStatus.NotYetValid(validFrom = Instant.now().plusSeconds(3600)),
+    )
 }
 
 @Composable
 @WalletComponentPreview
-private fun CredentialStatusBadgePreview(@PreviewParameter(CredentialStatusProvider::class) status: CredentialStatus) {
+private fun CredentialStatusBadgePreview(@PreviewParameter(CredentialStatusProvider::class) status: CredentialDisplayStatus) {
     WalletTheme {
         CredentialStatusBadge(
             status = status,

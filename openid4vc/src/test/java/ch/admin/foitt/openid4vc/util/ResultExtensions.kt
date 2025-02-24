@@ -12,6 +12,12 @@ fun <T, V> Result<T, V>.assertOk(): T {
     return get()!!
 }
 
+inline fun <T : Any, V, reified U : T> Result<T, V>.assertSuccessType(type: KClass<U>): U {
+    val success = assertOk()
+    assertTrue(type.isInstance(success)) { "the success is not of the right type: ${success::class.simpleName}" }
+    return success as U
+}
+
 fun <T, V> Result<T, V>.assertErr(): V {
     assertTrue(isErr) { "an unexpected success occurred: ${(asOk<T, V, T>()).value}" }
     return getError()!!

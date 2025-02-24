@@ -1,5 +1,7 @@
 package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
+import android.content.Context
+import android.content.pm.PackageManager
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import ch.admin.foitt.openid4vc.di.DefaultDispatcher
@@ -17,6 +19,7 @@ import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.getOr
 import com.github.michaelbull.result.getOrThrow
 import com.github.michaelbull.result.mapError
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -27,7 +30,8 @@ import java.util.UUID
 import javax.inject.Inject
 
 internal class CreateJWSKeyPairImpl @Inject constructor(
-    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
+    @ApplicationContext private val appContext: Context,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : CreateJWSKeyPair {
     override suspend operator fun invoke(
         signingAlgorithm: SigningAlgorithm,
@@ -38,6 +42,7 @@ internal class CreateJWSKeyPairImpl @Inject constructor(
             keyStore.load(null)
             val keyId = generateKeyId(keyStore).getOrThrow()
             val keyPair = createKeyPair(keyId, signingAlgorithm, provider)
+
             JWSKeyPair(
                 algorithm = signingAlgorithm,
                 keyPair = keyPair,
@@ -54,15 +59,20 @@ internal class CreateJWSKeyPairImpl @Inject constructor(
         val spec = KeyGenParameterSpec.Builder(keyId, KeyProperties.PURPOSE_SIGN)
             .setAlgorithmParameterSpec(signingAlgorithm.toAlgorithmParameterSpec())
             .setDigests(signingAlgorithm.toDigest())
+            .setIsStrongBoxBacked(isStrongBoxAvailable())
             .build()
         generator.initialize(spec)
         return generator.generateKeyPair()
     }
 
+    private fun isStrongBoxAvailable(): Boolean {
+        return appContext.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+    }
+
     private fun generateKeyId(keyStore: KeyStore): Result<String, Throwable> {
         // A collision is nearly impossible, but if it happens, the overridden keypair and linked credential is lost.
         // So we check if some key already exists here
-        repeat(keyIdRetries) {
+        repeat(KEY_ID_RETRIES) {
             val keyId = UUID.randomUUID().toString()
             val isNewEntry = runSuspendCatching<Boolean> {
                 keyStore.getEntry(keyId, null) == null
@@ -74,7 +84,7 @@ internal class CreateJWSKeyPairImpl @Inject constructor(
     }
 
     companion object {
-        private const val keyIdRetries: Int = 5
+        private const val KEY_ID_RETRIES: Int = 5
         private val collisionMessage by lazy { "Collision while creating a key Id" }
     }
 }

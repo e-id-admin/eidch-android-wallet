@@ -23,7 +23,7 @@ android {
 
         // keeps only resources in these languages
         // if libs f. e. include resources in spanish they are not shipped with the app
-        resourceConfigurations += arrayOf("en", "de", "fr", "it", "rm")
+        resourceConfigurations += arrayOf("en", "de", "fr", "it")
 
         buildConfigField(
             type = "String",

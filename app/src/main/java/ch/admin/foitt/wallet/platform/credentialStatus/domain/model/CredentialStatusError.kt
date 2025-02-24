@@ -65,7 +65,8 @@ internal fun JsonParsingError.toValidateTokenStatusListError(): ValidateTokenSta
 
 fun VerifyJwtError.toValidateTokenStatusListError(): ValidateTokenStatusStatusListError = when (this) {
     VcSdJwtError.NetworkError -> NetworkError
-    VcSdJwtError.InvalidJwt -> Unexpected(Exception("Validation failed"))
+    VcSdJwtError.InvalidJwt,
+    VcSdJwtError.IssuerValidationFailed -> Unexpected(Exception("Validation failed"))
     is VcSdJwtError.Unexpected -> Unexpected(cause)
 }
 

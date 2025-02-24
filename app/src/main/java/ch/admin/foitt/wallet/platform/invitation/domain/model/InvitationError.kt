@@ -11,19 +11,22 @@ import ch.admin.foitt.wallet.platform.utils.JsonParsingError
 import timber.log.Timber
 
 interface InvitationError {
-    data class UnknownSchema(val message: String) : ValidateInvitationError
-    data class InvalidUri(val message: String) : GetPresentationRequestError, ValidateInvitationError
-    data object InvalidCredentialInvitation : ProcessInvitationError
+    data object UnknownSchema : ValidateInvitationError
+    data object InvalidUri : GetPresentationRequestError, ValidateInvitationError
+    data object InvalidCredentialOffer : ProcessInvitationError
     data object NoCredentialsFound : GetCredentialOfferError, ValidateInvitationError
     data class UnsupportedGrantType(val message: String) : GetCredentialOfferError, ValidateInvitationError
-    data object DeserializationFailed : GetCredentialOfferError, ValidateInvitationError
+    data object CredentialOfferDeserializationFailed : GetCredentialOfferError, ValidateInvitationError
     data object NetworkError : ProcessInvitationError, GetPresentationRequestError, ValidateInvitationError
     data object EmptyWallet : ProcessInvitationError
-    data object Unexpected : ProcessInvitationError, GetPresentationRequestError, ValidateInvitationError
     data object NoCompatibleCredential : ProcessInvitationError
     data object InvalidInput : ProcessInvitationError
     data object InvalidPresentationRequest : GetPresentationRequestError, ValidateInvitationError, ProcessInvitationError
     data class InvalidPresentation(val responseUri: String) : ProcessInvitationError
+    data object CredentialOfferExpired : ProcessInvitationError
+    data object UnknownIssuer : ProcessInvitationError
+    data object UnknownVerifier : ProcessInvitationError
+    data object Unexpected : ProcessInvitationError, GetPresentationRequestError, ValidateInvitationError
 }
 
 sealed interface ProcessInvitationError : InvitationError
@@ -45,14 +48,14 @@ internal fun GetPresentationRequestError.toValidateInvitationError(): ValidateIn
 }
 
 internal fun GetCredentialOfferError.toValidateInvitationError(): ValidateInvitationError = when (this) {
-    is InvitationError.DeserializationFailed -> this
+    is InvitationError.CredentialOfferDeserializationFailed -> this
     is InvitationError.NoCredentialsFound -> this
     is InvitationError.UnsupportedGrantType -> this
 }
 
 internal fun FetchCredentialError.toProcessInvitationError(): ProcessInvitationError = when (this) {
+    CredentialError.InvalidGrant -> InvitationError.CredentialOfferExpired
     CredentialError.IntegrityCheckFailed,
-    CredentialError.InvalidGrant,
     CredentialError.UnsupportedGrantType,
     CredentialError.InvalidCredentialOffer,
     CredentialError.UnsupportedCredentialFormat,
@@ -60,10 +63,11 @@ internal fun FetchCredentialError.toProcessInvitationError(): ProcessInvitationE
     CredentialError.UnsupportedProofType,
     CredentialError.UnsupportedCryptographicSuite,
     CredentialError.CredentialParsingError,
-    CredentialError.InvalidMetadataClaims -> InvitationError.InvalidCredentialInvitation
+    CredentialError.InvalidMetadataClaims -> InvitationError.InvalidCredentialOffer
     CredentialError.NetworkError -> InvitationError.NetworkError
     CredentialError.DatabaseError,
     is CredentialError.Unexpected -> InvitationError.Unexpected
+    CredentialError.UnknownIssuer -> InvitationError.UnknownIssuer
 }
 
 internal fun ValidateInvitationError.toProcessInvitationError(): ProcessInvitationError = when (this) {
@@ -72,18 +76,18 @@ internal fun ValidateInvitationError.toProcessInvitationError(): ProcessInvitati
     is InvitationError.InvalidPresentationRequest -> this
     is InvitationError.NetworkError -> this
     is InvitationError.UnsupportedGrantType,
-    is InvitationError.DeserializationFailed,
-    is InvitationError.NoCredentialsFound -> InvitationError.InvalidCredentialInvitation
+    is InvitationError.CredentialOfferDeserializationFailed,
+    is InvitationError.NoCredentialsFound -> InvitationError.InvalidCredentialOffer
     is InvitationError.Unexpected -> this
 }
 
 internal fun Throwable.toGetCredentialOfferError(): GetCredentialOfferError {
     Timber.e(this)
-    return InvitationError.DeserializationFailed
+    return InvitationError.CredentialOfferDeserializationFailed
 }
 
 internal fun JsonParsingError.toGetCredentialOfferError(): GetCredentialOfferError = when (this) {
-    is JsonError.Unexpected -> InvitationError.DeserializationFailed
+    is JsonError.Unexpected -> InvitationError.CredentialOfferDeserializationFailed
 }
 
 internal fun ProcessPresentationRequestError.toProcessInvitationError(): ProcessInvitationError = when (this) {
@@ -91,5 +95,7 @@ internal fun ProcessPresentationRequestError.toProcessInvitationError(): Process
     CredentialPresentationError.NoCompatibleCredential -> InvitationError.NoCompatibleCredential
     is CredentialPresentationError.InvalidPresentation -> InvitationError.InvalidPresentation(responseUri)
     is CredentialPresentationError.Unexpected -> InvitationError.Unexpected
+    is CredentialPresentationError.UnknownVerifier -> InvitationError.UnknownVerifier
+    CredentialPresentationError.NetworkError -> InvitationError.NetworkError
 }
 //endregion

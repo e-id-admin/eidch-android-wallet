@@ -2,6 +2,7 @@ package ch.admin.foitt.wallet.platform.actorMetadata.presentation
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -35,7 +36,11 @@ internal fun InvitationHeader(
     modifier = modifier.fillMaxWidth(),
     verticalAlignment = Alignment.CenterVertically,
 ) {
-    Avatar(inviterImage, size = AvatarSize.LARGE)
+    Avatar(
+        imagePainter = inviterImage,
+        size = AvatarSize.LARGE,
+        imageTint = WalletTheme.colorScheme.onSurface,
+    )
     Spacer(modifier = Modifier.size(Sizes.s04))
     Column(
         modifier = Modifier
@@ -46,36 +51,52 @@ internal fun InvitationHeader(
             text = inviterName,
             color = WalletTheme.colorScheme.onSurface
         )
-        when (trustStatus) {
-            TrustStatus.TRUSTED -> {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.wallet_ic_trusted),
-                        contentDescription = null,
-                        tint = WalletTheme.colorScheme.tertiary,
-                        modifier = Modifier.size(Sizes.s04)
-                    )
-                    Spacer(Modifier.width(Sizes.s01))
-                    WalletTexts.LabelLarge(
-                        text = stringResource(R.string.tk_global_trust_status_trusted),
-                        color = WalletTheme.colorScheme.tertiary,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-            else -> {
-                // We show nothing, for now
-            }
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TrustIcon(trustStatus)
+            Spacer(Modifier.width(Sizes.s01))
+            TrustLabel(trustStatus)
         }
     }
 }
 
+@Composable
+private fun RowScope.TrustIcon(trustStatus: TrustStatus) = when (trustStatus) {
+    TrustStatus.TRUSTED -> Icon(
+        painter = painterResource(R.drawable.wallet_ic_trusted),
+        contentDescription = null,
+        tint = WalletTheme.colorScheme.tertiary,
+        modifier = Modifier.size(Sizes.s04)
+    )
+    TrustStatus.NOT_TRUSTED -> Icon(
+        painter = painterResource(R.drawable.wallet_ic_not_trusted),
+        contentDescription = null,
+        tint = WalletTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(Sizes.s04)
+    )
+    else -> {}
+}
+
+@Composable
+private fun RowScope.TrustLabel(trustStatus: TrustStatus) = when (trustStatus) {
+    TrustStatus.TRUSTED -> WalletTexts.LabelLarge(
+        text = stringResource(R.string.tk_global_trust_status_trusted),
+        color = WalletTheme.colorScheme.tertiary,
+        modifier = Modifier.weight(1f)
+    )
+    TrustStatus.NOT_TRUSTED -> WalletTexts.LabelLarge(
+        text = stringResource(R.string.tk_global_trust_status_notTrusted),
+        color = WalletTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.weight(1f)
+    )
+    else -> {}
+}
+
 private class InvitationHeaderPreviewParams : PreviewParameterProvider<Triple<String, Int, TrustStatus>> {
     override val values: Sequence<Triple<String, Int, TrustStatus>> = sequenceOf(
-        Triple("Strassen Issuer Name", R.drawable.wallet_ic_eid, TrustStatus.TRUSTED),
-        Triple("Issuer with a veeeeryyyyy loooonnnnnng name", R.drawable.wallet_ic_eid, TrustStatus.TRUSTED),
+        Triple("Issuer Name", R.drawable.wallet_ic_eid, TrustStatus.TRUSTED),
+        Triple("Issuer with a veeeeryyyyy loooonnnnnng name", R.drawable.ic_launcher_background, TrustStatus.TRUSTED),
         Triple("Issuer Name not trusted", R.drawable.wallet_ic_eid, TrustStatus.NOT_TRUSTED),
         Triple("Issuer Name trust unknown", R.drawable.wallet_ic_dotted_cross, TrustStatus.UNKNOWN),
     )

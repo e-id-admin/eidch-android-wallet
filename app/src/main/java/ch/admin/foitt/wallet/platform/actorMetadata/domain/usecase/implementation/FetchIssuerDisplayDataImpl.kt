@@ -1,15 +1,12 @@
 package ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
-import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
-import ch.admin.foitt.openid4vc.domain.model.sdjwt.SdJwt
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorField
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchIssuerDisplayData
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetAnyCredential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialIssuerDisplay
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialIssuerDisplayRepo
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatement
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.FetchTrustStatementFromDid
 import com.github.michaelbull.result.get
@@ -23,11 +20,8 @@ class FetchIssuerDisplayDataImpl @Inject constructor(
     override suspend fun invoke(credentialId: Long): ActorDisplayData {
         val credential: AnyCredential? = getAnyCredential(credentialId).get()
         val credentialIssuerDisplays = credentialIssuerDisplayRepo.getIssuerDisplays(credentialId).get()
-        val issuerDid = credential?.let {
-            getCredentialIssuerDid(credential)
-        }
 
-        val trustStatement: TrustStatement? = issuerDid?.let {
+        val trustStatement = getCredentialIssuerDid(credential?.issuer)?.let { issuerDid ->
             fetchTrustStatementFromDid(
                 did = issuerDid,
             ).get()
@@ -70,15 +64,18 @@ class FetchIssuerDisplayDataImpl @Inject constructor(
 
     private fun List<CredentialIssuerDisplay>.toIssuerLogo(): List<ActorField<String>> = mapNotNull { entry ->
         entry.image?.let {
-            ActorField<String>(
+            ActorField(
                 value = entry.image,
                 locale = entry.locale,
             )
         }
     }
 
-    private fun getCredentialIssuerDid(anyCredential: AnyCredential) = when (anyCredential.format) {
-        CredentialFormat.VC_SD_JWT -> SdJwt(anyCredential.payload).issuer
-        CredentialFormat.UNKNOWN -> null
+    private fun getCredentialIssuerDid(issuer: String?): String? {
+        return if (issuer == null || !issuer.startsWith("did")) {
+            null
+        } else {
+            issuer
+        }
     }
 }

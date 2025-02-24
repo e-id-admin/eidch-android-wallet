@@ -2,7 +2,6 @@ package ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementati
 
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.ClientMetaData
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.shouldFetchTrustStatements
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorField
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchVerifierDisplayData
@@ -16,11 +15,14 @@ import javax.inject.Inject
 class FetchVerifierDisplayDataImpl @Inject constructor(
     private val fetchTrustStatementFromDid: FetchTrustStatementFromDid,
 ) : FetchVerifierDisplayData {
-    override suspend fun invoke(presentationRequest: PresentationRequest): ActorDisplayData {
+    override suspend fun invoke(
+        presentationRequest: PresentationRequest,
+        shouldFetchTrustStatement: Boolean,
+    ): ActorDisplayData {
         val verifierNameDisplay = presentationRequest.clientMetaData?.toVerifierName()
         val verifierLogoDisplay = presentationRequest.clientMetaData?.toVerifierLogo()
 
-        val trustStatement: TrustStatement? = if (presentationRequest.shouldFetchTrustStatements()) {
+        val trustStatement: TrustStatement? = if (shouldFetchTrustStatement) {
             fetchTrustStatementFromDid(
                 did = presentationRequest.clientId,
             ).get()

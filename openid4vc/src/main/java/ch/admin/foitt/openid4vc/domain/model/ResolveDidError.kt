@@ -1,18 +1,18 @@
 package ch.admin.foitt.openid4vc.domain.model
 
 import ch.admin.eid.didresolver.didresolver.DidResolveException
-import ch.admin.eid.didresolver.didresolver.InternalException
+import timber.log.Timber
 
 sealed interface ResolveDidError {
-    data class NetworkError(val throwable: Throwable?) : ResolveDidError
-    data class DidResolveError(val throwable: Throwable?) : ResolveDidError
-    data class Unexpected(val throwable: Throwable?) : ResolveDidError
+    data object NetworkError : ResolveDidError
+    data object ValidationFailure : ResolveDidError
+    data class Unexpected(val cause: Throwable) : ResolveDidError
 }
 
 internal fun Throwable.toResolveDidError(): ResolveDidError {
+    Timber.e(t = this, message = "Did resolver error")
     return when (this) {
-        is InternalException,
-        is DidResolveException -> ResolveDidError.DidResolveError(this)
+        is DidResolveException -> ResolveDidError.ValidationFailure
         else -> ResolveDidError.Unexpected(this)
     }
 }

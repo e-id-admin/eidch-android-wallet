@@ -7,7 +7,7 @@ import androidx.compose.ui.res.painterResource
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialPreview
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
-import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
+import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialDisplayStatus
 import ch.admin.foitt.wallet.platform.preview.ComposableWrapper
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimText
 
@@ -17,10 +17,10 @@ object CredentialMocks {
         credentialId = 0L,
         title = "Lernfahrausweis B",
         subtitle = "Max Mustermann",
-        status = CredentialStatus.VALID,
-        logo = painterResource(id = R.drawable.pilot_ic_strassenverkehrsamt),
+        status = CredentialDisplayStatus.Valid,
+        logo = painterResource(id = R.drawable.ic_swiss_cross_small),
         backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-        textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         borderColor = MaterialTheme.colorScheme.primaryContainer,
         isCredentialFromBetaIssuer = false,
     )
@@ -29,10 +29,10 @@ object CredentialMocks {
         credentialId = 0L,
         title = "Lernfahrausweis A",
         subtitle = "Lilly Mustermann",
-        status = CredentialStatus.UNKNOWN,
-        logo = painterResource(id = R.drawable.pilot_ic_swisscross_small),
+        status = CredentialDisplayStatus.Unknown,
+        logo = painterResource(id = R.drawable.ic_swiss_cross_small),
         backgroundColor = Color(0xFF335588),
-        textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         borderColor = Color(0xFF335588),
         isCredentialFromBetaIssuer = false,
     )
@@ -41,10 +41,10 @@ object CredentialMocks {
         credentialId = 0L,
         title = "Lernfahrausweis B",
         subtitle = "Max Mustermann with a very looong name that does not fit in the card",
-        status = CredentialStatus.SUSPENDED,
+        status = CredentialDisplayStatus.Suspended,
         logo = null,
         backgroundColor = Color(0xFF996644),
-        textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         borderColor = Color(0xFFBB9977),
         isCredentialFromBetaIssuer = false,
     )
@@ -69,7 +69,7 @@ object CredentialMocks {
             credentialId = 9438,
             title = "Title 1",
             subtitle = "A subtitle",
-            status = CredentialStatus.VALID,
+            status = CredentialDisplayStatus.Valid,
             logoUri = null,
             backgroundColor = "#338855",
             isCredentialFromBetaIssuer = false,
@@ -81,7 +81,7 @@ object CredentialMocks {
             credentialId = 9440,
             title = "Title 2",
             subtitle = "Another subtitle",
-            status = CredentialStatus.REVOKED,
+            status = CredentialDisplayStatus.Revoked,
             logoUri = null,
             backgroundColor = "#335588",
             isCredentialFromBetaIssuer = false,
@@ -93,7 +93,7 @@ object CredentialMocks {
             credentialId = 9440,
             title = "Title 3 that is somehow a little bit too long for comfort",
             subtitle = "And another subtitle with way to much text to properly be displayed ",
-            status = CredentialStatus.UNKNOWN,
+            status = CredentialDisplayStatus.Unknown,
             logoUri = null,
             backgroundColor = "#883355",
             isCredentialFromBetaIssuer = false,

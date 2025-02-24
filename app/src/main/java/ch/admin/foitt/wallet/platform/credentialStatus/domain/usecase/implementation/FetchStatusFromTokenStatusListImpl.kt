@@ -1,6 +1,5 @@
 package ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.implementation
 
-import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.FetchStatusFromTokenStatusListError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.ParseTokenStatusStatusListError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.TokenStatusListProperties
@@ -23,18 +22,18 @@ class FetchStatusFromTokenStatusListImpl @Inject constructor(
 ) : FetchStatusFromTokenStatusList {
 
     override suspend fun invoke(
-        anyCredential: AnyCredential,
+        credentialIssuer: String,
         statusProperties: TokenStatusListProperties,
     ): Result<CredentialStatus, FetchStatusFromTokenStatusListError> = coroutineBinding {
-        val status = statusProperties.status ?: return@coroutineBinding CredentialStatus.UNKNOWN
+        val statusList = statusProperties.statusList
 
-        val jwt = credentialStatusRepository.fetchTokenStatusListJwt(status.statusList.uri).bind()
+        val jwt = credentialStatusRepository.fetchTokenStatusListJwt(statusList.uri).bind()
 
-        val response = validateTokenStatusList(anyCredential, jwt, status.statusList.uri)
+        val response = validateTokenStatusList(credentialIssuer, jwt, statusList.uri)
             .mapError(ValidateTokenStatusStatusListError::toFetchStatusFromTokenStatusListError)
             .bind()
 
-        val value = parseTokenStatusList(statusList = response.statusList, index = status.statusList.index)
+        val value = parseTokenStatusList(statusList = response.statusList, index = statusList.index)
             .mapError(ParseTokenStatusStatusListError::toFetchStatusFromTokenStatusListError)
             .bind()
 

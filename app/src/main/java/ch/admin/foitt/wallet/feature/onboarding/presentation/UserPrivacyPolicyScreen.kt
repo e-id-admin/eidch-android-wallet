@@ -52,7 +52,7 @@ private fun UserPrivacyPolicyScreenContent(
     },
     stickyBottomContent = {
         Buttons.TonalSecondary(
-            text = stringResource(id = R.string.tk_global_notallow),
+            text = stringResource(id = R.string.tk_onboarding_analytics_button_secondary),
             onClick = declineTracking,
             modifier = Modifier
                 .semantics {
@@ -61,7 +61,7 @@ private fun UserPrivacyPolicyScreenContent(
         )
         Buttons.FilledPrimary(
             modifier = Modifier.testTag(TestTags.ACCEPT_BUTTON.name),
-            text = stringResource(id = R.string.tk_global_allow),
+            text = stringResource(id = R.string.tk_onboarding_analytics_button_primary),
             onClick = acceptTracking,
         )
     }
@@ -76,13 +76,13 @@ private fun ScrollableContent(
     onOpenUserPrivacyPolicyLink: () -> Unit
 ) {
     OnboardingScreenContent(
-        title = stringResource(id = R.string.tk_onboarding_improvement_title),
-        subtitle = stringResource(id = R.string.tk_onboarding_improvement_body),
+        title = stringResource(id = R.string.tk_onboarding_analytics_primary),
+        subtitle = stringResource(id = R.string.tk_onboarding_analytics_secondary),
     )
     Spacer(modifier = Modifier.height(Sizes.s06))
     Buttons.TextLink(
         modifier = Modifier.testTag("privacyPolicy"),
-        text = stringResource(id = R.string.tk_onboarding_improvement_link_text),
+        text = stringResource(id = R.string.tk_onboarding_analytics_tertiary_link_text),
         onClick = onOpenUserPrivacyPolicyLink,
         endIcon = painterResource(id = R.drawable.wallet_ic_chevron),
     )

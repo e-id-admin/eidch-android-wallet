@@ -3,14 +3,9 @@ package ch.admin.foitt.wallet.feature.onboarding.presentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,20 +14,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.composables.Buttons
-import ch.admin.foitt.wallet.platform.composables.PassphraseValidationErrorToastFixed
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseInputFieldState
 import ch.admin.foitt.wallet.platform.passphraseInput.presentation.PassphraseInputComponent
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.scaffold.presentation.FullscreenGradient
-import ch.admin.foitt.wallet.platform.scaffold.presentation.WalletTopBar
-import ch.admin.foitt.wallet.platform.scaffold.presentation.WalletTopBarViewModel
-import ch.admin.foitt.wallet.platform.scaffold.presentation.preview.getPreviewWalletTopBarViewModel
 import ch.admin.foitt.wallet.platform.utils.TestTags
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTextFieldColors
@@ -48,40 +38,26 @@ fun OnboardingPassphraseScreen(
     OnboardingPassphraseScreenContent(
         textFieldValue = viewModel.textFieldValue.collectAsStateWithLifecycle().value,
         passphraseInputFieldState = viewModel.passphraseInputFieldState.collectAsStateWithLifecycle().value,
-        showPassphraseErrorToast = viewModel.showPassphraseErrorToast.collectAsStateWithLifecycle().value,
-        isValidating = viewModel.isValidating.collectAsStateWithLifecycle().value,
+        isPassphraseValid = viewModel.isPassphraseValid.collectAsStateWithLifecycle().value,
         onTextFieldValueChange = viewModel::onTextFieldValueChange,
         onCheckPassphrase = viewModel::onCheckPassphrase,
-        onClosePassphraseError = viewModel::onClosePassphraseError,
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OnboardingPassphraseScreenContent(
-    walletTopBarViewModel: WalletTopBarViewModel = hiltViewModel(),
     textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
-    showPassphraseErrorToast: Boolean,
-    isValidating: Boolean,
+    isPassphraseValid: Boolean,
     onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
-    onClosePassphraseError: () -> Unit,
 ) {
     FullscreenGradient()
 
     when (currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass) {
         WindowWidthSizeClass.COMPACT -> WalletLayouts.CompactContainerFloatingBottom(
-            modifier = Modifier
-                .fillMaxSize()
-                .imePadding(),
-            topBar = {
-                WalletTopBar(
-                    viewModel = walletTopBarViewModel,
-                    scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-                )
-            },
             verticalArrangement = Arrangement.Top,
+            shouldScrollUnderTopBar = false,
             content = {
                 CompactContent(
                     textFieldValue = textFieldValue,
@@ -90,50 +66,25 @@ private fun OnboardingPassphraseScreenContent(
                     onCheckPassphrase = onCheckPassphrase
                 )
             },
-            auxiliaryContent = {
-                AuxiliaryContent(
-                    compactLayout = true,
-                    passphraseInputFieldState = passphraseInputFieldState,
-                    showPassphraseErrorToast = showPassphraseErrorToast,
-                    isValidating = isValidating,
-                    onClosePassphraseError = onClosePassphraseError,
-                )
-            },
             stickyBottomHorizontalAlignment = Alignment.End,
             stickyBottomContent = {
                 BottomButton(
+                    isEnabled = isPassphraseValid,
                     onCheckPassphrase = onCheckPassphrase,
                 )
             },
         )
 
         else -> WalletLayouts.LargeContainerFloatingBottom(
-            modifier = Modifier
-                .fillMaxSize()
-                .imePadding(),
-            topBar = {
-                WalletTopBar(
-                    viewModel = walletTopBarViewModel,
-                    scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-                )
-            },
-            useStatusBarPadding = false,
             verticalArrangement = Arrangement.Top,
+            shouldScrollUnderTopBar = false,
             content = {
                 LargeContent(
                     textFieldValue = textFieldValue,
                     passphraseInputFieldState = passphraseInputFieldState,
+                    isPassphraseValid = isPassphraseValid,
                     onTextFieldValueChange = onTextFieldValueChange,
                     onCheckPassphrase = onCheckPassphrase
-                )
-            },
-            auxiliaryContent = {
-                AuxiliaryContent(
-                    compactLayout = false,
-                    passphraseInputFieldState = passphraseInputFieldState,
-                    showPassphraseErrorToast = showPassphraseErrorToast,
-                    isValidating = isValidating,
-                    onClosePassphraseError = onClosePassphraseError,
                 )
             },
         )
@@ -153,9 +104,8 @@ private fun CompactContent(
         passphraseInputFieldState = passphraseInputFieldState,
         textFieldValue = textFieldValue,
         colors = WalletTextFieldColors.textFieldColorsFixed(),
-        placeholder = {
-            Placeholder()
-        },
+        placeholder = { Placeholder() },
+        supportingText = { SupportingText() },
         keyboardImeAction = ImeAction.Next,
         onKeyboardAction = onCheckPassphrase,
         onTextFieldValueChange = onTextFieldValueChange,
@@ -167,6 +117,7 @@ private fun CompactContent(
 private fun LargeContent(
     textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
+    isPassphraseValid: Boolean,
     onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
@@ -179,9 +130,8 @@ private fun LargeContent(
             passphraseInputFieldState = passphraseInputFieldState,
             textFieldValue = textFieldValue,
             colors = WalletTextFieldColors.textFieldColorsFixed(),
-            placeholder = {
-                Placeholder()
-            },
+            placeholder = { Placeholder() },
+            supportingText = { SupportingText() },
             keyboardImeAction = ImeAction.Next,
             onKeyboardAction = onCheckPassphrase,
             onTextFieldValueChange = onTextFieldValueChange,
@@ -189,6 +139,7 @@ private fun LargeContent(
         )
         Spacer(modifier = Modifier.width(Sizes.s08))
         BottomButton(
+            isEnabled = isPassphraseValid,
             onCheckPassphrase = onCheckPassphrase
         )
     }
@@ -196,32 +147,23 @@ private fun LargeContent(
 
 @Composable
 private fun Placeholder() = WalletTexts.BodyLarge(
-    text = stringResource(R.string.tk_onboarding_characters_note),
+    text = stringResource(R.string.tk_onboarding_password_input_placeholder),
     color = WalletTheme.colorScheme.onSurfaceVariantFixed
 )
 
 @Composable
-private fun AuxiliaryContent(
-    compactLayout: Boolean,
-    passphraseInputFieldState: PassphraseInputFieldState,
-    showPassphraseErrorToast: Boolean,
-    isValidating: Boolean,
-    onClosePassphraseError: () -> Unit,
-) {
-    if (passphraseInputFieldState == PassphraseInputFieldState.Error && showPassphraseErrorToast && !isValidating) {
-        PassphraseValidationErrorToastFixed(
-            modifier = Modifier
-                .padding(start = Sizes.s08, end = Sizes.s08, bottom = if (compactLayout) Sizes.s06 else Sizes.s04),
-            text = R.string.tk_onboarding_passwordlength_notification,
-            onIconEnd = onClosePassphraseError,
-        )
-    }
-}
+private fun SupportingText() = WalletTexts.BodySmall(
+    modifier = Modifier,
+    text = stringResource(R.string.tk_onboarding_password_input_subtitle),
+    color = WalletTheme.colorScheme.onGradientFixed
+)
 
 @Composable
 private fun BottomButton(
-    onCheckPassphrase: () -> Unit
+    isEnabled: Boolean,
+    onCheckPassphrase: () -> Unit,
 ) = Buttons.FilledPrimaryFixed(
+    enabled = isEnabled,
     modifier = Modifier.testTag(TestTags.CONTINUE_BUTTON.name),
     text = stringResource(R.string.tk_global_continue),
     onClick = onCheckPassphrase
@@ -232,14 +174,11 @@ private fun BottomButton(
 private fun OnboardingPassphraseScreenPreview() {
     WalletTheme {
         OnboardingPassphraseScreenContent(
-            walletTopBarViewModel = getPreviewWalletTopBarViewModel(R.string.tk_global_enterpassword),
             textFieldValue = TextFieldValue("abc123"),
             passphraseInputFieldState = PassphraseInputFieldState.Error,
-            showPassphraseErrorToast = true,
-            isValidating = false,
             onTextFieldValueChange = {},
+            isPassphraseValid = true,
             onCheckPassphrase = {},
-            onClosePassphraseError = {},
         )
     }
 }

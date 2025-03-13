@@ -2,7 +2,6 @@ package ch.admin.foitt.wallet.feature.credentialOffer.presentation
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.model.CredentialOffer
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.usecase.GetCredentialOffer
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.model.CredentialOfferUiState
@@ -81,7 +80,6 @@ class CredentialOfferViewModel @Inject constructor(
     private suspend fun CredentialOffer.toUiState(): CredentialOfferUiState = CredentialOfferUiState(
         issuer = getActorUiState(
             actorDisplayData = this.issuerDisplayData,
-            defaultName = R.string.tk_credential_offer_issuer_name_unknown,
         ),
         credential = getCredentialCardState(this.credential),
         claims = this.claims,

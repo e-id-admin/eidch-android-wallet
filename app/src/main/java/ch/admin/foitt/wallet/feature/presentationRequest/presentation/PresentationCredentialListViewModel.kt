@@ -2,7 +2,6 @@ package ch.admin.foitt.wallet.feature.presentationRequest.presentation
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.GetPresentationRequestCredentialListFlow
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.model.PresentationCredentialListUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
@@ -54,7 +53,6 @@ class PresentationCredentialListViewModel @Inject constructor(
     val verifierUiState = _verifierDisplayData.map { verifierDisplayData ->
         getActorUiState(
             actorDisplayData = verifierDisplayData,
-            defaultName = R.string.presentation_verifier_name_unknown,
         )
     }.toStateFlow(ActorUiState.EMPTY, 0)
 

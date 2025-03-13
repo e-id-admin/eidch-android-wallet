@@ -7,7 +7,7 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.extension.navigateUpOrToRoot
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
-import ch.admin.foitt.walletcomposedestinations.destinations.EIdInfoScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.EIdPrivacyPolicyScreenDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -20,7 +20,7 @@ class EIdIntroViewModel @Inject constructor(
     override val topBarState = TopBarState.Empty
     override val fullscreenState = FullscreenState.Insets
 
-    fun onRequestEId() = navManager.navigateTo(EIdInfoScreenDestination)
+    fun onRequestEId() = navManager.navigateTo(EIdPrivacyPolicyScreenDestination)
 
     fun onSkip() = navManager.navigateUpOrToRoot()
 

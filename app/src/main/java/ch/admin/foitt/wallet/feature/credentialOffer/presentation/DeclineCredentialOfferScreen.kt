@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.credential.presentation.CredentialActionFeedbackCard
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.DeclineCredentialOfferNavArg
@@ -58,6 +59,7 @@ private fun DeclineCredentialOfferScreenContentPreview() {
                 name = "Test Issuer",
                 painter = painterResource(id = R.drawable.wallet_ic_scan_person),
                 trustStatus = TrustStatus.TRUSTED,
+                actorType = ActorType.ISSUER,
             ),
             onCancel = {},
             onDecline = {},

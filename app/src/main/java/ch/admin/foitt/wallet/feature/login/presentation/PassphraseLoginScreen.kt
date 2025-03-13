@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
@@ -28,12 +27,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
-import ch.admin.foitt.wallet.feature.login.domain.Constants.MAX_LOGIN_ATTEMPTS
 import ch.admin.foitt.wallet.platform.composables.Buttons
 import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
 import ch.admin.foitt.wallet.platform.composables.PassphraseValidationErrorToastFixed
 import ch.admin.foitt.wallet.platform.composables.presentation.centerHorizontallyOnFullscreen
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
+import ch.admin.foitt.wallet.platform.login.domain.Constants.MAX_LOGIN_ATTEMPTS
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.PassphraseLoginNavArg
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseInputFieldState
 import ch.admin.foitt.wallet.platform.passphraseInput.presentation.PassphraseInputComponent
@@ -106,7 +105,6 @@ private fun PassphraseLoginScreenContent(
 
     when (currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass) {
         WindowWidthSizeClass.COMPACT -> WalletLayouts.CompactContainerFloatingBottom(
-            modifier = Modifier.imePadding(),
             verticalArrangement = Arrangement.Top,
             content = {
                 CompactContent(
@@ -148,7 +146,6 @@ private fun PassphraseLoginScreenContent(
         )
 
         else -> WalletLayouts.LargeContainerFloatingBottom(
-            modifier = Modifier.imePadding(),
             content = {
                 LargeContent(
                     textFieldValue = textFieldValue,
@@ -225,7 +222,7 @@ private fun LargeContent(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = Sizes.s04, end = Sizes.s04),
+            .padding(top = Sizes.s04),
     ) {
         PassphraseInputComponent(
             modifier = Modifier.weight(1f),

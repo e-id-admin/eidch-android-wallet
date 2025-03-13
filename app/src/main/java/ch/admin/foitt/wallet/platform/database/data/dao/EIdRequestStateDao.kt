@@ -15,6 +15,19 @@ interface EIdRequestStateDao {
     @Query("SELECT * FROM eidrequeststate WHERE id = :id")
     fun getEIdRequestStateById(id: Long): EIdRequestState
 
-    @Query("UPDATE eidrequeststate SET state = :state, lastPolled = :lastPolled WHERE eIdRequestCaseId = :caseId")
-    fun updateByCaseId(caseId: String, state: EIdRequestQueueState, lastPolled: Long): Int
+    @Query(
+        "UPDATE eidrequeststate SET state = :state, lastPolled = :lastPolled, " +
+            "onlineSessionStartTimeoutAt = :onlineSessionStartTimeout, onlineSessionStartOpenAt = :onlineSessionStartOpenAt " +
+            "WHERE eIdRequestCaseId = :caseId"
+    )
+    fun updateByCaseId(
+        caseId: String,
+        state: EIdRequestQueueState,
+        lastPolled: Long,
+        onlineSessionStartTimeout: Long?,
+        onlineSessionStartOpenAt: Long?
+    ): Int
+
+    @Query("SELECT eIdRequestCaseId FROM eidrequeststate")
+    fun getAllStateCaseIds(): List<String>
 }

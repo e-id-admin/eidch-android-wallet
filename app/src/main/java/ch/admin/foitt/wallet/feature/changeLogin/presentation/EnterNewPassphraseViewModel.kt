@@ -15,7 +15,9 @@ import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.walletcomposedestinations.destinations.ConfirmNewPassphraseScreenDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,18 +37,17 @@ class EnterNewPassphraseViewModel @Inject constructor(
         MutableStateFlow(PassphraseInputFieldState.Typing)
     val passphraseInputFieldState = _passphraseInputFieldState.asStateFlow()
 
-    private var _isNextButtonEnabled =
-        MutableStateFlow(validatePassphrase(textFieldValue.value.text) == PassphraseValidationState.VALID)
-    val isNextButtonEnabled = _isNextButtonEnabled.asStateFlow()
+    val isPassphraseValid: StateFlow<Boolean> = textFieldValue.map { textField ->
+        validatePassphrase(textField.text) == PassphraseValidationState.VALID
+    }.toStateFlow(false, 0)
 
     fun onTextFieldValueChange(textFieldValue: TextFieldValue) {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
         _textFieldValue.value = textFieldValue
-        _isNextButtonEnabled.value = validatePassphrase(textFieldValue.text) == PassphraseValidationState.VALID
     }
 
     fun onCheckPassphrase() {
-        if (isNextButtonEnabled.value) {
+        if (isPassphraseValid.value) {
             navigateToConfirmNewPassphraseScreen()
             _textFieldValue.value = TextFieldValue("")
         }

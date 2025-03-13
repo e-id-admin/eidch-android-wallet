@@ -43,5 +43,5 @@ interface NavigationManager {
     @MainThread
     fun navigateUp()
 
-    fun navigateBackToHome(from: Destination)
+    fun navigateBackToHome(popUntil: Destination)
 }

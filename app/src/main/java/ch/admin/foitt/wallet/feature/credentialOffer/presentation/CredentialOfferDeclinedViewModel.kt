@@ -2,7 +2,6 @@ package ch.admin.foitt.wallet.feature.credentialOffer.presentation
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.model.DeclineCredentialOfferUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
@@ -49,7 +48,6 @@ class CredentialOfferDeclinedViewModel @Inject constructor(
         val uiState = DeclineCredentialOfferUiState(
             issuer = getActorUiState(
                 actorDisplayData = issuerDisplayData,
-                defaultName = R.string.tk_credential_offer_issuer_name_unknown,
             ),
         )
         emit(uiState)
@@ -67,7 +65,7 @@ class CredentialOfferDeclinedViewModel @Inject constructor(
         navigateToHome()
     }
 
-    fun navigateToHome() = navManager.navigateBackToHome(from = CredentialOfferDeclinedScreenDestination)
+    fun navigateToHome() = navManager.navigateBackToHome(popUntil = CredentialOfferDeclinedScreenDestination)
 
     companion object {
         private const val NAV_DELAY = 2500L

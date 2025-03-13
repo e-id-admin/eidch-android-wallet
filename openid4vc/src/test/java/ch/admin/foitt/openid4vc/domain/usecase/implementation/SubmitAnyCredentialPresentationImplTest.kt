@@ -81,7 +81,7 @@ class SubmitAnyCredentialPresentationImplTest {
     }
 
     @Test
-    fun `Submitting a presentation for vc+sd_jwt with no supported algorithm returns an error`() = runTest {
+    fun `Submitting a presentation where the repository returns VerificationError returns an error`() = runTest {
         mockPresentationRequest(
             inputDescriptorFormats = listOf(
                 InputDescriptorFormat.VcSdJwt(
@@ -132,6 +132,24 @@ class SubmitAnyCredentialPresentationImplTest {
         )
 
         result.assertErrorType(PresentationRequestError.Unexpected::class)
+    }
+
+    @Test
+    fun `Submitting a presentation for vc+sd_jwt with no supported algorithm returns an error`() = runTest {
+        coEvery {
+            mockPresentationRequestRepository.submitPresentation(
+                url = any(),
+                presentationRequestBody = presentationRequestBody,
+            )
+        } returns Err(PresentationRequestError.VerificationError)
+
+        val result = useCase(
+            anyCredential = mockAnyCredential,
+            requestedFields = requestedFields,
+            presentationRequest = mockPresentationRequest,
+        )
+
+        result.assertErrorType(PresentationRequestError.VerificationError::class)
     }
 
     @Test

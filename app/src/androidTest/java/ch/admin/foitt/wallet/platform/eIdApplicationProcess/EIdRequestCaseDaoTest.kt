@@ -4,7 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import ch.admin.foitt.wallet.platform.database.data.AppDatabase
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseDao
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.mock.EIdRequestMocks.eIdRequestCase
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.mock.EIdRequestMocks.eIdRequestCaseMock
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -32,9 +32,9 @@ class EIdRequestCaseDaoTest {
 
     @Test
     fun insertEIdRequestCaseTest() = runTest {
-        eIdRequestCaseDao.insert(eIdRequestCase)
+        eIdRequestCaseDao.insert(eIdRequestCaseMock())
 
-        val case = eIdRequestCaseDao.getEIdRequestCaseById(eIdRequestCase.id)
-        assertEquals(eIdRequestCase, case)
+        val case = eIdRequestCaseDao.getEIdRequestCaseById(eIdRequestCaseMock().id)
+        assertEquals(eIdRequestCaseMock(), case)
     }
 }

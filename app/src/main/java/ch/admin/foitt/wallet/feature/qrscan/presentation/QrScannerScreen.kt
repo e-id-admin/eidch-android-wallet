@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -97,7 +96,6 @@ private fun QrScannerScreenContent(
                 onClick = onFlashLightToggle,
             )
         },
-        scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
         colors = WalletTopBarColors.transparentFixed(),
     )
     Box {

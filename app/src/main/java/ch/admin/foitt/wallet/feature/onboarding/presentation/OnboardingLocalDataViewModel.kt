@@ -24,7 +24,7 @@ class OnboardingLocalDataViewModel @Inject constructor(
     override val topBarState = TopBarState.Details(navManager::popBackStack, null)
     override val fullscreenState = FullscreenState.Insets
 
-    fun onMoreInformation() = appContext.openLink(R.string.tk_onboarding_yourdata_link_value)
+    fun onMoreInformation() = appContext.openLink(R.string.tk_onboarding_introductionStep_yourData_tertiary_link_value)
 
     fun onNext() = navManager.navigateTo(OnboardingPresentScreenDestination)
     fun onBack() = navManager.popBackStack()

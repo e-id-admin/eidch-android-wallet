@@ -10,6 +10,7 @@ android {
     namespace = "ch.admin.foitt.wallet"
 
     val schemeCredentialOffer = "openid-credential-offer"
+    val schemeCredentialOfferSwiyu = "swiyu"
     val schemePresentationRequest = "https"
 
     defaultConfig {
@@ -19,18 +20,23 @@ android {
         versionName = properties.getOrDefault("APP_VERSION_NAME", "1.0.0") as String
         manifestPlaceholders["appLabel"] = "swiyu"
         manifestPlaceholders["deepLinkCredentialOfferScheme"] = schemeCredentialOffer
+        manifestPlaceholders["deepLinkCredentialOfferSchemeSwiyu"] = schemeCredentialOfferSwiyu
         manifestPlaceholders["deepLinkPresentationRequestScheme"] = schemePresentationRequest
 
         // keeps only resources in these languages
         // if libs f. e. include resources in spanish they are not shipped with the app
-        resourceConfigurations += arrayOf("en", "de", "fr", "it")
+        resourceConfigurations += arrayOf("en", "de", "fr", "it", "rm")
 
         buildConfigField(
             type = "String",
             name = "SCHEME_CREDENTIAL_OFFER",
             value = "\"$schemeCredentialOffer\""
         )
-
+        buildConfigField(
+            type = "String",
+            name = "SCHEME_CREDENTIAL_OFFER_SWIYU",
+            value = "\"$schemeCredentialOfferSwiyu\""
+        )
         buildConfigField(
             type = "String",
             name = "SCHEME_PRESENTATION_REQUEST",

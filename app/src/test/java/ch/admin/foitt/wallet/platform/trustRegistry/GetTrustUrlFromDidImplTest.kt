@@ -1,7 +1,7 @@
 package ch.admin.foitt.wallet.platform.trustRegistry
 
 import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustRegistryError
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.GetTrustUrlFromDidError
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.implementation.GetTrustUrlFromDidImpl
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
@@ -63,31 +63,31 @@ class GetTrustUrlFromDidImplTest {
     @Test
     fun `A Did with unsupported base domain returns an error`() {
         val result = useCase(inputDidWithUnsupportedDomain)
-        result.assertErrorType(TrustRegistryError.Unexpected::class)
+        result.assertErrorType(GetTrustUrlFromDidError.NoTrustRegistryMapping::class)
     }
 
     @Test
     fun `An random string input returns an error`() {
         val result = useCase(inputRandom)
-        result.assertErrorType(TrustRegistryError.Unexpected::class)
+        result.assertErrorType(GetTrustUrlFromDidError.NoTrustRegistryMapping::class)
     }
 
     @Test
     fun `A non-did twd input returns an error`() {
         val result = useCase(inputNonDid)
-        result.assertErrorType(TrustRegistryError.Unexpected::class)
+        result.assertErrorType(GetTrustUrlFromDidError.NoTrustRegistryMapping::class)
     }
 
     @Test
     fun `A did input with unsupported method returns an error`() {
         val result = useCase(inputDidWithUnsupportedMethod)
-        result.assertErrorType(TrustRegistryError.Unexpected::class)
+        result.assertErrorType(GetTrustUrlFromDidError.NoTrustRegistryMapping::class)
     }
 
     @Test
     fun `An empty input returns an error`() {
         val result = useCase(" ")
-        result.assertErrorType(TrustRegistryError.Unexpected::class)
+        result.assertErrorType(GetTrustUrlFromDidError.NoTrustRegistryMapping::class)
     }
 
     private val domain01 = "some.domain.swiyu.admin.ch"

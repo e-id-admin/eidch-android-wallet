@@ -25,6 +25,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -255,6 +260,7 @@ object Buttons {
         endIcon: Painter? = null,
     ) {
         val color = WalletTheme.colorScheme.error
+        val linkAltText = stringResource(R.string.tk_global_externalLink_alt)
         Row(
             modifier = modifier
                 .clickable(onClick = onClick)
@@ -262,6 +268,10 @@ object Buttons {
             verticalAlignment = Alignment.CenterVertically
         ) {
             androidx.compose.material3.Text(
+                modifier = Modifier.semantics {
+                    contentDescription = "$text $linkAltText"
+                    role = Role.Button
+                },
                 text = text,
                 color = color,
                 style = WalletTheme.typography.bodySmall,
@@ -424,6 +434,10 @@ private fun BottomButtonPreview() {
             Buttons.Icon(
                 icon = R.drawable.ic_fingerprint,
                 contentDescription = "",
+                onClick = {},
+            )
+            Buttons.Text(
+                text = "Text button",
                 onClick = {},
             )
         }

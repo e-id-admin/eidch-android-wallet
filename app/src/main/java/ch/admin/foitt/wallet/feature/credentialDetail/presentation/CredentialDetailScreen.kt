@@ -47,6 +47,7 @@ import ch.admin.foitt.wallet.feature.credentialDetail.presentation.composables.C
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.composables.MenuBottomSheet
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.composables.VisibleBottomSheet
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.model.CredentialDetailUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.HiddenScrollToButton
 import ch.admin.foitt.wallet.platform.composables.HiddenScrollToTopButton
@@ -54,10 +55,10 @@ import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
 import ch.admin.foitt.wallet.platform.composables.calculateVerticalPadding
 import ch.admin.foitt.wallet.platform.composables.presentation.HeightReportingLayout
 import ch.admin.foitt.wallet.platform.composables.presentation.bottomSafeDrawing
+import ch.admin.foitt.wallet.platform.composables.presentation.horizontalSafeDrawing
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.LazyColumn
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
 import ch.admin.foitt.wallet.platform.composables.presentation.spaceBarKeyClickable
-import ch.admin.foitt.wallet.platform.composables.presentation.startSafeDrawing
 import ch.admin.foitt.wallet.platform.composables.presentation.topSafeDrawing
 import ch.admin.foitt.wallet.platform.credential.presentation.LargeCredentialCard
 import ch.admin.foitt.wallet.platform.credential.presentation.credentialClaimItems
@@ -192,8 +193,9 @@ private fun BoxWithConstraintsScope.CredentialDetailCompact(
             Spacer(Modifier.height(Sizes.s04))
         }
         credentialClaimItems(
-            title = R.string.credential_offer_content_section_title,
+            title = R.string.tk_displaydelete_displaycredential1_title2,
             claims = credentialDetail.claims,
+            showIssuer = true,
             issuer = credentialDetail.issuer.name,
             issuerIcon = credentialDetail.issuer.painter,
             onWrongData = onWrongData,
@@ -210,7 +212,7 @@ private fun BoxWithConstraintsScope.CredentialDetailLarge(
 ) {
     Row(
         modifier = Modifier
-            .startSafeDrawing()
+            .horizontalSafeDrawing()
     ) {
         val verticalSafeDrawing = WindowInsets.safeDrawing.asPaddingValues().calculateVerticalPadding()
         CredentialWithTopBar(
@@ -233,7 +235,7 @@ private fun BoxWithConstraintsScope.CredentialDetailLarge(
                 contentPadding = PaddingValues(bottom = Sizes.s02),
             ) {
                 credentialClaimItems(
-                    title = R.string.credential_offer_content_section_title,
+                    title = R.string.tk_displaydelete_displaycredential1_title2,
                     claims = credentialDetail.claims,
                     issuer = credentialDetail.issuer.name,
                     issuerIcon = credentialDetail.issuer.painter,
@@ -344,6 +346,7 @@ private fun ExampleScreen(windowWidthClass: WindowWidthSizeClass) {
                 name = "Issuer",
                 painter = painterResource(id = R.drawable.ic_swiss_cross_small),
                 trustStatus = TrustStatus.TRUSTED,
+                actorType = ActorType.ISSUER,
             )
         ),
         windowWidthClass = windowWidthClass,

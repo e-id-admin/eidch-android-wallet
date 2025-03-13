@@ -37,7 +37,7 @@ class UserPrivacyPolicyViewModel @Inject constructor(
         onNext()
     }
 
-    fun onOpenUserPrivacyPolicy() = appContext.openLink(R.string.onboarding_privacy_link_value)
+    fun onOpenUserPrivacyPolicy() = appContext.openLink(R.string.tk_onboarding_analytics_tertiary_link_value)
 
     private fun onNext() = navManager.navigateTo(OnboardingPassphraseExplanationScreenDestination)
     fun onBack() = navManager.popBackStack()

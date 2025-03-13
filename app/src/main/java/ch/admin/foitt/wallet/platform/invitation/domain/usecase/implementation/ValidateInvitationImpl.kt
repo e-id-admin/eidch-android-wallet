@@ -32,7 +32,8 @@ internal class ValidateInvitationImpl @Inject constructor(
             BuildConfig.SCHEME_PRESENTATION_REQUEST -> getPresentationRequestFromUri(invitationUri)
                 .mapError(GetPresentationRequestError::toValidateInvitationError)
                 .bind()
-            BuildConfig.SCHEME_CREDENTIAL_OFFER -> getCredentialOfferFromUri(invitationUri)
+            BuildConfig.SCHEME_CREDENTIAL_OFFER,
+            BuildConfig.SCHEME_CREDENTIAL_OFFER_SWIYU -> getCredentialOfferFromUri(invitationUri)
                 .mapError(GetCredentialOfferError::toValidateInvitationError)
                 .bind()
             else -> {

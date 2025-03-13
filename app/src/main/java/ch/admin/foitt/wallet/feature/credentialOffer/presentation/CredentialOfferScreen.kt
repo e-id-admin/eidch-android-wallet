@@ -35,7 +35,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -43,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.model.CredentialOfferUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.InvitationHeader
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.Buttons
@@ -144,12 +144,13 @@ private fun CompactContent(
                 inviterName = credentialOffer.issuer.name,
                 inviterImage = credentialOffer.issuer.painter,
                 trustStatus = credentialOffer.issuer.trustStatus,
+                actorType = credentialOffer.issuer.actorType,
             )
             Spacer(modifier = Modifier.height(Sizes.s06))
         }
         item {
             WalletTexts.BodyLarge(
-                text = pluralStringResource(id = R.plurals.tk_receive_approval_android_subtitle, count = 1, 1),
+                text = stringResource(R.string.tk_receive_approval_subtitle),
                 modifier = Modifier.padding(horizontal = Sizes.s04)
             )
             Spacer(modifier = Modifier.height(Sizes.s04))
@@ -294,13 +295,14 @@ private fun DetailsWithHeader(
                         inviterName = credentialOffer.issuer.name,
                         inviterImage = credentialOffer.issuer.painter,
                         trustStatus = credentialOffer.issuer.trustStatus,
+                        actorType = credentialOffer.issuer.actorType,
                     )
                 }
             }
 
             item {
                 WalletTexts.BodyLarge(
-                    text = pluralStringResource(id = R.plurals.tk_receive_approval_android_subtitle, count = 1, 1),
+                    text = stringResource(R.string.tk_receive_approval_subtitle),
                     modifier = Modifier.padding(horizontal = Sizes.s04)
                 )
                 Spacer(modifier = Modifier.height(Sizes.s04))
@@ -407,6 +409,7 @@ private fun CredentialOfferScreenPreview() {
                     name = "Test Issuer",
                     painter = painterResource(id = R.drawable.ic_swiss_cross_small),
                     trustStatus = TrustStatus.TRUSTED,
+                    actorType = ActorType.ISSUER,
                 ),
                 credential = CredentialMocks.cardState01,
                 claims = CredentialMocks.claimList,
@@ -428,6 +431,7 @@ private fun CredentialOfferLargeContentPreview() {
                     name = "Test Issuer",
                     painter = painterResource(id = R.drawable.ic_swiss_cross_small),
                     trustStatus = TrustStatus.TRUSTED,
+                    actorType = ActorType.ISSUER,
                 ),
                 credential = CredentialMocks.cardState01,
                 claims = CredentialMocks.claimList,

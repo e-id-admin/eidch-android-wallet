@@ -39,6 +39,7 @@ import coil.compose.AsyncImage
 fun LazyListScope.credentialClaimItems(
     @StringRes title: Int,
     claims: List<CredentialClaimData>,
+    showIssuer: Boolean = false,
     issuer: String? = null,
     issuerIcon: Painter? = null,
     onWrongData: (() -> Unit)? = null,
@@ -61,7 +62,7 @@ fun LazyListScope.credentialClaimItems(
         ItemDivider()
     }
 
-    issuer?.let {
+    if (showIssuer) {
         item {
             ListItemHeader(
                 modifier = Modifier.padding(top = Sizes.s06),
@@ -121,9 +122,11 @@ private fun ListItemHeader(modifier: Modifier = Modifier, title: Int, number: In
 
 @Composable
 private fun IssuerItem(
-    issuer: String,
+    issuer: String?,
     issuerIcon: Painter?
 ) {
+    val issuer = issuer ?: stringResource(R.string.tk_credential_offer_issuer_name_unknown)
+    val issuerIcon = issuerIcon ?: painterResource(id = R.drawable.wallet_ic_actor_default)
     ListItem(
         headlineContent = { Text(text = issuer) },
         leadingContent = {

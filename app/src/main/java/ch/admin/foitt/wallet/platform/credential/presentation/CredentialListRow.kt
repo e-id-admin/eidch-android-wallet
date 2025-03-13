@@ -15,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import ch.admin.foitt.wallet.R
@@ -104,9 +103,9 @@ private fun CredentialStatus(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (isCredentialFromBetaIssuer) {
-            WalletTexts.Body(
-                text = stringResource(id = R.string.tk_global_credential_status_demo),
-                color = WalletTheme.colorScheme.onSurfaceVariant,
+            DemoBadge(
+                textColor = WalletTheme.colorScheme.onLightPrimary,
+                backgroundColor = WalletTheme.colorScheme.lightPrimary,
             )
             Spacer(modifier = Modifier.width(Sizes.s02))
         }

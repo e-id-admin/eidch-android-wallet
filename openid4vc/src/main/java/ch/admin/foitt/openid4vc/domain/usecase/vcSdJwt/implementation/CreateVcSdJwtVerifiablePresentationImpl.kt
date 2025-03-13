@@ -42,13 +42,13 @@ internal class CreateVcSdJwtVerifiablePresentationImpl @Inject constructor(
         coroutineBinding {
             val sdJwtWithDisclosures = runSuspendCatching {
                 credential.createVerifiableCredential(requestedFields)
-            }.mapError(Throwable::toCreateVcSdJwtVerifiablePresentationError)
+            }.mapError { throwable -> throwable.toCreateVcSdJwtVerifiablePresentationError("createVerifiableCredential error") }
                 .bind()
 
             if (credential.keyBindingIdentifier != null) {
                 val base64UrlEncodedSdHash = runSuspendCatching {
                     sdJwtWithDisclosures.createDigest(HASH_ALGORITHM)
-                }.mapError(Throwable::toCreateVcSdJwtVerifiablePresentationError)
+                }.mapError { throwable -> throwable.toCreateVcSdJwtVerifiablePresentationError("sdJwtWithDisclosures.createDigest error") }
                     .bind()
 
                 val keyPair = getKeyPair(credential.keyBindingIdentifier, ANDROID_KEY_STORE)
@@ -89,7 +89,7 @@ internal class CreateVcSdJwtVerifiablePresentationImpl @Inject constructor(
     private fun getKeyBindingJwk(credential: VcSdJwtCredential): Result<Jwk, CreateVcSdJwtVerifiablePresentationError> {
         val cnf = runSuspendCatching {
             credential.cnf
-        }.mapError(Throwable::toCreateVcSdJwtVerifiablePresentationError)
+        }.mapError { throwable -> throwable.toCreateVcSdJwtVerifiablePresentationError("credential.cnf error") }
 
         return safeJson.safeDecodeStringTo<Jwk>(cnf.value.toString())
             .mapError(JsonParsingError::toCreateVcSdJwtVerifiablePresentationError)

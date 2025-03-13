@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
@@ -20,7 +21,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
@@ -28,6 +31,7 @@ import androidx.compose.material.pullrefresh.PullRefreshDefaults
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
@@ -49,6 +54,9 @@ import ch.admin.foitt.wallet.platform.composables.presentation.nonFocusableAcces
 import ch.admin.foitt.wallet.platform.credential.presentation.CredentialListRow
 import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialMocks
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequest
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestQueueState
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.EIdRequestCard
 import ch.admin.foitt.wallet.platform.preview.AllCompactScreensPreview
 import ch.admin.foitt.wallet.platform.preview.AllLargeScreensPreview
 import ch.admin.foitt.wallet.platform.preview.ComposableWrapper
@@ -68,6 +76,7 @@ fun HomeScreen(
     HomeScreenContent(
         screenState = viewModel.screenState.collectAsStateWithLifecycle().value,
         isRefreshing = viewModel.isRefreshing.collectAsStateWithLifecycle().value,
+        onStartOnlineIdentification = viewModel::onStartOnlineIdentification,
         onQrScan = viewModel::onQrScan,
         onMenu = viewModel::onMenu,
         onRefresh = viewModel::onRefresh,
@@ -80,6 +89,7 @@ fun HomeScreen(
 private fun HomeScreenContent(
     screenState: HomeScreenState,
     isRefreshing: Boolean,
+    onStartOnlineIdentification: () -> Unit,
     onQrScan: () -> Unit,
     onMenu: () -> Unit,
     onRefresh: () -> Unit,
@@ -87,26 +97,34 @@ private fun HomeScreenContent(
     onGetEId: () -> Unit,
     windowWidthClass: WindowWidthSizeClass = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass,
 ) = WalletLayouts.HomeContainer(
-    onScan = onQrScan,
     onMenu = onMenu,
+    onScan = onQrScan,
     windowWidthClass = windowWidthClass,
 ) { stickyBottomHeightDp ->
     when (screenState) {
         HomeScreenState.Initial -> {
         }
+
         is HomeScreenState.CredentialList -> Credentials(
             credentialsState = screenState.credentials,
             isRefreshing = isRefreshing,
+            ongoingEIdRequests = screenState.eIdRequests,
+            onStartOnlineIdentification = onStartOnlineIdentification,
             contentBottomPadding = stickyBottomHeightDp,
             onCredentialClick = screenState.onCredentialClick,
             onRefresh = onRefresh,
         )
+
         is HomeScreenState.NoCredential -> NoCredentialContent(
             contentBottomPadding = stickyBottomHeightDp,
+            isRefreshing = isRefreshing,
+            ongoingEIdRequests = screenState.eIdRequests,
+            onStartOnlineIdentification = onStartOnlineIdentification,
             showBetaIdRequestButton = screenState.showBetaIdRequestButton,
             showEIdRequestButton = screenState.showEIdRequestButton,
             onRequestBetaId = onGetBetaId,
             onRequestEId = onGetEId,
+            onRefresh = onRefresh,
         )
     }
 }
@@ -114,21 +132,144 @@ private fun HomeScreenContent(
 @Composable
 private fun BoxScope.NoCredentialContent(
     contentBottomPadding: Dp,
+    isRefreshing: Boolean,
+    ongoingEIdRequests: List<EIdRequest>,
+    onStartOnlineIdentification: () -> Unit,
     showEIdRequestButton: Boolean,
     showBetaIdRequestButton: Boolean,
     onRequestEId: () -> Unit,
     onRequestBetaId: () -> Unit,
-) = Column(
-    horizontalAlignment = Alignment.CenterHorizontally,
-    modifier = Modifier
-        .align(Alignment.Center)
-        .wrapContentHeight()
-        .verticalScroll(rememberScrollState())
-        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-        .padding(bottom = contentBottomPadding)
-        .padding(start = Sizes.s06, end = Sizes.s06, top = Sizes.s04, bottom = Sizes.s06)
-        .widthIn(max = Sizes.maxTextWidth)
-        .setIsTraversalGroup(index = TraversalIndex.HIGH1)
+    onRefresh: () -> Unit,
+) {
+    if (ongoingEIdRequests.isEmpty()) {
+        WalletEmptyContainer(
+            contentBottomPadding = contentBottomPadding,
+            showEIdRequestButton = showEIdRequestButton,
+            showBetaIdRequestButton = showBetaIdRequestButton,
+            onRequestEId = onRequestEId,
+            onRequestBetaId = onRequestBetaId,
+        )
+    } else {
+        WalletEmptyWithEIdRequestsContainer(
+            contentBottomPadding = contentBottomPadding,
+            isRefreshing = isRefreshing,
+            ongoingEIdRequests = ongoingEIdRequests,
+            onStartOnlineIdentification = onStartOnlineIdentification,
+            showEIdRequestButton = showEIdRequestButton,
+            showBetaIdRequestButton = showBetaIdRequestButton,
+            onRequestEId = onRequestEId,
+            onRequestBetaId = onRequestBetaId,
+            onRefresh = onRefresh,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun WalletEmptyWithEIdRequestsContainer(
+    contentBottomPadding: Dp,
+    isRefreshing: Boolean,
+    ongoingEIdRequests: List<EIdRequest>,
+    onStartOnlineIdentification: () -> Unit,
+    showEIdRequestButton: Boolean,
+    showBetaIdRequestButton: Boolean,
+    onRequestEId: () -> Unit,
+    onRequestBetaId: () -> Unit,
+    onRefresh: () -> Unit,
+) {
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing,
+        refreshingOffset = pullToRefreshTopPadding(),
+        onRefresh = onRefresh,
+    )
+    LazyColumn(
+        state = rememberLazyListState(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+            .padding(bottom = contentBottomPadding)
+            .pullRefresh(
+                state = pullRefreshState,
+            )
+            .setIsTraversalGroup(index = TraversalIndex.HIGH1),
+    ) {
+        item {
+            Spacer(modifier = Modifier.height(Sizes.s04))
+        }
+
+        items(ongoingEIdRequests) { eIdRequest: EIdRequest ->
+            Box(modifier = Modifier.padding(horizontal = Sizes.s03)) {
+                EIdRequestCard(
+                    eIdRequest = eIdRequest,
+                    onStartOnlineIdentification = onStartOnlineIdentification,
+                )
+            }
+            Spacer(modifier = Modifier.height(Sizes.s02))
+        }
+
+        item {
+            Column(
+                modifier = Modifier.padding(vertical = Sizes.s04),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Spacer(modifier = Modifier.height(80.dp))
+                WalletEmptyContent(
+                    showEIdRequestButton = showEIdRequestButton,
+                    showBetaIdRequestButton = showBetaIdRequestButton,
+                    onRequestEId = onRequestEId,
+                    onRequestBetaId = onRequestBetaId,
+                )
+                Spacer(modifier = Modifier.height(80.dp))
+            }
+        }
+    }
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        PullRefreshIndicator(
+            refreshing = isRefreshing,
+            state = pullRefreshState,
+        )
+    }
+}
+
+@Composable
+fun BoxScope.WalletEmptyContainer(
+    contentBottomPadding: Dp,
+    showEIdRequestButton: Boolean,
+    showBetaIdRequestButton: Boolean,
+    onRequestEId: () -> Unit,
+    onRequestBetaId: () -> Unit,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .align(Alignment.Center)
+            .wrapContentHeight()
+            .verticalScroll(rememberScrollState())
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+            .padding(bottom = contentBottomPadding)
+            .padding(start = Sizes.s06, end = Sizes.s06, top = Sizes.s04, bottom = Sizes.s06)
+            .widthIn(max = Sizes.maxTextWidth)
+            .setIsTraversalGroup(index = TraversalIndex.HIGH1),
+    ) {
+        WalletEmptyContent(
+            showEIdRequestButton = showEIdRequestButton,
+            showBetaIdRequestButton = showBetaIdRequestButton,
+            onRequestEId = onRequestEId,
+            onRequestBetaId = onRequestBetaId,
+        )
+    }
+}
+
+@Composable
+fun WalletEmptyContent(
+    showEIdRequestButton: Boolean,
+    showBetaIdRequestButton: Boolean,
+    onRequestEId: () -> Unit,
+    onRequestBetaId: () -> Unit,
 ) {
     NoCredentialIcon()
     Spacer(modifier = Modifier.height(Sizes.s06))
@@ -138,13 +279,13 @@ private fun BoxScope.NoCredentialContent(
         modifier = Modifier
             .nonFocusableAccessibilityAnchor()
     )
-    Spacer(modifier = Modifier.height(Sizes.s02))
+    Spacer(modifier = Modifier.height(Sizes.s01))
     WalletTexts.Body(
         text = stringResource(id = R.string.tk_getBetaId_firstUse_body),
         textAlign = TextAlign.Center,
     )
     if (showBetaIdRequestButton || showEIdRequestButton) {
-        Spacer(modifier = Modifier.height(Sizes.s10))
+        Spacer(modifier = Modifier.height(Sizes.s06))
         Column(
             verticalArrangement = Arrangement.spacedBy(Sizes.s04),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -173,6 +314,8 @@ private fun Credentials(
     credentialsState: List<CredentialCardState>,
     isRefreshing: Boolean,
     contentBottomPadding: Dp,
+    ongoingEIdRequests: List<EIdRequest>,
+    onStartOnlineIdentification: () -> Unit,
     onCredentialClick: (id: Long) -> Unit,
     onRefresh: () -> Unit,
 ) {
@@ -186,15 +329,29 @@ private fun Credentials(
         modifier = Modifier
             .setIsTraversalGroup()
             .fillMaxHeight()
-            .pullRefresh(
-                state = pullRefreshState,
-            ),
+            .pullRefresh(state = pullRefreshState),
         contentPadding = PaddingValues(
             top = Sizes.s06,
             bottom = contentBottomPadding + Sizes.s06
         )
     ) {
-        itemsIndexed(credentialsState) { _, credentialState ->
+        if (ongoingEIdRequests.isNotEmpty()) {
+            items(ongoingEIdRequests) { eIdRequest: EIdRequest ->
+                Box(modifier = Modifier.padding(horizontal = Sizes.s03)) {
+                    EIdRequestCard(
+                        eIdRequest = eIdRequest,
+                        onStartOnlineIdentification = onStartOnlineIdentification,
+                    )
+                }
+                Spacer(modifier = Modifier.height(Sizes.s02))
+            }
+
+            item {
+                HorizontalDivider()
+            }
+        }
+
+        items(credentialsState) { credentialState ->
             CredentialListRow(
                 showDivider = true,
                 credentialState = credentialState,
@@ -220,7 +377,8 @@ private fun NoCredentialIcon() = Box(
     Image(
         painter = painterResource(id = R.drawable.wallet_ic_nocredential_bg),
         contentDescription = null,
-        modifier = Modifier.width(Sizes.noCredentialThumbnailWidth)
+        modifier = Modifier
+            .width(Sizes.noCredentialThumbnailWidth)
             .testTag(TestTags.NO_CREDENTIAL_ICON.name)
     )
     Image(
@@ -234,11 +392,54 @@ private class HomePreviewParams : PreviewParameterProvider<ComposableWrapper<Hom
     override val values: Sequence<ComposableWrapper<HomeScreenState>> = sequenceOf(
         ComposableWrapper {
             HomeScreenState.CredentialList(
+                eIdRequests = emptyList(),
                 credentials = CredentialMocks.cardStates.toList().map { it.value() },
                 onCredentialClick = {},
             )
         },
-        ComposableWrapper { HomeScreenState.NoCredential(showBetaIdRequestButton = true, showEIdRequestButton = true) },
+        ComposableWrapper {
+            HomeScreenState.CredentialList(
+                eIdRequests = listOf(
+                    EIdRequest(
+                        state = EIdRequestQueueState.IN_QUEUING,
+                        firstName = "Seraina",
+                        lastName = "Muster"
+                    ),
+                    EIdRequest(
+                        state = EIdRequestQueueState.READY_FOR_ONLINE_SESSION,
+                        firstName = "Seraina",
+                        lastName = "Muster"
+                    )
+                ),
+                credentials = CredentialMocks.cardStates.toList().map { it.value() },
+                onCredentialClick = {},
+            )
+        },
+        ComposableWrapper {
+            HomeScreenState.NoCredential(
+                eIdRequests = emptyList(),
+                showBetaIdRequestButton = true,
+                showEIdRequestButton = true
+            )
+        },
+        ComposableWrapper {
+            HomeScreenState.NoCredential(
+                eIdRequests = listOf(
+                    EIdRequest(
+                        state = EIdRequestQueueState.IN_QUEUING,
+                        firstName = "Seraina",
+                        lastName = "Muster"
+                    ),
+                    EIdRequest(
+                        state = EIdRequestQueueState.READY_FOR_ONLINE_SESSION,
+                        firstName = "Seraina",
+                        lastName = "Muster"
+                    )
+                ),
+                showBetaIdRequestButton = true,
+                showEIdRequestButton = true
+            )
+        },
     )
 }
 
@@ -257,6 +458,7 @@ private fun HomeScreenCompactPreview(
             screenState = state.value(),
             windowWidthClass = WindowWidthSizeClass.COMPACT,
             isRefreshing = true,
+            onStartOnlineIdentification = {},
             onQrScan = {},
             onMenu = {},
             onRefresh = {},
@@ -275,6 +477,7 @@ private fun HomeScreenLargePreview(
         HomeScreenContent(
             screenState = state.value(),
             windowWidthClass = WindowWidthSizeClass.EXPANDED,
+            onStartOnlineIdentification = {},
             isRefreshing = false,
             onQrScan = {},
             onMenu = {},

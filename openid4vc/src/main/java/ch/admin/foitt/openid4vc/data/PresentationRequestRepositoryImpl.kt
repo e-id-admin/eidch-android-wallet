@@ -91,6 +91,7 @@ internal class PresentationRequestRepositoryImpl @Inject constructor(
             success = {
                 when {
                     it.isValidationError() -> PresentationRequestError.ValidationError
+                    it.isVerificationError() -> PresentationRequestError.VerificationError
                     else -> PresentationRequestError.Unexpected(clientRequestException)
                 }
             },
@@ -100,11 +101,12 @@ internal class PresentationRequestRepositoryImpl @Inject constructor(
 
     private fun HttpErrorBody.isValidationError() = this.error in ERRORS
 
+    private fun HttpErrorBody.isVerificationError() = this.error == "verification_process_closed"
+
     companion object {
         private val ERRORS = listOf(
             "authorization_request_object_not_found",
             "authorization_request_missing_error_param",
-            "verification_process_closed",
             "invalid_presentation_definition",
             "invalid_request",
         )

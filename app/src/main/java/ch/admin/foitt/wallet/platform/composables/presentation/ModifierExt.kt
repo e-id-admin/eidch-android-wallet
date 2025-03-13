@@ -3,21 +3,18 @@
 package ch.admin.foitt.wallet.platform.composables.presentation
 
 import android.os.SystemClock
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,39 +31,17 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.LayoutDirection
+import ch.admin.foitt.wallet.platform.scaffold.presentation.LocalScaffoldPaddings
 import ch.admin.foitt.wallet.platform.utils.isScreenReaderOn
 import kotlinx.coroutines.delay
 
 @Composable
-fun Modifier.scrollingBehavior(
-    useStatusBarInsets: Boolean,
-    contentPadding: PaddingValues,
-    scrollState: ScrollState,
-) = this
-    .verticalScroll(scrollState)
-    .run {
-        if (useStatusBarInsets) {
-            this.statusBarsPadding()
-        } else {
-            this
-        }
-    }
-    // Padding added to the scrollable content
-    .padding(contentPadding)
-
-@Composable
-fun Modifier.scrollingBehavior(
-    useStatusBarInsets: Boolean,
-    scrollState: ScrollState,
-) = this
-    .verticalScroll(scrollState)
-    .run {
-        if (useStatusBarInsets) {
-            this.statusBarsPadding()
-        } else {
-            this
-        }
-    }
+fun Modifier.addTopScaffoldPadding(): Modifier {
+    val topPadding = LocalScaffoldPaddings.current.calculateTopPadding()
+    return this
+        .padding(top = topPadding)
+        .consumeWindowInsets(WindowInsets(top = topPadding))
+}
 
 /**
  * Acts as an anchor for talk back which is always focused when view is first composed. Counters the problem that buttons that do not
@@ -91,6 +66,15 @@ fun Modifier.nonFocusableAccessibilityAnchor(): Modifier {
     }
     return this.focusRequester(focusRequester)
         .focusable(isFocusable)
+}
+
+@Composable
+fun Modifier.requestFocus(focusRequester: FocusRequester): Modifier {
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+    return this.focusRequester(focusRequester)
+        .focusable()
 }
 
 @Composable

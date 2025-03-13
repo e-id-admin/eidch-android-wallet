@@ -4,8 +4,7 @@ import android.content.Context
 import android.os.CountDownTimer
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewModelScope
-import ch.admin.foitt.wallet.feature.login.domain.usecase.GetLockoutDuration
-import ch.admin.foitt.wallet.feature.login.domain.usecase.ResetLockout
+import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.biometricPrompt.domain.model.BiometricPromptType
 import ch.admin.foitt.wallet.platform.biometricPrompt.domain.usecase.GetAuthenticators
 import ch.admin.foitt.wallet.platform.biometricPrompt.presentation.AndroidBiometricPrompt
@@ -13,7 +12,9 @@ import ch.admin.foitt.wallet.platform.biometrics.domain.usecase.ResetBiometrics
 import ch.admin.foitt.wallet.platform.deeplink.domain.usecase.HandleDeeplink
 import ch.admin.foitt.wallet.platform.login.domain.model.CanUseBiometricsForLoginResult
 import ch.admin.foitt.wallet.platform.login.domain.usecase.CanUseBiometricsForLogin
+import ch.admin.foitt.wallet.platform.login.domain.usecase.GetLockoutDuration
 import ch.admin.foitt.wallet.platform.login.domain.usecase.LoginWithBiometrics
+import ch.admin.foitt.wallet.platform.login.domain.usecase.ResetLockout
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.PassphraseLoginNavArg
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
@@ -145,7 +146,7 @@ class LockoutViewModel @Inject constructor(
         direction = AppVersionBlockedScreenDestination(title = title, text = text)
     )
 
-    fun onPassphraseForgotten() = appContext.openLink("https://eid.admin.ch")
+    fun onPassphraseForgotten() = appContext.openLink(R.string.tk_login_locked_secondarybutton_value)
 
     enum class TimeUnit {
         SECONDS, MINUTES

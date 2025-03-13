@@ -125,12 +125,12 @@ class NavigationManagerImpl @Inject constructor(
         )
     }
 
-    override fun navigateBackToHome(from: Destination) {
+    override fun navigateBackToHome(popUntil: Destination) {
         val isHomeOnBackstack = popBackStackTo(HomeScreenDestination, false)
         if (!isHomeOnBackstack) {
             navigateToAndPopUpTo(
                 direction = HomeScreenDestination,
-                route = from.route
+                route = popUntil.route
             )
         }
     }

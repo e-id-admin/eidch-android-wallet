@@ -9,6 +9,7 @@ import timber.log.Timber
 interface PresentationRequestError {
     data object NetworkError : FetchPresentationRequestError, SubmitAnyCredentialPresentationError, SubmitPresentationErrorError
     data object ValidationError : SubmitAnyCredentialPresentationError
+    data object VerificationError : SubmitAnyCredentialPresentationError
     data class Unexpected(val throwable: Throwable?) :
         FetchPresentationRequestError,
         SubmitAnyCredentialPresentationError,
@@ -42,13 +43,13 @@ internal fun CreateAnyVerifiablePresentationError.toSubmitAnyCredentialPresentat
         is PresentationRequestError.Unexpected -> this
     }
 
-internal fun Throwable.toSubmitAnyCredentialPresentationError(): SubmitAnyCredentialPresentationError {
-    Timber.e(this)
+internal fun Throwable.toSubmitAnyCredentialPresentationError(message: String): SubmitAnyCredentialPresentationError {
+    Timber.e(t = this, message = message)
     return PresentationRequestError.Unexpected(this)
 }
 
-internal fun Throwable.toCreateVcSdJwtVerifiablePresentationError(): CreateVcSdJwtVerifiablePresentationError {
-    Timber.e(this)
+internal fun Throwable.toCreateVcSdJwtVerifiablePresentationError(message: String): CreateVcSdJwtVerifiablePresentationError {
+    Timber.e(t = this, message = message)
     return PresentationRequestError.Unexpected(this)
 }
 

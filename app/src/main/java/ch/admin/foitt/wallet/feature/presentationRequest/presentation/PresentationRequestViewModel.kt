@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestErrorBody
 import ch.admin.foitt.openid4vc.domain.usecase.DeclinePresentation
-import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.PresentationRequestDisplayData
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.PresentationRequestError
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.GetPresentationRequestFlow
@@ -30,6 +29,7 @@ import ch.admin.foitt.walletcomposedestinations.destinations.PresentationFailure
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationRequestScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationSuccessScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationValidationErrorScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.PresentationVerificationErrorScreenDestination
 import com.github.michaelbull.result.mapBoth
 import com.github.michaelbull.result.onFailure
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -68,7 +68,6 @@ class PresentationRequestViewModel @Inject constructor(
     val verifierUiState = _verifierDisplayData.map { verifierDisplayData ->
         getActorUiState(
             actorDisplayData = verifierDisplayData,
-            defaultName = R.string.presentation_verifier_name_unknown,
         )
     }.toStateFlow(ActorUiState.EMPTY, 0)
 
@@ -124,6 +123,7 @@ class PresentationRequestViewModel @Inject constructor(
                             PresentationRequestError.NetworkError,
                             is PresentationRequestError.Unexpected -> navigateToFailure()
                             PresentationRequestError.ValidationError -> navigateToValidationError()
+                            PresentationRequestError.VerificationError -> navigateToVerificationError()
                         }
                     },
                 )
@@ -167,6 +167,14 @@ class PresentationRequestViewModel @Inject constructor(
     private fun navigateToValidationError() {
         navManager.navigateToAndClearCurrent(
             direction = PresentationValidationErrorScreenDestination(
+                issuerDisplayData = _verifierDisplayData.value
+            )
+        )
+    }
+
+    private fun navigateToVerificationError() {
+        navManager.navigateToAndClearCurrent(
+            direction = PresentationVerificationErrorScreenDestination(
                 issuerDisplayData = _verifierDisplayData.value
             )
         )

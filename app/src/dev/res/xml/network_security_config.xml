@@ -3,7 +3,7 @@
     <domain-config>
         <domain includeSubdomains="false">mam-managed.bit.admin.ch</domain>
         <trust-anchors>
-            <certificates src="@raw/dynatrace" />
+            <certificates src="@raw/root_admin_ch" />
         </trust-anchors>
     </domain-config>
     <domain-config>

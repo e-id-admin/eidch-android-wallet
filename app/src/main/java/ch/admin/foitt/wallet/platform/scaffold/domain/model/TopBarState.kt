@@ -3,8 +3,6 @@ package ch.admin.foitt.wallet.platform.scaffold.domain.model
 import androidx.annotation.StringRes
 
 sealed interface TopBarState {
-    data object Root : TopBarState
-    data object SystemBarPadding : TopBarState
     data object None : TopBarState
     data object Empty : TopBarState
 
@@ -21,7 +19,7 @@ sealed interface TopBarState {
         val titleId: Int?,
     ) : TopBarState
 
-    data class Transparent(
+    data class OnGradient(
         val onUp: () -> Unit,
         @StringRes
         val titleId: Int,

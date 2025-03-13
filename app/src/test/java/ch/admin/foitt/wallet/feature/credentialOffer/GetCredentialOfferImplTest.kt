@@ -11,6 +11,7 @@ import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.cr
 import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.issuerDisplay1
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorField
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchIssuerDisplayData
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.IsCredentialFromBetaIssuerImpl
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
@@ -147,5 +148,6 @@ class GetCredentialOfferImplTest {
         image = null,
         preferredLanguage = "de",
         trustStatus = TrustStatus.TRUSTED,
+        actorType = ActorType.ISSUER,
     )
 }

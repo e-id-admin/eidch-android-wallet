@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -35,6 +34,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.composables.Toast
+import ch.admin.foitt.wallet.platform.composables.presentation.addTopScaffoldPadding
+import ch.admin.foitt.wallet.platform.composables.presentation.bottomSafeDrawing
+import ch.admin.foitt.wallet.platform.composables.presentation.horizontalSafeDrawing
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.utils.OnPauseEventHandler
 import ch.admin.foitt.wallet.theme.Sizes
@@ -99,8 +101,10 @@ private fun SecuritySettingsScreenContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .addTopScaffoldPadding()
             .verticalScroll(state = rememberScrollState())
-            .navigationBarsPadding()
+            .horizontalSafeDrawing()
+            .bottomSafeDrawing()
             .padding(
                 top = Sizes.s05,
                 bottom = Sizes.s05,

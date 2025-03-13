@@ -10,7 +10,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenContainer
 import ch.admin.foitt.wallet.platform.utils.LocalActivity
 import ch.admin.foitt.wallet.theme.WalletTheme
@@ -22,8 +21,6 @@ fun MainScreen(
     activity: FragmentActivity,
     viewModel: MainViewModel = hiltViewModel(),
 ) {
-    val fullscreenState = viewModel.fullscreenState.collectAsStateWithLifecycle().value
-
     WalletTheme {
         val engine = rememberNavHostEngine(
             navHostContentAlignment = Alignment.Center,
@@ -35,9 +32,7 @@ fun MainScreen(
         viewModel.initNavHost(navController)
 
         CompositionLocalProvider(LocalActivity provides activity) {
-            ScreenContainer(
-                fullscreenState = fullscreenState,
-            ) {
+            ScreenContainer {
                 NavigationHost(
                     engine = engine,
                     navController = navController,

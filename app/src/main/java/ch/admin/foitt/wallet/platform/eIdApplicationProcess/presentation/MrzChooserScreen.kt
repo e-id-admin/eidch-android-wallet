@@ -3,8 +3,12 @@ package ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.LazyColumn
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
@@ -22,16 +26,25 @@ import com.ramcosta.composedestinations.annotation.Destination
 fun MrzChooserScreen(
     viewModel: MrzChooserViewModel
 ) {
+    val errorMessage = viewModel.errorMessage.collectAsStateWithLifecycle().value
+    val showErrorMessage = viewModel.showErrorDialog.collectAsStateWithLifecycle().value
+
     MrzChooserScreenContent(
+        errorMessage = errorMessage,
         screenData = viewModel.mrzData,
         onMrzItemClick = viewModel::onMrzItemClick,
+        onCloseDialog = viewModel::onCloseErrorDialog,
+        showErrorMessage = showErrorMessage,
     )
 }
 
 @Composable
 private fun MrzChooserScreenContent(
+    errorMessage: String,
+    showErrorMessage: Boolean,
     screenData: List<MrzData>,
     onMrzItemClick: (Int) -> Unit,
+    onCloseDialog: () -> Unit,
 ) {
     WalletLayouts.LazyColumn(
         useBottomInsets = false,
@@ -52,6 +65,40 @@ private fun MrzChooserScreenContent(
             )
         }
     }
+
+    if (showErrorMessage) {
+        ErrorDialog(
+            onConfirmation = onCloseDialog,
+            dialogText = errorMessage
+        )
+    }
+}
+
+@Composable
+fun ErrorDialog(
+    onConfirmation: () -> Unit,
+    dialogText: String,
+) {
+    AlertDialog(
+        title = {
+            Text(text = "Error")
+        },
+        text = {
+            Text(text = dialogText)
+        },
+        onDismissRequest = {
+            onConfirmation()
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirmation()
+                }
+            ) {
+                Text("OK")
+            }
+        },
+    )
 }
 
 @WalletAllScreenPreview
@@ -61,25 +108,28 @@ fun MrzScreenPreview() {
         MrzChooserScreenContent(
             screenData = listOf(
                 MrzData(
-                    displayName = "1 Adult (ID-CARD)",
+                    displayName = "Adult (ID-CARD)",
                     payload = ApplyRequest(
                         mrz = listOf(),
                     )
                 ),
                 MrzData(
-                    displayName = "2 Adult (PASSPORT)",
+                    displayName = "Adult (PASSPORT)",
                     payload = ApplyRequest(
                         mrz = listOf(),
                     )
                 ),
                 MrzData(
-                    displayName = "1 Underage (ID-CARD)",
+                    displayName = "Underage (ID-CARD)",
                     payload = ApplyRequest(
                         mrz = listOf(),
                     )
                 )
             ),
             onMrzItemClick = {},
+            errorMessage = "error message",
+            showErrorMessage = false,
+            onCloseDialog = {},
         )
     }
 }

@@ -11,7 +11,6 @@ import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialOfferRepos
 import ch.admin.foitt.wallet.util.SafeJsonTestInstance.safeJson
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
-import ch.admin.foitt.wallet.util.assertTrue
 import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -23,9 +22,7 @@ import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestFactory
 
 class SaveCredentialImplTest {
 
@@ -79,50 +76,6 @@ class SaveCredentialImplTest {
         }
     }
 
-    @TestFactory
-    fun `should save all claims without reserved claim names`(): List<DynamicTest> {
-        coEvery { mockCredentialOfferRepository.saveCredentialOffer(any()) } returns Ok(1L)
-
-        return payloadTestData.map { testData ->
-            DynamicTest.dynamicTest(" should contain exactly these claims: ${testData.expectedClaims}") {
-                runTest {
-                    val anyCredential = VcSdJwtCredential(
-                        keyBindingIdentifier = "",
-                        keyBindingAlgorithm = SigningAlgorithm.ES256,
-                        payload = testData.payload
-                    )
-
-                    val vcSdJwtCredentialConfiguration = VcSdJwtCredentialConfiguration(
-                        identifier = "",
-                        claims = "{}",
-                        credentialSigningAlgValuesSupported = emptyList(),
-                        format = CredentialFormat.VC_SD_JWT,
-                        proofTypesSupported = emptyMap(),
-                        vct = "",
-                    )
-
-                    val result = saveCredentialUseCase(
-                        issuerInfo = mockIssuerInfo,
-                        anyCredential = anyCredential,
-                        credentialConfiguration = vcSdJwtCredentialConfiguration
-                    )
-
-                    result.assertOk()
-
-                    coVerify {
-                        mockCredentialOfferRepository.saveCredentialOffer(
-                            coWithArg { localizedCredentialOffer ->
-                                assertTrue(
-                                    localizedCredentialOffer.claims.keys.map { it.key }.toSet() == testData.expectedClaims
-                                ) { "Only expected claims should be saved" }
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
-
     @Test
     fun `should call CredentialOfferRepository#saveCredentialOffer exactly one time`() = runTest {
         coEvery { mockCredentialOfferRepository.saveCredentialOffer(any()) } returns Ok(1L)
@@ -153,22 +106,5 @@ class SaveCredentialImplTest {
         coVerify(exactly = 1) {
             mockCredentialOfferRepository.saveCredentialOffer(any())
         }
-    }
-
-    private data class PayloadTestData(val expectedClaims: Set<String>, val payload: String)
-
-    companion object {
-        private val payloadTestData = listOf(
-            //  The following JWT payload contains two non-reserved claims "test1" and "test2"
-            PayloadTestData(
-                expectedClaims = setOf("test1", "test2"),
-                payload = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImtpZCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidGVzdDEiOiJUZXN0IiwidGVzdDIiOiJUZXN0MiIsImlhdCI6MTUxNjIzOTAyMiwiaXNzIjoiaXNzdWVyIiwidmN0IjoidmN0In0.tkJ0DaGgQSfCVRG7l1c_XdGMyR7Uov-krHkNaS_c_0xfLcdhswZQeAGxeO8Hnc_umxamUfJnlZCxLqoGZay5zA",
-            ),
-            //  The following JWT payload contains only claims with reserved claim names
-            PayloadTestData(
-                expectedClaims = emptySet(),
-                payload = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImtpZCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJpc3MiOiJpc3N1ZXIiLCJ2Y3QiOiJ2Y3QifQ.nLumVkn8MPalWhI2NnGHZFJgNpWrgWsVRx4jZ31vWuMpnxh9YE5qRJ0Dxy27rUHUAF-ibJzmyr5JSBo2zdR1SA",
-            ),
-        )
     }
 }

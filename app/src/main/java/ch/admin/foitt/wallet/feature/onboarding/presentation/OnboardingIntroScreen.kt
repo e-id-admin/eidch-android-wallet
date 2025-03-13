@@ -36,7 +36,7 @@ fun OnboardingIntroScreen(
 private fun OnboardingIntroScreenContent(
     onNext: () -> Unit,
 ) = WalletLayouts.ScrollableColumnWithPicture(
-    modifier = Modifier.contentDescription(stringResource(id = R.string.tk_onboarding_start_alt)),
+    modifier = Modifier.contentDescription(stringResource(id = R.string.tk_onboarding_introductionStep_security_screen_alt)),
     stickyStartContent = {
         ScreenMainImage(
             modifier = Modifier.testTag(TestTags.INTRO_ICON.name),
@@ -47,14 +47,14 @@ private fun OnboardingIntroScreenContent(
     stickyBottomContent = {
         Buttons.FilledPrimary(
             modifier = Modifier.testTag(TestTags.START_BUTTON.name),
-            text = stringResource(id = R.string.tk_onboarding_start_primarybutton),
+            text = stringResource(id = R.string.tk_onboarding_introductionStep_security_button_primary),
             onClick = onNext,
         )
     }
 ) {
     OnboardingScreenContent(
-        title = stringResource(id = R.string.tk_onboarding_start_title),
-        subtitle = stringResource(id = R.string.tk_onboarding_start_body)
+        title = stringResource(id = R.string.tk_onboarding_introductionStep_security_primary),
+        subtitle = stringResource(id = R.string.tk_onboarding_introductionStep_security_secondary)
     )
 }
 

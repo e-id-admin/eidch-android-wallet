@@ -4,6 +4,7 @@ import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorField
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchIssuerDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementation.FetchIssuerDisplayDataImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetAnyCredential
@@ -182,6 +183,7 @@ class FetchIssuerDisplayDataImplTest {
         image = null,
         preferredLanguage = null,
         trustStatus = TrustStatus.NOT_TRUSTED,
+        actorType = ActorType.ISSUER,
     )
 
     private val credentialId01 = 1L

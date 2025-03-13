@@ -38,6 +38,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="${deepLinkCredentialOfferScheme}" />
+                <data android:scheme="${deepLinkCredentialOfferSchemeSwiyu}" />
             </intent-filter>
         </activity>
         <service

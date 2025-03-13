@@ -20,7 +20,7 @@ data class UnknownCredentialConfiguration(
     override val proofTypesSupported: Map<ProofType, ProofTypeSigningAlgorithms> =
         mapOf(ProofType.UNKNOWN to ProofTypeSigningAlgorithms(signingAlgorithms = emptyList())),
     @SerialName("display")
-    override val display: List<Display>? = null,
+    override val display: List<OidCredentialDisplay>? = null,
     @SerialName("order")
     override val order: List<String>? = null,
 

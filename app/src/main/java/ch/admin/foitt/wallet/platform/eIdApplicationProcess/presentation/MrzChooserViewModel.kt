@@ -3,11 +3,14 @@ package ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.platform.database.domain.model.EIdRequestCase
 import ch.admin.foitt.wallet.platform.database.domain.model.EIdRequestState
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.CaseResponse
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.StateResponse
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.FetchSIdCase
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.FetchSIdStatus
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.SaveEIdRequestCase
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.SaveEIdRequestState
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.mock.ApplyResponseBody
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.mock.StateResponseBody
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.model.MrzData
+import ch.admin.foitt.wallet.platform.navArgs.domain.model.EIdQueueNavArg
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
@@ -16,18 +19,27 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.extension.navigateUpOrToRoot
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.SafeJson
+import ch.admin.foitt.walletcomposedestinations.destinations.EIdQueueScreenDestination
+import com.github.michaelbull.result.coroutines.runSuspendCatching
+import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getOr
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
 import javax.inject.Inject
 
 @HiltViewModel
 class MrzChooserViewModel @Inject constructor(
-    private val safeJson: SafeJson,
+    safeJson: SafeJson,
     private val saveEIdRequestCase: SaveEIdRequestCase,
     private val saveEIdRequestState: SaveEIdRequestState,
     private val navManager: NavigationManager,
+    private val fetchSIdCase: FetchSIdCase,
+    private val fetchSIdStatus: FetchSIdStatus,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
 ) : ScreenViewModel(setTopBarState, setFullscreenState) {
@@ -40,18 +52,44 @@ class MrzChooserViewModel @Inject constructor(
 
     val mrzData = mockUnderAge.getOr(emptyList()) + mockAdult.getOr(emptyList()) + mockOther.getOr(emptyList())
 
+    private val _errorMessage = MutableStateFlow("")
+    val errorMessage = _errorMessage.asStateFlow()
+
+    private val _showErrorDialog = MutableStateFlow(false)
+    val showErrorDialog = _showErrorDialog.asStateFlow()
+
     fun onBack() = navManager.navigateUpOrToRoot()
 
     fun onMrzItemClick(index: Int) {
-        val mrzData = mrzData[index]
-        val rawMrz = mrzData.payload.mrz.joinToString(";")
-        saveData(rawMrz)
+        viewModelScope.launch {
+            fetchSIdCase.invoke(mrzData[index].payload)
+                .onSuccess { caseResponse ->
+                    checkStatus(caseResponse, mrzData[index])
+                }
+                .onFailure { applyRequestError ->
+                    _errorMessage.value = applyRequestError.toString()
+                    _showErrorDialog.value = true
+                }
+        }
     }
 
-    private fun saveData(rawMrz: String) {
-        val applyResponseBody = safeJson.safeDecodeStringTo<ApplyResponseBody>(APPLY_RESPONSE).value
-        val stateResponseBody = safeJson.safeDecodeStringTo<StateResponseBody>(STATE_RESPONSE).value
+    private suspend fun checkStatus(caseResponse: CaseResponse, mrzData: MrzData) {
+        fetchSIdStatus.invoke(caseResponse.caseId)
+            .onSuccess { stateResponse ->
+                val rawMrz = mrzData.payload.mrz.joinToString(";")
+                saveData(rawMrz, caseResponse, stateResponse)
+            }
+            .onFailure { stateRequestError ->
+                _errorMessage.value = stateRequestError.toString()
+                _showErrorDialog.value = true
+            }
+    }
 
+    fun onCloseErrorDialog() {
+        _showErrorDialog.value = false
+    }
+
+    private suspend fun saveData(rawMrz: String, applyResponseBody: CaseResponse, stateResponseBody: StateResponse) {
         val eIdRequestCase = EIdRequestCase(
             id = applyResponseBody.caseId,
             rawMrz = rawMrz,
@@ -60,46 +98,30 @@ class MrzChooserViewModel @Inject constructor(
             lastName = applyResponseBody.surname,
         )
 
+        val onlineSessionStartOpenAt: Long? = runSuspendCatching {
+            Instant.parse(stateResponseBody.queueInformation?.expectedOnlineSessionStart).epochSecond
+        }.get()
+
+        val onlineSessionStartTimeoutAt: Long? = runSuspendCatching {
+            Instant.parse(stateResponseBody.onlineSessionStartTimeout).epochSecond
+        }.get()
+
         val eIdRequestState = EIdRequestState(
             eIdRequestCaseId = applyResponseBody.caseId,
             state = stateResponseBody.state,
             lastPolled = Instant.now().epochSecond,
-            onlineSessionStartOpenAt = Instant.parse(stateResponseBody.queueInformation?.expectedOnlineSessionStart).epochSecond,
-            onlineSessionStartTimeoutAt = Instant.parse(stateResponseBody.onlineSessionStartTimeout).epochSecond
+            onlineSessionStartOpenAt = onlineSessionStartOpenAt,
+            onlineSessionStartTimeoutAt = onlineSessionStartTimeoutAt
         )
 
-        viewModelScope.launch {
-            saveEIdRequestCase(eIdRequestCase)
-            saveEIdRequestState(eIdRequestState)
-        }
-    }
+        saveEIdRequestCase(eIdRequestCase)
+        saveEIdRequestState(eIdRequestState)
 
-    private companion object {
-        const val APPLY_RESPONSE = """{
-          "caseId": "1234-5678-abcd-1234567890ABCDE",
-          "surname": "Muster",
-          "givenNames": "Max Felix",
-          "dateOfBirth": "1989-08-24T00:00:00Z",
-          "identityType": "SWISS_PASS",
-          "identityNumber": "A123456789",
-          "validUntil": "2028-12-23T00:00:00Z",
-          "legalRepresentant": false,
-          "email": "user@examle.com"
-        }"""
-
-        const val STATE_RESPONSE = """{
-          "state": "BereitFuerOnlineSession",
-          "queueInformation": {
-            "positionInQueue": 3978,
-            "totalInQueue": 5789,
-            "expectedOnlineSessionStart": "2024-03-24T00:00:00Z"
-          },
-          "legalRepresentant": {
-            "verified": false,
-            "verificationLink": "https://sid-test.ejpd.intra.admin.ch/sid-web/verify-legal-representant/1234567890"
-          },
-          "onlineSessionStartTimeout": "2024-03-27T00:00:00Z"
-        }"""
+        navManager.navigateTo(
+            EIdQueueScreenDestination(
+                navArgs = EIdQueueNavArg(rawDeadline = stateResponseBody.queueInformation?.expectedOnlineSessionStart)
+            )
+        )
     }
 
     private object MockMRZData {

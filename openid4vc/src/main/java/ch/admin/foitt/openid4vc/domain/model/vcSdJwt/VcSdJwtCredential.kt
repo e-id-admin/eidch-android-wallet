@@ -5,6 +5,8 @@ import ch.admin.foitt.openid4vc.domain.model.anycredential.CredentialValidity
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.SigningAlgorithm
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 
 class VcSdJwtCredential(
     override val id: Long? = null,
@@ -19,9 +21,36 @@ class VcSdJwtCredential(
     override val validity: CredentialValidity
         get() = jwtValidity
 
-    override val json: JsonElement = sdJwtJson
-
     override val claimsPath = "$"
 
+    /**
+     * @returns all claims that we want to save in the database (i. e. only the disclosable claims)
+     */
+    override fun getClaimsToSave(): JsonElement = getDisclosableClaimsJson()
+
+    /**
+     * @returns all claims that can be requested by a verifier (i. e. disclosable claims + technical (=reserved) claims)
+     */
+    override fun getClaimsForPresentation(): JsonElement = sdJwtJson
+
     override fun createVerifiableCredential(requestedFieldKeys: List<String>): String = createSelectiveDisclosure(requestedFieldKeys)
+
+    fun hasNonDisclosableClaims(): Boolean = (payloadJson.keys - RESERVED_CLAIM_NAMES).isNotEmpty()
+
+    private fun getDisclosableClaimsJson(): JsonElement {
+        val disclosableClaims = sdJwtJson.jsonObject.entries.filterNot { RESERVED_CLAIM_NAMES.contains(it.key) }
+        val disclosableClaimsJson = JsonObject(disclosableClaims.associate { it.toPair() })
+        return disclosableClaimsJson
+    }
+
+    private companion object {
+        // Reserved claim names
+        // See https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-04.html#name-registered-jwt-claims and
+        // https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-10.html#section-5.1
+        private val RESERVED_CLAIM_NAMES = setOf(
+            "iss", "nbf", "exp", "sub", "iat", "aud", "jti", // JWT
+            "_sd_alg", "_sd", // SD-JWT
+            "cnf", "vct", "status", // VcSdJwt
+        )
+    }
 }

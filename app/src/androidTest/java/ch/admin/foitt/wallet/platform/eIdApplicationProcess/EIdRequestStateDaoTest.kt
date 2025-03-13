@@ -7,8 +7,8 @@ import ch.admin.foitt.wallet.platform.database.data.AppDatabase
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseDao
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestStateDao
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestQueueState
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.mock.EIdRequestMocks.eIdRequestCase
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.mock.EIdRequestMocks.eIdRequestState
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.mock.EIdRequestMocks.eIdRequestCaseMock
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.mock.EIdRequestMocks.eIdRequestStateMock
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -39,21 +39,21 @@ class EIdRequestStateDaoTest {
 
     @Test
     fun insertEIdRequestStateTest() = runTest {
-        eIdRequestCaseDao.insert(eIdRequestCase)
-        val id = eIdRequestStateDao.insert(eIdRequestState)
+        eIdRequestCaseDao.insert(eIdRequestCaseMock())
+        val id = eIdRequestStateDao.insert(eIdRequestStateMock())
 
         val requestState = eIdRequestStateDao.getEIdRequestStateById(id)
-        assertEquals(eIdRequestState, requestState)
+        assertEquals(eIdRequestStateMock(), requestState)
     }
 
     @Test
     fun updateEIdRequestStateTest() = runTest {
-        eIdRequestCaseDao.insert(eIdRequestCase)
-        val id = eIdRequestStateDao.insert(eIdRequestState)
+        eIdRequestCaseDao.insert(eIdRequestCaseMock())
+        val id = eIdRequestStateDao.insert(eIdRequestStateMock())
 
-        val newState = EIdRequestQueueState.Abgelaufen
+        val newState = EIdRequestQueueState.CLOSED
         val lastPolled = Instant.now().epochSecond
-        eIdRequestStateDao.updateByCaseId(eIdRequestCase.id, newState, lastPolled)
+        eIdRequestStateDao.updateByCaseId(eIdRequestCaseMock().id, newState, lastPolled)
 
         val updatedRequestState = eIdRequestStateDao.getEIdRequestStateById(id)
         assertEquals(newState, updatedRequestState.state)
@@ -62,6 +62,19 @@ class EIdRequestStateDaoTest {
 
     @Test(expected = SQLiteConstraintException::class)
     fun insertWithoutMatchingForeignKeyShouldThrow() {
-        eIdRequestStateDao.insert(eIdRequestState)
+        eIdRequestStateDao.insert(eIdRequestStateMock())
+    }
+
+    @Test
+    fun getAllStateCaseIds() = runTest {
+        eIdRequestCaseDao.insert(eIdRequestCaseMock())
+        eIdRequestStateDao.insert(eIdRequestStateMock())
+
+        eIdRequestCaseDao.insert(eIdRequestCaseMock("caseId2"))
+        eIdRequestStateDao.insert(eIdRequestStateMock(id = 2L, caseId = "caseId2"))
+
+        val caseIds = eIdRequestStateDao.getAllStateCaseIds()
+
+        assertEquals(2, caseIds.size)
     }
 }

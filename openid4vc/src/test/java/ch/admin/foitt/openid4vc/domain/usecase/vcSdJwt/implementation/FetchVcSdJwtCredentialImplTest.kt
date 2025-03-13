@@ -7,6 +7,7 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.Credential
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.SigningAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.VcSdJwtCredentialConfiguration
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtError
+import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.mock.VcSdJwtMocks
 import ch.admin.foitt.openid4vc.domain.usecase.FetchVerifiableCredential
 import ch.admin.foitt.openid4vc.domain.usecase.VerifyJwtSignature
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.FetchVcSdJwtCredential
@@ -56,7 +57,7 @@ class FetchVcSdJwtCredentialImplTest {
 
         coEvery {
             mockFetchVerifiableCredential(mockCredentialConfig, mockCredentialOffer)
-        } returns Ok(mockVerifiableCredential)
+        } returns Ok(mockVerifiableCredentialValid)
 
         coEvery { mockVerifyJwtSignature(any(), any(), any()) } returns Ok(Unit)
     }
@@ -74,18 +75,10 @@ class FetchVcSdJwtCredentialImplTest {
         assertEquals(KEY_BINDING_IDENTIFIER, credential.keyBindingIdentifier)
         assertEquals(PAYLOAD, credential.payload)
         assertEquals(CredentialFormat.VC_SD_JWT, credential.format)
-        assertEquals(SafeJsonTestInstance.json.parseToJsonElement(credentialJson), credential.json)
-    }
-
-    @Test
-    fun `Fetching jwt vc json credential which is invalid returns an error`(): Unit = runTest {
-        coEvery {
-            mockVerifyJwtSignature(any(), any(), any())
-        } returns Err(VcSdJwtError.InvalidJwt)
-
-        val result = useCase(mockCredentialConfig, mockCredentialOffer)
-
-        result.assertErrorType(CredentialOfferError.IntegrityCheckFailed::class)
+        assertEquals(
+            SafeJsonTestInstance.json.parseToJsonElement(VcSdJwtMocks.VC_SD_JWT_FULL_SAMPLE_JSON),
+            credential.getClaimsToSave()
+        )
     }
 
     @Test
@@ -102,6 +95,15 @@ class FetchVcSdJwtCredentialImplTest {
     }
 
     @Test
+    fun `Fetching jwt vc json credential returns an error if the jwt payload contains non-reserved claim names`() = runTest {
+        coEvery {
+            mockFetchVerifiableCredential(mockCredentialConfig, mockCredentialOffer)
+        } returns Ok(mockVerifiableCredentialInvalid)
+
+        useCase(mockCredentialConfig, mockCredentialOffer).assertErrorType(CredentialOfferError.InvalidCredentialOffer::class)
+    }
+
+    @Test
     fun `Fetching jwt vc json credential maps errors from verifying jwt`(): Unit = runTest {
         coEvery {
             mockVerifyJwtSignature(any(), any(), any())
@@ -115,22 +117,20 @@ class FetchVcSdJwtCredentialImplTest {
     private companion object {
         const val CREDENTIAL_ISSUER = "credentialIssuer"
         const val KEY_BINDING_IDENTIFIER = "signingKeyId"
-        const val PAYLOAD =
-            "ewogICJhbGciOiJFUzI1NiIsCiAgInR5cCI6InZjK3NkLWp3dCIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJpc3MiOiJpc3N1ZXIiLAogICJ2Y3QiOiJ2Y3QiLAogICJzdWIiOiIxMjM0NTY3ODkwIiwKICAibmFtZSI6IkpvaG4gRG9lIiwKICAiaWF0IjoxNTE2MjM5MDIyCn0.ZXdvZ0lDSmhiR2NpT2lKRlV6STFOaUlzQ2lBZ0luUjVjQ0k2SW5aakszTmtMV3AzZENJc0NpQWdJbXRwWkNJNkltdGxlVWxrSWdwOS4uSm90ZUNENWFSQjNsVUpUMUtKM1VXRHZSbE5DeW9HR0xnbDVXVEpXa01ObUQzbDc5MGZ3MnlJeHdKTHgyZFllWVFRUHRSU1l6TUd1NGlMZjRJMWhmbFE"
-        val mockVerifiableCredential = VerifiableCredential(
+
+        const val PAYLOAD = VcSdJwtMocks.VC_SD_JWT_FULL_SAMPLE
+        val mockVerifiableCredentialValid = VerifiableCredential(
             keyBindingIdentifier = KEY_BINDING_IDENTIFIER,
             credential = PAYLOAD,
             format = CredentialFormat.VC_SD_JWT,
             keyBindingAlgorithm = SigningAlgorithm.ES512,
         )
-        val credentialJson = """
-            {
-              "iss":"issuer",
-              "vct":"vct",
-              "sub":"1234567890",
-              "name":"John Doe",
-              "iat":1516239022
-            }
-        """.trimIndent()
+
+        val mockVerifiableCredentialInvalid = VerifiableCredential(
+            keyBindingIdentifier = KEY_BINDING_IDENTIFIER,
+            credential = VcSdJwtMocks.VC_SD_JWT_NON_DISCLOSABLE_CLAIMS,
+            format = CredentialFormat.VC_SD_JWT,
+            keyBindingAlgorithm = SigningAlgorithm.ES512,
+        )
     }
 }

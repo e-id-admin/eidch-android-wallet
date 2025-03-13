@@ -29,9 +29,7 @@ open class VcSdJwt(
     /* "iat" claim can optionally be put in disclosures, so it has to be read here */
     override val issuedAt: Instant? = runSuspendCatching {
         sdJwtJson.jsonObject[JWTClaimNames.ISSUED_AT]?.jsonPrimitive?.content
-    }.get()?.let { dateTimeValue ->
-        dateTimeValue.toInstant()
-    }
+    }.get()?.toInstant()
 
     private fun String.toInstant(): Instant? = runSuspendCatching {
         Instant.ofEpochSecond(this.toLong())

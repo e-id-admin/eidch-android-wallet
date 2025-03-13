@@ -16,7 +16,7 @@ class EnableBiometricsLockoutViewModel @Inject constructor(
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
 ) : ScreenViewModel(setTopBarState, setFullscreenState) {
-    override val topBarState = TopBarState.SystemBarPadding
+    override val topBarState = TopBarState.None
     override val fullscreenState = FullscreenState.Insets
 
     fun onClose() = navManager.navigateUpOrToRoot()

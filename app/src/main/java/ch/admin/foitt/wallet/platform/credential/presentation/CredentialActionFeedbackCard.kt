@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.InvitationHeader
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.Buttons
@@ -214,6 +215,7 @@ private fun Header(
             inviterName = issuer.name,
             inviterImage = issuer.painter,
             trustStatus = issuer.trustStatus,
+            actorType = issuer.actorType,
         )
         Spacer(modifier = Modifier.height(Sizes.s06))
     }
@@ -342,6 +344,7 @@ private fun CredentialActionFeedbackCardPreview() {
                 name = "Test Issuer",
                 painter = painterResource(id = R.drawable.wallet_ic_scan_person),
                 trustStatus = TrustStatus.TRUSTED,
+                actorType = ActorType.ISSUER,
             ),
             contentTextFirstParagraphText = R.string.tk_receive_deny1_title,
             contentTextSecondParagraphText = R.string.tk_receive_deny1_body,

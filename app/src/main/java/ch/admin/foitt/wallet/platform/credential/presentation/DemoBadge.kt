@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -18,7 +19,10 @@ import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTheme
 
 @Composable
-internal fun DemoBadge() {
+internal fun DemoBadge(
+    textColor: Color = WalletTheme.colorScheme.onSecondaryFixed,
+    backgroundColor: Color = WalletTheme.colorScheme.secondaryFixed,
+) {
     val altText = stringResource(id = R.string.tk_global_credential_status_demo_alt)
     Box(
         modifier = Modifier
@@ -27,15 +31,15 @@ internal fun DemoBadge() {
                 contentDescription = altText
             }
             .background(
-                color = WalletTheme.colorScheme.secondaryFixed,
+                color = backgroundColor,
                 shape = RoundedCornerShape(Sizes.s04)
             )
-            .padding(start = Sizes.s03, end = Sizes.s04),
+            .padding(horizontal = Sizes.s04),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = stringResource(id = R.string.tk_global_credential_status_demo),
-            color = WalletTheme.colorScheme.onSecondaryFixed,
+            color = textColor,
             style = WalletTheme.typography.labelMedium,
         )
     }

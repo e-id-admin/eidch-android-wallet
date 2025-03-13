@@ -3,6 +3,7 @@ package ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementati
 import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorField
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchIssuerDisplayData
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetAnyCredential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialIssuerDisplay
@@ -43,6 +44,7 @@ class FetchIssuerDisplayDataImpl @Inject constructor(
             image = issuerTrustLogoDisplay,
             trustStatus = trustStatementStatus,
             preferredLanguage = trustStatement?.prefLang,
+            actorType = ActorType.ISSUER,
         )
 
         return offerIssuerDisplay

@@ -31,6 +31,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.InvitationHeader
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.Buttons
@@ -123,6 +124,7 @@ private fun ListHeader(verifierUiState: ActorUiState) {
         inviterName = verifierUiState.name,
         inviterImage = verifierUiState.painter,
         trustStatus = verifierUiState.trustStatus,
+        actorType = verifierUiState.actorType,
     )
     Spacer(modifier = Modifier.height(Sizes.s04))
     WalletTexts.BodyLarge(
@@ -195,6 +197,7 @@ private fun PresentationCredentialListScreenPreview() {
                 name = "My verifier name",
                 painter = painterResource(R.drawable.ic_swiss_cross_small),
                 trustStatus = TrustStatus.TRUSTED,
+                actorType = ActorType.VERIFIER,
             ),
             credentialCardStates = CredentialMocks.cardStates.toList().map { it.value() },
             isLoading = false,

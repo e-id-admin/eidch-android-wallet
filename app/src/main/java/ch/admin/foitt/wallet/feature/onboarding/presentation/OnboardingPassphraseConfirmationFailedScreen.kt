@@ -56,7 +56,7 @@ private fun OnboardingPassphraseConfirmationFailedScreenContent(
 private fun ScrollableContent() {
     OnboardingScreenContent(
         title = stringResource(id = R.string.tk_onboarding_passworderror_title),
-        subtitle = stringResource(id = R.string.tk_onboarding_passworderror_body),
+        subtitle = stringResource(id = R.string.tk_onboarding_passwordIntroduction_error_tooManyAttempts),
     )
 }
 

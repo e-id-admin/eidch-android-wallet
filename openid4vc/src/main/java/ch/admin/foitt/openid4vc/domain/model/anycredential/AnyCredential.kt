@@ -10,10 +10,11 @@ interface AnyCredential {
     val keyBindingAlgorithm: SigningAlgorithm?
     val payload: String
     val format: CredentialFormat
-    val json: JsonElement
     val claimsPath: String
     val validity: CredentialValidity
     val issuer: String?
 
+    fun getClaimsToSave(): JsonElement
+    fun getClaimsForPresentation(): JsonElement
     fun createVerifiableCredential(requestedFieldKeys: List<String>): String
 }

@@ -1,7 +1,6 @@
 package ch.admin.foitt.wallet.feature.presentationRequest.presentation
 
 import androidx.lifecycle.SavedStateHandle
-import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
@@ -40,7 +39,6 @@ class PresentationFailureViewModel @Inject constructor(
     val verifierUiState = _verifierDisplayData.map { verifierDisplayData ->
         getActorUiState(
             actorDisplayData = verifierDisplayData,
-            defaultName = R.string.presentation_verifier_name_unknown,
         )
     }.toStateFlow(ActorUiState.EMPTY, 0)
 

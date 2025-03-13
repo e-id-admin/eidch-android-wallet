@@ -3,10 +3,8 @@ package ch.admin.foitt.wallet.feature.changeLogin.presentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
@@ -59,7 +57,7 @@ fun ConfirmNewPassphraseScreen(viewModel: ConfirmNewPassphraseViewModel) {
     ConfirmNewPassphraseScreenContent(
         textFieldValue = viewModel.textFieldValue.collectAsStateWithLifecycle().value,
         passphraseInputFieldState = viewModel.passphraseInputFieldState.collectAsStateWithLifecycle().value,
-        isNextButtonEnabled = viewModel.isNextButtonEnabled.collectAsStateWithLifecycle().value,
+        isPassphraseValid = viewModel.isPassphraseValid.collectAsStateWithLifecycle().value,
         hideSupportText = viewModel.hideSupportText.collectAsStateWithLifecycle().value,
         remainingConfirmationAttempts = viewModel.remainingConfirmationAttempts.collectAsStateWithLifecycle().value,
         isLoading = isLoading,
@@ -72,7 +70,7 @@ fun ConfirmNewPassphraseScreen(viewModel: ConfirmNewPassphraseViewModel) {
 private fun ConfirmNewPassphraseScreenContent(
     textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
-    isNextButtonEnabled: Boolean,
+    isPassphraseValid: Boolean,
     hideSupportText: Boolean,
     remainingConfirmationAttempts: Int,
     isLoading: Boolean,
@@ -81,9 +79,7 @@ private fun ConfirmNewPassphraseScreenContent(
 ) {
     when (currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass) {
         WindowWidthSizeClass.COMPACT -> WalletLayouts.CompactContainerFloatingBottom(
-            modifier = Modifier
-                .fillMaxSize()
-                .imePadding(),
+            shouldScrollUnderTopBar = false,
             verticalArrangement = Arrangement.Top,
             content = {
                 CompactContent(
@@ -98,23 +94,20 @@ private fun ConfirmNewPassphraseScreenContent(
             stickyBottomHorizontalAlignment = Alignment.End,
             stickyBottomContent = {
                 BottomButton(
-                    enabled = isNextButtonEnabled,
+                    enabled = isPassphraseValid,
                     onCheckPassphrase = onCheckPassphrase,
                 )
             },
         )
 
         else -> WalletLayouts.LargeContainerFloatingBottom(
-            modifier = Modifier
-                .fillMaxSize()
-                .imePadding(),
-            useStatusBarPadding = false,
+            shouldScrollUnderTopBar = false,
             verticalArrangement = Arrangement.Top,
             content = {
                 LargeContent(
                     textFieldValue = textFieldValue,
                     passphraseInputFieldState = passphraseInputFieldState,
-                    isNextButtonEnabled = isNextButtonEnabled,
+                    isPassphraseValid = isPassphraseValid,
                     hideSupportText = hideSupportText,
                     remainingConfirmationAttempts = remainingConfirmationAttempts,
                     onTextFieldValueChange = onTextFieldValueChange,
@@ -164,7 +157,7 @@ private fun CompactContent(
 private fun LargeContent(
     textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
-    isNextButtonEnabled: Boolean,
+    isPassphraseValid: Boolean,
     hideSupportText: Boolean,
     remainingConfirmationAttempts: Int,
     onTextFieldValueChange: (TextFieldValue) -> Unit,
@@ -198,7 +191,7 @@ private fun LargeContent(
         )
         Spacer(modifier = Modifier.width(Sizes.s08))
         BottomButton(
-            enabled = isNextButtonEnabled,
+            enabled = isPassphraseValid,
             onCheckPassphrase = onCheckPassphrase
         )
     }
@@ -246,7 +239,7 @@ private fun ConfirmNewPassphraseScreenPreview() {
         ConfirmNewPassphraseScreenContent(
             textFieldValue = TextFieldValue("abc123"),
             passphraseInputFieldState = PassphraseInputFieldState.Error,
-            isNextButtonEnabled = true,
+            isPassphraseValid = true,
             hideSupportText = false,
             remainingConfirmationAttempts = 4,
             isLoading = false,

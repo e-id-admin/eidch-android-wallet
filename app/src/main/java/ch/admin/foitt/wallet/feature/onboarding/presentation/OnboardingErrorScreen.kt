@@ -53,11 +53,11 @@ private fun OnboardingErrorScreenContent(
     ) {
         Spacer(modifier = Modifier.height(Sizes.s06))
         WalletTexts.TitleScreen(
-            text = stringResource(R.string.tk_onboarding_biometricandroid5_title)
+            text = stringResource(R.string.tk_onboarding_biometricsPermissionLater_primary)
         )
         Spacer(modifier = Modifier.height(Sizes.s06))
         WalletTexts.BodyLarge(
-            text = stringResource(id = R.string.tk_onboarding_biometricandroid5_body)
+            text = stringResource(id = R.string.tk_onboarding_biometricsPermissionLater_secondary)
         )
     }
 }

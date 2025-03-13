@@ -1,7 +1,6 @@
 package ch.admin.foitt.wallet.feature.onboarding.presentation
 
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.ConfirmPassphraseNavArg
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
@@ -13,12 +12,12 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
-import ch.admin.foitt.wallet.platform.utils.trackCompletion
 import ch.admin.foitt.walletcomposedestinations.destinations.OnboardingConfirmPassphraseScreenDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 @HiltViewModel
@@ -28,7 +27,7 @@ class OnboardingPassphraseViewModel @Inject constructor(
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
 ) : ScreenViewModel(setTopBarState, setFullscreenState, systemBarsFixedLightColor = true) {
-    override val topBarState = TopBarState.Transparent(titleId = R.string.tk_global_enterpassword, onUp = navManager::popBackStack)
+    override val topBarState = TopBarState.OnGradient(titleId = R.string.tk_onboarding_password_title, onUp = navManager::popBackStack)
     override val fullscreenState = FullscreenState.Fullscreen
 
     private val _textFieldValue = MutableStateFlow(TextFieldValue(""))
@@ -38,11 +37,9 @@ class OnboardingPassphraseViewModel @Inject constructor(
         MutableStateFlow(PassphraseInputFieldState.Typing)
     val passphraseInputFieldState = _passphraseInputFieldState.asStateFlow()
 
-    private var _showPassphraseErrorToast = MutableStateFlow(false)
-    val showPassphraseErrorToast = _showPassphraseErrorToast.asStateFlow()
-
-    private val _isValidating = MutableStateFlow(false)
-    val isValidating = _isValidating.asStateFlow()
+    val isPassphraseValid: StateFlow<Boolean> = textFieldValue.map { textField ->
+        validatePassphrase(textField.text) == PassphraseValidationState.VALID
+    }.toStateFlow(false, 0)
 
     fun onTextFieldValueChange(textFieldValue: TextFieldValue) {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
@@ -50,26 +47,13 @@ class OnboardingPassphraseViewModel @Inject constructor(
     }
 
     fun onCheckPassphrase() {
-        viewModelScope.launch {
-            when (validatePassphrase(textFieldValue.value.text)) {
-                PassphraseValidationState.VALID -> {
-                    _passphraseInputFieldState.value = PassphraseInputFieldState.Success
-                    navigateToConfirmPassphraseScreen()
-                    _textFieldValue.value = TextFieldValue("")
-                }
-
-                PassphraseValidationState.INVALID_MIN_LENGTH -> {
-                    _passphraseInputFieldState.value = PassphraseInputFieldState.Error
-                    _showPassphraseErrorToast.value = true
-                }
-            }
-        }.trackCompletion(_isValidating)
+        if (isPassphraseValid.value) {
+            _passphraseInputFieldState.value = PassphraseInputFieldState.Success
+            navigateToConfirmPassphraseScreen()
+            _textFieldValue.value = TextFieldValue("")
+        }
     }
 
     private fun navigateToConfirmPassphraseScreen() =
         navManager.navigateTo(OnboardingConfirmPassphraseScreenDestination(navArgs = ConfirmPassphraseNavArg(textFieldValue.value.text)))
-
-    fun onClosePassphraseError() {
-        _showPassphraseErrorToast.value = false
-    }
 }

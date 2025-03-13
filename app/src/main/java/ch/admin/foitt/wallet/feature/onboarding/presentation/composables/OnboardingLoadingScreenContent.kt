@@ -57,11 +57,11 @@ fun OnboardingLoadingScreenContent() =
     ) {
         Spacer(modifier = Modifier.height(Sizes.s06))
         WalletTexts.TitleScreen(
-            text = stringResource(id = R.string.tk_onboarding_applysettings_title),
+            text = stringResource(id = R.string.tk_onboarding_setup_primary),
         )
         Spacer(modifier = Modifier.height(Sizes.s06))
         WalletTexts.BodyLarge(
-            text = stringResource(id = R.string.tk_onboarding_applysettings_body),
+            text = stringResource(id = R.string.tk_onboarding_setup_secondary),
             modifier = Modifier
                 .fillMaxWidth()
         )

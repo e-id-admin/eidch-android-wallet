@@ -1,7 +1,6 @@
 package ch.admin.foitt.wallet.feature.credentialOffer.presentation
 
 import androidx.lifecycle.SavedStateHandle
-import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.model.DeclineCredentialOfferUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
@@ -41,7 +40,6 @@ class DeclineCredentialOfferViewModel @Inject constructor(
         val uiState = DeclineCredentialOfferUiState(
             issuer = getActorUiState(
                 actorDisplayData = issuerDisplayData,
-                defaultName = R.string.tk_credential_offer_issuer_name_unknown,
             ),
         )
         emit(uiState)

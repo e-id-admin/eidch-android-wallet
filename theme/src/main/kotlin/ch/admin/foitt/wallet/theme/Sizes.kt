@@ -3,6 +3,7 @@ package ch.admin.foitt.wallet.theme
 import androidx.compose.ui.unit.dp
 
 object Sizes {
+    val s00 = 0.dp
     val s01 = 4.dp
     val s02 = 8.dp
     val s03 = 12.dp
@@ -24,6 +25,8 @@ object Sizes {
 
     val credentialSmallHeight = s24
     val credentialSmallWidth = 72.dp
+
+    val credentialVerySmallSquare = 34.dp
 
     val noCredentialThumbnailWidth = 52.dp
 

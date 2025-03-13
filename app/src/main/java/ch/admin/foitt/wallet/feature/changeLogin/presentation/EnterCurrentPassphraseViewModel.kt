@@ -3,13 +3,11 @@ package ch.admin.foitt.wallet.feature.changeLogin.presentation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
-import ch.admin.foitt.wallet.feature.changeLogin.domain.Constants.MAX_CURRENT_PASSPHRASE_ATTEMPTS
-import ch.admin.foitt.wallet.feature.changeLogin.domain.usecase.DeleteCurrentPassphraseAttempts
-import ch.admin.foitt.wallet.feature.changeLogin.domain.usecase.GetCurrentPassphraseAttempts
-import ch.admin.foitt.wallet.feature.changeLogin.domain.usecase.IncreaseFailedCurrentPassphraseAttemptsCounter
 import ch.admin.foitt.wallet.platform.authenticateWithPassphrase.domain.model.AuthenticateWithPassphraseError
 import ch.admin.foitt.wallet.platform.authenticateWithPassphrase.domain.usecase.AuthenticateWithPassphrase
-import ch.admin.foitt.wallet.platform.login.domain.usecase.NavigateToLogin
+import ch.admin.foitt.wallet.platform.login.domain.usecase.GetRemainingLoginAttempts
+import ch.admin.foitt.wallet.platform.login.domain.usecase.IncreaseFailedLoginAttemptsCounter
+import ch.admin.foitt.wallet.platform.login.domain.usecase.ResetLockout
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseInputFieldState
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseValidationState
@@ -21,7 +19,7 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.trackCompletion
 import ch.admin.foitt.walletcomposedestinations.destinations.EnterNewPassphraseScreenDestination
-import ch.admin.foitt.walletcomposedestinations.destinations.HomeScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.LockoutScreenDestination
 import com.github.michaelbull.result.mapBoth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,12 +32,11 @@ import javax.inject.Inject
 @HiltViewModel
 class EnterCurrentPassphraseViewModel @Inject constructor(
     private val navManager: NavigationManager,
-    private val getCurrentPassphraseAttempts: GetCurrentPassphraseAttempts,
+    private val getRemainingLoginAttempts: GetRemainingLoginAttempts,
     private val validatePassphrase: ValidatePassphrase,
     private val authenticateWithPassphrase: AuthenticateWithPassphrase,
-    private val deleteCurrentPassphraseAttempts: DeleteCurrentPassphraseAttempts,
-    private val increaseFailedCurrentPassphraseAttemptsCounter: IncreaseFailedCurrentPassphraseAttemptsCounter,
-    private val navigateToLogin: NavigateToLogin,
+    private val resetLockout: ResetLockout,
+    private val increaseFailedLoginAttemptsCounter: IncreaseFailedLoginAttemptsCounter,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
 ) : ScreenViewModel(setTopBarState, setFullscreenState) {
@@ -53,11 +50,11 @@ class EnterCurrentPassphraseViewModel @Inject constructor(
         MutableStateFlow(PassphraseInputFieldState.Typing)
     val passphraseInputFieldState = _passphraseInputFieldState.asStateFlow()
 
-    private var _isNextButtonEnabled =
+    private var _isPassphraseValid =
         MutableStateFlow(validatePassphrase(textFieldValue.value.text) == PassphraseValidationState.VALID)
-    val isNextButtonEnabled = _isNextButtonEnabled.asStateFlow()
+    val isPassphraseValid = _isPassphraseValid.asStateFlow()
 
-    private val _remainingAuthAttempts = MutableStateFlow(getCurrentPassphraseAttempts())
+    private val _remainingAuthAttempts = MutableStateFlow(getRemainingLoginAttempts())
     val remainingAuthAttempts = _remainingAuthAttempts.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
@@ -69,29 +66,28 @@ class EnterCurrentPassphraseViewModel @Inject constructor(
         isLoading
     ) { passphraseInputFieldState, remainingAuthAttempts, isLoading ->
         passphraseInputFieldState == PassphraseInputFieldState.Typing ||
-            remainingAuthAttempts >= MAX_CURRENT_PASSPHRASE_ATTEMPTS ||
             isLoading
     }.toStateFlow(true)
 
     fun onTextFieldValueChange(textFieldValue: TextFieldValue) {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
         _textFieldValue.value = textFieldValue
-        _isNextButtonEnabled.value = validatePassphrase(textFieldValue.text) == PassphraseValidationState.VALID
+        _isPassphraseValid.value = validatePassphrase(textFieldValue.text) == PassphraseValidationState.VALID
     }
 
     fun onCheckPassphrase() {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
-        if (isNextButtonEnabled.value) {
+        if (isPassphraseValid.value) {
             viewModelScope.launch {
                 authenticateWithPassphrase(passphrase = textFieldValue.value.text).mapBoth(
                     success = {
+                        resetLockout()
                         _passphraseInputFieldState.value = PassphraseInputFieldState.Success
-                        deleteCurrentPassphraseAttempts()
                         _textFieldValue.value = TextFieldValue("")
                         navigateToEnterNewPassphraseScreen()
                     },
                     failure = { error ->
-                        increaseFailedCurrentPassphraseAttemptsCounter()
+                        increaseFailedLoginAttemptsCounter()
                         if (error is AuthenticateWithPassphraseError.Unexpected) {
                             Timber.e(error.cause, "Authentication with current passphrase failed")
                         }
@@ -104,19 +100,15 @@ class EnterCurrentPassphraseViewModel @Inject constructor(
     }
 
     fun checkRemainingAttempts() {
-        _remainingAuthAttempts.value = getCurrentPassphraseAttempts()
+        _remainingAuthAttempts.value = getRemainingLoginAttempts()
         if (remainingAuthAttempts.value <= 0) {
-            deleteCurrentPassphraseAttempts()
-            navigateToLoginScreen()
+            navigateToLockoutScreen()
         }
     }
 
     private fun navigateToEnterNewPassphraseScreen() = navManager.navigateTo(EnterNewPassphraseScreenDestination)
 
-    private fun navigateToLoginScreen() = viewModelScope.launch {
-        navManager.navigateToAndPopUpTo(
-            direction = navigateToLogin(),
-            route = HomeScreenDestination.route,
-        )
+    private fun navigateToLockoutScreen() = viewModelScope.launch {
+        navManager.navigateToAndClearCurrent(LockoutScreenDestination)
     }
 }

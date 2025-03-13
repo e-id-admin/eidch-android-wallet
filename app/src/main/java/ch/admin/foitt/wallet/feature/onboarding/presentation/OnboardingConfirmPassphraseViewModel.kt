@@ -12,6 +12,8 @@ import ch.admin.foitt.wallet.platform.navArgs.domain.model.RegisterBiometricsNav
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.passphrase.domain.usecase.InitializePassphrase
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseInputFieldState
+import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseValidationState
+import ch.admin.foitt.wallet.platform.passphraseInput.domain.usecase.ValidatePassphrase
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
@@ -27,7 +29,9 @@ import ch.admin.foitt.walletcomposedestinations.destinations.RegisterBiometricsS
 import com.github.michaelbull.result.mapBoth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -37,12 +41,13 @@ class OnboardingConfirmPassphraseViewModel @Inject constructor(
     private val biometricsStatus: BiometricsStatus,
     private val initializePassphrase: InitializePassphrase,
     private val saveOnboardingState: SaveOnboardingState,
+    private val validatePassphrase: ValidatePassphrase,
     private val navManager: NavigationManager,
     private val setTopBarState: SetTopBarState,
     private val setFullscreenState: SetFullscreenState,
     savedStateHandle: SavedStateHandle,
 ) : ScreenViewModel(setTopBarState, setFullscreenState, systemBarsFixedLightColor = true) {
-    override val topBarState = TopBarState.Transparent(navManager::navigateUp, R.string.tk_global_confirmpassword)
+    override val topBarState = TopBarState.OnGradient(navManager::navigateUp, R.string.tk_onboarding_passwordConfirmation_title)
     override val fullscreenState = FullscreenState.Fullscreen
 
     private val originalPassphrase = OnboardingConfirmPassphraseScreenDestination.argsFrom(savedStateHandle).pin
@@ -59,8 +64,11 @@ class OnboardingConfirmPassphraseViewModel @Inject constructor(
 
     private var _passphraseInputFieldState: MutableStateFlow<PassphraseInputFieldState> =
         MutableStateFlow(PassphraseInputFieldState.Typing)
-
     val passphraseInputFieldState = _passphraseInputFieldState.asStateFlow()
+
+    val isPassphraseValid: StateFlow<Boolean> = textFieldValue.map { textField ->
+        validatePassphrase(textField.text) == PassphraseValidationState.VALID
+    }.toStateFlow(false, 0)
 
     private val _showPassphraseErrorToast = MutableStateFlow(false)
     val showPassphraseErrorToast = _showPassphraseErrorToast.asStateFlow()

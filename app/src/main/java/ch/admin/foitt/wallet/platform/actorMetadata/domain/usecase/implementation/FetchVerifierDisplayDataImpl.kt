@@ -4,6 +4,7 @@ import ch.admin.foitt.openid4vc.domain.model.presentationRequest.ClientMetaData
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorField
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchVerifierDisplayData
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatement
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
@@ -45,6 +46,7 @@ class FetchVerifierDisplayDataImpl @Inject constructor(
             image = verifierTrustLogoDisplay,
             trustStatus = trustStatementStatus,
             preferredLanguage = trustStatement?.prefLang,
+            actorType = ActorType.VERIFIER,
         )
 
         return presentationVerifierDisplay

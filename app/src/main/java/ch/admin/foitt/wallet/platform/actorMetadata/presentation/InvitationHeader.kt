@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.composables.Avatar
 import ch.admin.foitt.wallet.platform.composables.AvatarSize
 import ch.admin.foitt.wallet.platform.preview.WalletComponentPreview
@@ -28,16 +29,17 @@ import ch.admin.foitt.wallet.theme.WalletTheme
 
 @Composable
 internal fun InvitationHeader(
-    inviterName: String,
+    inviterName: String?,
     inviterImage: Painter?,
     trustStatus: TrustStatus,
+    actorType: ActorType,
     modifier: Modifier = Modifier,
 ) = Row(
     modifier = modifier.fillMaxWidth(),
     verticalAlignment = Alignment.CenterVertically,
 ) {
     Avatar(
-        imagePainter = inviterImage,
+        imagePainter = inviterImage ?: fallBackIcon(actorType),
         size = AvatarSize.LARGE,
         imageTint = WalletTheme.colorScheme.onSurface,
     )
@@ -48,7 +50,7 @@ internal fun InvitationHeader(
             .semantics(mergeDescendants = true) {}
     ) {
         WalletTexts.TitleMedium(
-            text = inviterName,
+            text = inviterName ?: fallBackName(actorType),
             color = WalletTheme.colorScheme.onSurface
         )
         Row(
@@ -59,6 +61,20 @@ internal fun InvitationHeader(
             TrustLabel(trustStatus)
         }
     }
+}
+
+@Composable
+private fun fallBackIcon(actorType: ActorType) = when (actorType) {
+    ActorType.ISSUER,
+    ActorType.VERIFIER -> painterResource(R.drawable.wallet_ic_actor_default)
+    ActorType.UNKNOWN -> null
+}
+
+@Composable
+private fun fallBackName(actorType: ActorType): String = when (actorType) {
+    ActorType.ISSUER -> stringResource(R.string.tk_credential_offer_issuer_name_unknown)
+    ActorType.VERIFIER -> stringResource(R.string.presentation_verifier_name_unknown)
+    ActorType.UNKNOWN -> ""
 }
 
 @Composable
@@ -93,25 +109,27 @@ private fun RowScope.TrustLabel(trustStatus: TrustStatus) = when (trustStatus) {
     else -> {}
 }
 
-private class InvitationHeaderPreviewParams : PreviewParameterProvider<Triple<String, Int, TrustStatus>> {
-    override val values: Sequence<Triple<String, Int, TrustStatus>> = sequenceOf(
-        Triple("Issuer Name", R.drawable.wallet_ic_eid, TrustStatus.TRUSTED),
+private class InvitationHeaderPreviewParams : PreviewParameterProvider<Triple<String?, Int, TrustStatus>> {
+    override val values: Sequence<Triple<String?, Int, TrustStatus>> = sequenceOf(
+        Triple("Issuer Name", R.drawable.wallet_ic_eid, TrustStatus.TRUSTED,),
         Triple("Issuer with a veeeeryyyyy loooonnnnnng name", R.drawable.ic_launcher_background, TrustStatus.TRUSTED),
-        Triple("Issuer Name not trusted", R.drawable.wallet_ic_eid, TrustStatus.NOT_TRUSTED),
+        Triple("Issuer Name not trusted", R.drawable.wallet_ic_actor_default, TrustStatus.NOT_TRUSTED),
         Triple("Issuer Name trust unknown", R.drawable.wallet_ic_dotted_cross, TrustStatus.UNKNOWN),
+        Triple(null, R.drawable.wallet_ic_dotted_cross, TrustStatus.UNKNOWN),
     )
 }
 
 @WalletComponentPreview
 @Composable
 private fun InvitationHeaderPreview(
-    @PreviewParameter(InvitationHeaderPreviewParams::class) previewParams: Triple<String, Int, TrustStatus>,
+    @PreviewParameter(InvitationHeaderPreviewParams::class) previewParams: Triple<String?, Int, TrustStatus>,
 ) {
     WalletTheme {
         InvitationHeader(
             inviterName = previewParams.first,
             inviterImage = painterResource(previewParams.second),
             trustStatus = previewParams.third,
+            actorType = ActorType.ISSUER,
         )
     }
 }

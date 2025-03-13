@@ -16,7 +16,7 @@ data class IssuerCredentialInformation(
     @SerialName("credential_configurations_supported")
     val credentialConfigurations: List<AnyCredentialConfiguration>,
     @SerialName("display")
-    val display: List<Display>
+    val display: List<OidIssuerDisplay>?,
 )
 
 @Serializable
@@ -43,7 +43,7 @@ sealed class AnyCredentialConfiguration {
     abstract val cryptographicBindingMethodsSupported: List<String>?
     abstract val credentialSigningAlgValuesSupported: List<SigningAlgorithm>
     abstract val proofTypesSupported: Map<ProofType, ProofTypeSigningAlgorithms>
-    abstract val display: List<Display>?
+    abstract val display: List<OidCredentialDisplay>?
     abstract val order: List<String>?
     abstract val claims: String?
 }
@@ -86,14 +86,14 @@ data class Claim(
     @SerialName("value_type")
     val valueType: String? = "string",
     @SerialName("display")
-    val display: List<Display>? = null
+    val display: List<OidClaimDisplay>? = null
 )
 
-// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-10.2.3.1
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-11.2.3
 @Serializable
-data class Display(
+data class OidCredentialDisplay(
     @SerialName("locale")
-    val locale: String? = null,
+    override val locale: String? = null,
     @SerialName("description")
     val description: String? = null,
     @SerialName("logo")
@@ -104,12 +104,35 @@ data class Display(
     val backgroundColor: String? = null,
     @SerialName("text_color")
     val textColor: String? = null,
-)
+) : CredentialInformationDisplay
+
+// https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-11.2.3
+@Serializable
+data class OidIssuerDisplay(
+    @SerialName("locale")
+    override val locale: String? = null,
+    @SerialName("logo")
+    val logo: Logo? = null,
+    @SerialName("name")
+    val name: String? = null,
+) : CredentialInformationDisplay
+
+@Serializable
+data class OidClaimDisplay(
+    @SerialName("locale")
+    override val locale: String? = null,
+    @SerialName("name")
+    val name: String,
+) : CredentialInformationDisplay
+
+interface CredentialInformationDisplay {
+    val locale: String?
+}
 
 @Serializable
 data class Logo(
     @SerialName("uri")
-    val uri: String? = null,
+    val uri: String,
     @SerialName("alt_text")
     val altText: String? = null,
 )

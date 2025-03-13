@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.feature.credentialDetail.presentation.model
 
 import androidx.compose.ui.graphics.Color
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialDisplayStatus
@@ -26,7 +27,7 @@ data class CredentialDetailUiState(
                 isCredentialFromBetaIssuer = false
             ),
             claims = emptyList(),
-            issuer = ActorUiState("", null, TrustStatus.UNKNOWN),
+            issuer = ActorUiState(null, null, TrustStatus.UNKNOWN, ActorType.UNKNOWN),
         )
     }
 }

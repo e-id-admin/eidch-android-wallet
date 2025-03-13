@@ -10,6 +10,7 @@ data class ActorDisplayData(
     val image: List<ActorField<String>>?,
     val preferredLanguage: String?,
     val trustStatus: TrustStatus,
+    val actorType: ActorType,
 ) {
     companion object {
         val EMPTY by lazy {
@@ -18,6 +19,7 @@ data class ActorDisplayData(
                 image = listOf(),
                 preferredLanguage = null,
                 trustStatus = TrustStatus.UNKNOWN,
+                actorType = ActorType.UNKNOWN,
             )
         }
     }
@@ -25,6 +27,6 @@ data class ActorDisplayData(
 
 @Serializable
 data class ActorField<T>(
-    val value: T,
+    val value: T?,
     override val locale: String,
 ) : LocalizedDisplay

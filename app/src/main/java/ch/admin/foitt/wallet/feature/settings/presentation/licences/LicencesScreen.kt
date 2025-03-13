@@ -13,19 +13,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.Dimension
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.composables.Buttons
-import ch.admin.foitt.wallet.platform.composables.SpacerBottom
-import ch.admin.foitt.wallet.platform.composables.SpacerTop
+import ch.admin.foitt.wallet.platform.composables.presentation.addTopScaffoldPadding
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTexts
@@ -46,43 +42,15 @@ fun LicencesScreen(viewModel: LicencesViewModel) {
 private fun LicencesScreenContent(
     onMoreInformation: () -> Unit,
 ) {
-    ConstraintLayout(
+    Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(WalletTheme.colorScheme.background)
             .padding(horizontal = Sizes.s02)
-            .background(MaterialTheme.colorScheme.background),
+            .addTopScaffoldPadding()
     ) {
-        val (
-            topSpacerRef,
-            mainContentRef,
-            bottomSpacerRef,
-        ) = createRefs()
-
-        SpacerTop(
-            backgroundColor = MaterialTheme.colorScheme.background,
-            modifier = Modifier.constrainAs(topSpacerRef) {
-                top.linkTo(parent.top)
-            },
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .constrainAs(mainContentRef) {
-                    top.linkTo(parent.top)
-                    bottom.linkTo(parent.bottom)
-                    height = Dimension.fillToConstraints
-                }
-        ) {
-            Licences(
-                onMoreInformation = onMoreInformation,
-            )
-        }
-        SpacerBottom(
-            backgroundColor = MaterialTheme.colorScheme.background,
-            modifier = Modifier.constrainAs(bottomSpacerRef) {
-                bottom.linkTo(parent.bottom)
-            },
-            useNavigationBarInsets = true,
+        Licences(
+            onMoreInformation = onMoreInformation,
         )
     }
 }
@@ -119,8 +87,8 @@ private fun Licences(
             }
         },
         colors = libraryColors(
-            badgeBackgroundColor = MaterialTheme.colorScheme.primary,
-            badgeContentColor = MaterialTheme.colorScheme.onPrimary
+            badgeBackgroundColor = WalletTheme.colorScheme.primary,
+            badgeContentColor = WalletTheme.colorScheme.onPrimary
         ),
         itemContentPadding = PaddingValues(horizontal = Sizes.s04, vertical = Sizes.s04),
         showLicenseBadges = false,

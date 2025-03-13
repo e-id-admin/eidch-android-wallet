@@ -51,8 +51,8 @@ private fun OnboardingPresentScreenContent(
     }
 ) {
     OnboardingScreenContent(
-        title = stringResource(id = R.string.tk_onboarding_neverforget_title),
-        subtitle = stringResource(id = R.string.tk_onboarding_neverforget_body),
+        title = stringResource(id = R.string.tk_onboarding_introductionStep_neverForget_primary),
+        subtitle = stringResource(id = R.string.tk_onboarding_introductionStep_neverForget_secondary),
     )
 }
 

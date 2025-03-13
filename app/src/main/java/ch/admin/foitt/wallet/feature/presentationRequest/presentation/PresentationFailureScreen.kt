@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.credential.presentation.CredentialActionFeedbackCardError
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.PresentationFailureNavArg
@@ -53,7 +54,8 @@ private fun PresentationFailurePreview() {
             verifierUiState = ActorUiState(
                 name = "My Verfifier Name",
                 painter = painterResource(id = R.drawable.ic_swiss_cross_small),
-                trustStatus = TrustStatus.TRUSTED
+                trustStatus = TrustStatus.TRUSTED,
+                actorType = ActorType.VERIFIER,
             ),
             onRetry = {},
             onClose = {},

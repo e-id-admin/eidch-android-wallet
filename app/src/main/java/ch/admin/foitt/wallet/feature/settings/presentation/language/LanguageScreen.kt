@@ -15,6 +15,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.settings.presentation.composables.SettingsLanguageItem
 import ch.admin.foitt.wallet.platform.composables.ScreenHeader
+import ch.admin.foitt.wallet.platform.composables.presentation.addTopScaffoldPadding
+import ch.admin.foitt.wallet.platform.composables.presentation.bottomSafeDrawing
+import ch.admin.foitt.wallet.platform.composables.presentation.horizontalSafeDrawing
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTheme
@@ -50,7 +53,10 @@ private fun LanguageScreenContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(state = scrollState, enabled = true)
+            .addTopScaffoldPadding()
+            .verticalScroll(state = scrollState)
+            .horizontalSafeDrawing()
+            .bottomSafeDrawing()
             .padding(
                 PaddingValues(
                     top = Sizes.s04,

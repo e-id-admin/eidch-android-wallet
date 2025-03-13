@@ -16,7 +16,9 @@ interface TrustRegistryError {
 }
 
 sealed interface TrustStatementRepositoryError
-sealed interface GetTrustUrlFromDidError
+sealed interface GetTrustUrlFromDidError {
+    data class NoTrustRegistryMapping(val message: String) : GetTrustUrlFromDidError
+}
 sealed interface FetchAnyCredentialTrustStatementError
 sealed interface ValidateTrustStatementError
 sealed interface FetchTrustStatementFromDidError
@@ -28,8 +30,8 @@ fun VerifyJwtError.toValidateTrustStatementError(): ValidateTrustStatementError 
     is VcSdJwtError.Unexpected -> TrustRegistryError.Unexpected(cause)
 }
 
-fun Throwable.toGetTrustUrlFromDidError(): GetTrustUrlFromDidError {
-    Timber.e(this)
+fun Throwable.toGetTrustUrlFromDidError(message: String): GetTrustUrlFromDidError {
+    Timber.e(message = message, t = this)
     return TrustRegistryError.Unexpected(this)
 }
 
@@ -50,6 +52,10 @@ fun Throwable.toFetchTrustStatementFromDidError(): FetchTrustStatementFromDidErr
 
 fun GetTrustUrlFromDidError.toFetchTrustStatementFromDidError(): FetchTrustStatementFromDidError = when (this) {
     is TrustRegistryError.Unexpected -> this
+    is GetTrustUrlFromDidError.NoTrustRegistryMapping -> {
+        Timber.w(message = this.message)
+        TrustRegistryError.Unexpected(null)
+    }
 }
 
 fun TrustStatementRepositoryError.toFetchTrustStatementFromDidError(): FetchTrustStatementFromDidError = when (this) {

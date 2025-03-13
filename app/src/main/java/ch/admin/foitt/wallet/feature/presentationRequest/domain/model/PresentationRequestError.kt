@@ -15,6 +15,7 @@ import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationReq
 interface PresentationRequestError {
     data object RawSdJwtParsingError : GeneratePresentationMetadataError, SubmitPresentationError
     data object ValidationError : SubmitPresentationError
+    data object VerificationError : SubmitPresentationError
     data object InvalidUrl : SubmitPresentationError
     data object NetworkError : SubmitPresentationError
     data class Unexpected(val throwable: Throwable?) :
@@ -38,11 +39,12 @@ fun GetAnyCredentialError.toSubmitPresentationError(): SubmitPresentationError =
 fun SubmitAnyCredentialPresentationError.toSubmitPresentationError(): SubmitPresentationError = when (this) {
     OpenIdPresentationRequestError.NetworkError -> PresentationRequestError.NetworkError
     OpenIdPresentationRequestError.ValidationError -> PresentationRequestError.ValidationError
+    OpenIdPresentationRequestError.VerificationError -> PresentationRequestError.VerificationError
     is OpenIdPresentationRequestError.Unexpected -> PresentationRequestError.Unexpected(throwable)
 }
 
 fun Throwable.toPresentationRequestRepositoryError(): PresentationRequestRepositoryError {
-    Timber.e(this)
+    Timber.e(t = this, message = "Presentation Request Repository Error")
     return PresentationRequestError.Unexpected(this)
 }
 

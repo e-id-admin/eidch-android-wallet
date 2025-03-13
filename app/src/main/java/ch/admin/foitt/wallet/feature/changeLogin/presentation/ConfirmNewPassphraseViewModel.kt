@@ -4,11 +4,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
-import ch.admin.foitt.wallet.feature.changeLogin.domain.Constants.MAX_NEW_PASSPHRASE_CONFIRMATION_ATTEMPTS
 import ch.admin.foitt.wallet.feature.changeLogin.domain.usecase.ChangePassphrase
-import ch.admin.foitt.wallet.feature.changeLogin.domain.usecase.DeleteNewPassphraseConfirmationAttempts
-import ch.admin.foitt.wallet.feature.changeLogin.domain.usecase.GetNewPassphraseConfirmationAttempts
-import ch.admin.foitt.wallet.feature.changeLogin.domain.usecase.IncreaseFailedNewPassphraseConfirmationAttemptsCounter
 import ch.admin.foitt.wallet.platform.eventToast.domain.repository.PassphraseChangeSuccessToastRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseInputFieldState
@@ -25,8 +21,10 @@ import ch.admin.foitt.walletcomposedestinations.destinations.SecuritySettingsScr
 import com.github.michaelbull.result.mapBoth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -35,9 +33,6 @@ import javax.inject.Inject
 class ConfirmNewPassphraseViewModel @Inject constructor(
     private val navManager: NavigationManager,
     private val validatePassphrase: ValidatePassphrase,
-    private val getNewPassphraseConfirmationAttempts: GetNewPassphraseConfirmationAttempts,
-    private val increaseFailedNewPassphraseConfirmationAttemptsCounter: IncreaseFailedNewPassphraseConfirmationAttemptsCounter,
-    private val deleteNewPassphraseConfirmationAttempts: DeleteNewPassphraseConfirmationAttempts,
     private val changePassphrase: ChangePassphrase,
     private val passphraseChangeSuccessToastRepository: PassphraseChangeSuccessToastRepository,
     setTopBarState: SetTopBarState,
@@ -56,11 +51,11 @@ class ConfirmNewPassphraseViewModel @Inject constructor(
         MutableStateFlow(PassphraseInputFieldState.Typing)
     val passphraseInputFieldState = _passphraseInputFieldState.asStateFlow()
 
-    private var _isNextButtonEnabled =
-        MutableStateFlow(validatePassphrase(textFieldValue.value.text) == PassphraseValidationState.VALID)
-    val isNextButtonEnabled = _isNextButtonEnabled.asStateFlow()
+    val isPassphraseValid: StateFlow<Boolean> = textFieldValue.map { textField ->
+        validatePassphrase(textField.text) == PassphraseValidationState.VALID
+    }.toStateFlow(false, 0)
 
-    private var _remainingConfirmationAttempts = MutableStateFlow(getNewPassphraseConfirmationAttempts())
+    private val _remainingConfirmationAttempts = MutableStateFlow(MAX_NEW_PASSPHRASE_CONFIRMATION_ATTEMPTS)
     val remainingConfirmationAttempts = _remainingConfirmationAttempts.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
@@ -79,12 +74,11 @@ class ConfirmNewPassphraseViewModel @Inject constructor(
     fun onTextFieldValueChange(textFieldValue: TextFieldValue) {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
         _textFieldValue.value = textFieldValue
-        _isNextButtonEnabled.value = validatePassphrase(textFieldValue.text) == PassphraseValidationState.VALID
     }
 
     fun onCheckPassphrase() {
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
-        if (isNextButtonEnabled.value) {
+        if (isPassphraseValid.value) {
             viewModelScope.launch {
                 when (textFieldValue.value.text == originalPassphrase) {
                     true -> onValidPassphrase()
@@ -95,7 +89,7 @@ class ConfirmNewPassphraseViewModel @Inject constructor(
     }
 
     private fun onInvalidPassphrase() {
-        increaseFailedNewPassphraseConfirmationAttemptsCounter()
+        decreaseRemainingAttempts()
         _passphraseInputFieldState.value = PassphraseInputFieldState.Error
         checkRemainingConfirmationAttempts()
     }
@@ -103,7 +97,6 @@ class ConfirmNewPassphraseViewModel @Inject constructor(
     private suspend fun onValidPassphrase() = changePassphrase(textFieldValue.value.text).mapBoth(
         success = {
             _passphraseInputFieldState.value = PassphraseInputFieldState.Success
-            deleteNewPassphraseConfirmationAttempts()
             passphraseChangeSuccessToastRepository.showPassphraseChangeSuccess()
             navManager.popBackStackTo(SecuritySettingsScreenDestination, false)
         },
@@ -113,11 +106,22 @@ class ConfirmNewPassphraseViewModel @Inject constructor(
         }
     )
 
+    private fun resetConfirmationAttempts() {
+        _remainingConfirmationAttempts.value = MAX_NEW_PASSPHRASE_CONFIRMATION_ATTEMPTS
+    }
+
+    private fun decreaseRemainingAttempts() {
+        _remainingConfirmationAttempts.value -= 1
+    }
+
     fun checkRemainingConfirmationAttempts() {
-        _remainingConfirmationAttempts.value = getNewPassphraseConfirmationAttempts()
         if (remainingConfirmationAttempts.value <= 0) {
-            deleteNewPassphraseConfirmationAttempts()
+            resetConfirmationAttempts()
             navManager.popBackStack()
         }
+    }
+
+    private companion object {
+        const val MAX_NEW_PASSPHRASE_CONFIRMATION_ATTEMPTS = 3
     }
 }

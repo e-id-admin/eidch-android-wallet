@@ -8,7 +8,7 @@ import ch.admin.foitt.wallet.platform.eventTracking.domain.usecase.ApplyUserPriv
 import ch.admin.foitt.wallet.platform.eventTracking.domain.usecase.IsUserPrivacyPolicyAcceptedFlow
 import ch.admin.foitt.wallet.platform.login.domain.model.CanUseBiometricsForLoginResult
 import ch.admin.foitt.wallet.platform.login.domain.usecase.CanUseBiometricsForLogin
-import ch.admin.foitt.wallet.platform.navArgs.domain.model.AuthWithPinNavArg
+import ch.admin.foitt.wallet.platform.navArgs.domain.model.AuthWithPassphraseNavArg
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.passphrase.domain.usecase.GetPassphraseWasDeleted
 import ch.admin.foitt.wallet.platform.passphrase.domain.usecase.SavePassphraseWasDeleted
@@ -18,7 +18,7 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.openLink
-import ch.admin.foitt.walletcomposedestinations.destinations.AuthWithPinScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.AuthWithPassphraseScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.DataAnalysisScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.EnterCurrentPassphraseScreenDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -81,11 +81,11 @@ class SecuritySettingsViewModel @Inject constructor(
     }
 
     private fun toggleBiometricsOn() {
-        navManager.navigateTo(AuthWithPinScreenDestination(navArgs = AuthWithPinNavArg(enable = true)))
+        navManager.navigateTo(AuthWithPassphraseScreenDestination(navArgs = AuthWithPassphraseNavArg(enableBiometrics = true)))
     }
 
     private fun toggleBiometricsOff() {
-        navManager.navigateTo(AuthWithPinScreenDestination(navArgs = AuthWithPinNavArg(enable = false)))
+        navManager.navigateTo(AuthWithPassphraseScreenDestination(navArgs = AuthWithPassphraseNavArg(enableBiometrics = false)))
     }
 
     fun onDataProtection() = appContext.openLink(R.string.securitySettings_dataProtectionLink)

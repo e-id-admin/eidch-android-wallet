@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -12,6 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.composables.presentation.addTopScaffoldPadding
+import ch.admin.foitt.wallet.platform.composables.presentation.bottomSafeDrawing
+import ch.admin.foitt.wallet.platform.composables.presentation.horizontalSafeDrawing
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTexts
@@ -28,8 +30,10 @@ fun DataAnalysisScreen() {
 private fun DataAnalysisScreenContent() {
     Column(
         modifier = Modifier
+            .addTopScaffoldPadding()
             .verticalScroll(rememberScrollState())
-            .navigationBarsPadding()
+            .horizontalSafeDrawing()
+            .bottomSafeDrawing()
             .padding(
                 start = Sizes.s08,
                 top = Sizes.s05,

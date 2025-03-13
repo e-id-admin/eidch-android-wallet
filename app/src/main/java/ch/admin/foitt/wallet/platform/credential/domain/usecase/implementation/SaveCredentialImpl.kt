@@ -3,13 +3,17 @@ package ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation
 import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.AnyCredentialConfiguration
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.Claim
-import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.Display
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialInformationDisplay
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.IssuerCredentialInformation
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.OidClaimDisplay
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.OidCredentialDisplay
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.OidIssuerDisplay
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.model.SaveCredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.model.toSaveCredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.SaveCredential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
+import ch.admin.foitt.wallet.platform.database.domain.model.DisplayConst
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayLanguage
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialOfferRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.LocalizedCredentialOffer
@@ -44,8 +48,13 @@ class SaveCredentialImpl @Inject constructor(
         anyCredential: AnyCredential,
         credentialConfiguration: AnyCredentialConfiguration,
     ): Result<Long, SaveCredentialError> = coroutineBinding {
-        val localizedIssuerDisplays = issuerInfo.display.addFallbackLanguageIfNecessary(issuerInfo.credentialIssuer)
-        val localizedCredentialDisplays = credentialConfiguration.display.addFallbackLanguageIfNecessary(credentialConfiguration.identifier)
+        val localizedIssuerDisplays: List<OidIssuerDisplay> = issuerInfo.display.addFallbackLanguageIfNecessary {
+            OidIssuerDisplay(name = DisplayConst.ISSUER_FALLBACK_NAME, locale = DisplayLanguage.FALLBACK)
+        }
+
+        val localizedCredentialDisplays = credentialConfiguration.display.addFallbackLanguageIfNecessary {
+            OidCredentialDisplay(name = credentialConfiguration.identifier, locale = DisplayLanguage.FALLBACK)
+        }
         val localizedClaims = createLocalizedCredentialClaims(
             credentialConfiguration = credentialConfiguration,
             credential = anyCredential,
@@ -68,10 +77,10 @@ class SaveCredentialImpl @Inject constructor(
         credentialId: Long = -1,
         credentialConfiguration: AnyCredentialConfiguration,
         credential: AnyCredential,
-    ): Result<Map<CredentialClaim, List<Display>>, SaveCredentialError> = coroutineBinding {
+    ): Result<Map<CredentialClaim, List<OidClaimDisplay>>, SaveCredentialError> = coroutineBinding {
         val metadataClaims = getMetadataClaims(credentialConfiguration = credentialConfiguration).bind()
 
-        val credentialJson = runSuspendCatching { credential.json }
+        val credentialJson = runSuspendCatching { credential.getClaimsToSave() }
             .mapError(Throwable::toSaveCredentialError)
             .bind()
         val conf: Configuration = Configuration.builder().options(Option.SUPPRESS_EXCEPTIONS, Option.ALWAYS_RETURN_LIST).build()
@@ -87,20 +96,20 @@ class SaveCredentialImpl @Inject constructor(
                 }
             } ?: emptyMap()
 
-        credentialClaims
-            .filterNot { reserved_claim_names.contains(it.key) }
-            .map { (claimKey, claimValue) ->
-                val metadata = metadataClaims[claimKey]
-                val credentialClaim = CredentialClaim(
-                    credentialId = credentialId,
-                    key = claimKey,
-                    value = claimValue,
-                    valueType = metadata?.valueType ?: DEFAULT_VALUE_TYPE,
-                    order = credentialConfiguration.order?.indexOf(claimKey) ?: -1
-                )
-                val claimDisplays = metadata?.display.addFallbackLanguageIfNecessary(claimKey)
-                credentialClaim to claimDisplays
-            }.toMap()
+        credentialClaims.map { (claimKey, claimValue) ->
+            val metadata = metadataClaims[claimKey]
+            val credentialClaim = CredentialClaim(
+                credentialId = credentialId,
+                key = claimKey,
+                value = claimValue,
+                valueType = metadata?.valueType ?: DEFAULT_VALUE_TYPE,
+                order = credentialConfiguration.order?.indexOf(claimKey) ?: -1
+            )
+            val claimDisplays: List<OidClaimDisplay> = metadata?.display.addFallbackLanguageIfNecessary {
+                OidClaimDisplay(name = claimKey, locale = DisplayLanguage.FALLBACK)
+            }
+            credentialClaim to claimDisplays
+        }.toMap()
     }
 
     private fun getMetadataClaims(
@@ -113,9 +122,9 @@ class SaveCredentialImpl @Inject constructor(
 
     private fun createLocalizedCredentialOffer(
         credential: AnyCredential,
-        localizedIssuerDisplays: List<Display>,
-        localizedCredentialDisplays: List<Display>,
-        localizedClaims: Map<CredentialClaim, List<Display>>,
+        localizedIssuerDisplays: List<OidIssuerDisplay>,
+        localizedCredentialDisplays: List<OidCredentialDisplay>,
+        localizedClaims: Map<CredentialClaim, List<OidClaimDisplay>>,
     ) = LocalizedCredentialOffer(
         keyBindingIdentifier = credential.keyBindingIdentifier,
         keyBindingAlgorithm = credential.keyBindingAlgorithm,
@@ -127,24 +136,21 @@ class SaveCredentialImpl @Inject constructor(
         issuer = credential.issuer
     )
 
-    private fun List<Display>?.addFallbackLanguageIfNecessary(name: String): List<Display> {
+    private fun <T : CredentialInformationDisplay> List<T>?.addFallbackLanguageIfNecessary(
+        fallbackValue: () -> T
+    ): List<T> {
         if (this == null) {
-            return listOf(Display(name = name, locale = DisplayLanguage.FALLBACK))
+            return listOf(fallbackValue())
         }
 
         return if (none { it.locale == DisplayLanguage.FALLBACK }) {
-            this + Display(name = name, locale = DisplayLanguage.FALLBACK)
+            this + fallbackValue()
         } else {
             this
         }
     }
 
     companion object {
-        // Reserved claim names
-        // See https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-04.html#name-registered-jwt-claims and
-        // https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-10.html#section-5.1
-        private val reserved_claim_names =
-            listOf("iss", "nbf", "exp", "cnf", "vct", "status", "sub", "iat", "_sd_alg", "_sd")
         private const val DEFAULT_VALUE_TYPE = "string"
     }
 }

@@ -19,6 +19,7 @@ import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDisplaysAn
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDisplaysDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithIssuerAndDisplaysDao
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseDao
+import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseWithStateDao
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestStateDao
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
@@ -62,6 +63,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun eIdRequestCaseDao(): EIdRequestCaseDao
     abstract fun eIdRequestStateDao(): EIdRequestStateDao
+    abstract fun eIdRequestCaseWithStateDao(): EIdRequestCaseWithStateDao
 
     abstract fun decryptionTestDao(): DecryptionTestDao
 

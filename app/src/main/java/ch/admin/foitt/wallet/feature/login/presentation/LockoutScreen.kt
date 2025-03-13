@@ -3,7 +3,6 @@ package ch.admin.foitt.wallet.feature.login.presentation
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -72,7 +71,6 @@ private fun LockoutScreenContent(
     FullscreenGradient()
     when (currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass) {
         WindowWidthSizeClass.COMPACT -> WalletLayouts.CompactContainerFloatingBottom(
-            modifier = Modifier.fillMaxSize(),
             content = {
                 Content(
                     countdown = countdown,
@@ -87,7 +85,6 @@ private fun LockoutScreenContent(
             }
         )
         else -> WalletLayouts.LargeContainerFloatingBottom(
-            modifier = Modifier.fillMaxSize(),
             content = {
                 Content(
                     countdown = countdown,
@@ -134,7 +131,7 @@ private fun Content(
             id = if (countdown.second == LockoutViewModel.TimeUnit.MINUTES) {
                 R.plurals.tk_login_locked_body_android
             } else {
-                R.plurals.tk_login_locked_seconds_android
+                R.plurals.tk_login_locked_body_seconds_android
             },
             count = countdown.first.toInt(),
             formatArgs = arrayOf(countdown.first),

@@ -48,7 +48,7 @@ internal class SubmitAnyCredentialPresentationImpl @Inject constructor(
 
         val descriptorMaps = createAnyDescriptorMaps(presentationRequest)
         val responseURL = runSuspendCatching { URL(presentationRequest.responseUri) }
-            .mapError(Throwable::toSubmitAnyCredentialPresentationError)
+            .mapError { throwable -> throwable.toSubmitAnyCredentialPresentationError("presentationRequest.responseUri error") }
             .bind()
         val body = createPresentationRequestBody(
             presentationRequest = presentationRequest,

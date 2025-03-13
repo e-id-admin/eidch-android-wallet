@@ -147,7 +147,8 @@ class SdJwtTest {
            "_sd_alg":"sha-256"
         }
          */
-        val jwt = "eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJ0ZXN0Ijp7Il9zZCI6eyJub3RfZ29vZCI6InRydWUifX0sIl9zZF9hbGciOiJzaGEtMjU2IiwiaWF0IjoxNjk3ODA5NzMxfQ.AaQdx2Pwj0jPE2Z8dCa9Jiam8tyzkOJb_5HCEZumuLRlh3nFtvmAxLGWBqYO54zotDOgGMH5WBdPuad5sJzdbWfHAbpFN6APM9FSNk3uk4C2qvb1osGeehE2REtJ1EjPOqFldgO36zqmMG8jSHm5YH9p1Xw4oYkeehXJpLL2qRsZPdZU"
+        val jwt =
+            "eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJ0ZXN0Ijp7Il9zZCI6eyJub3RfZ29vZCI6InRydWUifX0sIl9zZF9hbGciOiJzaGEtMjU2IiwiaWF0IjoxNjk3ODA5NzMxfQ.AaQdx2Pwj0jPE2Z8dCa9Jiam8tyzkOJb_5HCEZumuLRlh3nFtvmAxLGWBqYO54zotDOgGMH5WBdPuad5sJzdbWfHAbpFN6APM9FSNk3uk4C2qvb1osGeehE2REtJ1EjPOqFldgO36zqmMG8jSHm5YH9p1Xw4oYkeehXJpLL2qRsZPdZU"
 
         assertThrows<IllegalStateException> {
             SdJwt(jwt + FlatDisclosures)

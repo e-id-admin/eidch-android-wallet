@@ -11,8 +11,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.onboarding.presentation.composables.OnboardingLoadingScreenContent
 import ch.admin.foitt.wallet.platform.biometrics.presentation.BiometricsAvailableImage
+import ch.admin.foitt.wallet.platform.biometrics.presentation.BiometricsContent
 import ch.admin.foitt.wallet.platform.biometrics.presentation.BiometricsUnavailableImage
-import ch.admin.foitt.wallet.platform.biometrics.presentation.OnboardingBiometricsContent
 import ch.admin.foitt.wallet.platform.composables.Buttons
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.ScrollableColumnWithPicture
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
@@ -91,29 +91,29 @@ private fun BiometricsImage(screenState: RegisterBiometricsScreenState) = when (
 @Composable
 private fun BiometricsBodyContent(screenState: RegisterBiometricsScreenState) = when (screenState) {
     RegisterBiometricsScreenState.Initial -> {}
-    RegisterBiometricsScreenState.Available -> OnboardingBiometricsContent(
-        title = R.string.tk_onboarding_biometricandroid1_title,
-        description = R.string.tk_onboarding_biometricandroid1_body,
-        infoText = R.string.tk_onboarding_biometricandroid1_smallbody,
+    RegisterBiometricsScreenState.Available -> BiometricsContent(
+        title = R.string.tk_onboarding_biometricsPermission_primary,
+        description = R.string.tk_onboarding_biometricsPermission_secondary,
+        infoText = R.string.tk_onboarding_biometricsPermission_tertiary,
     )
 
     RegisterBiometricsScreenState.Lockout,
-    RegisterBiometricsScreenState.Error -> OnboardingBiometricsContent(
-        title = R.string.tk_onboarding_biometricandroid1_title,
-        description = R.string.tk_onboarding_biometricandroid5_body,
-        infoText = R.string.tk_onboarding_biometricandroid5_body,
+    RegisterBiometricsScreenState.Error -> BiometricsContent(
+        title = R.string.tk_onboarding_biometricsPermission_primary,
+        description = R.string.tk_onboarding_biometricsPermissionLater_secondary,
+        infoText = R.string.tk_onboarding_biometricsPermissionLater_secondary,
     )
 
-    RegisterBiometricsScreenState.DisabledOnDevice -> OnboardingBiometricsContent(
-        title = R.string.tk_onboarding_biometricandroid1_title,
-        description = R.string.tk_onboarding_biometricandroid4_body,
-        infoText = R.string.tk_onboarding_biometricandroid3_smallbody,
+    RegisterBiometricsScreenState.DisabledOnDevice -> BiometricsContent(
+        title = R.string.tk_onboarding_biometricsPermission_primary,
+        description = R.string.tk_onboarding_biometricsPermissionDisabledDevice_primary,
+        infoText = R.string.tk_onboarding_biometricsPermissionDisabled_tertiary,
     )
 
-    RegisterBiometricsScreenState.DisabledForApp -> OnboardingBiometricsContent(
-        title = R.string.tk_onboarding_biometricandroid3_title,
-        description = R.string.tk_onboarding_biometricandroid3_body,
-        infoText = R.string.tk_onboarding_biometricandroid3_smallbody,
+    RegisterBiometricsScreenState.DisabledForApp -> BiometricsContent(
+        title = R.string.tk_onboarding_biometricsPermissionDisabled_primary,
+        description = R.string.tk_onboarding_biometricsPermissionDisabled_secondary,
+        infoText = R.string.tk_onboarding_biometricsPermissionDisabled_tertiary,
     )
 }
 
@@ -130,7 +130,7 @@ private fun BiometricsButtons(
             onClick = onSkip,
         )
         Buttons.FilledPrimary(
-            text = stringResource(id = R.string.tk_onboarding_biometricandroid1_primarybutton),
+            text = stringResource(id = R.string.tk_onboarding_biometricsPermission_button_primary),
             onClick = onTriggerPrompt,
         )
     }
@@ -141,7 +141,7 @@ private fun BiometricsButtons(
             modifier = Modifier.testTag(TestTags.NO_BIOMETRICS_BUTTON.name)
         )
         Buttons.FilledPrimary(
-            text = stringResource(id = R.string.tk_global_tothesettings),
+            text = stringResource(id = R.string.tk_onboarding_biometricsPermissionDisabled_button_primary),
             onClick = onOpenSettings,
             modifier = Modifier.testTag(TestTags.TO_SETTING_BUTTON.name)
         )
@@ -153,7 +153,7 @@ private fun BiometricsButtons(
             modifier = Modifier.testTag(TestTags.NO_BIOMETRICS_BUTTON.name)
         )
         Buttons.FilledPrimary(
-            text = stringResource(id = R.string.tk_global_tothesettings),
+            text = stringResource(id = R.string.tk_onboarding_biometricsPermissionDisabled_button_primary),
             onClick = onOpenSettings,
             modifier = Modifier.testTag(TestTags.TO_SETTING_BUTTON.name)
         )

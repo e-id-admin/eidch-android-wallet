@@ -145,7 +145,7 @@ class GetCompatibleCredentialsImplTest {
     @Test
     fun `Getting compatible credentials maps errors from json parsing`() = runTest {
         val exception = IllegalStateException()
-        coEvery { mockCredential.json.toString() } throws exception
+        coEvery { mockCredential.getClaimsForPresentation().toString() } throws exception
 
         val result = useCase(inputDescriptors)
 
@@ -229,12 +229,12 @@ class GetCompatibleCredentialsImplTest {
         requestedFields2: List<PresentationRequestField> = emptyList(),
     ) {
         every { mockCredential.id } returns CREDENTIAL_ID
-        every { mockCredential.json.toString() } returns CREDENTIAL_JSON
+        every { mockCredential.getClaimsForPresentation().toString() } returns CREDENTIAL_JSON
         every { mockCredential.format } returns CredentialFormat.VC_SD_JWT
         every { mockCredential.payload } returns CREDENTIAL_PAYLOAD
         every { mockCredential.keyBindingAlgorithm } returns SigningAlgorithm.ES256
         every { mockCredential2.id } returns CREDENTIAL_ID_2
-        every { mockCredential2.json.toString() } returns CREDENTIAL_JSON_2
+        every { mockCredential2.getClaimsForPresentation().toString() } returns CREDENTIAL_JSON_2
         every { mockCredential2.format } returns CredentialFormat.VC_SD_JWT
         every { mockCredential2.payload } returns CREDENTIAL_PAYLOAD
         every { mockCredential2.keyBindingAlgorithm } returns SigningAlgorithm.ES256
@@ -249,6 +249,7 @@ class GetCompatibleCredentialsImplTest {
         const val CREDENTIAL_ID_2 = 2L
         const val CREDENTIAL_JSON = "credentialJson"
         const val CREDENTIAL_JSON_2 = "credentialJson2"
+        const val PRESENTABLE_CLAIMS = "presentableClaims"
 
         val inputDescriptor: InputDescriptor = mockk()
         val inputDescriptorFormatVcSdJwt = InputDescriptorFormat.VcSdJwt(

@@ -3,6 +3,7 @@ package ch.admin.foitt.wallet.platform.login.domain.usecase.implementation
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateAllCredentialStatuses
 import ch.admin.foitt.wallet.platform.database.domain.model.DatabaseState
 import ch.admin.foitt.wallet.platform.database.domain.repository.DatabaseRepository
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.UpdateAllSIdStatuses
 import ch.admin.foitt.wallet.platform.login.domain.usecase.AfterLoginWork
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -28,6 +29,9 @@ class AfterLoginWorkImplTest {
     @MockK
     private lateinit var mockUpdateAllCredentialStatuses: UpdateAllCredentialStatuses
 
+    @MockK
+    private lateinit var mockUpdateAllSIdStatuses: UpdateAllSIdStatuses
+
     private lateinit var stateFlow: MutableStateFlow<DatabaseState>
 
     private lateinit var useCase: AfterLoginWork
@@ -37,10 +41,12 @@ class AfterLoginWorkImplTest {
         MockKAnnotations.init(this)
 
         coEvery { mockUpdateAllCredentialStatuses() } just runs
+        coEvery { mockUpdateAllSIdStatuses() } just runs
 
         useCase = AfterLoginWorkImpl(
             databaseRepository = mockDatabaseRepository,
             updateAllCredentialStatuses = mockUpdateAllCredentialStatuses,
+            updateAllSIdStatuses = mockUpdateAllSIdStatuses
         )
     }
 
@@ -50,7 +56,7 @@ class AfterLoginWorkImplTest {
     }
 
     @Test
-    fun `AfterLoginWork updates the status of all credentials when the DB state changes to open`() = runTest {
+    fun `AfterLoginWork updates the status of all credentials and EId when the DB state changes to open`() = runTest {
         // initially closed
         stateFlow = MutableStateFlow(DatabaseState.CLOSED)
 
@@ -69,11 +75,12 @@ class AfterLoginWorkImplTest {
 
         coVerify(exactly = 1) {
             mockUpdateAllCredentialStatuses()
+            mockUpdateAllSIdStatuses()
         }
     }
 
     @Test
-    fun `AfterLoginWork does not update the status of all credential when the DB state changes to closed`() = runTest {
+    fun `AfterLoginWork does not update the status of all credential and EId when the DB state changes to closed`() = runTest {
         // initially open
         stateFlow = MutableStateFlow(DatabaseState.OPEN)
 
@@ -92,6 +99,7 @@ class AfterLoginWorkImplTest {
 
         coVerify(exactly = 0) {
             mockUpdateAllCredentialStatuses()
+            mockUpdateAllSIdStatuses()
         }
     }
 }

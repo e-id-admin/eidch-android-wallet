@@ -43,7 +43,7 @@ class GetCompatibleCredentialsImpl @Inject constructor(
                 if (isProofTypeCompatible(compatibleFormat, credential).not()) {
                     return@mapNotNull null
                 }
-                val fields = getRequestedFields(credential.json.toString(), inputDescriptors)
+                val fields = getRequestedFields(credential.getClaimsForPresentation().toString(), inputDescriptors)
                     .mapError(GetRequestedFieldsError::toGetCompatibleCredentialsError)
                     .bind()
                 if (fields.isNotEmpty()) {

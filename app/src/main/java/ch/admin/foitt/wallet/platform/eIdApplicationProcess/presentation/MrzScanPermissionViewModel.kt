@@ -17,8 +17,8 @@ import ch.admin.foitt.wallet.platform.scaffold.extension.hasCameraPermission
 import ch.admin.foitt.wallet.platform.scaffold.extension.shouldShowRationale
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.openAppDetailsSettings
+import ch.admin.foitt.walletcomposedestinations.destinations.EIdIntroScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.MrzChooserScreenDestination
-import ch.admin.foitt.walletcomposedestinations.destinations.MrzScanPermissionScreenDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,7 +42,7 @@ class MrzScanPermissionViewModel @Inject constructor(
     override val topBarState = TopBarState.DetailsWithCloseButton(
         titleId = null,
         onUp = navManager::popBackStack,
-        onClose = { navManager.navigateBackToHome(MrzScanPermissionScreenDestination) }
+        onClose = { navManager.navigateBackToHome(EIdIntroScreenDestination) }
     )
     override val fullscreenState = FullscreenState.Insets
 

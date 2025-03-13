@@ -55,11 +55,11 @@ private fun OnboardingSuccessScreenContent(
     ) {
         Spacer(modifier = Modifier.height(Sizes.s06))
         WalletTexts.TitleScreen(
-            text = stringResource(id = R.string.tk_onboarding_allset_title),
+            text = stringResource(id = R.string.tk_onboarding_done_primary),
         )
         Spacer(modifier = Modifier.height(Sizes.s06))
         WalletTexts.BodyLarge(
-            text = stringResource(id = R.string.tk_onboarding_allset_body),
+            text = stringResource(id = R.string.tk_onboarding_done_secondary),
             modifier = Modifier.fillMaxWidth(),
         )
     }

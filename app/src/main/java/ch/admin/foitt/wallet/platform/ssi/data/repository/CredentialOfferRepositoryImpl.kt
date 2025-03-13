@@ -1,7 +1,9 @@
 package ch.admin.foitt.wallet.platform.ssi.data.repository
 
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
-import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.Display
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.OidClaimDisplay
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.OidCredentialDisplay
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.OidIssuerDisplay
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.SigningAlgorithm
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialClaimDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialClaimDisplayDao
@@ -15,6 +17,7 @@ import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimDispl
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialIssuerDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialWithDetails
+import ch.admin.foitt.wallet.platform.database.domain.model.DisplayConst
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayLanguage
 import ch.admin.foitt.wallet.platform.di.IoDispatcher
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialOfferRepositoryError
@@ -82,24 +85,24 @@ class CredentialOfferRepositoryImpl @Inject constructor(
     )
 
     private fun createCredentialIssuerDisplays(
-        issuerDisplays: List<Display>,
+        issuerDisplays: List<OidIssuerDisplay>,
     ) = issuerDisplays.map { display ->
         CredentialIssuerDisplay(
             credentialId = -1,
-            name = display.name,
+            name = display.name ?: DisplayConst.ISSUER_FALLBACK_NAME,
             image = display.logo?.uri,
             imageAltText = display.logo?.altText,
-            locale = display.locale ?: DisplayLanguage.FALLBACK,
+            locale = display.locale ?: DisplayLanguage.UNKNOWN,
         )
     }
 
     private fun createCredentialDisplays(
-        credentialDisplays: List<Display>,
+        credentialDisplays: List<OidCredentialDisplay>,
     ) = credentialDisplays.map { display ->
         CredentialDisplay(
             // at this point we do not have the credential id yet, since it will only be known after the credential was inserted in the db
             credentialId = -1,
-            locale = display.locale ?: DisplayLanguage.FALLBACK,
+            locale = display.locale ?: DisplayLanguage.UNKNOWN,
             name = display.name,
             description = display.description,
             logoUri = display.logo?.uri,
@@ -109,14 +112,14 @@ class CredentialOfferRepositoryImpl @Inject constructor(
     }
 
     private fun createCredentialClaims(
-        claims: Map<CredentialClaim, List<Display>>
+        claims: Map<CredentialClaim, List<OidClaimDisplay>>
     ): Map<CredentialClaim, List<CredentialClaimDisplay>> = claims.map { entry ->
         entry.key to entry.value.map { display ->
             CredentialClaimDisplay(
                 // at this point we do not have the claim id yet, since it will only be known after the claim was inserted in the db
                 claimId = -1,
                 name = display.name,
-                locale = display.locale ?: DisplayLanguage.FALLBACK,
+                locale = display.locale ?: DisplayLanguage.UNKNOWN,
             )
         }
     }.toMap()

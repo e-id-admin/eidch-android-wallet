@@ -22,6 +22,7 @@ internal fun ScalableContentLayout(
     minScalableHeight: Dp = Sizes.loginMethodHeaderMinHeight,
     maxScalableHeight: Dp = Sizes.loginMethodHeaderMaxHeight,
     stickyContentHeight: Dp = 0.dp,
+    layoutInsetHeight: Dp = 0.dp,
     scalableContentIndex: Int,
     content: @Composable () -> Unit,
 ) {
@@ -36,7 +37,7 @@ internal fun ScalableContentLayout(
             }
 
             val heightOfOtherPlaceables = otherPlaceables.sumOf { it.height } + stickyContentHeight.roundToPx()
-            val remainingHeight = height.roundToPx() - heightOfOtherPlaceables
+            val remainingHeight = height.roundToPx() - layoutInsetHeight.roundToPx() - heightOfOtherPlaceables
             val heightOfScalableContent = remainingHeight.coerceIn(minScalableHeight.roundToPx()..maxScalableHeight.roundToPx())
 
             val scalableContentPlaceable = scalableContentMeasurable.measure(

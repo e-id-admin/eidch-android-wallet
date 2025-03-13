@@ -12,19 +12,18 @@ object EIdRequestMocks {
     private const val FIRST_NAME = "firstName"
     private const val LAST_NAME = "lastName"
 
-
-    val eIdRequestCase = EIdRequestCase(
-        id = CASE_ID,
+    fun eIdRequestCaseMock(caseId: String = CASE_ID) = EIdRequestCase(
+        id = caseId,
         rawMrz = RAW_MRZ,
         documentNumber = DOCUMENT_NUMBER,
         firstName = FIRST_NAME,
         lastName = LAST_NAME,
     )
 
-    val eIdRequestState = EIdRequestState(
-        id = 1L,
-        eIdRequestCaseId = CASE_ID,
-        state = EIdRequestQueueState.BereitFuerOnlineSession,
+    fun eIdRequestStateMock(id: Long = 1L, caseId: String = CASE_ID) = EIdRequestState(
+        id = id,
+        eIdRequestCaseId = caseId,
+        state = EIdRequestQueueState.READY_FOR_ONLINE_SESSION,
         lastPolled = Instant.now().epochSecond,
         onlineSessionStartOpenAt = Instant.now().epochSecond,
         onlineSessionStartTimeoutAt = Instant.now().epochSecond,

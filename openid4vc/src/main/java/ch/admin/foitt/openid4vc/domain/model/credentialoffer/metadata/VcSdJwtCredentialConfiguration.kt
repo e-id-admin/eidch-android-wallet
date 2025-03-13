@@ -20,7 +20,7 @@ data class VcSdJwtCredentialConfiguration(
     @SerialName("proof_types_supported")
     override val proofTypesSupported: Map<ProofType, ProofTypeSigningAlgorithms> = emptyMap(),
     @SerialName("display")
-    override val display: List<Display>? = null,
+    override val display: List<OidCredentialDisplay>? = null,
     @SerialName("order")
     override val order: List<String>? = null,
 

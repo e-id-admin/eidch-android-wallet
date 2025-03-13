@@ -3,7 +3,6 @@ package ch.admin.foitt.wallet.feature.login.presentation
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -65,7 +64,6 @@ fun BiometricLoginScreenContent(
     FullscreenGradient()
     when (currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass) {
         WindowWidthSizeClass.COMPACT -> WalletLayouts.CompactContainerFloatingBottom(
-            modifier = Modifier.fillMaxSize(),
             content = {
                 Content()
             },
@@ -78,7 +76,6 @@ fun BiometricLoginScreenContent(
             },
         )
         else -> WalletLayouts.LargeContainerFloatingBottom(
-            modifier = Modifier.fillMaxSize(),
             content = {
                 Content()
             },

@@ -3,7 +3,6 @@ package ch.admin.foitt.wallet.feature.settings.presentation.impressum
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,7 +19,6 @@ import androidx.compose.ui.res.stringResource
 import ch.admin.foitt.wallet.BuildConfig
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.composables.Buttons
-import ch.admin.foitt.wallet.platform.composables.presentation.layout.ScrollableColumn
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.theme.Sizes
@@ -43,31 +41,25 @@ private fun ImpressumScreenContent(
     onGithub: () -> Unit,
     onMoreInformation: () -> Unit,
     onLegals: () -> Unit,
-) = WalletLayouts.ScrollableColumn(
-    useStatusBarInsets = false,
-    contentPadding = PaddingValues(
-        vertical = Sizes.s05,
-        horizontal = Sizes.s02
-    ),
-    scrollableContent = {
-        Image(
-            modifier = Modifier.fillMaxWidth(),
-            painter = painterResource(id = R.drawable.pilot_ic_cards),
-            contentDescription = null,
-            alignment = Alignment.Center,
-            contentScale = ContentScale.Fit,
-        )
-        Spacer(modifier = Modifier.height(Sizes.s06))
-        Content(
-            onGithub = onGithub,
-            onMoreInformation = onMoreInformation,
-            onLegals = onLegals,
-        )
-    },
-    useNavigationBarInsets = true,
+) = WalletLayouts.CompactContainer(
+    shouldScrollUnderTopBar = false,
+    onBottomHeightMeasured = null,
     stickyBottomContent = null,
-    stickyBottomPadding = PaddingValues(),
-)
+) {
+    Image(
+        modifier = Modifier.fillMaxWidth(),
+        painter = painterResource(id = R.drawable.pilot_ic_cards),
+        contentDescription = null,
+        alignment = Alignment.Center,
+        contentScale = ContentScale.Fit,
+    )
+    Spacer(modifier = Modifier.height(Sizes.s06))
+    Content(
+        onGithub = onGithub,
+        onMoreInformation = onMoreInformation,
+        onLegals = onLegals,
+    )
+}
 
 @Composable
 private fun Content(

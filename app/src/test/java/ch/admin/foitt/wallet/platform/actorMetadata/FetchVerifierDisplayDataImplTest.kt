@@ -6,6 +6,7 @@ import ch.admin.foitt.openid4vc.domain.model.presentationRequest.LogoUri
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorField
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchVerifierDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementation.FetchVerifierDisplayDataImpl
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustRegistryError
@@ -198,6 +199,7 @@ class FetchVerifierDisplayDataImplTest {
         image = null,
         preferredLanguage = null,
         trustStatus = TrustStatus.NOT_TRUSTED,
+        actorType = ActorType.VERIFIER,
     )
     //endregion
 }

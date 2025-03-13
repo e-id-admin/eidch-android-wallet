@@ -1,8 +1,6 @@
 package ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -50,21 +48,14 @@ private fun EIdIntroScreenContent(
         },
         stickyBottomBackgroundColor = Color.Transparent,
         stickyBottomContent = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Sizes.s02)
-            ) {
-                Buttons.TonalSecondary(
-                    modifier = Modifier.weight(1f),
-                    text = stringResource(R.string.tk_getEid_intro_secondaryButton),
-                    onClick = onSkip,
-                )
-                Buttons.FilledPrimary(
-                    modifier = Modifier.weight(1f),
-                    text = stringResource(R.string.tk_getEid_intro_primaryButton),
-                    onClick = onRequestEId,
-                )
-            }
+            Buttons.TonalSecondary(
+                text = stringResource(R.string.tk_getEid_intro_secondaryButton),
+                onClick = onSkip,
+            )
+            Buttons.FilledPrimary(
+                text = stringResource(R.string.tk_getEid_intro_primaryButton),
+                onClick = onRequestEId,
+            )
         }
     ) {
         Spacer(modifier = Modifier.height(Sizes.s06))

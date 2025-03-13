@@ -57,12 +57,12 @@ private fun OnboardingLocalDataScreenContent(
     }
 ) {
     OnboardingScreenContent(
-        title = stringResource(id = R.string.tk_onboarding_yourdata_title),
-        subtitle = stringResource(id = R.string.tk_onboarding_yourdata_body),
+        title = stringResource(id = R.string.tk_onboarding_introductionStep_yourData_primary),
+        subtitle = stringResource(id = R.string.tk_onboarding_introductionStep_yourData_secondary),
     )
     Spacer(modifier = Modifier.height(Sizes.s06))
     Buttons.TextLink(
-        text = stringResource(id = R.string.tk_onboarding_yourdata_link_text),
+        text = stringResource(id = R.string.tk_onboarding_introductionStep_yourData_tertiary_link_text),
         onClick = onMoreInformation,
         endIcon = painterResource(id = R.drawable.wallet_ic_chevron),
     )

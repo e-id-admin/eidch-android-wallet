@@ -7,7 +7,8 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -17,15 +18,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
@@ -41,15 +39,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
-import androidx.constraintlayout.compose.Visibility
 import androidx.window.core.layout.WindowHeightSizeClass
-import ch.admin.foitt.wallet.platform.composables.SpacerBottom
-import ch.admin.foitt.wallet.platform.composables.SpacerTop
 import ch.admin.foitt.wallet.platform.composables.presentation.HeightReportingLayout
+import ch.admin.foitt.wallet.platform.composables.presentation.bottomSafeDrawing
 import ch.admin.foitt.wallet.platform.composables.presentation.horizontalSafeDrawing
-import ch.admin.foitt.wallet.platform.composables.presentation.scrollingBehavior
+import ch.admin.foitt.wallet.platform.composables.presentation.topSafeDrawing
+import ch.admin.foitt.wallet.platform.scaffold.presentation.LocalScaffoldPaddings
 import ch.admin.foitt.wallet.theme.Sizes
-import ch.admin.foitt.wallet.theme.WalletTheme
 
 object WalletLayouts {
     //region Layout constants
@@ -88,6 +84,38 @@ object WalletLayouts {
         cardLargeScreenRatio
     }
 
+    private fun Modifier.handleContainerInsets(
+        shouldScrollUnderTopBar: Boolean,
+        scaffoldPaddings: PaddingValues,
+    ): Modifier =
+        fillMaxSize()
+            .run {
+                if (!shouldScrollUnderTopBar) {
+                    padding(scaffoldPaddings)
+                        .consumeWindowInsets(scaffoldPaddings)
+                } else {
+                    this
+                }
+            }.imePadding()
+
+    @Composable
+    fun TopInsetSpacer(
+        shouldScrollUnderTopBar: Boolean,
+        scaffoldPaddings: PaddingValues,
+    ) {
+        val modifier = Modifier
+            .run {
+                if (shouldScrollUnderTopBar) {
+                    val topPadding = scaffoldPaddings.calculateTopPadding()
+                    this.padding(top = topPadding)
+                        .consumeWindowInsets(WindowInsets(top = topPadding))
+                } else {
+                    this.topSafeDrawing()
+                }
+            }
+        Spacer(modifier)
+    }
+
     @OptIn(ExperimentalLayoutApi::class)
     @Composable
     fun LargeContainer(
@@ -103,36 +131,33 @@ object WalletLayouts {
         stickyBottomBackgroundColor: Color = Color.Transparent,
         stickyBottomContent: (@Composable () -> Unit)?,
         onBottomHeightMeasured: (Dp) -> Unit,
+        contentPadding: PaddingValues = PaddingValues(),
+        scaffoldPaddings: PaddingValues = LocalScaffoldPaddings.current,
+        shouldScrollUnderTopBar: Boolean = true,
         content: @Composable ColumnScope.() -> Unit,
     ) = ConstraintLayout(
         modifier = modifier
-            .fillMaxSize()
+            .handleContainerInsets(
+                shouldScrollUnderTopBar,
+                scaffoldPaddings,
+            )
+            .horizontalSafeDrawing()
     ) {
+        var bottomBlockHeightDp by remember {
+            mutableStateOf(0.dp)
+        }
         val (
-            topSpacerRef,
             stickyStartRef,
             mainContentRef,
             stickyBottomRef,
         ) = createRefs()
-
-        SpacerTop(
-            backgroundColor = WalletTheme.colorScheme.surfaceTransparent,
-            modifier = Modifier.constrainAs(topSpacerRef) {
-                top.linkTo(parent.top)
-            },
-            useStatusBarInsets = false,
-        )
 
         Column(
             modifier = Modifier
                 .then(
                     if (isStickyStartScrollable) {
                         Modifier
-                            .scrollingBehavior(
-                                useStatusBarInsets = false,
-                                contentPadding = PaddingValues(),
-                                scrollState = contentScrollState,
-                            )
+                            .verticalScroll(contentScrollState)
                             .scrollable(
                                 contentScrollState,
                                 orientation = Orientation.Vertical,
@@ -151,6 +176,10 @@ object WalletLayouts {
                     width = Dimension.percent(cardScreenRatio)
                 }
         ) {
+            TopInsetSpacer(
+                shouldScrollUnderTopBar,
+                scaffoldPaddings,
+            )
             stickyStartContent()
         }
         Column(
@@ -164,8 +193,15 @@ object WalletLayouts {
                     height = contentHeightDimension
                     width = Dimension.fillToConstraints
                 }
+                .verticalScroll(contentScrollState)
+                .padding(contentPadding)
         ) {
+            TopInsetSpacer(
+                shouldScrollUnderTopBar,
+                scaffoldPaddings,
+            )
             content()
+            Spacer(Modifier.height(bottomBlockHeightDp))
         }
 
         Box(
@@ -178,12 +214,17 @@ object WalletLayouts {
                 }
         ) {
             HeightReportingLayout(
-                onContentHeightMeasured = onBottomHeightMeasured,
+                onContentHeightMeasured = { height ->
+                    bottomBlockHeightDp = height
+                    onBottomHeightMeasured(height)
+                },
             ) {
                 if (stickyBottomContent == null) {
-                    SpacerBottom(
-                        useNavigationBarInsets = true,
-                        backgroundColor = WalletTheme.colorScheme.surfaceTransparent,
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(stickyBottomBackgroundColor)
+                            .bottomSafeDrawing()
                     )
                 } else {
                     FlowRow(
@@ -191,7 +232,7 @@ object WalletLayouts {
                             .fillMaxWidth()
                             .background(stickyBottomBackgroundColor)
                             .padding(stickyBottomPadding)
-                            .navigationBarsPadding()
+                            .bottomSafeDrawing()
                             .focusGroup(),
                         horizontalArrangement = stickyBottomHorizontalArrangement,
                         verticalArrangement = Arrangement.spacedBy(Sizes.s02, Alignment.Top),
@@ -208,80 +249,81 @@ object WalletLayouts {
     @Composable
     fun CompactContainer(
         modifier: Modifier = Modifier,
-        useStatusBarInsets: Boolean,
-        useNavigationBarInsets: Boolean,
         contentHeightDimension: Dimension = Dimension.fillToConstraints,
         stickyBottomPadding: PaddingValues = stickyBottomPaddingValuesPortrait,
         stickyBottomHorizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(Sizes.s02, Alignment.End),
         stickyBottomBackgroundColor: Color = Color.Transparent,
         stickyBottomContent: (@Composable () -> Unit)?,
+        scaffoldPaddings: PaddingValues = LocalScaffoldPaddings.current,
+        shouldScrollUnderTopBar: Boolean = true,
+        scrollState: ScrollState = rememberScrollState(),
         onBottomHeightMeasured: ((Dp) -> Unit)?,
-        content: @Composable BoxScope.() -> Unit,
+        contentPadding: PaddingValues = PaddingValues(),
+        content: @Composable ColumnScope.(BoxWithConstraintsScope) -> Unit,
     ) = ConstraintLayout(
         modifier = modifier
-            .fillMaxSize()
+            .handleContainerInsets(
+                shouldScrollUnderTopBar,
+                scaffoldPaddings,
+            )
     ) {
+        var bottomBlockHeightDp by remember {
+            mutableStateOf(0.dp)
+        }
         val (
-            topSpacerRef,
             mainContentRef,
-            bottomSpacerRef,
             stickyBottomRef,
         ) = createRefs()
 
-        SpacerTop(
-            backgroundColor = WalletTheme.colorScheme.surfaceTransparent,
-            modifier = Modifier.constrainAs(topSpacerRef) {
-                top.linkTo(parent.top)
-            },
-            useStatusBarInsets = useStatusBarInsets,
-        )
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 .constrainAs(mainContentRef) {
                     top.linkTo(parent.top)
-                    onBottomHeightMeasured?.let {
-                        bottom.linkTo(parent.bottom)
-                    } ?: bottom.linkTo(stickyBottomRef.top)
-
+                    bottom.linkTo(parent.bottom)
                     height = contentHeightDimension
                 }
         ) {
-            content()
+            Column(
+                modifier = Modifier
+                    .verticalScroll(scrollState)
+                    .padding(contentPadding)
+            ) {
+                TopInsetSpacer(
+                    shouldScrollUnderTopBar,
+                    scaffoldPaddings,
+                )
+                content(this@BoxWithConstraints)
+                stickyBottomContent?.let {
+                    Spacer(Modifier.height(bottomBlockHeightDp))
+                } ?: Spacer(Modifier.bottomSafeDrawing())
+            }
         }
-        SpacerBottom(
-            backgroundColor = WalletTheme.colorScheme.surfaceTransparent.copy(alpha = 0.85f),
-            modifier = Modifier.constrainAs(bottomSpacerRef) {
-                bottom.linkTo(stickyBottomRef.top)
-            },
-            useNavigationBarInsets = useNavigationBarInsets,
-        )
-        Box(
-            modifier = Modifier
-                .constrainAs(stickyBottomRef) {
-                    bottom.linkTo(parent.bottom)
-                    visibility = if (stickyBottomContent != null) {
-                        Visibility.Visible
-                    } else {
-                        Visibility.Gone
-                    }
-                }
-        ) {
+
+        if (stickyBottomContent != null) {
             HeightReportingLayout(
-                onContentHeightMeasured = onBottomHeightMeasured ?: {},
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .constrainAs(stickyBottomRef) {
+                        bottom.linkTo(parent.bottom)
+                    },
+                onContentHeightMeasured = { height ->
+                    bottomBlockHeightDp = height
+                    onBottomHeightMeasured?.let { it(height) }
+                },
             ) {
                 FlowRow(
                     modifier = Modifier
                         .background(stickyBottomBackgroundColor)
                         .fillMaxWidth()
                         .padding(stickyBottomPadding)
-                        .navigationBarsPadding()
+                        .bottomSafeDrawing()
                         .focusGroup(),
                     horizontalArrangement = stickyBottomHorizontalArrangement,
                     verticalArrangement = Arrangement.spacedBy(Sizes.s02, Alignment.Top),
                     maxItemsInEachRow = 2,
                 ) {
-                    stickyBottomContent?.invoke()
+                    stickyBottomContent()
                 }
             }
         }
@@ -293,43 +335,34 @@ object WalletLayouts {
     @Composable
     fun CompactContainerFloatingBottom(
         modifier: Modifier = Modifier,
-        topBar: (@Composable () -> Unit)? = null,
         verticalArrangement: Arrangement.Vertical = Arrangement.Center,
-        content: @Composable ColumnScope.() -> Unit,
         auxiliaryContent: (@Composable () -> Unit)? = null,
         stickyBottomHorizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
         stickyBottomContent: @Composable ColumnScope.() -> Unit,
+        scaffoldPaddings: PaddingValues = LocalScaffoldPaddings.current,
+        shouldScrollUnderTopBar: Boolean = true,
+        content: @Composable ColumnScope.() -> Unit,
     ) = ConstraintLayout(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.handleContainerInsets(
+            shouldScrollUnderTopBar,
+            scaffoldPaddings,
+        )
     ) {
         var bottomBlockHeightDp by remember {
             mutableStateOf(0.dp)
         }
 
         val (
-            topBarRef,
             contentRef,
             auxContentRef,
             stickyBottomRef,
         ) = createRefs()
 
-        topBar?.let {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .constrainAs(topBarRef) {
-                        top.linkTo(parent.top)
-                    }
-            ) {
-                topBar()
-            }
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .constrainAs(contentRef) {
-                    top.linkTo(if (topBar == null) parent.top else topBarRef.bottom)
+                    top.linkTo(parent.top)
                     bottom.linkTo(parent.bottom)
                     height = Dimension.fillToConstraints
                 }
@@ -338,10 +371,12 @@ object WalletLayouts {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = verticalArrangement,
         ) {
-            Spacer(Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)))
+            TopInsetSpacer(
+                shouldScrollUnderTopBar,
+                scaffoldPaddings,
+            )
             content()
             Spacer(Modifier.height(bottomBlockHeightDp))
-            Spacer(Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)))
         }
 
         auxiliaryContent?.let {
@@ -366,7 +401,7 @@ object WalletLayouts {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                    .bottomSafeDrawing()
                     .padding(Sizes.s04),
                 horizontalAlignment = stickyBottomHorizontalAlignment,
             ) {
@@ -381,16 +416,19 @@ object WalletLayouts {
     @Composable
     fun LargeContainerFloatingBottom(
         modifier: Modifier = Modifier,
-        topBar: (@Composable () -> Unit)? = null,
-        useStatusBarPadding: Boolean = true,
         verticalArrangement: Arrangement.Vertical = Arrangement.Center,
-        content: @Composable ColumnScope.() -> Unit,
         auxiliaryContent: (@Composable () -> Unit)? = null,
         stickyBottomHorizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
         stickyBottomContent: (@Composable RowScope.() -> Unit)? = null,
+        scaffoldPaddings: PaddingValues = LocalScaffoldPaddings.current,
+        shouldScrollUnderTopBar: Boolean = true,
+        content: @Composable ColumnScope.() -> Unit,
     ) = ConstraintLayout(
         modifier = modifier
-            .fillMaxSize()
+            .handleContainerInsets(
+                shouldScrollUnderTopBar,
+                scaffoldPaddings,
+            )
             .horizontalSafeDrawing()
     ) {
         var bottomBlockHeightDp by remember {
@@ -398,44 +436,32 @@ object WalletLayouts {
         }
 
         val (
-            topBarRef,
             contentRef,
             auxContentRef,
             stickyBottomRef,
         ) = createRefs()
 
-        topBar?.let {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .constrainAs(topBarRef) {
-                        top.linkTo(parent.top)
-                    }
-            ) {
-                topBar()
-            }
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .constrainAs(contentRef) {
-                    top.linkTo(if (topBar == null) parent.top else topBarRef.bottom)
+                    top.linkTo(parent.top)
                     bottom.linkTo(parent.bottom)
                     height = Dimension.fillToConstraints
                 }
+                .padding(horizontal = Sizes.s04)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = verticalArrangement,
         ) {
-            if (useStatusBarPadding) {
-                Spacer(Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)))
-            }
+            TopInsetSpacer(
+                shouldScrollUnderTopBar,
+                scaffoldPaddings,
+            )
             content()
             stickyBottomContent?.let {
                 Spacer(Modifier.height(bottomBlockHeightDp))
-            }
-            Spacer(Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)))
+            } ?: Spacer(Modifier.bottomSafeDrawing())
         }
 
         stickyBottomContent?.let {

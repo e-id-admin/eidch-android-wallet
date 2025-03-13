@@ -6,11 +6,14 @@ import ch.admin.foitt.wallet.feature.credentialDetail.domain.model.CredentialDet
 import ch.admin.foitt.wallet.feature.credentialDetail.domain.usecase.GetCredentialDetailFlow
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.composables.VisibleBottomSheet
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.model.CredentialDetailUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.presentation.adapter.GetDrawableFromUri
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateCredentialStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialIssuerDisplay
+import ch.admin.foitt.wallet.platform.database.domain.model.DisplayConst
+import ch.admin.foitt.wallet.platform.database.domain.model.DisplayLanguage
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
@@ -132,8 +135,15 @@ class CredentialDetailViewModel @Inject constructor(
     }
 
     private suspend fun CredentialIssuerDisplay.toIssuerUiState() = ActorUiState(
-        name = name,
+        name = if (locale == DisplayLanguage.FALLBACK) {
+            null
+        } else if (name == DisplayConst.ISSUER_FALLBACK_NAME) {
+            null
+        } else {
+            name
+        },
         painter = getDrawableFromUri(image)?.toPainter(),
         trustStatus = TrustStatus.UNKNOWN,
+        actorType = ActorType.ISSUER,
     )
 }

@@ -32,6 +32,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.InvitationHeader
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.Buttons
@@ -204,6 +205,7 @@ private fun InvitationHeader(modifier: Modifier = Modifier, verifierUiState: Act
         inviterName = verifierUiState.name,
         inviterImage = verifierUiState.painter,
         trustStatus = verifierUiState.trustStatus,
+        actorType = verifierUiState.actorType,
         modifier = modifier
             .statusBarsPadding()
             .padding(horizontal = Sizes.s04)
@@ -325,7 +327,8 @@ private fun PresentationRequestScreenPreview() {
             verifierUiState = ActorUiState(
                 name = "My Verfifier Name",
                 painter = painterResource(id = R.drawable.ic_swiss_cross_small),
-                trustStatus = TrustStatus.TRUSTED
+                trustStatus = TrustStatus.TRUSTED,
+                actorType = ActorType.VERIFIER,
             ),
             requestedClaims = CredentialMocks.claimList,
             isLoading = false,

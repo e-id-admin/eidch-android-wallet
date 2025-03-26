@@ -67,6 +67,7 @@ class VerifyJwtSignatureImplTest {
         )
 
         coEvery { mockResolveDid(DID) } returns Ok(mockDidDoc)
+        every { mockDidDoc.getDeactivated() } returns false
         every { mockDidDoc.getVerificationMethod() } returns listOf(mockVerificationMethod1, mockVerificationMethod2)
         every { mockVerificationMethod1.id } returns KID1
         every { mockVerificationMethod1.publicKeyJwk } returns mockJwk1

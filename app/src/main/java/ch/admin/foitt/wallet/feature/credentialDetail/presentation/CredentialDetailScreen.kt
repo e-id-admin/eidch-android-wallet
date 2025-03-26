@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
 import androidx.compose.material.icons.sharp.MoreVert
@@ -131,7 +130,6 @@ private fun CoroutineScope.hideModalSheet(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun CredentialDetailScreenContent(
     isLoading: Boolean,

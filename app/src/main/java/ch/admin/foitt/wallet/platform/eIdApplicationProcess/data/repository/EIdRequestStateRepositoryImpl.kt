@@ -27,7 +27,9 @@ class EIdRequestStateRepositoryImpl @Inject constructor(
     ): Result<Long, EIdRequestStateRepositoryError> = withContext(ioDispatcher) {
         runSuspendCatching {
             eIdRequestStateDao().insert(state)
-        }.mapError(Throwable::toEIdRequestStateRepositoryError)
+        }.mapError { throwable ->
+            throwable.toEIdRequestStateRepositoryError("EIdRequestStateRepository saveEIdRequestState error")
+        }
     }
 
     override suspend fun updateStatusByCaseId(
@@ -50,13 +52,17 @@ class EIdRequestStateRepositoryImpl @Inject constructor(
                 onlineSessionStartOpenAt = onlineSessionStartOpenAt,
                 lastPolled = Instant.now().epochSecond
             )
-        }.mapError(Throwable::toEIdRequestStateRepositoryError)
+        }.mapError { throwable ->
+            throwable.toEIdRequestStateRepositoryError("EIdRequestStateRepository updateStatusByCaseId error")
+        }
     }
 
     override suspend fun getAllCaseIds(): Result<List<String>, EIdRequestStateRepositoryError> = withContext(ioDispatcher) {
         runSuspendCatching {
             eIdRequestStateDao().getAllStateCaseIds()
-        }.mapError(Throwable::toEIdRequestStateRepositoryError)
+        }.mapError { throwable ->
+            throwable.toEIdRequestStateRepositoryError("EIdRequestStateRepository getAllCaseIds error")
+        }
     }
 
     private val eIdRequestStateDaoFlow = daoProvider.eIdRequestStateDaoFlow

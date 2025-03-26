@@ -4,6 +4,7 @@ import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.FetchStatusF
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.ParseTokenStatusStatusListError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.TokenStatusListProperties
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.ValidateTokenStatusStatusListError
+import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.toFetchStatusFromParseTokenStatusListError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.toFetchStatusFromTokenStatusListError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.repository.CredentialStatusRepository
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.FetchStatusFromTokenStatusList
@@ -29,12 +30,12 @@ class FetchStatusFromTokenStatusListImpl @Inject constructor(
 
         val jwt = credentialStatusRepository.fetchTokenStatusListJwt(statusList.uri).bind()
 
-        val response = validateTokenStatusList(credentialIssuer, jwt, statusList.uri)
+        val responseResult = validateTokenStatusList(credentialIssuer, jwt, statusList.uri)
             .mapError(ValidateTokenStatusStatusListError::toFetchStatusFromTokenStatusListError)
             .bind()
 
-        val value = parseTokenStatusList(statusList = response.statusList, index = statusList.index)
-            .mapError(ParseTokenStatusStatusListError::toFetchStatusFromTokenStatusListError)
+        val value = parseTokenStatusList(statusList = responseResult.statusList, index = statusList.index)
+            .mapError(ParseTokenStatusStatusListError::toFetchStatusFromParseTokenStatusListError)
             .bind()
 
         mapStatus(value)

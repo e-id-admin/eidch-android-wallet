@@ -2,88 +2,91 @@
 
 package ch.admin.foitt.wallet.platform.ssi.domain.model
 
+import ch.admin.foitt.wallet.platform.credential.domain.model.AnyCredentialError
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
+import ch.admin.foitt.wallet.platform.credential.domain.model.MapToCredentialDisplayDataError
 import timber.log.Timber
 
 interface SsiError {
     data class Unexpected(val cause: Throwable?) :
         CredentialClaimDisplayRepositoryError,
         CredentialClaimRepositoryError,
-        CredentialDisplayRepositoryError,
         CredentialIssuerDisplayRepositoryError,
-        CredentialIssuerRepositoryError,
         CredentialRepositoryError,
-        GetAllCredentialsError,
-        GetCredentialByIdError,
+        CredentialWithDisplaysRepositoryError,
+        CredentialWithDisplaysAndClaimsRepositoryError,
         DeleteCredentialError,
-        GetCredentialClaimsError,
-        GetCredentialClaimDisplayError,
-        GetCredentialClaimDataError,
         MapToCredentialClaimDataError,
         CredentialOfferRepositoryError,
-        GetCredentialIssuerDisplayFlowError
+        GetCredentialDetailFlowError,
+        GetCredentialsWithDisplaysFlowError
 }
 
 sealed interface CredentialClaimDisplayRepositoryError
 sealed interface CredentialClaimRepositoryError
-sealed interface CredentialDisplayRepositoryError
 sealed interface CredentialIssuerDisplayRepositoryError
-sealed interface CredentialIssuerRepositoryError
 sealed interface CredentialRepositoryError
-sealed interface GetAllCredentialsError
-sealed interface GetCredentialByIdError
-sealed interface DeleteCredentialError
-sealed interface GetCredentialClaimsError
-sealed interface GetCredentialClaimDisplayError
-sealed interface GetCredentialClaimDataError
-sealed interface MapToCredentialClaimDataError
+sealed interface CredentialWithDisplaysRepositoryError
+sealed interface CredentialWithDisplaysAndClaimsRepositoryError
 sealed interface CredentialOfferRepositoryError
-sealed interface GetCredentialIssuerDisplayFlowError
-
-internal fun CredentialRepositoryError.toGetAllCredentialsError() = when (this) {
-    is SsiError.Unexpected -> SsiError.Unexpected(cause)
-}
+sealed interface DeleteCredentialError
+sealed interface MapToCredentialClaimDataError
+sealed interface GetCredentialDetailFlowError
+sealed interface GetCredentialsWithDisplaysFlowError
 
 internal fun CredentialRepositoryError.toDeleteCredentialError() = when (this) {
     is SsiError.Unexpected -> SsiError.Unexpected(cause)
 }
 
-internal fun CredentialClaimRepositoryError.toGetCredentialClaimsError() = when (this) {
-    is SsiError.Unexpected -> SsiError.Unexpected(cause)
+internal fun Throwable.toMapToCredentialClaimDataError(message: String): MapToCredentialClaimDataError {
+    Timber.e(t = this, message = message)
+    return SsiError.Unexpected(this)
 }
 
-internal fun CredentialClaimDisplayRepositoryError.toGetCredentialClaimDisplayError() = when (this) {
-    is SsiError.Unexpected -> SsiError.Unexpected(cause)
+internal fun Throwable.toCredentialOfferRepositoryError(message: String): CredentialOfferRepositoryError {
+    Timber.e(t = this, message = message)
+    return SsiError.Unexpected(this)
 }
 
-internal fun GetCredentialClaimDisplayError.toGetCredentialClaimDataError() = when (this) {
-    is SsiError.Unexpected -> SsiError.Unexpected(cause)
+internal fun Throwable.toCredentialIssuerDisplayRepositoryError(message: String): CredentialIssuerDisplayRepositoryError {
+    Timber.e(t = this, message = message)
+    return SsiError.Unexpected(this)
+}
+internal fun Throwable.toCredentialWithDisplaysRepositoryError(message: String): CredentialWithDisplaysRepositoryError {
+    Timber.e(t = this, message = message)
+    return SsiError.Unexpected(this)
 }
 
-internal fun MapToCredentialClaimDataError.toGetCredentialClaimDataError() = when (this) {
+internal fun Throwable.toCredentialWithDisplaysAndClaimsRepositoryError(message: String): CredentialWithDisplaysAndClaimsRepositoryError {
+    Timber.e(t = this, message = message)
+    return SsiError.Unexpected(this)
+}
+
+internal fun MapToCredentialClaimDataError.toGetCredentialDetailFlowError(): GetCredentialDetailFlowError = when (this) {
     is SsiError.Unexpected -> this
 }
 
-internal fun Throwable.toMapToCredentialClaimDataError(): MapToCredentialClaimDataError {
-    Timber.e(this)
-    return SsiError.Unexpected(this)
+internal fun CredentialWithDisplaysAndClaimsRepositoryError.toGetCredentialDetailFlowError(): GetCredentialDetailFlowError = when (this) {
+    is SsiError.Unexpected -> this
 }
 
-internal fun Throwable.toCredentialRepositoryError(): CredentialRepositoryError {
-    Timber.e(this)
-    return SsiError.Unexpected(this)
+internal fun CredentialWithDisplaysRepositoryError.toGetCredentialWithDisplaysFlowError():
+    GetCredentialsWithDisplaysFlowError = when (this) {
+    is SsiError.Unexpected -> this
 }
 
-internal fun Throwable.toCredentialOfferRepositoryError(): CredentialOfferRepositoryError {
-    Timber.e(this)
-    return SsiError.Unexpected(this)
+internal fun AnyCredentialError.toGetCredentialDetailFlowError(): GetCredentialDetailFlowError = when (this) {
+    is CredentialError.Unexpected -> SsiError.Unexpected(cause)
 }
 
-internal fun Throwable.toCredentialIssuerDisplayRepositoryError(): CredentialIssuerDisplayRepositoryError {
-    Timber.e(this)
-    return SsiError.Unexpected(this)
+internal fun AnyCredentialError.toGetCredentialsWithDisplaysFlowError(): GetCredentialsWithDisplaysFlowError = when (this) {
+    is CredentialError.Unexpected -> SsiError.Unexpected(cause)
 }
 
-internal fun CredentialIssuerDisplayRepositoryError.toGetCredentialIssuerDisplayFlowError(): GetCredentialIssuerDisplayFlowError =
-    when (this) {
-        is SsiError.Unexpected -> this
-    }
+internal fun MapToCredentialDisplayDataError.toGetCredentialDetailFlowError(): GetCredentialDetailFlowError = when (this) {
+    is CredentialError.Unexpected -> SsiError.Unexpected(cause)
+}
+
+internal fun MapToCredentialDisplayDataError.toGetCredentialsWithDisplaysFlowError(): GetCredentialsWithDisplaysFlowError = when (this) {
+    is CredentialError.Unexpected -> SsiError.Unexpected(cause)
+}

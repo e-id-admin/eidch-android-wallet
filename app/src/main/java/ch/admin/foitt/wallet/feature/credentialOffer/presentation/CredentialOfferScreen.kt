@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -60,6 +61,7 @@ import ch.admin.foitt.wallet.platform.navArgs.domain.model.CredentialOfferNavArg
 import ch.admin.foitt.wallet.platform.preview.AllCompactScreensPreview
 import ch.admin.foitt.wallet.platform.preview.AllLargeScreensPreview
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
+import ch.admin.foitt.wallet.platform.utils.TestTags
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTexts
 import ch.admin.foitt.wallet.theme.WalletTheme
@@ -204,7 +206,9 @@ private fun CredentialBoxWithButtons(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         MediumCredentialCard(
-            modifier = Modifier.padding(horizontal = Sizes.s10),
+            modifier = Modifier
+                .padding(horizontal = Sizes.s10)
+                .testTag(TestTags.OFFER_CREDENTIAL.name),
             credentialCardState = credential,
         )
         Spacer(modifier = Modifier.height(Sizes.s06))
@@ -384,13 +388,17 @@ private fun CredentialOfferButtons(
         maxItemsInEachRow = 2,
     ) {
         Buttons.FilledPrimary(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .testTag(TestTags.DECLINE_BUTTON.name),
             text = stringResource(id = R.string.tk_global_decline_secondarybutton),
             startIcon = painterResource(id = R.drawable.wallet_ic_cross),
             onClick = onDecline,
         )
         Buttons.FilledTertiary(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .testTag(TestTags.ACCEPT_BUTTON.name),
             text = stringResource(id = R.string.tk_global_add_primarybutton),
             startIcon = painterResource(id = R.drawable.wallet_ic_checkmark),
             onClick = onAccept,

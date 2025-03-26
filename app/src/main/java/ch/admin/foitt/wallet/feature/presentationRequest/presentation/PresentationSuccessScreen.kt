@@ -40,7 +40,7 @@ private fun PresentationSuccessContent(
         contentIcon = R.drawable.wallet_ic_check_circle_complete_thin,
         primaryButtonText = R.string.tk_global_close,
         onPrimaryButton = onClose,
-        content = { SubmittedDataBoxTertiary(fields = fields) },
+        content = { SubmittedDataBox(fields = fields) },
     )
 }
 

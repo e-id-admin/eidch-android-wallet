@@ -1,20 +1,15 @@
 package ch.admin.foitt.wallet.feature.home.domain.model
 
-import timber.log.Timber
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestCaseWithStateRepositoryError
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestError
 
 internal interface HomeError {
     data class Unexpected(val throwable: Throwable?) :
-        HomeRepositoryError,
-        GetHomeDataFlowError
-}
-sealed interface GetHomeDataFlowError
-sealed interface HomeRepositoryError
-
-internal fun Throwable.toHomeRepositoryError(): HomeRepositoryError {
-    Timber.e(this)
-    return HomeError.Unexpected(this)
+        GetEIdRequestsFlowError
 }
 
-internal fun HomeRepositoryError.toGetHomeDataFlowError(): GetHomeDataFlowError = when (this) {
-    is HomeError.Unexpected -> this
+sealed interface GetEIdRequestsFlowError
+
+internal fun EIdRequestCaseWithStateRepositoryError.toGetEIdRequestsFlowError() = when (this) {
+    is EIdRequestError.Unexpected -> HomeError.Unexpected(cause)
 }

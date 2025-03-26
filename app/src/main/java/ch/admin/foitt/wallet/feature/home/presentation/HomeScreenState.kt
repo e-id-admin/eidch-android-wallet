@@ -1,7 +1,7 @@
 package ch.admin.foitt.wallet.feature.home.presentation
 
+import ch.admin.foitt.wallet.feature.home.domain.model.EIdRequest
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequest
 
 sealed interface HomeScreenState {
     data object Initial : HomeScreenState

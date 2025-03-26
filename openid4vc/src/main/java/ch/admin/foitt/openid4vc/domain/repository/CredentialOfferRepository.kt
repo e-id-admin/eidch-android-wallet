@@ -12,7 +12,7 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.IssuerConf
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.IssuerCredentialInformation
 import com.github.michaelbull.result.Result
 
-internal interface CredentialOfferRepository {
+interface CredentialOfferRepository {
 
     @CheckResult
     suspend fun fetchIssuerCredentialInformation(

@@ -6,7 +6,7 @@ import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimImage
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimText
 import ch.admin.foitt.wallet.platform.ssi.domain.model.MapToCredentialClaimDataError
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.MapToCredentialClaimData
-import ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.mock.MockCredentialClaim.buildCredentialClaim
+import ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.mock.MockCredentialClaim.buildClaimWithDisplays
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.mock.MockCredentialClaim.credentialClaimDisplay
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.mock.MockCredentialClaim.credentialClaimDisplays
 import ch.admin.foitt.wallet.platform.utils.base64NonUrlStringToByteArray
@@ -54,22 +54,22 @@ class MapToCredentialClaimDataImplTest {
 
     @Test
     fun `Claim with string valueType should return correct data`() = runTest {
-        val claim = buildCredentialClaim("string")
+        val claimWithDisplays = buildClaimWithDisplays("string")
 
-        val data = mapToCredentialClaimData(claim = claim, displays = credentialClaimDisplays).assertOk()
+        val data = mapToCredentialClaimData(claimWithDisplays).assertOk()
         assertTrue(data is CredentialClaimText, "string valueType should return ${CredentialClaimText::class.simpleName}")
         assertEquals(credentialClaimDisplay.name, data.localizedKey)
-        assertEquals(claim.value, (data as CredentialClaimText).value)
+        assertEquals(claimWithDisplays.claim.value, (data as CredentialClaimText).value)
     }
 
     @Test
     fun `Claim with bool valueType should return correct data`() = runTest {
-        val claim = buildCredentialClaim("bool")
+        val claimWithDisplays = buildClaimWithDisplays("bool")
 
-        val data = mapToCredentialClaimData(claim = claim, displays = credentialClaimDisplays).assertOk()
+        val data = mapToCredentialClaimData(claimWithDisplays).assertOk()
         assertTrue(data is CredentialClaimText, "bool valueType should return ${CredentialClaimText::class.simpleName}")
         assertEquals(credentialClaimDisplay.name, data.localizedKey)
-        assertEquals(claim.value, (data as CredentialClaimText).value)
+        assertEquals(claimWithDisplays.claim.value, (data as CredentialClaimText).value)
     }
 
     @ParameterizedTest
@@ -81,38 +81,38 @@ class MapToCredentialClaimDataImplTest {
         ]
     )
     fun `Claim with supported image mime type should return correct data`(imageMimeType: String) = runTest {
-        val claim = buildCredentialClaim(imageMimeType)
+        val claimWithDisplays = buildClaimWithDisplays(imageMimeType)
 
-        val data = mapToCredentialClaimData(claim = claim, displays = credentialClaimDisplays).assertOk()
+        val data = mapToCredentialClaimData(claimWithDisplays).assertOk()
         assertTrue(data is CredentialClaimImage, "$imageMimeType mime type should return ${CredentialClaimImage::class.simpleName}")
         assertEquals(credentialClaimDisplay.name, data.localizedKey)
-        assertEquals(claim.value.base64NonUrlStringToByteArray(), (data as CredentialClaimImage).imageData)
+        assertEquals(claimWithDisplays.claim.value.base64NonUrlStringToByteArray(), (data as CredentialClaimImage).imageData)
     }
 
     @Test
     fun `Claim with jpg valueType should return an error`() = runTest {
-        mapToCredentialClaimData(claim = buildCredentialClaim("image/jpg"), displays = credentialClaimDisplays)
+        mapToCredentialClaimData(buildClaimWithDisplays("image/jpg"))
             .assertErrorType(MapToCredentialClaimDataError::class)
     }
 
     @Test
     fun `Claim with null valueType should return an error`() = runTest {
-        mapToCredentialClaimData(claim = buildCredentialClaim("null"), displays = credentialClaimDisplays)
+        mapToCredentialClaimData(buildClaimWithDisplays("null"))
             .assertErrorType(MapToCredentialClaimDataError::class)
     }
 
     @Test
     fun `Claim with empty valueType should return an error`() = runTest {
-        mapToCredentialClaimData(claim = buildCredentialClaim(""), displays = credentialClaimDisplays)
+        mapToCredentialClaimData(buildClaimWithDisplays(""))
             .assertErrorType(MapToCredentialClaimDataError::class)
     }
 
     @Test
     fun `Claim with string valueType but no displays should return an error`() = runTest {
         coEvery { mockGetLocalizedDisplay(displays = any<List<CredentialClaimDisplay>>()) } returns null
-        val claim = buildCredentialClaim("string")
+        val claimWithDisplays = buildClaimWithDisplays("string", emptyList())
 
-        mapToCredentialClaimData(claim = claim, displays = emptyList())
+        mapToCredentialClaimData(claimWithDisplays)
             .assertErrorType(MapToCredentialClaimDataError::class)
     }
 }

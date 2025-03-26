@@ -11,7 +11,7 @@ import ch.admin.foitt.wallet.theme.WalletTheme
 
 object CredentialCardMocks {
 
-    val state1 @Composable get() = CredentialCardState(
+    private val state1 @Composable get() = CredentialCardState(
         credentialId = 1L,
         title = "Lernfahrausweis B",
         subtitle = "Max Mustermann",
@@ -23,7 +23,7 @@ object CredentialCardMocks {
         isCredentialFromBetaIssuer = true,
     )
 
-    val state2 @Composable get() = CredentialCardState(
+    private val state2 @Composable get() = CredentialCardState(
         credentialId = 2L,
         title = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore " +
             "et dolore magna aliquyam erat, sed diam voluptua.",
@@ -37,7 +37,7 @@ object CredentialCardMocks {
         isCredentialFromBetaIssuer = false,
     )
 
-    val state3 @Composable get() = CredentialCardState(
+    private val state3 @Composable get() = CredentialCardState(
         credentialId = 3L,
         title = "Lernfahrausweis B",
         subtitle = null,
@@ -49,7 +49,7 @@ object CredentialCardMocks {
         isCredentialFromBetaIssuer = false,
     )
 
-    val state4 @Composable get() = CredentialCardState(
+    private val state4 @Composable get() = CredentialCardState(
         credentialId = 4L,
         title = null,
         subtitle = null,
@@ -61,7 +61,7 @@ object CredentialCardMocks {
         isCredentialFromBetaIssuer = false,
     )
 
-    val state5 @Composable get() = CredentialCardState(
+    private val state5 @Composable get() = CredentialCardState(
         credentialId = 5L,
         title = null,
         subtitle = null,
@@ -73,11 +73,24 @@ object CredentialCardMocks {
         isCredentialFromBetaIssuer = false,
     )
 
+    private val state6 @Composable get() = CredentialCardState(
+        credentialId = 6L,
+        title = "Credential name",
+        subtitle = null,
+        status = CredentialDisplayStatus.Valid,
+        logo = null,
+        backgroundColor = CredentialCardState.defaultCardColor,
+        contentColor = Color.Black,
+        borderColor = CredentialCardState.defaultCardColor,
+        isCredentialFromBetaIssuer = true,
+    )
+
     val mocks = sequenceOf(
         ComposableWrapper { state1 },
         ComposableWrapper { state2 },
         ComposableWrapper { state3 },
         ComposableWrapper { state4 },
         ComposableWrapper { state5 },
+        ComposableWrapper { state6 },
     )
 }

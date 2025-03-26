@@ -60,6 +60,18 @@ class GeneralCodingKonsistTest {
     }
 
     @Test
+    fun `Timber error and warning (this) should not be used`() {
+        Konsist
+            .scopeFromProject()
+            .files
+            .filter { it.path.endsWith(".kt") }
+            .filterNot { "androidTest" in it.path || "test" in it.path }
+            .assertFalse(additionalMessage = "Use the following format: Timber.x(t = throwable, message = \"Some context\")") {
+                it.text.contains("Timber.e(this)") || it.text.contains("Timber.w(this)")
+            }
+    }
+
+    @Test
     fun `Serializable classes should not be open`() = Konsist
         .scopeFromProject()
         .classes()
@@ -128,17 +140,13 @@ class GeneralCodingKonsistTest {
                         }
                     },
                     DynamicTest.dynamicTest("${file.name}: kotlinx.serialization.json.Json methods should not be used") {
-                        val exceptions = listOf("SafeJson")
+                        val exceptions = listOf("SafeJson", "OpenId4VcModule", "UtilModule", "Jwt", "SdJwt")
                         if (!file.hasClassWithName(names = exceptions)) {
-                            file.assertFalse(additionalMessage = "use methods from 'SafeJson' instead") {
-                                it.hasImportWithName(
-                                    listOf(
-                                        "kotlinx.serialization.encodeToString",
-                                        "kotlinx.serialization.decodeFromString",
-                                        "kotlinx.serialization.json.encodeToJsonElement",
-                                        "kotlinx.serialization.json.decodeFromJsonElement"
-                                    )
-                                )
+                            file.assertFalse(additionalMessage = "use methods from 'SafeJson' instead") { fileDeclaration ->
+                                fileDeclaration.hasImport { import ->
+                                    import.name == "kotlinx.serialization.json.Json" ||
+                                        import.name.startsWith("kotlinx.serialization.json.Json.", ignoreCase = false)
+                                }
                             }
                         }
                     },

@@ -12,11 +12,6 @@ fun <T, V> Result<T, V>.assertOk(): T {
     return get()!!
 }
 
-fun <T, V> Result<T, V>.assertOkNullable(): T? {
-    assertTrue(isOk) { "an error occurred: ${asErr<T, V, V>().error}" }
-    return get()
-}
-
 inline fun <T : Any, V, reified U : T> Result<T, V>.assertSuccessType(type: KClass<U>): U {
     val success = assertOk()
     assertTrue(type.isInstance(success)) { "the success is not of the right type: ${success::class.simpleName}" }

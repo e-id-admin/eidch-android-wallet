@@ -20,7 +20,9 @@ class EIdRequestCaseWithStateRepositoryImpl @Inject constructor(
     override fun getEIdRequestCasesWithStatesFlow(): Flow<Result<List<EIdRequestCaseWithState>, EIdRequestCaseWithStateRepositoryError>> =
         eIdRequestCaseWithStateDaoFlow.flatMapLatest { dao ->
             dao?.getEIdCasesWithStatesFlow()
-                ?.catchAndMap(Throwable::toEIdRequestCaseWithStateRepositoryError) ?: emptyFlow()
+                ?.catchAndMap { throwable ->
+                    throwable.toEIdRequestCaseWithStateRepositoryError("getEIdRequestCasesWithStatesFlow error")
+                } ?: emptyFlow()
         }
 
     private val eIdRequestCaseWithStateDaoFlow = daoProvider.eIdRequestCaseWithStateDaoFlow

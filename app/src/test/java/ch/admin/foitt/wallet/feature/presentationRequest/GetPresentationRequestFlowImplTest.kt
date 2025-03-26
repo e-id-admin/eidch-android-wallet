@@ -1,23 +1,24 @@
 package ch.admin.foitt.wallet.feature.presentationRequest
 
-import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest
-import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.PresentationRequestDisplayData
+import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.credentialDisplayData
+import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.credentialDisplays
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.PresentationRequestError
-import ch.admin.foitt.wallet.feature.presentationRequest.domain.repository.PresentationRequestRepository
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.implementation.GetPresentationRequestFlowImpl
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.IsCredentialFromBetaIssuer
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialDisplayData
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
+import ch.admin.foitt.wallet.platform.credential.domain.model.toDisplayStatus
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.MapToCredentialDisplayData
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.PresentationRequestField
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
-import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimWithDisplays
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialWithDisplaysAndClaims
-import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedDisplay
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimData
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
+import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialWithDisplaysAndClaimsRepository
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.MapToCredentialClaimData
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
@@ -40,16 +41,13 @@ import org.junit.jupiter.api.Test
 class GetPresentationRequestFlowImplTest {
 
     @MockK
-    lateinit var mockPresentationRequestRepository: PresentationRequestRepository
+    lateinit var mockCredentialWithDisplaysAndClaimsRepository: CredentialWithDisplaysAndClaimsRepository
 
     @MockK
-    lateinit var mockGetLocalizedDisplay: GetLocalizedDisplay
+    lateinit var mockMapToCredentialDisplayData: MapToCredentialDisplayData
 
     @MockK
     lateinit var mockMapToCredentialClaimData: MapToCredentialClaimData
-
-    @MockK
-    lateinit var mockIsCredentialFromBetaIssuer: IsCredentialFromBetaIssuer
 
     @MockK
     lateinit var mockCredentialWithDisplaysAndClaims: CredentialWithDisplaysAndClaims
@@ -61,9 +59,6 @@ class GetPresentationRequestFlowImplTest {
     lateinit var mockCredentialClaim: CredentialClaim
 
     @MockK
-    lateinit var mockCredentialClaimDisplay: CredentialClaimDisplay
-
-    @MockK
     lateinit var mockClaimData: CredentialClaimData
 
     @MockK
@@ -72,6 +67,9 @@ class GetPresentationRequestFlowImplTest {
     @MockK
     lateinit var mockPresentationRequest: PresentationRequest
 
+    @MockK
+    lateinit var mockCredential: Credential
+
     private lateinit var getPresentationRequestFlow: GetPresentationRequestFlowImpl
 
     @BeforeEach
@@ -79,10 +77,9 @@ class GetPresentationRequestFlowImplTest {
         MockKAnnotations.init(this)
 
         getPresentationRequestFlow = GetPresentationRequestFlowImpl(
-            mockPresentationRequestRepository,
-            mockGetLocalizedDisplay,
+            mockCredentialWithDisplaysAndClaimsRepository,
+            mockMapToCredentialDisplayData,
             mockMapToCredentialClaimData,
-            mockIsCredentialFromBetaIssuer,
         )
 
         setupDefaultMocks()
@@ -98,7 +95,6 @@ class GetPresentationRequestFlowImplTest {
         val result = getPresentationRequestFlow(
             id = CREDENTIAL_ID1,
             requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
@@ -106,32 +102,15 @@ class GetPresentationRequestFlowImplTest {
     }
 
     @Test
-    fun `A beta issuer credential is indicated in the result`(): Unit = runTest {
-        coEvery { mockIsCredentialFromBetaIssuer.invoke(credentialId = any()) } returns true
-
-        val result = getPresentationRequestFlow(
-            id = CREDENTIAL_ID1,
-            requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockPresentationRequest,
-        ).firstOrNull()
-
-        assertNotNull(result)
-        val displayData: PresentationRequestDisplayData? = result?.assertOk()
-        val credentialPreview = displayData?.credential
-        assert(credentialPreview?.isCredentialFromBetaIssuer == true)
-    }
-
-    @Test
     fun `Getting the presentation request flow maps errors from the repository`() = runTest {
         val exception = IllegalStateException("db error")
         coEvery {
-            mockPresentationRequestRepository.getPresentationCredentialFlow(CREDENTIAL_ID1)
-        } returns flowOf(Err(PresentationRequestError.Unexpected(exception)))
+            mockCredentialWithDisplaysAndClaimsRepository.getCredentialWithDisplaysAndClaimsFlowById(CREDENTIAL_ID1)
+        } returns flowOf(Err(SsiError.Unexpected(exception)))
 
         val result = getPresentationRequestFlow(
             id = CREDENTIAL_ID1,
             requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
@@ -141,13 +120,15 @@ class GetPresentationRequestFlowImplTest {
     }
 
     @Test
-    fun `Getting the presentation request flow maps errors from the GetLocalizedDisplay use case`() = runTest {
-        coEvery { mockGetLocalizedDisplay(listOf(credentialDisplay1)) } returns null
+    fun `Getting the presentation request flow maps errors from the MapToCredentialDisplayData use case`() = runTest {
+        val exception = IllegalStateException("map to credential claim display data error")
+        coEvery {
+            mockMapToCredentialDisplayData(mockCredential, credentialDisplays)
+        } returns Err(CredentialError.Unexpected(exception))
 
         val result = getPresentationRequestFlow(
             id = CREDENTIAL_ID1,
             requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
@@ -158,13 +139,12 @@ class GetPresentationRequestFlowImplTest {
     fun `Getting the presentation request flow maps from the MapToCredentialClaimData use case`() = runTest {
         val exception = IllegalStateException("no claim displays found")
         coEvery {
-            mockMapToCredentialClaimData(any<CredentialClaim>(), any<List<CredentialClaimDisplay>>())
+            mockMapToCredentialClaimData(any<CredentialClaimWithDisplays>())
         } returns Err(SsiError.Unexpected(exception))
 
         val result = getPresentationRequestFlow(
             id = CREDENTIAL_ID1,
             requestedFields = listOf(mockRequestedField),
-            presentationRequest = mockPresentationRequest,
         ).firstOrNull()
 
         assertNotNull(result)
@@ -175,23 +155,23 @@ class GetPresentationRequestFlowImplTest {
 
     private fun setupDefaultMocks() {
         coEvery {
-            mockPresentationRequestRepository.getPresentationCredentialFlow(CREDENTIAL_ID1)
+            mockCredentialWithDisplaysAndClaimsRepository.getCredentialWithDisplaysAndClaimsFlowById(CREDENTIAL_ID1)
         } returns flowOf(Ok(mockCredentialWithDisplaysAndClaims))
-        coEvery { mockCredentialWithDisplaysAndClaims.credential } returns credential1
-        coEvery { mockCredentialWithDisplaysAndClaims.credentialDisplays } returns listOf(credentialDisplay1)
+        coEvery { mockCredentialWithDisplaysAndClaims.credential } returns mockCredential
+        coEvery { mockCredentialWithDisplaysAndClaims.credentialDisplays } returns credentialDisplays
         coEvery { mockCredentialWithDisplaysAndClaims.claims } returns listOf(mockCredentialClaimWithDisplays)
 
         coEvery { mockCredentialClaimWithDisplays.claim } returns mockCredentialClaim
         coEvery { mockCredentialClaim.key } returns CLAIM_KEY
         coEvery { mockCredentialClaim.order } returns CLAIM_ORDER
-        coEvery { mockCredentialClaimWithDisplays.displays } returns listOf(mockCredentialClaimDisplay)
-
-        coEvery { mockGetLocalizedDisplay(listOf(credentialDisplay1)) } returns credentialDisplay1
 
         coEvery {
-            mockMapToCredentialClaimData(mockCredentialClaim, listOf(mockCredentialClaimDisplay))
+            mockMapToCredentialDisplayData(mockCredential, credentialDisplays)
+        } returns Ok(credentialDisplayData)
+
+        coEvery {
+            mockMapToCredentialClaimData(mockCredentialClaimWithDisplays)
         } returns Ok(mockClaimData)
-        coEvery { mockIsCredentialFromBetaIssuer(CREDENTIAL_ID1) } returns false
 
         coEvery { mockRequestedField.key } returns CLAIM_KEY
         coEvery { mockPresentationRequest.clientIdScheme } returns CLIENT_ID_SCHEME
@@ -206,20 +186,19 @@ class GetPresentationRequestFlowImplTest {
 
         const val CREDENTIAL_ID1 = 1L
 
-        val credential1 = Credential(
-            id = CREDENTIAL_ID1,
-            status = CredentialStatus.VALID,
-            keyBindingIdentifier = "privateKeyIdentifier",
-            keyBindingAlgorithm = "signingAlgo",
-            payload = "payload",
-            format = CredentialFormat.VC_SD_JWT,
-            issuer = "issuer"
-        )
-
         val credentialDisplay1 = CredentialDisplay(
             credentialId = CREDENTIAL_ID1,
             locale = "locale",
             name = "name"
+        )
+
+        val credentialDisplays = listOf(credentialDisplay1)
+
+        val credentialDisplayData = CredentialDisplayData(
+            credentialId = CREDENTIAL_ID1,
+            status = CredentialStatus.VALID.toDisplayStatus(),
+            credentialDisplay = credentialDisplay1,
+            isCredentialFromBetaIssuer = false,
         )
     }
 }

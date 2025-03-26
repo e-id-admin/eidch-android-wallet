@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.feature.home.presentation
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,16 +48,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.feature.home.domain.model.EIdRequest
+import ch.admin.foitt.wallet.feature.home.presentation.composables.EIdRequestCard
 import ch.admin.foitt.wallet.platform.composables.Buttons
+import ch.admin.foitt.wallet.platform.composables.ToastAnimated
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.LazyColumn
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
 import ch.admin.foitt.wallet.platform.composables.presentation.nonFocusableAccessibilityAnchor
 import ch.admin.foitt.wallet.platform.credential.presentation.CredentialListRow
 import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialMocks
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequest
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestQueueState
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.EIdRequestCard
 import ch.admin.foitt.wallet.platform.preview.AllCompactScreensPreview
 import ch.admin.foitt.wallet.platform.preview.AllLargeScreensPreview
 import ch.admin.foitt.wallet.platform.preview.ComposableWrapper
@@ -77,6 +79,8 @@ fun HomeScreen(
         screenState = viewModel.screenState.collectAsStateWithLifecycle().value,
         isRefreshing = viewModel.isRefreshing.collectAsStateWithLifecycle().value,
         onStartOnlineIdentification = viewModel::onStartOnlineIdentification,
+        eventMessage = viewModel.eventMessage.collectAsStateWithLifecycle().value,
+        onCloseToast = viewModel::onCloseToast,
         onQrScan = viewModel::onQrScan,
         onMenu = viewModel::onMenu,
         onRefresh = viewModel::onRefresh,
@@ -90,6 +94,8 @@ private fun HomeScreenContent(
     screenState: HomeScreenState,
     isRefreshing: Boolean,
     onStartOnlineIdentification: () -> Unit,
+    @StringRes eventMessage: Int?,
+    onCloseToast: () -> Unit,
     onQrScan: () -> Unit,
     onMenu: () -> Unit,
     onRefresh: () -> Unit,
@@ -101,6 +107,7 @@ private fun HomeScreenContent(
     onScan = onQrScan,
     windowWidthClass = windowWidthClass,
 ) { stickyBottomHeightDp ->
+
     when (screenState) {
         HomeScreenState.Initial -> {
         }
@@ -113,6 +120,8 @@ private fun HomeScreenContent(
             contentBottomPadding = stickyBottomHeightDp,
             onCredentialClick = screenState.onCredentialClick,
             onRefresh = onRefresh,
+            messageToast = eventMessage,
+            onCloseToast = onCloseToast,
         )
 
         is HomeScreenState.NoCredential -> NoCredentialContent(
@@ -313,6 +322,8 @@ fun WalletEmptyContent(
 private fun Credentials(
     credentialsState: List<CredentialCardState>,
     isRefreshing: Boolean,
+    @StringRes messageToast: Int?,
+    onCloseToast: () -> Unit,
     contentBottomPadding: Dp,
     ongoingEIdRequests: List<EIdRequest>,
     onStartOnlineIdentification: () -> Unit,
@@ -329,7 +340,8 @@ private fun Credentials(
         modifier = Modifier
             .setIsTraversalGroup()
             .fillMaxHeight()
-            .pullRefresh(state = pullRefreshState),
+            .pullRefresh(state = pullRefreshState)
+            .testTag(TestTags.CREDENTIAL_LIST.name),
         contentPadding = PaddingValues(
             top = Sizes.s06,
             bottom = contentBottomPadding + Sizes.s06
@@ -368,6 +380,15 @@ private fun Credentials(
             state = pullRefreshState,
         )
     }
+
+    ToastAnimated(
+        isVisible = messageToast != null,
+        isSnackBarDesign = true,
+        messageToast = messageToast,
+        onCloseToast = onCloseToast,
+        iconEnd = R.drawable.wallet_ic_cross,
+        contentBottomPadding = contentBottomPadding + Sizes.s06
+    )
 }
 
 @Composable
@@ -464,6 +485,8 @@ private fun HomeScreenCompactPreview(
             onRefresh = {},
             onGetBetaId = {},
             onGetEId = {},
+            onCloseToast = {},
+            eventMessage = null,
         )
     }
 }
@@ -484,6 +507,8 @@ private fun HomeScreenLargePreview(
             onRefresh = {},
             onGetBetaId = {},
             onGetEId = {},
+            onCloseToast = {},
+            eventMessage = null,
         )
     }
 }

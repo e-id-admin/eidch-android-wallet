@@ -112,15 +112,6 @@ class UpdateCredentialStatusImplTest {
     }
 
     @Test
-    fun `Updating credential status for non-existing credential does not update status`() = runTest(testDispatcher) {
-        coEvery { mockGetAnyCredential(any()) } returns Ok(null)
-
-        coVerify(exactly = 0) {
-            mockCredentialRepository.updateStatusByCredentialId(any(), any())
-        }
-    }
-
-    @Test
     fun `Updating credential status maps errors from getting any credential`() = runTest(testDispatcher) {
         val exception = Exception("exception")
         coEvery { mockGetAnyCredential(any()) } returns Err(CredentialError.Unexpected(exception))

@@ -1,16 +1,19 @@
 package ch.admin.foitt.wallet.feature.credentialOffer.mock
 
-import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
-import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.SigningAlgorithm
-import ch.admin.foitt.wallet.platform.database.domain.model.Credential
+import androidx.compose.ui.graphics.Color
+import ch.admin.foitt.wallet.feature.credentialOffer.domain.model.CredentialOffer
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorField
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialDisplayData
+import ch.admin.foitt.wallet.platform.credential.domain.model.toDisplayStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimWithDisplays
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
-import ch.admin.foitt.wallet.platform.database.domain.model.CredentialIssuerDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
-import ch.admin.foitt.wallet.platform.database.domain.model.CredentialWithDetails
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimText
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 
 object MockCredentialOffer {
 
@@ -18,21 +21,14 @@ object MockCredentialOffer {
     private const val CLAIM_ID_1 = 1L
     private const val CLAIM_ID_2 = 2L
 
-    private val credential = Credential(
-        id = CREDENTIAL_ID,
-        status = CredentialStatus.VALID,
-        keyBindingIdentifier = "privateKeyIdentifier",
-        payload = "payload",
-        format = CredentialFormat.VC_SD_JWT,
-        keyBindingAlgorithm = SigningAlgorithm.ES256.stdName,
-        issuer = "issuer"
-    )
+    const val ISSUER = "issuer"
 
-    val credentialDisplay1 = CredentialDisplay(
+    private val credentialDisplay1 = CredentialDisplay(
         id = 23,
         credentialId = CREDENTIAL_ID,
         locale = "locale1",
         name = "name1",
+        backgroundColor = Color.Black.toString()
     )
 
     private val credentialDisplay2 = CredentialDisplay(
@@ -42,29 +38,7 @@ object MockCredentialOffer {
         name = "name2",
     )
 
-    private val credentialDisplays = listOf(
-        credentialDisplay1,
-        credentialDisplay2,
-    )
-
-    val issuerDisplay1 = CredentialIssuerDisplay(
-        id = 10,
-        credentialId = CREDENTIAL_ID,
-        name = "name1",
-        locale = "locale1",
-    )
-
-    private val issuerDisplay2 = CredentialIssuerDisplay(
-        id = 11,
-        credentialId = CREDENTIAL_ID,
-        name = "name2",
-        locale = "locale2",
-    )
-
-    private val issuerDisplays = listOf(
-        issuerDisplay1,
-        issuerDisplay2,
-    )
+    val credentialDisplays = listOf(credentialDisplay1, credentialDisplay2)
 
     private val claim1 = CredentialClaim(
         id = CLAIM_ID_1,
@@ -72,6 +46,7 @@ object MockCredentialOffer {
         key = "key1",
         value = "value1",
         valueType = "valueType1",
+        order = 0,
     )
 
     private val claim2 = CredentialClaim(
@@ -80,6 +55,7 @@ object MockCredentialOffer {
         key = "key2",
         value = "value2",
         valueType = "valueType2",
+        order = 1,
     )
 
     private val claimDisplay1 = CredentialClaimDisplay(
@@ -110,29 +86,23 @@ object MockCredentialOffer {
         locale = "locale4",
     )
 
-    private val claims = listOf(
-        CredentialClaimWithDisplays(
-            claim = claim1,
-            displays = listOf(
-                claimDisplay1,
-                claimDisplay2,
-            )
-        ),
-        CredentialClaimWithDisplays(
-            claim = claim2,
-            displays = listOf(
-                claimDisplay3,
-                claimDisplay4,
-            )
+    val claimWithDisplays1 = CredentialClaimWithDisplays(
+        claim = claim1,
+        displays = listOf(
+            claimDisplay1,
+            claimDisplay2,
         )
     )
 
-    val credentialWithDetails = CredentialWithDetails(
-        credential = credential,
-        credentialDisplays = credentialDisplays,
-        issuerDisplays = issuerDisplays,
-        claims = claims,
+    val claimWithDisplays2 = CredentialClaimWithDisplays(
+        claim = claim2,
+        displays = listOf(
+            claimDisplay3,
+            claimDisplay4,
+        )
     )
+
+    val claims = listOf(claimWithDisplays1, claimWithDisplays2)
 
     val claimData1 = CredentialClaimText(
         localizedKey = claimDisplay1.name,
@@ -142,5 +112,35 @@ object MockCredentialOffer {
     val claimData2 = CredentialClaimText(
         localizedKey = claimDisplay3.name,
         value = claim2.value,
+    )
+
+    val credentialDisplayData = CredentialDisplayData(
+        credentialId = CREDENTIAL_ID,
+        status = CredentialStatus.VALID.toDisplayStatus(),
+        credentialDisplay = credentialDisplay1,
+        isCredentialFromBetaIssuer = false
+    )
+
+    val mockIssuerDisplayData = ActorDisplayData(
+        name = listOf(
+            ActorField(value = "a", "de"),
+            ActorField(value = "b", "en"),
+        ),
+        image = null,
+        preferredLanguage = "de",
+        trustStatus = TrustStatus.TRUSTED,
+        actorType = ActorType.ISSUER,
+    )
+
+    val credentialOffer = CredentialOffer(
+        issuerDisplayData = mockIssuerDisplayData,
+        credential = credentialDisplayData,
+        claims = listOf(claimData1, claimData2)
+    )
+
+    val credentialOffer2 = CredentialOffer(
+        issuerDisplayData = mockIssuerDisplayData,
+        credential = credentialDisplayData,
+        claims = listOf(claimData1, claimData2)
     )
 }

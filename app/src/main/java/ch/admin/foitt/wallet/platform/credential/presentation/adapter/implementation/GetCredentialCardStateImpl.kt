@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
 import ch.admin.foitt.wallet.platform.composables.presentation.adapter.GetColor
 import ch.admin.foitt.wallet.platform.composables.presentation.adapter.GetDrawableFromUri
-import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialPreview
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialDisplayData
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
 import ch.admin.foitt.wallet.platform.utils.toPainter
@@ -16,19 +16,19 @@ internal class GetCredentialCardStateImpl @Inject constructor(
     private val getDrawableFromUri: GetDrawableFromUri,
 ) : GetCredentialCardState {
 
-    override suspend fun invoke(credentialPreview: CredentialPreview): CredentialCardState {
-        val backgroundColor: Color = getColor(credentialPreview.backgroundColor) ?: CredentialCardState.defaultCardColor
+    override suspend fun invoke(credentialDisplayData: CredentialDisplayData): CredentialCardState {
+        val backgroundColor: Color = getColor(credentialDisplayData.backgroundColor) ?: CredentialCardState.defaultCardColor
 
         return CredentialCardState(
-            credentialId = credentialPreview.credentialId,
-            title = credentialPreview.title,
-            subtitle = credentialPreview.subtitle,
-            status = credentialPreview.status,
-            borderColor = getColor(credentialPreview.backgroundColor) ?: CredentialCardState.defaultCardColor,
+            credentialId = credentialDisplayData.credentialId,
+            title = credentialDisplayData.title,
+            subtitle = credentialDisplayData.subtitle,
+            status = credentialDisplayData.status,
+            borderColor = backgroundColor,
             backgroundColor = backgroundColor,
             contentColor = getBestContrastColor(backgroundColor),
-            logo = getDrawableFromUri(credentialPreview.logoUri)?.toPainter(),
-            isCredentialFromBetaIssuer = credentialPreview.isCredentialFromBetaIssuer
+            logo = getDrawableFromUri(credentialDisplayData.logoUri)?.toPainter(),
+            isCredentialFromBetaIssuer = credentialDisplayData.isCredentialFromBetaIssuer
         )
     }
 

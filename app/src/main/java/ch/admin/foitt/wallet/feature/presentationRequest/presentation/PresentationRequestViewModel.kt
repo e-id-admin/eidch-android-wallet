@@ -26,6 +26,7 @@ import ch.admin.foitt.wallet.platform.utils.trackCompletion
 import ch.admin.foitt.walletcomposedestinations.destinations.ErrorScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationDeclinedScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationFailureScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.PresentationInvalidCredentialErrorScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationRequestScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationSuccessScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationValidationErrorScreenDestination
@@ -75,7 +76,6 @@ class PresentationRequestViewModel @Inject constructor(
         getPresentationRequestFlow(
             id = compatibleCredential.credentialId,
             requestedFields = compatibleCredential.requestedFields,
-            presentationRequest = presentationRequest,
         ).map { result ->
             result.mapBoth(
                 success = { presentationRequestUi ->
@@ -124,6 +124,7 @@ class PresentationRequestViewModel @Inject constructor(
                             is PresentationRequestError.Unexpected -> navigateToFailure()
                             PresentationRequestError.ValidationError -> navigateToValidationError()
                             PresentationRequestError.VerificationError -> navigateToVerificationError()
+                            PresentationRequestError.InvalidCredentialError -> navigateToInvalidCredentialError()
                         }
                     },
                 )
@@ -167,6 +168,15 @@ class PresentationRequestViewModel @Inject constructor(
     private fun navigateToValidationError() {
         navManager.navigateToAndClearCurrent(
             direction = PresentationValidationErrorScreenDestination(
+                issuerDisplayData = _verifierDisplayData.value
+            )
+        )
+    }
+
+    private fun navigateToInvalidCredentialError() {
+        navManager.navigateToAndClearCurrent(
+            direction = PresentationInvalidCredentialErrorScreenDestination(
+                sentFields = getSentFields(),
                 issuerDisplayData = _verifierDisplayData.value
             )
         )

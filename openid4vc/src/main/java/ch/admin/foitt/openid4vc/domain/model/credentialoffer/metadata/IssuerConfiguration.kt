@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class IssuerConfiguration(
+data class IssuerConfiguration(
     @SerialName("issuer")
     val issuer: String,
     @SerialName("token_endpoint")

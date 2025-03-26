@@ -69,18 +69,6 @@ class SubmitPresentationImplTest {
     }
 
     @Test
-    fun `Submitting a presentation for a non-existing compatible credential returns an error`() = runTest {
-        coEvery { mockGetAnyCredential(CREDENTIAL_ID) } returns Ok(null)
-
-        val result = submitPresentationUseCase(
-            presentationRequest = mockPresentationRequest,
-            compatibleCredential = compatibleCredential,
-        )
-
-        result.assertErrorType(PresentationRequestError.Unexpected::class)
-    }
-
-    @Test
     fun `Submitting a presentation maps errors from getting any credential`() = runTest {
         val exception = IllegalStateException()
         coEvery { mockGetAnyCredential.invoke(any()) } returns Err(CredentialError.Unexpected(exception))

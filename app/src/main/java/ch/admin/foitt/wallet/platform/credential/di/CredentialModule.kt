@@ -3,12 +3,14 @@ package ch.admin.foitt.wallet.platform.credential.di
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchCredential
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetAnyCredential
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetAnyCredentials
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.IsCredentialFromBetaIssuer
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.IsBetaIssuer
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.MapToCredentialDisplayData
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.SaveCredential
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.FetchCredentialImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.GetAnyCredentialImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.GetAnyCredentialsImpl
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.IsCredentialFromBetaIssuerImpl
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.IsBetaIssuerImpl
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.MapToCredentialDisplayDataImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.SaveCredentialImpl
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.implementation.GetCredentialCardStateImpl
@@ -47,7 +49,12 @@ internal interface CredentialModule {
     ): GetCredentialCardState
 
     @Binds
-    fun bindIsCredentialFromBetaIssuer(
-        useCase: IsCredentialFromBetaIssuerImpl
-    ): IsCredentialFromBetaIssuer
+    fun bindIsBetaIssuer(
+        useCase: IsBetaIssuerImpl
+    ): IsBetaIssuer
+
+    @Binds
+    fun bindMapToCredentialDisplayData(
+        useCase: MapToCredentialDisplayDataImpl
+    ): MapToCredentialDisplayData
 }

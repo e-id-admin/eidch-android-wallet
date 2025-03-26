@@ -12,7 +12,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven {
-            url = uri("https://maven.pkg.github.com/e-id-admin/didresolver-kotlin-android")
+            url = uri("https://maven.pkg.github.com/swiyu-admin-ch/didresolver-kotlin-android")
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
                 password = System.getenv("GITHUB_TOKEN")

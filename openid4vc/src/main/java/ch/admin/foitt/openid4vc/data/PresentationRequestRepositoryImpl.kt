@@ -92,6 +92,7 @@ internal class PresentationRequestRepositoryImpl @Inject constructor(
                 when {
                     it.isValidationError() -> PresentationRequestError.ValidationError
                     it.isVerificationError() -> PresentationRequestError.VerificationError
+                    it.isInvalidCredentialError() -> PresentationRequestError.InvalidCredentialError
                     else -> PresentationRequestError.Unexpected(clientRequestException)
                 }
             },
@@ -102,6 +103,8 @@ internal class PresentationRequestRepositoryImpl @Inject constructor(
     private fun HttpErrorBody.isValidationError() = this.error in ERRORS
 
     private fun HttpErrorBody.isVerificationError() = this.error == "verification_process_closed"
+
+    private fun HttpErrorBody.isInvalidCredentialError() = this.error == "invalid_credential"
 
     companion object {
         private val ERRORS = listOf(

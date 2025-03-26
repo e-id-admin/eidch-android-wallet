@@ -4,6 +4,6 @@ import ch.admin.eid.didresolver.didtoolbox.Jwk
 import com.github.michaelbull.result.Result
 import com.nimbusds.jwt.SignedJWT
 
-internal interface VerifyPublicKey {
+interface VerifyPublicKey {
     operator fun invoke(publicKey: Jwk, signedJWT: SignedJWT): Result<Unit, Unit>
 }

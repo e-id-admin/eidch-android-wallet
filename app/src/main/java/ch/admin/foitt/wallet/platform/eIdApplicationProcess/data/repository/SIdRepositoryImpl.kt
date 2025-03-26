@@ -31,12 +31,16 @@ class SIdRepositoryImpl @Inject constructor(
                 contentType(ContentType.Application.Json)
                 setBody(applyRequest)
             }.body()
-        }.mapError(Throwable::toFetchSIdCaseError)
+        }.mapError { throwable ->
+            throwable.toFetchSIdCaseError("fetchSIdCase error")
+        }
 
     override suspend fun fetchSIdState(caseId: String): Result<StateResponse, StateRequestError> =
         runSuspendCatching<StateResponse> {
             httpClient.get(environmentSetupRepo.sidBackendUrl + "/eid/$caseId/state") {
                 contentType(ContentType.Application.Json)
             }.body()
-        }.mapError(Throwable::toFetchSIdStateError)
+        }.mapError { throwable ->
+            throwable.toFetchSIdStateError("fetchSIdState error")
+        }
 }

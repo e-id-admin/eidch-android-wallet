@@ -48,6 +48,7 @@ class VerifyJwtImplTest {
 
         every { mockJwt.signedJwt } returns mockSignedJWT
         coEvery { mockResolveDid.invoke(any()) } returns Ok(mockDidDoc)
+        every { mockDidDoc.getDeactivated() } returns false
         every { mockDidDoc.getVerificationMethod() } returns mockVerificationMethods
         every { mockVerifyPublicKey(any(), any()) } returns Ok(Unit)
 
@@ -118,6 +119,15 @@ class VerifyJwtImplTest {
         val result = useCase(did = ISSUER_ID1, kid = KID_ID2, jwt = mockJwt)
 
         result.assertOk()
+    }
+
+    @Test
+    fun `Verifying jwt with didDoc deactivated returns DidDocumentDeactivated`(): Unit = runTest {
+        every { mockDidDoc.getDeactivated() } returns true
+
+        val result = useCase(did = ISSUER_ID1, kid = KID_ID1, jwt = mockJwt)
+
+        result.assertErrorType(VcSdJwtError.DidDocumentDeactivated::class)
     }
 
     companion object {

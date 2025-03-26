@@ -78,6 +78,7 @@ android {
 
         create("abn") {
             dimension = "environment"
+            applicationIdSuffix = ".abn"
             manifestPlaceholders["appLabel"] = "(ABN) swiyu"
         }
 
@@ -204,5 +205,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(libs.androidx.ui.automator)
+    androidTestImplementation(libs.androidx.espresso.intents)
     kspAndroidTest(libs.hilt.android.compiler)
 }

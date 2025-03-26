@@ -4,12 +4,12 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.Credential
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.SigningAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtCredential
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
+import ch.admin.foitt.wallet.platform.credential.domain.model.GetAnyCredentialError
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialRepo
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
-import ch.admin.foitt.wallet.util.assertOkNullable
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
@@ -19,7 +19,6 @@ import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -55,7 +54,7 @@ class GetAnyCredentialImplTest {
         )
         coEvery { mockCredentialRepository.getById(CREDENTIAL_ID) } returns Ok(mockCredential)
 
-        val credential = useCase(CREDENTIAL_ID).assertOk()!!
+        val credential = useCase(CREDENTIAL_ID).assertOk()
 
         assertEquals(CREDENTIAL_ID, credential.id)
         assertEquals(KEY_BINDING_ID, credential.keyBindingIdentifier)
@@ -65,12 +64,11 @@ class GetAnyCredentialImplTest {
     }
 
     @Test
-    fun `Getting any credential with none available returns null`() = runTest {
-        coEvery { mockCredentialRepository.getById(any()) } returns Ok(null)
+    fun `Getting any credential with none available returns an error`() = runTest {
+        val exception = IllegalStateException("no credential found")
+        coEvery { mockCredentialRepository.getById(any()) } returns Err(SsiError.Unexpected(exception))
 
-        val result = useCase(CREDENTIAL_ID).assertOkNullable()
-
-        assertNull(result)
+        useCase(CREDENTIAL_ID).assertErrorType(GetAnyCredentialError::class)
     }
 
     @Test

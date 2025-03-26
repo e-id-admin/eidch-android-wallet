@@ -23,11 +23,6 @@ class DeleteCredentialImpl @Inject constructor(
             .mapError(CredentialRepositoryError::toDeleteCredentialError)
             .bind()
 
-        if (credential == null) {
-            Timber.w("Try to delete non-existing credential")
-            return@coroutineBinding
-        }
-
         if (credential.keyBindingIdentifier != null) {
             deleteKeyStoreEntry(credential.keyBindingIdentifier)
         }

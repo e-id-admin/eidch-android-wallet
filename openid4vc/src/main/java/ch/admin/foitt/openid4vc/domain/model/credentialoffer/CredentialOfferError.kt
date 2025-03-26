@@ -2,8 +2,11 @@ package ch.admin.foitt.openid4vc.domain.model.credentialoffer
 
 import ch.admin.foitt.openid4vc.domain.model.CreateJWSKeyPairError
 import ch.admin.foitt.openid4vc.domain.model.KeyPairError
+import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.TypeMetadataRepositoryError
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtError
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VerifyJwtError
+import ch.admin.foitt.openid4vc.utils.JsonError
+import ch.admin.foitt.openid4vc.utils.JsonParsingError
 import timber.log.Timber
 
 interface CredentialOfferError {
@@ -40,8 +43,8 @@ sealed interface FetchIssuerCredentialInformationError
 sealed interface FetchCredentialByConfigError
 internal sealed interface FetchCredentialError
 internal sealed interface CreateDidJwkError
-internal sealed interface FetchVerifiableCredentialError
-internal sealed interface FetchIssuerConfigurationError
+sealed interface FetchVerifiableCredentialError
+sealed interface FetchIssuerConfigurationError
 
 internal fun FetchCredentialError.toFetchCredentialByConfigError(): FetchCredentialByConfigError = when (this) {
     is CredentialOfferError.IntegrityCheckFailed -> this
@@ -85,13 +88,23 @@ internal fun CreateDidJwkError.toFetchVerifiableCredentialError(): FetchVerifiab
 }
 
 internal fun VerifyJwtError.toFetchCredentialError(): FetchCredentialError = when (this) {
-    VcSdJwtError.InvalidJwt -> CredentialOfferError.IntegrityCheckFailed
+    VcSdJwtError.InvalidJwt,
+    VcSdJwtError.DidDocumentDeactivated -> CredentialOfferError.IntegrityCheckFailed
     VcSdJwtError.NetworkError -> CredentialOfferError.NetworkInfoError
     VcSdJwtError.IssuerValidationFailed -> CredentialOfferError.UnknownIssuer
     is VcSdJwtError.Unexpected -> CredentialOfferError.Unexpected(cause)
 }
 
-internal fun Throwable.toFetchCredentialError(): FetchCredentialError {
-    Timber.e(this)
+internal fun Throwable.toFetchCredentialError(message: String): FetchCredentialError {
+    Timber.e(t = this, message = message)
     return CredentialOfferError.Unexpected(this)
+}
+
+internal fun TypeMetadataRepositoryError.toFetchCredentialError(): FetchCredentialError = when (this) {
+    is VcSdJwtError.NetworkError -> CredentialOfferError.NetworkInfoError
+    is VcSdJwtError.Unexpected -> CredentialOfferError.Unexpected(cause)
+}
+
+internal fun JsonParsingError.toFetchCredentialError(): FetchCredentialError = when (this) {
+    is JsonError.Unexpected -> CredentialOfferError.Unexpected(throwable)
 }

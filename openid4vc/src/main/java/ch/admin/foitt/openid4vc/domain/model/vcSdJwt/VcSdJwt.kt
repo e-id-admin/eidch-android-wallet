@@ -18,6 +18,7 @@ open class VcSdJwt(
     val vcIssuer: String = iss ?: error("missing iss claim")
     val kid: String = keyId ?: error("missing keyId claim")
     val vct = sdJwtJson.jsonObject[CLAIM_KEY_VCT]?.jsonPrimitive?.content ?: error("missing vct claim")
+    val vctIntegrity: String? = sdJwtJson.jsonObject[CLAIM_KEY_VCT_INTEGRITY]?.jsonPrimitive?.content
     val cnf = sdJwtJson.jsonObject[CLAIM_KEY_CNF]
     val status = sdJwtJson.jsonObject[CLAIM_KEY_STATUS]
 
@@ -40,6 +41,7 @@ open class VcSdJwt(
     private companion object {
         const val CLAIM_KEY_CNF = "cnf"
         const val CLAIM_KEY_VCT = "vct"
+        const val CLAIM_KEY_VCT_INTEGRITY = "vct#integrity"
         const val CLAIM_KEY_STATUS = "status"
     }
 }

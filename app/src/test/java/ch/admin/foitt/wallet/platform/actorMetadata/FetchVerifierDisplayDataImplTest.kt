@@ -47,7 +47,6 @@ class FetchVerifierDisplayDataImplTest {
             fetchTrustStatementFromDid = mockFetchTrustStatementFromDid,
         )
 
-        coEvery { mockTrustStatement01.logoUri } returns mockTrustedLogos
         coEvery { mockTrustStatement01.orgName } returns mockTrustedNames
         coEvery { mockTrustStatement01.prefLang } returns mockPreferredLanguage
 
@@ -113,7 +112,8 @@ class FetchVerifierDisplayDataImplTest {
         )
 
         assertEquals(mockTrustedNamesDisplay, displayData.name)
-        assertEquals(mockTrustedLogosDisplay, displayData.image)
+        // logo of the trust statement is ignored for now -> metadata logo is used instead
+        assertEquals(mockMetadataLogoDisplays, displayData.image)
     }
 
     @Test
@@ -141,9 +141,9 @@ class FetchVerifierDisplayDataImplTest {
         assertEquals(emptyActorDisplayData, displayData)
     }
 
-    fun defaultPresentationRequestMocks() {
+    private fun defaultPresentationRequestMocks() {
         coEvery { mockPresentationRequest.clientId } returns clientId
-        coEvery { mockPresentationRequest.clientMetaData } returns mockClientMetatdata
+        coEvery { mockPresentationRequest.clientMetaData } returns mockClientMetadata
     }
 
     //region mock data
@@ -154,11 +154,6 @@ class FetchVerifierDisplayDataImplTest {
 
     private val mockPreferredLanguage = "en-us"
 
-    private val mockTrustedLogos = mapOf(
-        "en-us" to "logo EnUs",
-        "de-de" to "logo DeDe",
-    )
-
     private val mockTrustedNames = mapOf(
         "de-de" to "name DeDe",
         "en-gb" to "name EnGb"
@@ -168,11 +163,7 @@ class FetchVerifierDisplayDataImplTest {
         ActorField(value = entry.value, locale = entry.key)
     }
 
-    private val mockTrustedLogosDisplay = mockTrustedLogos.entries.map { entry ->
-        ActorField(value = entry.value, locale = entry.key)
-    }
-
-    private val mockClientMetatdata = ClientMetaData(
+    private val mockClientMetadata = ClientMetaData(
         clientNameList = listOf(
             ClientName("clientName En", locale = "en-gb")
         ),
@@ -181,13 +172,13 @@ class FetchVerifierDisplayDataImplTest {
         ),
     )
 
-    private val mockMetadataNameDisplays = mockClientMetatdata.clientNameList.map { entry ->
+    private val mockMetadataNameDisplays = mockClientMetadata.clientNameList.map { entry ->
         ActorField(
             value = entry.clientName,
             locale = entry.locale,
         )
     }
-    private val mockMetadataLogoDisplays = mockClientMetatdata.logoUriList.map { entry ->
+    private val mockMetadataLogoDisplays = mockClientMetadata.logoUriList.map { entry ->
         ActorField(
             value = entry.logoUri,
             locale = entry.locale,

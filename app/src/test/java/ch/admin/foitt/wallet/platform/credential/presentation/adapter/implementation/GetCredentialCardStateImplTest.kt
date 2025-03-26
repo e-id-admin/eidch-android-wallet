@@ -3,11 +3,11 @@ package ch.admin.foitt.wallet.platform.credential.presentation.adapter.implement
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
-import ch.admin.foitt.wallet.feature.credentialDetail.mock.MockCredentialDetail
 import ch.admin.foitt.wallet.platform.composables.presentation.adapter.GetDrawableFromUri
 import ch.admin.foitt.wallet.platform.composables.presentation.adapter.implementation.GetColorImpl
-import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialPreview
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialDisplayData
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
+import ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.mock.MockCredentialDetail
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.every
@@ -52,8 +52,8 @@ class GetCredentialCardStateImplTest {
     fun `If contrast of black and white are the same, use black text`() = runTest {
         every { ColorUtils.calculateContrast(any(), any()) } returns 1.0
 
-        val credentialPreview: CredentialPreview = MockCredentialDetail.credentialPreview
-        val result = getCredentialCardState(credentialPreview = credentialPreview)
+        val credentialDisplayData: CredentialDisplayData = MockCredentialDetail.credentialDisplayData
+        val result = getCredentialCardState(credentialDisplayData)
 
         assertEquals(result.contentColor, Color.Black, "black text used")
     }
@@ -63,8 +63,8 @@ class GetCredentialCardStateImplTest {
         every { ColorUtils.calculateContrast(any(), Color.Black.toArgb()) } returns 0.2
         every { ColorUtils.calculateContrast(any(), Color.White.toArgb()) } returns 0.8
 
-        val credentialPreview: CredentialPreview = MockCredentialDetail.credentialPreview
-        val result = getCredentialCardState(credentialPreview = credentialPreview)
+        val credentialDisplayData: CredentialDisplayData = MockCredentialDetail.credentialDisplayData
+        val result = getCredentialCardState(credentialDisplayData)
 
         assertEquals(result.contentColor, Color.White, "white text used")
     }
@@ -74,8 +74,8 @@ class GetCredentialCardStateImplTest {
         every { ColorUtils.calculateContrast(any(), Color.Black.toArgb()) } returns 0.6
         every { ColorUtils.calculateContrast(any(), Color.White.toArgb()) } returns 0.2
 
-        val credentialPreview: CredentialPreview = MockCredentialDetail.credentialPreview
-        val result = getCredentialCardState(credentialPreview = credentialPreview)
+        val credentialDisplayData: CredentialDisplayData = MockCredentialDetail.credentialDisplayData
+        val result = getCredentialCardState(credentialDisplayData)
 
         assertEquals(result.contentColor, Color.Black, "black text used")
     }

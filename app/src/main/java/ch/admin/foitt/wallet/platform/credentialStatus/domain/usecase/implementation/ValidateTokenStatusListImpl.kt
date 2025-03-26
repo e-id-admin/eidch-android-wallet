@@ -49,8 +49,9 @@ class ValidateTokenStatusListImpl @Inject constructor(
                 .bind()
 
             parseResponse(jwt.payloadString).bind()
-        }.mapError(Throwable::toValidateTokenStatusStatusListError)
-            .bind()
+        }.mapError { throwable ->
+            throwable.toValidateTokenStatusStatusListError("ValidateTokenStatusList error")
+        }.bind()
     }
 
     private fun parseResponse(payload: String) =

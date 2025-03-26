@@ -49,6 +49,9 @@ fun LargeCredentialCard(
     if (credentialCardState.isCredentialFromBetaIssuer) {
         DemoWatermark(color = contentColor)
     }
+    if (credentialCardState.useDefaultBackground) {
+        CredentialBackgroundFallbackPattern()
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()

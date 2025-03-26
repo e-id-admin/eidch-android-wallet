@@ -2,12 +2,6 @@ package ch.admin.foitt.wallet.feature.settings.presentation.security
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.VisibilityThreshold
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,8 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -30,10 +22,9 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
-import ch.admin.foitt.wallet.platform.composables.Toast
+import ch.admin.foitt.wallet.platform.composables.ToastAnimated
 import ch.admin.foitt.wallet.platform.composables.presentation.addTopScaffoldPadding
 import ch.admin.foitt.wallet.platform.composables.presentation.bottomSafeDrawing
 import ch.admin.foitt.wallet.platform.composables.presentation.horizontalSafeDrawing
@@ -45,8 +36,6 @@ import ch.admin.foitt.wallet.theme.WalletListItems
 import ch.admin.foitt.wallet.theme.WalletTexts
 import ch.admin.foitt.wallet.theme.WalletTheme
 import com.ramcosta.composedestinations.annotation.Destination
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Destination
 @Composable
@@ -62,13 +51,12 @@ fun SecuritySettingsScreen(
         biometricsEnabled = viewModel.isBiometricsToggleEnabled.collectAsStateWithLifecycle(false).value,
         shareAnalysisEnabled = viewModel.shareAnalysisEnabled.collectAsStateWithLifecycle().value,
         showPassphraseDeletionMessage = viewModel.showPassphraseDeletionMessage.collectAsStateWithLifecycle(false).value,
-        showToast = viewModel.showPassphraseChangeSuccessToast.collectAsStateWithLifecycle(false).value,
+        isToastVisible = viewModel.isToastVisible.collectAsStateWithLifecycle(false).value,
         onChangePin = viewModel::onChangePassphrase,
         onChangeBiometrics = viewModel::onChangeBiometrics,
         onDataProtection = viewModel::onDataProtection,
         onShareAnalysisChange = viewModel::onShareAnalysisChange,
         onDataAnalysis = viewModel::onDataAnalysis,
-        resetToast = viewModel::hidePassphraseChangeSuccessToast
     )
 }
 
@@ -78,8 +66,7 @@ private fun SecuritySettingsScreenContent(
     biometricsEnabled: Boolean,
     shareAnalysisEnabled: Boolean,
     showPassphraseDeletionMessage: Boolean,
-    showToast: Boolean,
-    resetToast: () -> Unit,
+    isToastVisible: Boolean,
     onChangePin: () -> Unit,
     onChangeBiometrics: () -> Unit,
     onDataProtection: () -> Unit,
@@ -88,16 +75,6 @@ private fun SecuritySettingsScreenContent(
 ) = Box(
     modifier = Modifier.fillMaxSize()
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(showToast) {
-        if (showToast) {
-            coroutineScope.launch {
-                delay(3000L)
-                resetToast()
-            }
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -125,39 +102,12 @@ private fun SecuritySettingsScreenContent(
             onDataAnalysis = onDataAnalysis,
         )
     }
-
-    AnimatedVisibility(
-        visible = showToast,
-        modifier = Modifier.align(Alignment.BottomCenter),
-        label = "infoToast",
-        enter = slideInVertically(
-            animationSpec = spring(
-                stiffness = Spring.StiffnessMediumLow,
-                visibilityThreshold = IntOffset.VisibilityThreshold,
-            ),
-            initialOffsetY = { 200 },
-        ),
-        exit = slideOutVertically(
-            animationSpec = spring(
-                stiffness = Spring.StiffnessMediumLow,
-                visibilityThreshold = IntOffset.VisibilityThreshold,
-            ),
-            targetOffsetY = { 200 },
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(start = Sizes.s08, end = Sizes.s08, bottom = Sizes.s10)
-        ) {
-            Toast(
-                modifier = Modifier,
-                text = R.string.tk_changepassword_successful_notification,
-                backgroundColor = WalletTheme.colorScheme.inverseSurface,
-                textColor = WalletTheme.colorScheme.inverseOnSurface,
-                iconEnd = null,
-            )
-        }
-    }
+    ToastAnimated(
+        isVisible = isToastVisible,
+        isSnackBarDesign = false,
+        messageToast = R.string.tk_changepassword_successful_notification,
+        contentBottomPadding = Sizes.s10
+    )
 }
 
 @Composable
@@ -277,14 +227,13 @@ private fun SecuritySettingsScreenPreview(
             biometricsHardwareIsAvailable = previewParams.first,
             biometricsEnabled = previewParams.second,
             shareAnalysisEnabled = true,
-            showToast = false,
+            isToastVisible = false,
             onChangeBiometrics = {},
             onChangePin = {},
             onDataProtection = {},
             onShareAnalysisChange = {},
             onDataAnalysis = {},
             showPassphraseDeletionMessage = false,
-            resetToast = {},
         )
     }
 }

@@ -24,7 +24,9 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 
 class ValidatePresentationRequestImplTest {
 
@@ -54,8 +56,6 @@ class ValidatePresentationRequestImplTest {
             mockVerifyJwtSignature
         )
 
-        MockPresentationRequest.presentationRequest.copy()
-
         setupDefaultMocks()
     }
 
@@ -67,6 +67,30 @@ class ValidatePresentationRequestImplTest {
     @Test
     fun `A valid json Presentation request returns Ok`() = runTest {
         useCase(mockJsonPresentationContainer).assertOk()
+    }
+
+    @TestFactory
+    fun `Invalid constrain paths should throw error`(): List<DynamicTest> {
+        val invalidConstrainPaths = listOf(
+            listOf("$..book[?(@.price <= $['expensive'])]"),
+            listOf("$..book[ ?(@.price <= $['expensive'])]"),
+            listOf("$..book[\t?(@.isbn)]"),
+            listOf("$..book[        ?(@.isbn)]"),
+            listOf("$..book[?(@.author =~ /.*REES/i)]"),
+            listOf("valid.path", "$..book[?(@.isbn)]"),
+            listOf("$..book[?(@.isbn)]", "valid.path"),
+            listOf("valid.path", "$..book[?(@.isbn)]", "valid.path"),
+        )
+        return invalidConstrainPaths.map { paths ->
+            DynamicTest.dynamicTest("$paths contains an invalid contrains path") {
+                runTest {
+                    coEvery {
+                        mockJsonPresentationContainer.json
+                    } returns MockPresentationRequest.invalidPresentationRequest(paths).toJsonObject()
+                    useCase(mockJsonPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
+                }
+            }
+        }
     }
 
     @Test
@@ -225,6 +249,15 @@ class ValidatePresentationRequestImplTest {
         } returns Err(VcSdJwtError.NetworkError)
 
         useCase(mockJwtPresentationContainer).assertErrorType(CredentialPresentationError.NetworkError::class)
+    }
+
+    @Test
+    fun `Jwt Presentation request map invalid jwt signature with DidDocumentDeactivated to invalid presentation error`(): Unit = runTest {
+        coEvery {
+            mockVerifyJwtSignature.invoke(did = any(), kid = any(), jwt = mockPresentationJwt)
+        } returns Err(VcSdJwtError.DidDocumentDeactivated)
+
+        useCase(mockJwtPresentationContainer).assertErrorType(CredentialPresentationError.InvalidPresentation::class)
     }
 
     private fun setupDefaultMocks() {

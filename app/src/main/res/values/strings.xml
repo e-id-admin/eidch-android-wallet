@@ -69,6 +69,8 @@
     <string name="tk_home_scan_button">Scan</string>
     <string name="tk_home_scan_button_altText">Scan the QR code. To identify or add credentials.</string>
     <string name="tk_home_menu_button_altText">More options</string>
+    <string name="tk_home_notification_credential_accepted">Credential has been added.</string>
+    <string name="tk_home_notification_credential_declined">Credential has been declined.</string>
     <string name="tk_global_credential_status_valid">Valid</string>
     <string name="tk_global_credential_status_invalid">Expired</string>
     <string name="tk_global_credential_status_unknown">Unknown</string>
@@ -99,7 +101,7 @@
     <string name="settings_helpLink">https://www.eid.admin.ch/en/help-publicbeta-e</string>
     <string name="settings_contact">Contact</string>
     <string name="settings_contactLink">https://forms.eid.admin.ch/</string>
-    <string name="tk_menu_setting_wallet_feedback_link_value">https://findmind.ch/c/rBVu-3vyY</string>
+    <string name="tk_menu_setting_wallet_feedback_link_value">https://findmind.ch/c/feedback_public_beta_en</string>
     <string name="settings_impressum">Publication details</string>
     <string name="settings_licences">Licences</string>
     <string name="languageSettings_systemDefaultLanguage_button">Use system default language</string>
@@ -109,7 +111,7 @@
     <string name="securitySettings_biometrics">Biometrics</string>
     <string name="securitySettings_biometrics_noHardware">The device has no compatible biometric hardware.</string>
     <string name="securitySettings_biometrics_pinChanged">Your biometrics have been deactivated because you changed your code.</string>
-    <string name="securitySettings_analysisTitle">Analysis and Improvements</string>
+    <string name="securitySettings_analysisTitle">Analysis &amp; Improvements</string>
     <string name="securitySettings_dataProtection">Privacy statement</string>
     <string name="securitySettings_dataProtectionLink">https://www.eid.admin.ch/en/swiyu-privacy-e</string>
     <string name="securitySettings_shareAnalysis">Share anonymised error reports</string>
@@ -201,7 +203,7 @@ The licenses follow the BIT guidelines for compliance with privacy and the lates
     <string name="tk_global_closedetails_alt">Close details</string>
     <string name="tk_receive_deny2_title">Credential declined</string>
     <string name="tk_receive_incorrectdata_subtitle">Found any incorrect details?</string>
-    <string name="tk_receive_incorrectdata_body">Once issued, a credential cannot be changed.\n\nIf you notice an error in the information you provided, please contact the issuer.\nThey can issue you with a new, corrected credential.</string>
+    <string name="tk_receive_incorrectdata_body">Once issued, a credential cannot be changed.\n\nIf you notice an error in your data, please contact the issuer.\nThey can issue a new, corrected credential.</string>
     <string name="tk_receive_incorrectdata_link_text">Report incorrect details</string>
     <string name="tk_global_pleasewait">Please wait</string>
     <string name="tk_global_moreoptions_alt">More options</string>
@@ -216,6 +218,8 @@ The licenses follow the BIT guidelines for compliance with privacy and the lates
     <string name="tk_displaydelete_displaycredential1_title2">Details</string>
     <string name="tk_displaydelete_displaycredential1_title5">Issued by</string>
     <string name="tk_displaydelete_displaycredential1_title4">Validity</string>
+    <string name="tk_displaydelete_wrongdata_title">Report incorrect details</string>
+    <string name="tk_displaydelete_wrongdata_body">Once issued, a credential cannot be changed.\n\nIf you notice an error in your data, please contact the issuer.\nThey can issue a new, corrected credential.</string>
     <string name="tk_receive_scanning_alt">Camera searching for QR code</string>
     <string name="tk_receive_scanning_notfound_alt">No QR code found. Try to reposition the camera.</string>
     <string name="tk_global_add">Add</string>
@@ -242,6 +246,8 @@ The licenses follow the BIT guidelines for compliance with privacy and the lates
     <string name="tk_present_decline_title">Data was not transmitted</string>
     <string name="tk_present_canceledverification_title">Aborted verification</string>
     <string name="tk_present_canceledverification_subtitle">The verification was canceled and no data was transferred.</string>
+    <string name="tk_present_invalidcredential_title">Verification of the transmitted data has failed.</string>
+    <string name="tk_present_invalidcredential_subtitle">Please check the validity of your credential.</string>
     <string name="tk_global_cancel_primarybutton">Cancel</string>
     <string name="tk_global_checkage">Would like to check your age</string>
     <string name="tk_global_checkcredential">Would like to check your credential</string>
@@ -301,7 +307,7 @@ The licenses follow the BIT guidelines for compliance with privacy and the lates
     <string name="tk_changepassword_step1_currentpassword_alt">Enter current password</string>
     <string name="tk_changepassword_step2_passwordlength_alt">Enter new password with at least six characters</string>
     <string name="tk_onboarding_introductionStep_neverForget_primary">Never forget your ID again</string>
-    <string name="tk_onboarding_introductionStep_neverForget_secondary">Thanks to the swiyu app, you always have ID with you on your mobile phone.</string>
+    <string name="tk_onboarding_introductionStep_neverForget_secondary">Thanks to the swiyu app, you always have your ID with you on your mobile phone.</string>
     <string name="tk_onboarding_introductionStep_yourData_primary">Your data belongs to you</string>
     <string name="tk_onboarding_introductionStep_yourData_secondary">You have control over who can check your ID data, and when. No access without permission.</string>
     <string name="tk_onboarding_introductionStep_yourData_tertiary_link_text">More about decentralised data management</string>
@@ -338,7 +344,7 @@ The licenses follow the BIT guidelines for compliance with privacy and the lates
         <item quantity="other">You have %s attempts remaining</item>
     </plurals>
     <string name="tk_menu_homeList_menu_add">Create Beta-ID</string>
-    <string name="tk_getBetaId_link">https://www.bcs.admin.ch/bcs-web/</string>
+    <string name="tk_getBetaId_link">https://www.bcs.admin.ch/bcs-web/?lang=EN</string>
     <string name="tk_onboarding_passworderror_title">Failed to set up the password</string>
     <string name="tk_onboarding_passwordIntroduction_error_tooManyAttempts">Incorrect password entered too many times. Please set a new password.</string>
     <string name="tk_onboarding_passworderror_primarybutton">Create password</string>
@@ -368,7 +374,7 @@ The licenses follow the BIT guidelines for compliance with privacy and the lates
     <string name="tk_menu_imprint_title">Imprint</string>
     <string name="tk_menu_imprint_github_link_text">www.github.com/admin-ch</string>
     <string name="tk_error_notusable_title">QR code no longer valid</string>
-    <string name="tk_error_notusable_body">This QR code has already been used and cannot be used again.</string>
+    <string name="tk_error_notusable_body">This QR code is no longer valid, please create a new one.</string>
     <string name="tk_error_issuer_notregistered_title">Unknown issuer</string>
     <string name="tk_error_issuer_notregistered_body">This issuer is not registered.</string>
     <string name="tk_error_verifier_notregistered_title">Unknown verifier</string>
@@ -445,7 +451,7 @@ The licenses follow the BIT guidelines for compliance with privacy and the lates
     <string name="tk_menu_imprint_termsOfUse_link_text">Terms of use</string>
     <string name="tk_menu_imprint_termsOfUse_link_value">https://www.eid.admin.ch/en/swiyu-terms-e</string>
     <string name="tk_menu_imprint_admin_link_value">https://www.bit.admin.ch/en</string>
-    <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web</string>
+    <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web/?lang=EN</string>
     <string name="tk_menu_securityPrivacy_status_passwordChangeSuccessful">Password successfully changed</string>
     <string name="tk_present_approval_subtitle_affectedDetails_android">Would like to read %s detail(s)</string>
     <string name="tk_onboarding_password_input_subtitle">Password must be at least 6 characters</string>
@@ -484,7 +490,7 @@ The licenses follow the BIT guidelines for compliance with privacy and the lates
     <string name="tk_getEid_queuing_title">processing delay (deepl)</string>
     <string name="tk_getEid_generalError_body">Please scan the ID again or use a different ID. (deepl)</string>
     <string name="tk_getEid_queuing_body">Unfortunately, your order cannot be processed immediately due to high demand. You will be notified via the app as soon as it is your turn. This may take a few days. (deepl)</string>
-    <string name="tk_getEid_queuing_body2_android">Expected date: %s (deepl)</string>
+    <string name="tk_getEid_queuing_body2_android">Expected date: (deepl)</string>
     <string name="tk_getEid_generalError_title">An error has occurred (deepl)</string>
     <string name="tk_getEid_walletPairing1_title">Define further devices (deepl)</string>
     <string name="tk_getEid_walletPairing1_body">Would you like to store your e-ID on additional devices? (deepl)</string>
@@ -506,4 +512,6 @@ The licenses follow the BIT guidelines for compliance with privacy and the lates
     <string name="tk_getEid_dataPrivacy_link_value">https://www.eid.admin.ch/en/swiyu-privacy-e</string>
     <string name="tk_getEid_dataPrivacy_link_text">Privacy Statement</string>
     <string name="tk_getEid_dataPrivacy_primaryButton">Agree and continue</string>
+    <string name="tk_getEid_notification_eidExpired_body">You did not fully complete the ordering process. Please restart it to receive your e-ID.</string>
+    <string name="tk_getEid_notification_eidExpired_title_android">e-ID Order for %s expired</string>
 </resources>

@@ -27,26 +27,27 @@ fun VerifyJwtError.toValidateTrustStatementError(): ValidateTrustStatementError 
     VcSdJwtError.NetworkError,
     VcSdJwtError.InvalidJwt,
     VcSdJwtError.IssuerValidationFailed -> TrustRegistryError.Unexpected(null)
+    VcSdJwtError.DidDocumentDeactivated -> TrustRegistryError.Unexpected(null)
     is VcSdJwtError.Unexpected -> TrustRegistryError.Unexpected(cause)
 }
 
 fun Throwable.toGetTrustUrlFromDidError(message: String): GetTrustUrlFromDidError {
-    Timber.e(message = message, t = this)
+    Timber.e(t = this, message = message)
     return TrustRegistryError.Unexpected(this)
 }
 
-fun Throwable.toTrustStatementRepositoryError(): TrustStatementRepositoryError {
-    Timber.e(this)
+fun Throwable.toTrustStatementRepositoryError(message: String): TrustStatementRepositoryError {
+    Timber.e(t = this, message = message)
     return TrustRegistryError.Unexpected(this)
 }
 
-fun Throwable.toValidateTrustStatementError(): ValidateTrustStatementError {
-    Timber.e(this)
+fun Throwable.toValidateTrustStatementError(message: String): ValidateTrustStatementError {
+    Timber.e(t = this, message = message)
     return TrustRegistryError.Unexpected(this)
 }
 
-fun Throwable.toFetchTrustStatementFromDidError(): FetchTrustStatementFromDidError {
-    Timber.e(this)
+fun Throwable.toFetchTrustStatementFromDidError(message: String): FetchTrustStatementFromDidError {
+    Timber.e(t = this, message = message)
     return TrustRegistryError.Unexpected(this)
 }
 

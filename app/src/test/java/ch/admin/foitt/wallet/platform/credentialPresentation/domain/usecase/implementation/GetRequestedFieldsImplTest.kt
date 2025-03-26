@@ -216,37 +216,41 @@ class GetRequestedFieldsImplTest {
         val invalidTypeFilterInputDescriptor = InputDescriptor.create(invalidFilterTypeField)
         val invalidPathFilterInputDescriptor = InputDescriptor.create(invalidFilterPathField)
 
-        val validFilterField get() = Field(
-            path = listOf(JSON_PATH_VCT),
-            filter = Filter(
-                type = TYPE_STRING,
-                const = VALUE_VCT,
+        val validFilterField
+            get() = Field(
+                path = listOf(JSON_PATH_VCT),
+                filter = Filter(
+                    type = TYPE_STRING,
+                    const = VALUE_VCT,
+                )
             )
-        )
 
-        val nonMatchingVctFilter get() = Field(
-            path = listOf(JSON_PATH_VCT),
-            filter = Filter(
-                type = TYPE_STRING,
-                const = "vctype2"
+        val nonMatchingVctFilter
+            get() = Field(
+                path = listOf(JSON_PATH_VCT),
+                filter = Filter(
+                    type = TYPE_STRING,
+                    const = "vctype2"
+                )
             )
-        )
 
-        val invalidFilterTypeField get() = Field(
-            path = listOf(JSON_PATH_VCT),
-            filter = Filter(
-                type = TYPE_NUMBER,
-                const = "1",
+        val invalidFilterTypeField
+            get() = Field(
+                path = listOf(JSON_PATH_VCT),
+                filter = Filter(
+                    type = TYPE_NUMBER,
+                    const = "1",
+                )
             )
-        )
 
-        val invalidFilterPathField get() = Field(
-            path = listOf(JSON_PATH_1),
-            filter = Filter(
-                type = TYPE_STRING,
-                const = "a",
+        val invalidFilterPathField
+            get() = Field(
+                path = listOf(JSON_PATH_1),
+                filter = Filter(
+                    type = TYPE_STRING,
+                    const = "a",
+                )
             )
-        )
 
         val stringField1 = Field(
             path = listOf(JSON_PATH_1),

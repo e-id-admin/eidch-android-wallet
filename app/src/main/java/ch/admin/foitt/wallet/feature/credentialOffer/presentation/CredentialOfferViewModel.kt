@@ -3,12 +3,14 @@ package ch.admin.foitt.wallet.feature.credentialOffer.presentation
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.model.CredentialOffer
-import ch.admin.foitt.wallet.feature.credentialOffer.domain.usecase.GetCredentialOffer
+import ch.admin.foitt.wallet.feature.credentialOffer.domain.usecase.GetCredentialOfferFlow
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.model.CredentialOfferUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
 import ch.admin.foitt.wallet.platform.appSetupState.domain.usecase.SaveFirstCredentialWasAdded
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateCredentialStatus
+import ch.admin.foitt.wallet.platform.messageEvents.domain.model.CredentialOfferEvent
+import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialOfferEventRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
@@ -17,7 +19,7 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.extension.navigateUpOrToRoot
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialOfferScreenDestination
-import ch.admin.foitt.walletcomposedestinations.destinations.CredentialWrongDataScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.CredentialOfferWrongDataScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.DeclineCredentialOfferScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.ErrorScreenDestination
 import com.github.michaelbull.result.mapBoth
@@ -33,12 +35,13 @@ import javax.inject.Inject
 @HiltViewModel
 class CredentialOfferViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    getCredentialOffer: GetCredentialOffer,
+    getCredentialOfferFlow: GetCredentialOfferFlow,
     private val navManager: NavigationManager,
     private val updateCredentialStatus: UpdateCredentialStatus,
     private val getCredentialCardState: GetCredentialCardState,
     private val saveFirstCredentialWasAdded: SaveFirstCredentialWasAdded,
     private val getActorUiState: GetActorUiState,
+    private val credentialOfferEventRepository: CredentialOfferEventRepository,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
 ) : ScreenViewModel(setTopBarState, setFullscreenState) {
@@ -51,7 +54,7 @@ class CredentialOfferViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
-    private val credentialOffer: StateFlow<CredentialOffer?> = getCredentialOffer(credentialId)
+    private val credentialOffer: StateFlow<CredentialOffer?> = getCredentialOfferFlow(credentialId)
         .map { result ->
             result.mapBoth(
                 success = { credentialOffer ->
@@ -88,6 +91,7 @@ class CredentialOfferViewModel @Inject constructor(
     fun onAcceptClicked() {
         viewModelScope.launch {
             saveFirstCredentialWasAdded()
+            credentialOfferEventRepository.setEvent(CredentialOfferEvent.ACCEPTED)
             navManager.navigateUpOrToRoot()
         }
     }
@@ -108,6 +112,6 @@ class CredentialOfferViewModel @Inject constructor(
     }
 
     fun onWrongDataClicked() {
-        navManager.navigateTo(CredentialWrongDataScreenDestination)
+        navManager.navigateTo(CredentialOfferWrongDataScreenDestination)
     }
 }

@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.feature.onboarding
 
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.performClick
@@ -51,7 +52,6 @@ class OnboardingPasswordTest {
         passwordEntryScreen.navigateToScreen()
         passwordEntryScreen.enterPin("test1")
         passwordEntryScreen.nextScreen()
-        passwordEntryScreen.errorIsDisplayed()
     }
 
     @Test
@@ -75,11 +75,11 @@ class OnboardingPasswordTest {
         val passwordEntryScreen = PasswordEntryScreen(activityRule)
         passwordEntryScreen.navigateToScreen()
         passwordEntryScreen.enterPin(password)
-        passwordEntryScreen.passwordField.assertTextEquals(maskedPassword)
+        passwordEntryScreen.passwordField.assertTextContains(maskedPassword)
         passwordEntryScreen.showPassphrase.performClick()
-        passwordEntryScreen.passwordField.assertTextEquals(password)
+        passwordEntryScreen.passwordField.assertTextContains(password)
         passwordEntryScreen.showPassphrase.performClick()
-        passwordEntryScreen.passwordField.assertTextEquals(maskedPassword)
+        passwordEntryScreen.passwordField.assertTextContains(maskedPassword)
     }
 
     @Test

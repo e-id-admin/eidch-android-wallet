@@ -67,7 +67,7 @@
     <string name="tk_home_firstuse_title">Wallet vuoto</string>
     <string name="tk_qrscanner_scanning_title">Scansionare il codice QR</string>
     <string name="tk_error_notusable_title">Il codice QR non è più valido.</string>
-    <string name="tk_error_notusable_body">Questo codice QR non è più valido perché è già stato utilizzato.</string>
+    <string name="tk_error_notusable_body">Questo codice QR non è più valido, per favore crealo di nuovo.</string>
     <string name="tk_error_issuer_notregistered_title">Emittente sconosciuto</string>
     <string name="tk_error_connectionproblem_title">Problemi di connessione</string>
     <string name="tk_error_connectionproblem_body">Riprovi.</string>
@@ -84,6 +84,8 @@
     <string name="tk_displaydelete_displaycredential1_title5">Rilasciato da</string>
     <string name="tk_displaydelete_displaycredential1_title4">Validità</string>
     <string name="tk_displaydelete_displaycredential1_title3">Aggiunte</string>
+    <string name="tk_displaydelete_wrongdata_title">Segnalare dati errati</string>
+    <string name="tk_displaydelete_wrongdata_body">Una volta rilasciato, un documento non può essere modificato.\n\nSe dovesse rilevare un errore nei suoi dati, la preghiamo di contattare l’emittente. Quest’ultimo potrà rilasciarle un nuovo documento corretto.</string>
     <string name="tk_qrscanner_invalidcode_link_text">Il codice QR è stato utilizzato a Sua insaputa?</string>
     <string name="tk_home_empthyhome_title">Wallet vuoto</string>
     <string name="tk_displaydelete_displaycredential1_title1">Cronologia</string>
@@ -118,7 +120,7 @@
     <string name="tk_home_firstuse_body">Aggiunga documenti scansionando il codice QR o tramite il link ricevuto via SMS.</string>
     <string name="tk_onboarding_introductionStep_security_primary">Custodire i documenti digitali in modo sicuro</string>
     <string name="tk_onboarding_somethingwentwrong_primarybutton">Riprovare</string>
-    <string name="tk_receive_incorrectdata_body">Una volta rilasciata, la prova non può documento modificata.\n\nSe si riscontra un errore nei dati forniti, si prega di contattare l\'emittente.\nQuest\'ultimo può rilasciare una nuova documento corretta.</string>
+    <string name="tk_receive_incorrectdata_body">Una volta rilasciato, un documento non può essere modificato.\n\nSe dovesse rilevare un errore nei suoi dati, la preghiamo di contattare l\'emittente. Quest\'ultimo potrà rilasciarle un nuovo documento corretto.</string>
     <string name="tk_error_nosuchcredential_title">Non sono disponibili documenti idonei</string>
     <string name="tk_receive_deny1_primarybutton">Rifiuta il documento</string>
     <string name="tk_receive_deny1_title">Rifiutare il documento?</string>
@@ -198,7 +200,7 @@
         <item quantity="other"/>
     </plurals>
     <string name="tk_present_multiplecredentials_title">Selezioni un documento</string>
-    <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web</string>
+    <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web/?lang=IT</string>
     <string name="tk_menu_securityPrivacy_status_passwordChangeSuccessful">Password modificata</string>
     <string name="tk_displaydelete_credentialdelete_body">Il documento e tutti i relativi dati verranno eliminati completamente dal dispositivo.</string>
     <string name="tk_onboarding_password_input_subtitle">La password deve contenere almeno 6 caratteri</string>
@@ -257,19 +259,19 @@
     <string name="languageSettings_systemDefaultLanguage_button">Utilizza la lingua predefinita del sistema</string>
     <string name="dataAnalysis_text">Contribuisci a migliorare l\'app consentendo che i seguenti messaggi di errore anonimi siano messi a disposizione del team di sviluppo:\n\n\n✓ Messaggi di errore generali\n✓ Errori di comunicazione\n✓ Arresto anomalo dell\'app\n\n\nVengono analizzati solo dati anonimi che non consentono di risalire alla tua persona.</string>
     <string name="licences_text">Di seguito è riportato l\'elenco delle licenze software utilizzate da questa app.\nLe licenze seguono le linee guida BIT per la conformità alla privacy e i più recenti standard di sicurezza. Con questo elenco vogliamo garantire trasparenza nei confronti degli utenti.</string>
-    <string name="impressum_title">Colophon</string>
+    <string name="impressum_title">Colofone</string>
     <string name="impressum_header_text">L\'app swiyu è open source. Il suo codice sorgente può essere visualizzato su GitHub.</string>
     <string name="licences_more_information_link">https://www.eid.admin.ch/it/help-publicbeta-i</string>
     <string name="tk_menu_homeList_menu_add">Crea un Beta-ID</string>
     <string name="securitySettings_shareAnalysis">Condividere i messaggi di errore anonimizzati</string>
     <string name="tk_menu_setup_menu_feedback">Invio feedback</string>
     <string name="securitySettings_changePin">Modificare la password</string>
-    <string name="securitySettings_analysisTitle">Analisi e miglioramenti</string>
+    <string name="securitySettings_analysisTitle">Analisi &amp; miglioramenti</string>
     <string name="securitySettings_dataProtection">Dichiarazione sulla protezione dei dati</string>
     <string name="securitySettings_shareAnalysis_text">Contribuisci a migliorare l\'app swiyu condividendo in modo anonimo segnalazioni di errori e arresti anomali, rendendola ancora migliore.</string>
     <string name="securitySettings_dataAnalysis">Ulteriori informazioni</string>
     <string name="settings_security">Protezione dei dati e sicurezza</string>
-    <string name="tk_menu_setting_wallet_feedback_link_value">https://findmind.ch/c/rBVu-3vyY</string>
+    <string name="tk_menu_setting_wallet_feedback_link_value">https://findmind.ch/c/feedback_public_beta_it</string>
     <string name="impressum_app_version">App Version</string>
     <string name="impressum_build_number">Build number</string>
     <string name="impressum_github_link_text">www.github.com/swiyu-admin-ch</string>
@@ -310,4 +312,10 @@
     <string name="global_error_no_device_pin_button">Vai alle impostazioni</string>
     <string name="tk_menu_deactivatingBiometrics_android_note">Inserisci la tua password swiyu per disabilitare lo sblocco biometrico.</string>
     <string name="tk_menu_activatingBiometrics_android_body">Inserisci la tua password swiyu per attivare lo sblocco biometrico.</string>
+    <string name="tk_getEid_queuing_body2_android">Data prevista (deepl)</string>
+    <string name="tk_getBetaId_link">https://www.bcs.admin.ch/bcs-web/?lang=IT</string>
+    <string name="tk_present_invalidcredential_title">La verifica dei dati trasmessi non è riuscita.</string>
+    <string name="tk_present_invalidcredential_subtitle">Per favore verificare la validità del documento.</string>
+    <string name="tk_home_notification_credential_accepted">È stato aggiunto il documento.</string>
+    <string name="tk_home_notification_credential_declined">Documento rifiutato.</string>
 </resources>

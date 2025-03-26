@@ -145,12 +145,12 @@ private fun ScanButton(
         if (canPlaceContent) {
             ScanTextButton(
                 onClick = onClick,
-                modifier = modifier.fillMaxWidth()
+                modifier = modifier.fillMaxWidth().testTag(TestTags.SCAN_TEXT_BUTTON.name)
             )
         } else {
             ScanIconButton(
                 onClick = onClick,
-                modifier = modifier,
+                modifier = modifier.testTag(TestTags.SCAN_TEXT_BUTTON.name),
             )
         }
     }
@@ -188,7 +188,6 @@ private fun ScanTextButton(
         .height(Sizes.s16)
         .contentDescription(stringResource(id = R.string.tk_home_scan_button_altText))
         .spaceBarKeyClickable(onClick)
-        .testTag(TestTags.SCAN_TEXT_BUTTON.name)
 ) {
     Icon(
         painter = painterResource(id = R.drawable.wallet_ic_qr),

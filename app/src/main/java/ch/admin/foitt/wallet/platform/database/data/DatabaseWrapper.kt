@@ -5,10 +5,8 @@ import ch.admin.foitt.wallet.platform.database.data.dao.CredentialClaimDisplayDa
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialDisplayDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialIssuerDisplayDao
-import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDetailsDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDisplaysAndClaimsDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDisplaysDao
-import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithIssuerAndDisplaysDao
 import ch.admin.foitt.wallet.platform.database.data.dao.DaoProvider
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseDao
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseWithStateDao
@@ -153,14 +151,10 @@ internal class DatabaseWrapper @Inject constructor(
         getDaoFlow { it?.credentialClaimDisplayDao() }
     override val credentialIssuerDisplayDaoFlow: StateFlow<CredentialIssuerDisplayDao?> =
         getDaoFlow { it?.credentialIssuerDisplayDao() }
-    override val credentialWithDetailsDaoFlow: StateFlow<CredentialWithDetailsDao?> =
-        getDaoFlow { it?.credentialWithDetailsDao() }
     override val credentialWithDisplaysAndClaimsDaoFlow: StateFlow<CredentialWithDisplaysAndClaimsDao?> =
         getDaoFlow { it?.credentialWithDisplaysAndClaimsDao() }
     override val credentialWithDisplaysDaoFlow: StateFlow<CredentialWithDisplaysDao?> =
         getDaoFlow { it?.credentialWithDisplaysDao() }
-    override val credentialWithIssuerAndDisplaysDaoFlow: StateFlow<CredentialWithIssuerAndDisplaysDao?> =
-        getDaoFlow { it?.credentialWithIssuerAndDisplaysDao() }
     override val eIdRequestCaseDaoFlow: StateFlow<EIdRequestCaseDao?> =
         getDaoFlow { it?.eIdRequestCaseDao() }
     override val eIdRequestStateDaoFlow: StateFlow<EIdRequestStateDao?> = getDaoFlow { it?.eIdRequestStateDao() }

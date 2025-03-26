@@ -72,13 +72,33 @@ class SaveCredentialImplTest {
         )
         result.assertErrorType(CredentialError.UnsupportedCredentialFormat::class)
         coVerify(exactly = 0) {
-            mockCredentialOfferRepository.saveCredentialOffer(any())
+            mockCredentialOfferRepository.saveCredentialOffer(
+                keyBindingIdentifier = any(),
+                keyBindingAlgorithm = any(),
+                payload = any(),
+                format = any(),
+                issuer = any(),
+                issuerDisplays = any(),
+                credentialDisplays = any(),
+                claims = any(),
+            )
         }
     }
 
     @Test
     fun `should call CredentialOfferRepository#saveCredentialOffer exactly one time`() = runTest {
-        coEvery { mockCredentialOfferRepository.saveCredentialOffer(any()) } returns Ok(1L)
+        coEvery {
+            mockCredentialOfferRepository.saveCredentialOffer(
+                keyBindingIdentifier = any(),
+                keyBindingAlgorithm = any(),
+                payload = any(),
+                format = any(),
+                issuer = any(),
+                issuerDisplays = any(),
+                credentialDisplays = any(),
+                claims = any(),
+            )
+        } returns Ok(1L)
 
         val anyCredential = VcSdJwtCredential(
             keyBindingIdentifier = "",
@@ -104,7 +124,16 @@ class SaveCredentialImplTest {
         result.assertOk()
 
         coVerify(exactly = 1) {
-            mockCredentialOfferRepository.saveCredentialOffer(any())
+            mockCredentialOfferRepository.saveCredentialOffer(
+                keyBindingIdentifier = any(),
+                keyBindingAlgorithm = any(),
+                payload = any(),
+                format = any(),
+                issuer = any(),
+                issuerDisplays = any(),
+                credentialDisplays = any(),
+                claims = any(),
+            )
         }
     }
 }

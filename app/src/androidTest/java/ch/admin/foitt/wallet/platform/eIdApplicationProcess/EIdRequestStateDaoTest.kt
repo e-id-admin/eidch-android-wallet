@@ -53,11 +53,21 @@ class EIdRequestStateDaoTest {
 
         val newState = EIdRequestQueueState.CLOSED
         val lastPolled = Instant.now().epochSecond
-        eIdRequestStateDao.updateByCaseId(eIdRequestCaseMock().id, newState, lastPolled)
+        val onlineSessionStartOpenAt = Instant.now().epochSecond
+        val onlineSessionStartTimeout = Instant.now().epochSecond
+        eIdRequestStateDao.updateByCaseId(
+            caseId = eIdRequestCaseMock().id,
+            state = newState,
+            lastPolled = lastPolled,
+            onlineSessionStartOpenAt = onlineSessionStartOpenAt,
+            onlineSessionStartTimeout = onlineSessionStartTimeout,
+        )
 
         val updatedRequestState = eIdRequestStateDao.getEIdRequestStateById(id)
         assertEquals(newState, updatedRequestState.state)
         assertEquals(lastPolled, updatedRequestState.lastPolled)
+        assertEquals(onlineSessionStartOpenAt, updatedRequestState.onlineSessionStartOpenAt)
+        assertEquals(onlineSessionStartTimeout, updatedRequestState.onlineSessionStartTimeoutAt)
     }
 
     @Test(expected = SQLiteConstraintException::class)

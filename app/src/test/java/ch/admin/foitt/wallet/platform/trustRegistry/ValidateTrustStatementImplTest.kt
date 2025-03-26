@@ -147,7 +147,6 @@ class ValidateTrustStatementImplTest {
     @ParameterizedTest
     @ValueSource(
         strings = [
-            missingLogoUri,
             missingOrgName,
             missingPrefLang,
         ]
@@ -218,8 +217,6 @@ class ValidateTrustStatementImplTest {
             "eyJhbGciOiJFUzI1NiIsInR5cCI6InZjK3NkLWp3dCIsImtpZCI6ImRpZDp0ZHc6YWJjI2tleTAxIn0.eyJpc3MiOiJkaWQ6dGR3OmFiYyIsIm5iZiI6MCwiZXhwIjo5OTk5OTk5OTk5LCJpYXQiOjAsIl9zZF9hbGciOiJzaGEtMjU2Iiwic3ViIjoiZGlkOnRkdzphYmNkIiwib3JnTmFtZSI6eyJlbiI6Im9yZ05hbWUgRW4iLCJkZS1DSCI6Im9yZ05hbWUgRGUifSwicHJlZkxhbmciOiJkZSIsInZjdCI6IlNvbWVUeXBlIiwibG9nb1VyaSI6eyJlbiI6ImxvZ29VcmlFbiIsImRlIjoibG9nb1VyaURlIn19.WQauSJEOIljNcojD59vhRwDKQiR2nes7PIDXqI14wVJ_njt6jD8mNsqoJko_rammXxwwaL_Zo1QOlfnkXIoWew"
         private const val missingOrgName =
             "eyJhbGciOiJFUzI1NiIsInR5cCI6InZjK3NkLWp3dCIsImtpZCI6ImRpZDp0ZHc6YWJjI2tleTAxIn0.eyJpc3MiOiJkaWQ6dGR3OmFiYyIsIm5iZiI6MCwiZXhwIjo5OTk5OTk5OTk5LCJpYXQiOjAsIl9zZF9hbGciOiJzaGEtMjU2Iiwic3ViIjoiZGlkOnRkdzphYmNkIiwib3JnTmFtZSI6eyJlbiI6Im9yZ05hbWUgRW4iLCJkZS1DSCI6Im9yZ05hbWUgRGUifSwicHJlZkxhbmciOiJkZSIsInZjdCI6IlRydXN0U3RhdGVtZW50TWV0YWRhdGFWMSJ9.sLm7z9FSmaeTBXA9pgmkaa62TOMs6kHpjH4QEdyhHv7bqpi-O82ngyvb_R7yDgI6Gv_sRhH-h4E1EwSEO3lYIA"
-        private const val missingLogoUri =
-            "eyJhbGciOiJFUzI1NiIsInR5cCI6InZjK3NkLWp3dCIsImtpZCI6ImRpZDp0ZHc6YWJjI2tleTAxIn0.eyJpc3MiOiJkaWQ6dGR3OmFiYyIsIm5iZiI6MCwiZXhwIjo5OTk5OTk5OTk5LCJpYXQiOjAsIl9zZF9hbGciOiJzaGEtMjU2Iiwic3ViIjoiZGlkOnRkdzphYmNkIiwicHJlZkxhbmciOiJkZSIsInZjdCI6IlRydXN0U3RhdGVtZW50TWV0YWRhdGFWMSIsImxvZ29VcmkiOnsiZW4iOiJsb2dvVXJpRW4iLCJkZSI6ImxvZ29VcmlEZSJ9fQ.acxmQSU39zIhvlT0DNrzW79KHpRCl5t_i0uWRtmpfLf5aXswFN-vT2m4eHitS9f3zpZeZ_MMlNPilTbmlk1_0A"
         private const val missingPrefLang =
             "eyJhbGciOiJFUzI1NiIsInR5cCI6InZjK3NkLWp3dCIsImtpZCI6ImRpZDp0ZHc6YWJjI2tleTAxIn0.eyJpc3MiOiJkaWQ6dGR3OmFiYyIsIm5iZiI6MCwiZXhwIjo5OTk5OTk5OTk5LCJpYXQiOjAsIl9zZF9hbGciOiJzaGEtMjU2Iiwic3ViIjoiZGlkOnRkdzphYmNkIiwib3JnTmFtZSI6eyJlbiI6Im9yZ05hbWUgRW4iLCJkZS1DSCI6Im9yZ05hbWUgRGUifSwidmN0IjoiVHJ1c3RTdGF0ZW1lbnRNZXRhZGF0YVYxIiwibG9nb1VyaSI6eyJlbiI6ImxvZ29VcmlFbiIsImRlIjoibG9nb1VyaURlIn19.NRMDJN5yR_MaL0Ca27TYeRY_1th-fiZu3COI36oXSRjWmZWqXH0_ru9M2c3SvrefwLGxaDPTO7ciLAVVTuY1ag"
         private const val wrongFieldTypes =

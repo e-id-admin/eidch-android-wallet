@@ -39,7 +39,7 @@ class FetchVerifierDisplayDataImpl @Inject constructor(
         }
 
         val verifierTrustNameDisplay: List<ActorField<String>>? = trustStatement?.orgName?.toActorField() ?: verifierNameDisplay
-        val verifierTrustLogoDisplay: List<ActorField<String>>? = trustStatement?.logoUri?.toActorField() ?: verifierLogoDisplay
+        val verifierTrustLogoDisplay: List<ActorField<String>>? = verifierLogoDisplay
 
         val presentationVerifierDisplay = ActorDisplayData(
             name = verifierTrustNameDisplay,
@@ -66,7 +66,7 @@ class FetchVerifierDisplayDataImpl @Inject constructor(
         )
     }
 
-    private fun ClientMetaData.toVerifierLogo(): List<ActorField<String>>? = logoUriList.map { entry ->
+    private fun ClientMetaData.toVerifierLogo(): List<ActorField<String>> = logoUriList.map { entry ->
         ActorField(
             value = entry.logoUri,
             locale = entry.locale,

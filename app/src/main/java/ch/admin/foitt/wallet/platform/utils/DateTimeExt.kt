@@ -22,6 +22,11 @@ fun ZonedDateTime.asDayMonthYear(locale: Locale = Locale.getDefault()): String {
     return formatPattern(localizedPattern, locale)
 }
 
+fun ZonedDateTime.asDayFullMonthYear(locale: Locale = Locale.getDefault()): String {
+    val localizedPattern = DateFormat.getBestDateTimePattern(locale, "ddMMMMyyyy")
+    return formatPattern(localizedPattern, locale)
+}
+
 fun ZonedDateTime.asMonthYear(locale: Locale = Locale.getDefault()): String {
     val localizedPattern = DateFormat.getBestDateTimePattern(locale, "MMMM yyyy")
     return formatPattern(localizedPattern, locale).uppercase(locale)

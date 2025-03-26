@@ -16,24 +16,17 @@ import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialIssuerDisplay
-import ch.admin.foitt.wallet.platform.database.domain.model.CredentialWithDetails
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayConst
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayLanguage
 import ch.admin.foitt.wallet.platform.di.IoDispatcher
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialOfferRepositoryError
-import ch.admin.foitt.wallet.platform.ssi.domain.model.LocalizedCredentialOffer
 import ch.admin.foitt.wallet.platform.ssi.domain.model.toCredentialOfferRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialOfferRepository
-import ch.admin.foitt.wallet.platform.utils.catchAndMap
 import ch.admin.foitt.wallet.platform.utils.suspendUntilNonNull
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.mapError
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -41,26 +34,27 @@ class CredentialOfferRepositoryImpl @Inject constructor(
     daoProvider: DaoProvider,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : CredentialOfferRepository {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getCredentialOfferByIdFlow(id: Long): Flow<Result<CredentialWithDetails?, CredentialOfferRepositoryError>> =
-        credentialWithDetailsDaoFlow.flatMapLatest { dao ->
-            dao?.getCredentialWithDetailsFlowById(id)
-                ?.catchAndMap(Throwable::toCredentialOfferRepositoryError) ?: emptyFlow()
-        }
 
     override suspend fun saveCredentialOffer(
-        localizedCredentialOffer: LocalizedCredentialOffer,
+        keyBindingIdentifier: String?,
+        keyBindingAlgorithm: SigningAlgorithm?,
+        payload: String,
+        format: CredentialFormat,
+        issuer: String?,
+        issuerDisplays: List<OidIssuerDisplay>,
+        credentialDisplays: List<OidCredentialDisplay>,
+        claims: Map<CredentialClaim, List<OidClaimDisplay>>,
     ): Result<Long, CredentialOfferRepositoryError> = withContext(ioDispatcher) {
         val credential = createCredential(
-            privateKeyIdentifier = localizedCredentialOffer.keyBindingIdentifier,
-            signingAlgorithm = localizedCredentialOffer.keyBindingAlgorithm,
-            payload = localizedCredentialOffer.payload,
-            format = localizedCredentialOffer.format,
-            issuer = localizedCredentialOffer.issuer
+            privateKeyIdentifier = keyBindingIdentifier,
+            signingAlgorithm = keyBindingAlgorithm,
+            payload = payload,
+            format = format,
+            issuer = issuer
         )
-        val credentialIssuerDisplays = createCredentialIssuerDisplays(localizedCredentialOffer.issuerDisplays)
-        val credDisplays = createCredentialDisplays(localizedCredentialOffer.credentialDisplays)
-        val credentialClaims = createCredentialClaims(localizedCredentialOffer.claims)
+        val credentialIssuerDisplays = createCredentialIssuerDisplays(issuerDisplays)
+        val credDisplays = createCredentialDisplays(credentialDisplays)
+        val credentialClaims = createCredentialClaims(claims)
 
         saveCredentialOffer(
             credential = credential,
@@ -140,7 +134,9 @@ class CredentialOfferRepositoryImpl @Inject constructor(
             credentialClaimDisplayDao().insertAll(displays)
         }
         credentialId
-    }.mapError(Throwable::toCredentialOfferRepositoryError)
+    }.mapError { throwable ->
+        throwable.toCredentialOfferRepositoryError("saveCredentialOffer error")
+    }
 
     private suspend fun credentialDao(): CredentialDao = suspendUntilNonNull { credentialDaoFlow.value }
     private val credentialDaoFlow = daoProvider.credentialDaoFlow
@@ -158,6 +154,4 @@ class CredentialOfferRepositoryImpl @Inject constructor(
         credentialClaimDisplayDaoFlow.value
     }
     private val credentialClaimDisplayDaoFlow = daoProvider.credentialClaimDisplayDaoFlow
-
-    private val credentialWithDetailsDaoFlow = daoProvider.credentialWithDetailsDaoFlow
 }

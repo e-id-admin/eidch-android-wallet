@@ -16,7 +16,6 @@ import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayConst
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayLanguage
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialOfferRepositoryError
-import ch.admin.foitt.wallet.platform.ssi.domain.model.LocalizedCredentialOffer
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialOfferRepository
 import ch.admin.foitt.wallet.platform.utils.JsonParsingError
 import ch.admin.foitt.wallet.platform.utils.SafeJson
@@ -59,15 +58,16 @@ class SaveCredentialImpl @Inject constructor(
             credentialConfiguration = credentialConfiguration,
             credential = anyCredential,
         ).bind()
-        val localizedCredentialOffer = createLocalizedCredentialOffer(
-            credential = anyCredential,
-            localizedIssuerDisplays = localizedIssuerDisplays,
-            localizedCredentialDisplays = localizedCredentialDisplays,
-            localizedClaims = localizedClaims,
-        )
 
         credentialOfferRepository.saveCredentialOffer(
-            localizedCredentialOffer = localizedCredentialOffer,
+            keyBindingIdentifier = anyCredential.keyBindingIdentifier,
+            keyBindingAlgorithm = anyCredential.keyBindingAlgorithm,
+            payload = anyCredential.payload,
+            format = anyCredential.format,
+            issuer = anyCredential.issuer,
+            issuerDisplays = localizedIssuerDisplays,
+            credentialDisplays = localizedCredentialDisplays,
+            claims = localizedClaims,
         )
             .mapError(CredentialOfferRepositoryError::toSaveCredentialError)
             .bind()
@@ -81,7 +81,7 @@ class SaveCredentialImpl @Inject constructor(
         val metadataClaims = getMetadataClaims(credentialConfiguration = credentialConfiguration).bind()
 
         val credentialJson = runSuspendCatching { credential.getClaimsToSave() }
-            .mapError(Throwable::toSaveCredentialError)
+            .mapError { throwable -> throwable.toSaveCredentialError("getClaimsToSave error") }
             .bind()
         val conf: Configuration = Configuration.builder().options(Option.SUPPRESS_EXCEPTIONS, Option.ALWAYS_RETURN_LIST).build()
         val credentialClaims: Map<String, String> = using(conf)
@@ -119,22 +119,6 @@ class SaveCredentialImpl @Inject constructor(
         return safeJson.safeDecodeStringTo<Map<String, Claim>>(jsonString)
             .mapError(JsonParsingError::toSaveCredentialError)
     }
-
-    private fun createLocalizedCredentialOffer(
-        credential: AnyCredential,
-        localizedIssuerDisplays: List<OidIssuerDisplay>,
-        localizedCredentialDisplays: List<OidCredentialDisplay>,
-        localizedClaims: Map<CredentialClaim, List<OidClaimDisplay>>,
-    ) = LocalizedCredentialOffer(
-        keyBindingIdentifier = credential.keyBindingIdentifier,
-        keyBindingAlgorithm = credential.keyBindingAlgorithm,
-        payload = credential.payload,
-        format = credential.format,
-        issuerDisplays = localizedIssuerDisplays,
-        credentialDisplays = localizedCredentialDisplays,
-        claims = localizedClaims,
-        issuer = credential.issuer
-    )
 
     private fun <T : CredentialInformationDisplay> List<T>?.addFallbackLanguageIfNecessary(
         fallbackValue: () -> T

@@ -18,5 +18,7 @@ class TrustStatementRepositoryImpl @Inject constructor(
     override suspend fun fetchTrustStatements(url: URL): Result<List<String>, TrustStatementRepositoryError> =
         runSuspendCatching<List<String>> {
             httpClient.get(url).body()
-        }.mapError(Throwable::toTrustStatementRepositoryError)
+        }.mapError { throwable ->
+            throwable.toTrustStatementRepositoryError("TrustStatementRepository error")
+        }
 }

@@ -36,14 +36,9 @@ class UpdateCredentialStatusImpl @Inject constructor(
 
     override suspend fun invoke(credentialId: Long): Result<Unit, UpdateCredentialStatusError> = withContext(ioDispatcher) {
         coroutineBinding {
-            val anyCredential: AnyCredential? = getAnyCredential(credentialId)
+            val anyCredential = getAnyCredential(credentialId)
                 .mapError(GetAnyCredentialError::toUpdateCredentialStatusError)
                 .bind()
-
-            if (anyCredential == null) {
-                Timber.w("Cannot update status of non-existing credential")
-                return@coroutineBinding
-            }
 
             if (anyCredential.validity != CredentialValidity.Valid) {
                 // No point in getting the status, local validity has precedence for now.

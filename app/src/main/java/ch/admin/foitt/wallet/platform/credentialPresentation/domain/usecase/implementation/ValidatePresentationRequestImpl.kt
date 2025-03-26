@@ -47,7 +47,21 @@ class ValidatePresentationRequestImpl @Inject constructor(
             presentationRequest.clientIdScheme != ID_SCHEME_DID -> validationError
             !presentationRequest.clientId.matches(DID_REGEX) -> validationError
             presentationRequest.isFieldsEmpty() -> validationError
+            presentationRequest.hasInvalidConstraintsPath() -> validationError
             else -> Ok(Unit)
+        }
+    }
+
+    private fun PresentationRequest.hasInvalidConstraintsPath(): Boolean {
+        // JsonPath filter expressions in path are not allowed.
+        // The filter expression starts with "[?" and may contain whitespace between these characters
+        val invalidConstrainPath = """.*\[\s*\?.*""".toRegex()
+        return presentationDefinition.inputDescriptors.any { inputDescriptor ->
+            inputDescriptor.constraints.fields.any { field ->
+                field.path.any { path ->
+                    invalidConstrainPath.matches(path)
+                }
+            }
         }
     }
 
@@ -71,7 +85,7 @@ class ValidatePresentationRequestImpl @Inject constructor(
         val validationError = Err(CredentialPresentationError.InvalidPresentation(responseUri))
 
         if (jwt.algorithm != SigningAlgorithm.ES256.stdName) {
-            validationError.bind()
+            validationError.bind<ValidatePresentationRequestError>()
         }
 
         runSuspendCatching {
@@ -87,7 +101,7 @@ class ValidatePresentationRequestImpl @Inject constructor(
                 .bind()
         }.mapError { throwable ->
             Timber.w(t = throwable)
-            throwable.toValidatePresentationRequestError(responseUri)
+            throwable.toValidatePresentationRequestError(responseUri = responseUri, message = "validateJwtPresentationRequest error")
         }.bind()
 
         safeJson.safeDecodeElementTo<PresentationRequest>(jwt.payloadJson).mapError { error ->
@@ -95,7 +109,7 @@ class ValidatePresentationRequestImpl @Inject constructor(
         }.bind()
     }
 
-    private suspend fun PresentationRequestContainer.Json.toPresentationRequest():
+    private fun PresentationRequestContainer.Json.toPresentationRequest():
         Result<PresentationRequest, ValidatePresentationRequestError> = safeJson.safeDecodeElementTo<PresentationRequest>(json)
         .mapError(JsonParsingError::toValidatePresentationRequestError)
 

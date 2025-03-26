@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package ch.admin.foitt.wallet.platform.credential.domain.model
 
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchCredentialByConfigError
@@ -28,13 +30,17 @@ sealed interface CredentialError {
         FetchCredentialError,
         SaveCredentialError,
         GetAnyCredentialError,
-        GetAnyCredentialsError
+        GetAnyCredentialsError,
+        AnyCredentialError,
+        MapToCredentialDisplayDataError
 }
 
 sealed interface FetchCredentialError
 sealed interface SaveCredentialError
 sealed interface GetAnyCredentialError
 sealed interface GetAnyCredentialsError
+sealed interface AnyCredentialError
+sealed interface MapToCredentialDisplayDataError
 
 fun FetchIssuerCredentialInformationError.toFetchCredentialError(): FetchCredentialError = when (this) {
     OpenIdCredentialOfferError.NetworkInfoError -> CredentialError.NetworkError
@@ -67,8 +73,8 @@ fun JsonParsingError.toSaveCredentialError(): SaveCredentialError = when (this) 
     is JsonError.Unexpected -> CredentialError.UnsupportedCredentialFormat
 }
 
-fun Throwable.toSaveCredentialError(): SaveCredentialError {
-    Timber.e(this)
+fun Throwable.toSaveCredentialError(message: String): SaveCredentialError {
+    Timber.e(t = this, message = message)
     return CredentialError.Unexpected(this)
 }
 
@@ -80,16 +86,19 @@ fun CredentialRepositoryError.toGetAnyCredentialError(): GetAnyCredentialError =
     is SsiError.Unexpected -> CredentialError.Unexpected(cause)
 }
 
-fun Throwable.toGetAnyCredentialError(): GetAnyCredentialError {
-    Timber.e(this)
-    return CredentialError.Unexpected(this)
-}
-
 fun CredentialRepositoryError.toGetAnyCredentialsError(): GetAnyCredentialsError = when (this) {
     is SsiError.Unexpected -> CredentialError.Unexpected(cause)
 }
 
-fun Throwable.toGetAnyCredentialsError(): GetAnyCredentialsError {
-    Timber.e(this)
+fun AnyCredentialError.toGetAnyCredentialError(): GetAnyCredentialError = when (this) {
+    is CredentialError.Unexpected -> this
+}
+
+fun Throwable.toAnyCredentialError(message: String): AnyCredentialError {
+    Timber.e(t = this, message = message)
     return CredentialError.Unexpected(this)
+}
+
+fun AnyCredentialError.toMapToCredentialDisplayDataError(): MapToCredentialDisplayDataError = when (this) {
+    is CredentialError.Unexpected -> this
 }

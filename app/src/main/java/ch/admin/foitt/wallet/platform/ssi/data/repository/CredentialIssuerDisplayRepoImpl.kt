@@ -7,12 +7,16 @@ import ch.admin.foitt.wallet.platform.di.IoDispatcher
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialIssuerDisplayRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.toCredentialIssuerDisplayRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialIssuerDisplayRepo
+import ch.admin.foitt.wallet.platform.utils.catchAndMap
 import ch.admin.foitt.wallet.platform.utils.suspendUntilNonNull
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.mapError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -29,9 +33,19 @@ class CredentialIssuerDisplayRepoImpl @Inject constructor(
             withContext(ioDispatcher) {
                 dao().getCredentialIssuerDisplaysById(credentialId)
             }
-        }.mapError(
-            Throwable::toCredentialIssuerDisplayRepositoryError
-        )
+        }.mapError { throwable ->
+            throwable.toCredentialIssuerDisplayRepositoryError("getIssuerDisplays error")
+        }
+
+    override fun getIssuerDisplaysFlow(
+        credentialId: Long
+    ): Flow<Result<List<CredentialIssuerDisplay>, CredentialIssuerDisplayRepositoryError>> =
+        daoFlow.flatMapLatest { dao ->
+            dao?.getCredentialIssuerDisplaysFlowById(credentialId)
+                ?.catchAndMap { throwable ->
+                    throwable.toCredentialIssuerDisplayRepositoryError("getIssuerDisplaysFlow error")
+                } ?: emptyFlow()
+        }
 
     private suspend fun dao(): CredentialIssuerDisplayDao = suspendUntilNonNull { daoFlow.value }
     private val daoFlow = daoProvider.credentialIssuerDisplayDaoFlow

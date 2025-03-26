@@ -52,8 +52,9 @@ class GetCompatibleCredentialsImpl @Inject constructor(
                 } else {
                     null
                 }
-            }.mapError(Throwable::toGetCompatibleCredentialsError)
-                .bind()
+            }.mapError { throwable ->
+                throwable.toGetCompatibleCredentialsError("findCompatibleCredentials error")
+            }.bind()
         }
     }
 

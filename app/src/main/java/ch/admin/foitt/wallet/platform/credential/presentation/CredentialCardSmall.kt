@@ -41,6 +41,11 @@ fun CredentialCardSmall(
             large = false,
         )
     }
+    if (credentialState.useDefaultBackground) {
+        CredentialBackgroundFallbackPattern(
+            useSmall = true
+        )
+    }
     Box(
         modifier = Modifier
             .drawBehind {

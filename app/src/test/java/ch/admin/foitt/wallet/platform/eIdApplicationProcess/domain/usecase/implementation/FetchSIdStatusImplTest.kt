@@ -48,7 +48,7 @@ class FetchSIdStatusImplTest {
 
         coEvery { mockEIdRepository.fetchSIdState("caseID") } returns Ok(stateResponse)
 
-        var response = fetchSIdStatus("caseID").assertOk()
+        val response = fetchSIdStatus("caseID").assertOk()
 
         assertEquals(EIdRequestQueueState.IN_QUEUING, response.state)
     }

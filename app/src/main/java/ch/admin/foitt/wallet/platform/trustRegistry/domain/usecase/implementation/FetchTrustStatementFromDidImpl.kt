@@ -41,7 +41,8 @@ internal class FetchTrustStatementFromDidImpl @Inject constructor(
             }
 
             trustStatement
-        }.mapError(Throwable::toFetchTrustStatementFromDidError)
-            .bind()
+        }.mapError { throwable ->
+            throwable.toFetchTrustStatementFromDidError("FetchTrustStatementFromDid error")
+        }.bind()
     }
 }

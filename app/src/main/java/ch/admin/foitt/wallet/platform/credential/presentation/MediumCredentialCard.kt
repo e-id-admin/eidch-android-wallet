@@ -57,6 +57,11 @@ fun MediumCredentialCard(
                 color = contentColor,
             )
         }
+        if (credentialCardState.useDefaultBackground) {
+            CredentialBackgroundFallbackPattern(
+                modifier = Modifier.height(min(maxHeight, preferredHeight)).widthIn(max = 340.dp),
+            )
+        }
         MediumCredentialCardLayout(
             modifier = Modifier
                 .then(
@@ -101,8 +106,7 @@ fun MediumCredentialCard(
                     )
                 }
             },
-            subtitle =
-            credentialCardState.subtitle?.let {
+            subtitle = credentialCardState.subtitle?.let {
                 {
                     WalletTexts.MediumCredentialSubtitle(
                         text = it,

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CredentialWithDisplaysDao {
+
     @Transaction
     @Query("SELECT * FROM credential ORDER BY createdAt DESC")
     fun getCredentialsWithDisplaysFlow(): Flow<List<CredentialWithDisplays>>

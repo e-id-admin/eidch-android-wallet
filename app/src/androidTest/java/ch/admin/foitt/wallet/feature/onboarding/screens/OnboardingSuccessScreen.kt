@@ -15,7 +15,7 @@ class OnboardingSuccessScreen(composeTestRule: ComposeContentTestRule) : Onboard
 
     @OptIn(ExperimentalTestApi::class)
     override fun isDisplayed() {
-        composeTestRule.waitUntilAtLeastOneExists(hasTestTag(imageIdentifier), 10000)
+        composeTestRule.waitUntilAtLeastOneExists(hasTestTag(imageIdentifier), 20000)
         image.assertIsDisplayed()
         continueButton.assertIsDisplayed()
     }

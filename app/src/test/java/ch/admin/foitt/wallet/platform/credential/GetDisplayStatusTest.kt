@@ -8,6 +8,7 @@ import ch.admin.foitt.wallet.platform.credential.domain.model.toDisplayStatus
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialDisplayStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
+import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.impl.annotations.MockK
@@ -34,7 +35,7 @@ class GetDisplayStatusTest {
     fun setUp() {
         MockKAnnotations.init(this)
         mockkStatic(Credential::toAnyCredential)
-        coEvery { mockCredential.toAnyCredential() } returns mockAnyCredential
+        coEvery { mockCredential.toAnyCredential() } returns Ok(mockAnyCredential)
         coEvery { mockAnyCredential.validity } returns CredentialValidity.Valid
         coEvery { mockCredential.status } returns CredentialStatus.VALID
     }
@@ -46,7 +47,7 @@ class GetDisplayStatusTest {
 
     @Test
     fun `A valid credential returns a valid result`() {
-        val status = mockCredential.getDisplayStatus()
+        val status = mockAnyCredential.getDisplayStatus(mockCredential.status)
         assertEquals(CredentialDisplayStatus.Valid, status)
     }
 
@@ -54,7 +55,7 @@ class GetDisplayStatusTest {
     fun `An expired validity returns an expired result`() {
         val expectedInstant = Instant.ofEpochSecond(1516183639)
         coEvery { mockAnyCredential.validity } returns CredentialValidity.Expired(expectedInstant)
-        val status = mockCredential.getDisplayStatus()
+        val status = mockAnyCredential.getDisplayStatus(mockCredential.status)
         assertTrue(status is CredentialDisplayStatus.Expired)
         val expectedStatus = status as CredentialDisplayStatus.Expired
         assertEquals(expectedInstant, expectedStatus.expiredAt)
@@ -65,7 +66,7 @@ class GetDisplayStatusTest {
         val expectedInstant = Instant.ofEpochSecond(17768026519)
         coEvery { mockAnyCredential.validity } returns CredentialValidity.NotYetValid(expectedInstant)
 
-        val status = mockCredential.getDisplayStatus()
+        val status = mockAnyCredential.getDisplayStatus(mockCredential.status)
         assertTrue(status is CredentialDisplayStatus.NotYetValid)
         val expectedStatus = status as CredentialDisplayStatus.NotYetValid
         assertEquals(expectedInstant, expectedStatus.validFrom)
@@ -77,7 +78,7 @@ class GetDisplayStatusTest {
         coEvery { mockAnyCredential.validity } returns CredentialValidity.Expired(expectedInstant)
         coEvery { mockCredential.status } returns CredentialStatus.REVOKED
 
-        val status = mockCredential.getDisplayStatus()
+        val status = mockAnyCredential.getDisplayStatus(mockCredential.status)
         assertTrue(status is CredentialDisplayStatus.Expired)
         val expectedStatus = status as CredentialDisplayStatus.Expired
         assertEquals(expectedInstant, expectedStatus.expiredAt)
@@ -89,7 +90,7 @@ class GetDisplayStatusTest {
     )
     fun `Given a valid validity, the status is returned`(credentialStatus: CredentialStatus) {
         coEvery { mockCredential.status } returns credentialStatus
-        val displayStatus = mockCredential.getDisplayStatus()
+        val displayStatus = mockAnyCredential.getDisplayStatus(mockCredential.status)
         assertEquals(credentialStatus.toDisplayStatus(), displayStatus)
     }
 }

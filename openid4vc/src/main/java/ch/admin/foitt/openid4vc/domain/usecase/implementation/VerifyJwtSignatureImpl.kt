@@ -16,7 +16,7 @@ import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.mapError
 import javax.inject.Inject
 
-internal class VerifyJwtSignatureImpl @Inject constructor(
+class VerifyJwtSignatureImpl @Inject constructor(
     private val resolveDid: ResolveDid,
     private val verifyPublicKey: VerifyPublicKey,
 ) : VerifyJwtSignature {
@@ -24,6 +24,11 @@ internal class VerifyJwtSignatureImpl @Inject constructor(
         val didDoc = resolveDid(did)
             .mapError { error -> error.toVerifyJwtError() }
             .bind()
+
+        if (didDoc.getDeactivated()) {
+            Err(VcSdJwtError.DidDocumentDeactivated).bind()
+        }
+
         val publicKey = didDoc.getPublicKey(keyIdentifier = kid).bind()
 
         verifyPublicKey(publicKey, jwt.signedJwt)

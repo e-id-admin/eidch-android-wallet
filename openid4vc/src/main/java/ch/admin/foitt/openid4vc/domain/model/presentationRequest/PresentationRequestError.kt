@@ -10,6 +10,7 @@ interface PresentationRequestError {
     data object NetworkError : FetchPresentationRequestError, SubmitAnyCredentialPresentationError, SubmitPresentationErrorError
     data object ValidationError : SubmitAnyCredentialPresentationError
     data object VerificationError : SubmitAnyCredentialPresentationError
+    data object InvalidCredentialError : SubmitAnyCredentialPresentationError
     data class Unexpected(val throwable: Throwable?) :
         FetchPresentationRequestError,
         SubmitAnyCredentialPresentationError,

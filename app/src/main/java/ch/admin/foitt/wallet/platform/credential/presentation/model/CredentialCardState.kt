@@ -15,6 +15,8 @@ data class CredentialCardState(
     val borderColor: Color,
     val isCredentialFromBetaIssuer: Boolean,
 ) {
+    val useDefaultBackground = backgroundColor == defaultCardColor
+
     companion object {
         val EMPTY by lazy {
             CredentialCardState(
@@ -30,7 +32,7 @@ data class CredentialCardState(
             )
         }
 
-        val defaultCardColor = Color(0xFF5E6D7E)
-        val defaultCardTextColor = Color(0xFFF8FAFC)
+        val defaultCardColor = Color(0xFFF0EDE5)
+        private val defaultCardTextColor = Color(0xFFF8FAFC)
     }
 }

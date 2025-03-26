@@ -3,11 +3,12 @@ package ch.admin.foitt.wallet.feature.settings.presentation.security
 import android.content.Context
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
-import ch.admin.foitt.wallet.platform.eventToast.domain.repository.PassphraseChangeSuccessToastRepository
 import ch.admin.foitt.wallet.platform.eventTracking.domain.usecase.ApplyUserPrivacyPolicy
 import ch.admin.foitt.wallet.platform.eventTracking.domain.usecase.IsUserPrivacyPolicyAcceptedFlow
 import ch.admin.foitt.wallet.platform.login.domain.model.CanUseBiometricsForLoginResult
 import ch.admin.foitt.wallet.platform.login.domain.usecase.CanUseBiometricsForLogin
+import ch.admin.foitt.wallet.platform.messageEvents.domain.model.PassphraseChangeEvent
+import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.PassphraseChangeEventRepository
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.AuthWithPassphraseNavArg
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.passphrase.domain.usecase.GetPassphraseWasDeleted
@@ -23,7 +24,10 @@ import ch.admin.foitt.walletcomposedestinations.destinations.DataAnalysisScreenD
 import ch.admin.foitt.walletcomposedestinations.destinations.EnterCurrentPassphraseScreenDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -37,7 +41,7 @@ class SecuritySettingsViewModel @Inject constructor(
     isUserPrivacyPolicyAcceptedFlow: IsUserPrivacyPolicyAcceptedFlow,
     private val getPassphraseWasDeleted: GetPassphraseWasDeleted,
     private val savePassphraseWasDeleted: SavePassphraseWasDeleted,
-    private val passphraseChangeSuccessToastRepository: PassphraseChangeSuccessToastRepository,
+    private val passphraseChangeEventRepository: PassphraseChangeEventRepository,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
 ) : ScreenViewModel(setTopBarState, setFullscreenState) {
@@ -64,9 +68,25 @@ class SecuritySettingsViewModel @Inject constructor(
 
     val shareAnalysisEnabled = isUserPrivacyPolicyAcceptedFlow()
 
-    val showPassphraseChangeSuccessToast = passphraseChangeSuccessToastRepository.passphraseChangeSuccess
+    private val _isToastVisible = MutableStateFlow(false)
+    val isToastVisible = _isToastVisible.asStateFlow()
 
-    fun hidePassphraseChangeSuccessToast() = passphraseChangeSuccessToastRepository.hidePassphraseChangeSuccess()
+    init {
+        viewModelScope.launch {
+            passphraseChangeEventRepository.event.collect { event ->
+                when (event) {
+                    PassphraseChangeEvent.NONE -> _isToastVisible.value = false
+                    PassphraseChangeEvent.CHANGED -> {
+                        _isToastVisible.value = true
+                        delay(4000L)
+                        passphraseChangeEventRepository.resetEvent()
+                    }
+                }
+            }
+        }
+    }
+
+    fun hidePassphraseChangeSuccessToast() = passphraseChangeEventRepository.resetEvent()
 
     fun onChangeBiometrics() {
         viewModelScope.launch {

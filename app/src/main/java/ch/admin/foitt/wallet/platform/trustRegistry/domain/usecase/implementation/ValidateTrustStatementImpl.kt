@@ -70,8 +70,6 @@ internal class ValidateTrustStatementImpl @Inject constructor(
             // Specific trust statements claims
             trustStatement.checkClaimNotNull(VC_ORGNAME_KEY)
 
-            trustStatement.checkClaimNotNull(VC_LOGOURI_KEY)
-
             trustStatement.checkClaimNotNull(VC_PREFLANG_KEY)
 
             // Status of trust statement
@@ -92,8 +90,9 @@ internal class ValidateTrustStatementImpl @Inject constructor(
                 .bind()
             trustStatementObject
         }
-            .mapError(Throwable::toValidateTrustStatementError)
-            .bind()
+            .mapError { throwable ->
+                throwable.toValidateTrustStatementError("ValidateTrustStatement error")
+            }.bind()
     }
 
     private fun VcSdJwt.hasTrustedDid() = environmentSetupRepo.trustedDids.contains(vcIssuer)
@@ -109,6 +108,5 @@ internal class ValidateTrustStatementImpl @Inject constructor(
         const val SDJWT_TYPE_VALUE = "vc+sd-jwt"
         const val VC_ORGNAME_KEY = "orgName"
         const val VC_PREFLANG_KEY = "prefLang"
-        const val VC_LOGOURI_KEY = "logoUri"
     }
 }

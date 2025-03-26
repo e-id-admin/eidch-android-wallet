@@ -3,9 +3,11 @@ package ch.admin.foitt.openid4vc.di
 import ch.admin.foitt.openid4vc.data.CredentialOfferRepositoryImpl
 import ch.admin.foitt.openid4vc.data.FetchDidLogRepositoryImpl
 import ch.admin.foitt.openid4vc.data.PresentationRequestRepositoryImpl
+import ch.admin.foitt.openid4vc.data.TypeMetadataRepositoryImpl
 import ch.admin.foitt.openid4vc.domain.repository.CredentialOfferRepository
 import ch.admin.foitt.openid4vc.domain.repository.FetchDidLogRepository
 import ch.admin.foitt.openid4vc.domain.repository.PresentationRequestRepository
+import ch.admin.foitt.openid4vc.domain.repository.TypeMetadataRepository
 import ch.admin.foitt.openid4vc.domain.usecase.CreateAnyDescriptorMaps
 import ch.admin.foitt.openid4vc.domain.usecase.CreateAnyVerifiablePresentation
 import ch.admin.foitt.openid4vc.domain.usecase.CreateCredentialRequestProofJwt
@@ -68,6 +70,25 @@ import timber.log.Timber
 import java.time.Clock
 import javax.inject.Named
 
+@Module(includes = [OpenId4VcModule::class])
+@InstallIn(ActivityRetainedComponent::class)
+class ExternalOpenId4VcModule {
+    @Provides
+    internal fun provideCredentialOfferRepository(
+        httpClient: HttpClient,
+        safeJson: SafeJson,
+    ): CredentialOfferRepository = CredentialOfferRepositoryImpl(httpClient, safeJson)
+}
+
+@Module(includes = [OpenId4VCBindings::class])
+@InstallIn(ActivityRetainedComponent::class)
+interface ExternalOpenId4VcBindings {
+    @Binds
+    fun bindVerifyJwtSignature(
+        useCase: VerifyJwtSignatureImpl
+    ): VerifyJwtSignature
+}
+
 @Module
 @InstallIn(ActivityRetainedComponent::class)
 internal class OpenId4VcModule {
@@ -117,12 +138,6 @@ internal class OpenId4VcModule {
 @Module
 @InstallIn(ActivityRetainedComponent::class)
 internal interface OpenId4VCBindings {
-    @Binds
-    @ActivityRetainedScoped
-    fun bindCredentialOfferRepository(
-        repository: CredentialOfferRepositoryImpl
-    ): CredentialOfferRepository
-
     @Binds
     @ActivityRetainedScoped
     fun bindFetchDidLogRepository(
@@ -220,11 +235,6 @@ internal interface OpenId4VCBindings {
     ): FetchVcSdJwtCredential
 
     @Binds
-    fun bindVerifyJwtSignature(
-        useCase: VerifyJwtSignatureImpl
-    ): VerifyJwtSignature
-
-    @Binds
     fun bindVerifyPublicKey(
         verifier: VerifyPublicKeyImpl
     ): VerifyPublicKey
@@ -233,4 +243,10 @@ internal interface OpenId4VCBindings {
     fun bindResolveDid(
         resolver: ResolveDidImpl
     ): ResolveDid
+
+    @Binds
+    @ActivityRetainedScoped
+    fun bindTypeMetadataRepository(
+        repo: TypeMetadataRepositoryImpl
+    ): TypeMetadataRepository
 }

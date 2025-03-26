@@ -23,11 +23,13 @@ class CredentialStatusRepositoryImpl @Inject constructor(
             httpClient.get(url) {
                 header(HttpHeaders.Accept, "application/statuslist+jwt")
             }.body()
-        }.mapError(Throwable::toFetchStatusFromStatusListError)
+        }.mapError { throwable ->
+            throwable.toFetchStatusFromStatusListError("fetchTokenStatusListJwt error")
+        }
 }
 
-private fun Throwable.toFetchStatusFromStatusListError(): FetchStatusFromTokenStatusListError {
-    Timber.e(this)
+private fun Throwable.toFetchStatusFromStatusListError(message: String): FetchStatusFromTokenStatusListError {
+    Timber.e(t = this, message = message)
     return when (this) {
         is IOException -> CredentialStatusError.NetworkError
         else -> CredentialStatusError.Unexpected(this)

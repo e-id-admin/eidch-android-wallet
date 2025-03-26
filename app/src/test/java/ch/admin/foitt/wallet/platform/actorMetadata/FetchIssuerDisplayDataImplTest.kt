@@ -1,13 +1,10 @@
 package ch.admin.foitt.wallet.platform.actorMetadata
 
-import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
-import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorField
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchIssuerDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementation.FetchIssuerDisplayDataImpl
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetAnyCredential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialIssuerDisplay
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialIssuerDisplayRepo
@@ -38,13 +35,7 @@ class FetchIssuerDisplayDataImplTest {
     private lateinit var mockFetchTrustStatementFromDid: FetchTrustStatementFromDid
 
     @MockK
-    private lateinit var mockGetAnyCredential: GetAnyCredential
-
-    @MockK
     private lateinit var mockTrustStatement01: TrustStatement
-
-    @MockK
-    private lateinit var mockAnyCredential: AnyCredential
 
     private lateinit var useCase: FetchIssuerDisplayData
 
@@ -54,18 +45,10 @@ class FetchIssuerDisplayDataImplTest {
         useCase = FetchIssuerDisplayDataImpl(
             credentialIssuerDisplayRepo = mockCredentialIssuerDisplayRepo,
             fetchTrustStatementFromDid = mockFetchTrustStatementFromDid,
-            getAnyCredential = mockGetAnyCredential,
         )
 
-        coEvery { mockAnyCredential.payload } returns mockPayload
-        coEvery { mockAnyCredential.format } returns CredentialFormat.VC_SD_JWT
-        coEvery { mockAnyCredential.issuer } returns mockDid
-
-        coEvery { mockTrustStatement01.logoUri } returns mockTrustedLogos
         coEvery { mockTrustStatement01.orgName } returns mockTrustedNames
         coEvery { mockTrustStatement01.prefLang } returns mockPreferredLanguage
-
-        coEvery { mockGetAnyCredential.invoke(credentialId = credentialId01) } returns Ok(mockAnyCredential)
 
         coEvery { mockFetchTrustStatementFromDid.invoke(did = any()) } returns Ok(mockTrustStatement01)
 
@@ -81,10 +64,9 @@ class FetchIssuerDisplayDataImplTest {
 
     @Test
     fun `A trust statement is following specific steps`(): Unit = runTest {
-        useCase(credentialId01)
+        useCase(credentialId01, mockDid)
 
         coVerifyOrder {
-            mockGetAnyCredential.invoke(credentialId = any())
             mockCredentialIssuerDisplayRepo.getIssuerDisplays(any())
             mockFetchTrustStatementFromDid.invoke(did = any())
         }
@@ -92,7 +74,7 @@ class FetchIssuerDisplayDataImplTest {
 
     @Test
     fun `A trust statement is fetched using the credential issuer id`(): Unit = runTest {
-        useCase(credentialId01)
+        useCase(credentialId01, mockDid)
 
         coVerifyOrder {
             mockFetchTrustStatementFromDid.invoke(did = mockDid)
@@ -101,15 +83,14 @@ class FetchIssuerDisplayDataImplTest {
 
     @Test
     fun `A valid trust statement will display as trusted`(): Unit = runTest {
-        val displayData: ActorDisplayData = useCase(credentialId01)
+        val displayData: ActorDisplayData = useCase(credentialId01, mockDid)
 
         assertEquals(TrustStatus.TRUSTED, displayData.trustStatus)
     }
 
     @Test
     fun `No trust statement is fetched when issuer is not a did`(): Unit = runTest {
-        coEvery { mockAnyCredential.issuer } returns "not a did"
-        val displayData: ActorDisplayData = useCase(credentialId01)
+        val displayData: ActorDisplayData = useCase(credentialId01, "not a did")
 
         assertEquals(TrustStatus.NOT_TRUSTED, displayData.trustStatus)
 
@@ -121,23 +102,24 @@ class FetchIssuerDisplayDataImplTest {
     @Test
     fun `An invalid trust statement will display as not trusted`(): Unit = runTest {
         coEvery { mockFetchTrustStatementFromDid.invoke(did = any()) } returns trustRegistryError
-        val displayData: ActorDisplayData = useCase(credentialId01)
+        val displayData: ActorDisplayData = useCase(credentialId01, mockDid)
 
         assertEquals(TrustStatus.NOT_TRUSTED, displayData.trustStatus)
     }
 
     @Test
     fun `Valid trust statement data is shown first`(): Unit = runTest {
-        val displayData: ActorDisplayData = useCase(credentialId01)
+        val displayData: ActorDisplayData = useCase(credentialId01, mockDid)
 
         assertEquals(mockTrustedNamesDisplay, displayData.name)
-        assertEquals(mockTrustedLogosDisplay, displayData.image)
+        // logo of the trust statement is ignored for now -> metadata logo is used instead
+        assertEquals(mockMetadataLogoDisplays, displayData.image)
     }
 
     @Test
     fun `In case of invalid trust statement, falls back to the credential issuer metadata`(): Unit = runTest {
         coEvery { mockFetchTrustStatementFromDid.invoke(did = any()) } returns trustRegistryError
-        val displayData: ActorDisplayData = useCase(credentialId01)
+        val displayData: ActorDisplayData = useCase(credentialId01, mockDid)
 
         assertEquals(mockMetadataNameDisplays, displayData.name)
         assertEquals(mockMetadataLogoDisplays, displayData.image)
@@ -148,7 +130,7 @@ class FetchIssuerDisplayDataImplTest {
         coEvery { mockFetchTrustStatementFromDid.invoke(did = any()) } returns trustRegistryError
         coEvery { mockCredentialIssuerDisplayRepo.getIssuerDisplays(any()) } returns credentialIssuerDisplayError
 
-        val displayData: ActorDisplayData = useCase(credentialId01)
+        val displayData: ActorDisplayData = useCase(credentialId01, mockDid)
 
         assertEquals(emptyActorDisplayData, displayData)
     }
@@ -160,21 +142,12 @@ class FetchIssuerDisplayDataImplTest {
 
     private val mockPreferredLanguage = "en-us"
 
-    private val mockTrustedLogos = mapOf(
-        "en-us" to "logo EnUs",
-        "de-de" to "logo DeDe",
-    )
-
     private val mockTrustedNames = mapOf(
         "de-de" to "name DeDe",
         "en-gb" to "name EnGb"
     )
 
     private val mockTrustedNamesDisplay = mockTrustedNames.entries.map { entry ->
-        ActorField(value = entry.value, locale = entry.key)
-    }
-
-    private val mockTrustedLogosDisplay = mockTrustedLogos.entries.map { entry ->
         ActorField(value = entry.value, locale = entry.key)
     }
 
@@ -191,7 +164,7 @@ class FetchIssuerDisplayDataImplTest {
     private val credentialIssuerDisplay01 = CredentialIssuerDisplay(
         credentialId = credentialId01,
         name = "credentialIssuer01",
-        image = "crecentialImage01",
+        image = "credentialImage01",
         imageAltText = null,
         locale = "en-us",
     )
@@ -199,7 +172,7 @@ class FetchIssuerDisplayDataImplTest {
     private val credentialIssuerDisplay02 = credentialIssuerDisplay01.copy(
         credentialId = credentialId01,
         name = "credentialIssuer02",
-        image = "crecentialImage02",
+        image = "credentialImage02",
         imageAltText = null,
         locale = "de-de",
     )
@@ -226,13 +199,5 @@ class FetchIssuerDisplayDataImplTest {
     }
 
     private val mockDid = "did:tdw:identifier"
-
-    /*
-    {
-        "iss":"did:tdw:identifier"
-    }
-     */
-    private val mockPayload =
-        "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJpc3MiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJ2Y3QiOiJ2Y3QiCn0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJc0NpQWdJbXRwWkNJNkltdGxlVWxrSWdwOS4uNHNwTXBzWE1nYlNyY0lqMFdNbXJNYXdhcVRzeG9GWmItcjdwTWlubEhvZklRRUhhS2pzV1J0dENzUTkyd0tfa3RpaDQta2VCdjdVbkc2MkRPa2NDbGc"
     //endregion
 }

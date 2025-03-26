@@ -1,7 +1,6 @@
 package ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation
 
-import ch.admin.foitt.wallet.platform.database.domain.model.Claim
-import ch.admin.foitt.wallet.platform.database.domain.model.ClaimDisplay
+import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimWithDisplays
 import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedDisplay
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimData
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimImage
@@ -18,11 +17,12 @@ import javax.inject.Inject
 class MapToCredentialClaimDataImpl @Inject constructor(
     private val getLocalizedDisplay: GetLocalizedDisplay,
 ) : MapToCredentialClaimData {
-    override suspend fun <T : Claim, U : ClaimDisplay> invoke(
-        claim: T,
-        displays: List<U>
+    override suspend fun invoke(
+        claimWithDisplays: CredentialClaimWithDisplays,
     ): Result<CredentialClaimData, MapToCredentialClaimDataError> =
         runSuspendCatching {
+            val displays = claimWithDisplays.displays
+            val claim = claimWithDisplays.claim
             getLocalizedDisplay(displays)?.let { display ->
                 when (claim.valueType) {
                     "bool", "string" -> CredentialClaimText(localizedKey = display.name, value = claim.value)
@@ -34,5 +34,7 @@ class MapToCredentialClaimDataImpl @Inject constructor(
                     else -> error("Unsupported value type '${claim.valueType}' found for claim '${claim.key}'")
                 }
             } ?: error("No localized display found")
-        }.mapError(Throwable::toMapToCredentialClaimDataError)
+        }.mapError { throwable ->
+            throwable.toMapToCredentialClaimDataError("MapToCredentialClaimData error")
+        }
 }

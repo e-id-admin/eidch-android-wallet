@@ -22,8 +22,9 @@ internal class GetCredentialOfferFromUriImpl @Inject constructor(
     override fun invoke(uri: URI): Result<CredentialOffer, GetCredentialOfferError> = binding {
         val jsonString = runSuspendCatching {
             URLDecoder.decode(uri.query.split("=").last(), "UTF-8")
-        }.mapError(Throwable::toGetCredentialOfferError)
-            .bind()
+        }.mapError { throwable ->
+            throwable.toGetCredentialOfferError("GetCredentialOfferFromUri error")
+        }.bind()
         safeJson.safeDecodeStringTo<CredentialOffer>(
             string = jsonString,
         ).mapError(JsonParsingError::toGetCredentialOfferError)

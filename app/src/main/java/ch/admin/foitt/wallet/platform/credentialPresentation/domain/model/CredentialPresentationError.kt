@@ -53,25 +53,26 @@ internal fun GetAnyCredentialsError.toGetCompatibleCredentialsError(): GetCompat
     is CredentialError.Unexpected -> CredentialPresentationError.Unexpected(cause)
 }
 
-internal fun Throwable.toGetCompatibleCredentialsError(): GetCompatibleCredentialsError {
-    Timber.e(this)
+internal fun Throwable.toGetCompatibleCredentialsError(message: String): GetCompatibleCredentialsError {
+    Timber.e(t = this, message = message)
     return CredentialPresentationError.Unexpected(this)
 }
 
-internal fun Throwable.toGetRequestedFieldsError(): GetRequestedFieldsError {
-    Timber.e(this)
+internal fun Throwable.toGetRequestedFieldsError(message: String): GetRequestedFieldsError {
+    Timber.e(t = this, message = message)
     return CredentialPresentationError.Unexpected(this)
 }
 
 internal fun VerifyJwtError.toValidatePresentationRequestError(responseUri: String): ValidatePresentationRequestError = when (this) {
     VcSdJwtError.NetworkError -> CredentialPresentationError.NetworkError
     VcSdJwtError.InvalidJwt,
+    VcSdJwtError.DidDocumentDeactivated,
     is VcSdJwtError.Unexpected -> CredentialPresentationError.InvalidPresentation(responseUri)
     VcSdJwtError.IssuerValidationFailed -> CredentialPresentationError.UnknownVerifier
 }
 
-internal fun Throwable.toValidatePresentationRequestError(responseUri: String): ValidatePresentationRequestError {
-    Timber.e(this)
+internal fun Throwable.toValidatePresentationRequestError(responseUri: String, message: String): ValidatePresentationRequestError {
+    Timber.e(t = this, message = message)
     return CredentialPresentationError.InvalidPresentation(responseUri)
 }
 

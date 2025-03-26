@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -43,6 +44,7 @@ import ch.admin.foitt.wallet.platform.navArgs.domain.model.QrScannerNavArg
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.scaffold.presentation.TopBarBackArrow
 import ch.admin.foitt.wallet.platform.scaffold.presentation.TopBarButton
+import ch.admin.foitt.wallet.platform.utils.TestTags
 import ch.admin.foitt.wallet.theme.FadingVisibility
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTheme
@@ -129,7 +131,8 @@ private fun Camera(
                     topStart = Sizes.boxCornerSize,
                     topEnd = Sizes.boxCornerSize,
                 )
-            ),
+            )
+            .testTag(TestTags.SCANNING_VIEW.name),
         update = { view -> previewView.value = view },
     )
     val firstComposition = rememberSaveable { mutableStateOf(true) }

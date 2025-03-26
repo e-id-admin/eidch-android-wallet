@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -33,6 +32,7 @@ import ch.admin.foitt.wallet.platform.utils.TestTags
 import ch.admin.foitt.wallet.platform.utils.TraversalIndex
 import ch.admin.foitt.wallet.platform.utils.traversalIndex
 import ch.admin.foitt.wallet.theme.Sizes
+import ch.admin.foitt.wallet.theme.WalletShapes
 import ch.admin.foitt.wallet.theme.WalletTexts
 import ch.admin.foitt.wallet.theme.WalletTheme
 
@@ -41,7 +41,7 @@ fun PassphraseValidationErrorToastFixed(
     modifier: Modifier = Modifier,
     shouldRequestFocus: Boolean = false,
     @StringRes text: Int = R.string.tk_global_warning_alt,
-    iconEndContentDescription: Int? = R.string.tk_global_closewarning_alt,
+    @StringRes iconEndContentDescription: Int? = R.string.tk_global_closewarning_alt,
     onIconEnd: () -> Unit,
 ) = Toast(
     modifier = modifier,
@@ -61,7 +61,7 @@ fun PassphraseValidationErrorToastFixed(
 fun PassphraseValidationErrorToast(
     modifier: Modifier = Modifier,
     @StringRes text: Int = R.string.tk_global_warning_alt,
-    iconEndContentDescription: Int? = R.string.tk_global_closewarning_alt,
+    @StringRes iconEndContentDescription: Int? = R.string.tk_global_closewarning_alt,
     onIconEnd: () -> Unit,
 ) = Toast(
     modifier = modifier,
@@ -80,6 +80,7 @@ fun PassphraseValidationErrorToast(
 fun Toast(
     modifier: Modifier = Modifier,
     shouldRequestFocus: Boolean = false,
+    isSnackBarDesign: Boolean = false,
     backgroundColor: Color = WalletTheme.colorScheme.surface,
     @StringRes headline: Int? = null,
     headlineColor: Color = WalletTheme.colorScheme.onSurface,
@@ -99,13 +100,19 @@ fun Toast(
     Surface(
         modifier = modifier,
         shadowElevation = Sizes.line02,
-        shape = RoundedCornerShape(Sizes.s04),
+        shape = if (isSnackBarDesign) WalletShapes.default.extraSmall else WalletShapes.default.large,
         color = backgroundColor,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = Sizes.s04, top = Sizes.s03, bottom = Sizes.s03, end = Sizes.s01)
+                .then(
+                    if (isSnackBarDesign) {
+                        Modifier.padding(start = Sizes.s04, top = Sizes.s01, bottom = Sizes.s01, end = Sizes.s01)
+                    } else {
+                        Modifier.padding(start = Sizes.s04, top = Sizes.s03, bottom = Sizes.s03, end = Sizes.s01)
+                    }
+                )
                 .testTag(TestTags.ERROR.name)
                 .semantics(mergeDescendants = true) {},
             verticalAlignment = Alignment.CenterVertically
@@ -180,7 +187,20 @@ private fun ToastPreview() {
             iconEnd = R.drawable.wallet_ic_cross,
             onLink = { },
             onIconEnd = { },
-            shouldRequestFocus = false
+            shouldRequestFocus = false,
+            isSnackBarDesign = false
+        )
+    }
+}
+
+@WalletComponentPreview
+@Composable
+private fun SnackbarDesignPreview() {
+    WalletTheme {
+        Toast(
+            text = R.string.tk_home_notification_credential_declined,
+            onIconEnd = { },
+            isSnackBarDesign = true
         )
     }
 }

@@ -81,8 +81,8 @@ internal fun ValidateInvitationError.toProcessInvitationError(): ProcessInvitati
     is InvitationError.Unexpected -> this
 }
 
-internal fun Throwable.toGetCredentialOfferError(): GetCredentialOfferError {
-    Timber.e(this)
+internal fun Throwable.toGetCredentialOfferError(message: String): GetCredentialOfferError {
+    Timber.e(t = this, message = message)
     return InvitationError.CredentialOfferDeserializationFailed
 }
 

@@ -7,13 +7,11 @@ import androidx.compose.ui.test.swipeRight
 
 open class BaseScreen(val composeTestRule: ComposeContentTestRule) {
 
-    open fun isDisplayed() {
-    }
+    open fun isDisplayed() {}
 
     fun swipeBack() {
         composeTestRule.onRoot().performTouchInput {
             swipeRight()
         }
-
     }
 }

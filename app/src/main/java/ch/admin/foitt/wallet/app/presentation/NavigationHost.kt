@@ -10,14 +10,24 @@ import ch.admin.foitt.wallet.feature.changeLogin.presentation.EnterNewPassphrase
 import ch.admin.foitt.wallet.feature.changeLogin.presentation.EnterNewPassphraseViewModel
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.CredentialDetailScreen
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.CredentialDetailViewModel
+import ch.admin.foitt.wallet.feature.credentialDetail.presentation.CredentialDetailWrongDataScreen
+import ch.admin.foitt.wallet.feature.credentialDetail.presentation.CredentialDetailWrongDataViewModel
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.CredentialOfferDeclinedScreen
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.CredentialOfferDeclinedViewModel
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.CredentialOfferScreen
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.CredentialOfferViewModel
+import ch.admin.foitt.wallet.feature.credentialOffer.presentation.CredentialOfferWrongDataScreen
+import ch.admin.foitt.wallet.feature.credentialOffer.presentation.CredentialOfferWrongDataViewModel
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.DeclineCredentialOfferScreen
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.DeclineCredentialOfferViewModel
-import ch.admin.foitt.wallet.feature.credentialWrongData.presentation.CredentialWrongDataScreen
-import ch.admin.foitt.wallet.feature.credentialWrongData.presentation.CredentialWrongDataViewModel
+import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdInfoScreen
+import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdInfoViewModel
+import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdIntroScreen
+import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdIntroViewModel
+import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdPrivacyPolicyScreen
+import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdPrivacyPolicyViewModel
+import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdQueueScreen
+import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdQueueViewModel
 import ch.admin.foitt.wallet.feature.home.presentation.BetaIdScreen
 import ch.admin.foitt.wallet.feature.home.presentation.BetaIdViewModel
 import ch.admin.foitt.wallet.feature.home.presentation.HomeScreen
@@ -32,6 +42,10 @@ import ch.admin.foitt.wallet.feature.login.presentation.NoDevicePinSetScreen
 import ch.admin.foitt.wallet.feature.login.presentation.NoDevicePinSetViewModel
 import ch.admin.foitt.wallet.feature.login.presentation.PassphraseLoginScreen
 import ch.admin.foitt.wallet.feature.login.presentation.PassphraseLoginViewModel
+import ch.admin.foitt.wallet.feature.mrzScan.presentation.MrzChooserScreen
+import ch.admin.foitt.wallet.feature.mrzScan.presentation.MrzChooserViewModel
+import ch.admin.foitt.wallet.feature.mrzScan.presentation.MrzScanPermissionScreen
+import ch.admin.foitt.wallet.feature.mrzScan.presentation.MrzScanPermissionViewModel
 import ch.admin.foitt.wallet.feature.onboarding.presentation.OnboardingConfirmPassphraseScreen
 import ch.admin.foitt.wallet.feature.onboarding.presentation.OnboardingConfirmPassphraseViewModel
 import ch.admin.foitt.wallet.feature.onboarding.presentation.OnboardingErrorScreen
@@ -60,6 +74,8 @@ import ch.admin.foitt.wallet.feature.presentationRequest.presentation.Presentati
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationDeclinedViewModel
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationFailureScreen
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationFailureViewModel
+import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationInvalidCredentialErrorScreen
+import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationInvalidCredentialErrorViewModel
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationRequestScreen
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationRequestViewModel
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationSuccessScreen
@@ -92,20 +108,8 @@ import ch.admin.foitt.wallet.feature.settings.presentation.security.DataAnalysis
 import ch.admin.foitt.wallet.feature.settings.presentation.security.DataAnalysisViewModel
 import ch.admin.foitt.wallet.feature.settings.presentation.security.SecuritySettingsScreen
 import ch.admin.foitt.wallet.feature.settings.presentation.security.SecuritySettingsViewModel
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.EIdInfoScreen
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.EIdInfoViewModel
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.EIdIntroScreen
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.EIdIntroViewModel
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.EIdPrivacyPolicyScreen
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.EIdPrivacyPolicyViewModel
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.EIdQueueScreen
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.EIdQueueViewModel
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.EIdWalletPairingScreen
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.EIdWalletPairingViewModel
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.MrzChooserScreen
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.MrzChooserViewModel
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.MrzScanPermissionScreen
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.presentation.MrzScanPermissionViewModel
+import ch.admin.foitt.wallet.feature.walletPairing.presentation.EIdWalletPairingScreen
+import ch.admin.foitt.wallet.feature.walletPairing.presentation.EIdWalletPairingViewModel
 import ch.admin.foitt.wallet.platform.invitation.presentation.InvitationFailureScreen
 import ch.admin.foitt.wallet.platform.invitation.presentation.InvitationFailureViewModel
 import ch.admin.foitt.wallet.platform.scaffold.extension.screenDestination
@@ -120,9 +124,10 @@ import ch.admin.foitt.walletcomposedestinations.destinations.BetaIdScreenDestina
 import ch.admin.foitt.walletcomposedestinations.destinations.BiometricLoginScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.ConfirmNewPassphraseScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialDetailScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.CredentialDetailWrongDataScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialOfferDeclinedScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialOfferScreenDestination
-import ch.admin.foitt.walletcomposedestinations.destinations.CredentialWrongDataScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.CredentialOfferWrongDataScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.DataAnalysisScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.DeclineCredentialOfferScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.EIdInfoScreenDestination
@@ -159,6 +164,7 @@ import ch.admin.foitt.walletcomposedestinations.destinations.PassphraseLoginScre
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationCredentialListScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationDeclinedScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationFailureScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.PresentationInvalidCredentialErrorScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationRequestScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationSuccessScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.PresentationValidationErrorScreenDestination
@@ -313,8 +319,8 @@ fun NavigationHost(
             CredentialOfferDeclinedScreen(viewModel)
         }
 
-        screenDestination(CredentialWrongDataScreenDestination) { viewModel: CredentialWrongDataViewModel ->
-            CredentialWrongDataScreen(viewModel)
+        screenDestination(CredentialOfferWrongDataScreenDestination) { viewModel: CredentialOfferWrongDataViewModel ->
+            CredentialOfferWrongDataScreen()
         }
 
         screenDestination(PresentationRequestScreenDestination) { viewModel: PresentationRequestViewModel ->
@@ -331,6 +337,10 @@ fun NavigationHost(
 
         screenDestination(PresentationValidationErrorScreenDestination) { viewModel: PresentationValidationErrorViewModel ->
             PresentationValidationErrorScreen(viewModel)
+        }
+
+        screenDestination(PresentationInvalidCredentialErrorScreenDestination) { viewModel: PresentationInvalidCredentialErrorViewModel ->
+            PresentationInvalidCredentialErrorScreen(viewModel)
         }
 
         screenDestination(PresentationVerificationErrorScreenDestination) { viewModel: PresentationVerificationErrorViewModel ->
@@ -351,6 +361,10 @@ fun NavigationHost(
 
         screenDestination(CredentialDetailScreenDestination) { viewModel: CredentialDetailViewModel ->
             CredentialDetailScreen(viewModel)
+        }
+
+        screenDestination(CredentialDetailWrongDataScreenDestination) { viewmodel: CredentialDetailWrongDataViewModel ->
+            CredentialDetailWrongDataScreen()
         }
 
         screenDestination(AuthWithPassphraseScreenDestination) { viewModel: AuthWithPassphraseViewModel ->

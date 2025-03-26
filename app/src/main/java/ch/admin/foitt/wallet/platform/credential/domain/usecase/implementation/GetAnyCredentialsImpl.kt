@@ -9,10 +9,8 @@ import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialRepo
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
-import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.mapError
-import timber.log.Timber
 import javax.inject.Inject
 
 internal class GetAnyCredentialsImpl @Inject constructor(
@@ -23,12 +21,7 @@ internal class GetAnyCredentialsImpl @Inject constructor(
             .mapError(CredentialRepositoryError::toGetAnyCredentialsError)
             .bind()
         credentials.mapNotNull { credential ->
-            runSuspendCatching {
-                credential.toAnyCredential()
-            }.get() ?: run {
-                Timber.e("Could not create AnyCredential from database entry")
-                null
-            }
+            credential.toAnyCredential().get()
         }
     }
 }

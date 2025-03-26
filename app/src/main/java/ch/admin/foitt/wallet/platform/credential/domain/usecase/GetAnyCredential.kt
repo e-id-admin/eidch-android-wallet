@@ -7,5 +7,5 @@ import com.github.michaelbull.result.Result
 fun interface GetAnyCredential {
     suspend operator fun invoke(
         credentialId: Long,
-    ): Result<AnyCredential?, GetAnyCredentialError>
+    ): Result<AnyCredential, GetAnyCredentialError>
 }

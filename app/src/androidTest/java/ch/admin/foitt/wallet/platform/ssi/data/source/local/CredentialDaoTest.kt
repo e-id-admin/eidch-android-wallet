@@ -8,7 +8,8 @@ import ch.admin.foitt.wallet.platform.database.data.dao.CredentialClaimDisplayDa
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialDisplayDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialIssuerDisplayDao
-import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDetailsDao
+import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDisplaysAndClaimsDao
+import ch.admin.foitt.wallet.platform.database.domain.model.CredentialIssuerDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.ssi.data.source.local.mock.CredentialTestData.credential1
 import ch.admin.foitt.wallet.platform.ssi.data.source.local.mock.CredentialTestData.credentialClaim1
@@ -32,7 +33,7 @@ class CredentialDaoTest {
     private lateinit var credentialClaimDao: CredentialClaimDao
     private lateinit var credentialClaimDisplayDao: CredentialClaimDisplayDao
 
-    private lateinit var credentialWithDetailsDao: CredentialWithDetailsDao
+    private lateinit var credentialWithDisplaysAndClaimsDao: CredentialWithDisplaysAndClaimsDao
 
     @Before
     fun setupDatabase() {
@@ -46,7 +47,7 @@ class CredentialDaoTest {
         credentialClaimDao = database.credentialClaimDao()
         credentialClaimDisplayDao = database.credentialClaimDisplayDao()
 
-        credentialWithDetailsDao = database.credentialWithDetailsDao()
+        credentialWithDisplaysAndClaimsDao = database.credentialWithDisplaysAndClaimsDao()
     }
 
     @After
@@ -91,6 +92,10 @@ class CredentialDaoTest {
 
         credentialDao.deleteById(credential1.id)
 
-        assertNull(credentialWithDetailsDao.getCredentialWithDetailsFlowById(credential1.id).firstOrNull())
+        assertNull(credentialWithDisplaysAndClaimsDao.getNullableCredentialWithDisplaysAndClaimsFlowById(credential1.id).firstOrNull())
+        assertEquals(
+            emptyList<CredentialIssuerDisplay>(),
+            credentialIssuerDisplayDao.getCredentialIssuerDisplaysById(credential1.id)
+        )
     }
 }

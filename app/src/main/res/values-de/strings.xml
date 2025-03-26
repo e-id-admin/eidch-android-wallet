@@ -103,7 +103,7 @@
     <string name="securitySettings_biometrics">Biometrie</string>
     <string name="securitySettings_biometrics_noHardware">Das Gerät verfügt über keine kompatible biometrische Hardware</string>
     <string name="securitySettings_biometrics_pinChanged">Ihre Biometrics wurden deaktiviert, weil Sie das Passwort geändert haben.</string>
-    <string name="securitySettings_analysisTitle">Analyse und Verbesserung</string>
+    <string name="securitySettings_analysisTitle">Analyse &amp; Verbesserung</string>
     <string name="securitySettings_dataProtection">Datenschutzerklärung</string>
     <string name="securitySettings_dataProtectionLink">https://www.eid.admin.ch/de/swiyu-privacy</string>
     <string name="securitySettings_shareAnalysis">Anonymisierte Fehlermeldungen teilen</string>
@@ -207,6 +207,8 @@
     <string name="tk_displaydelete_displaycredential1_title2">Details</string>
     <string name="tk_displaydelete_displaycredential1_title5">Ausgestellt von</string>
     <string name="tk_displaydelete_displaycredential1_title4">Gültigkeit</string>
+    <string name="tk_displaydelete_wrongdata_title">Falsche Angaben melden</string>
+    <string name="tk_displaydelete_wrongdata_body">Ein einmal ausgestellter Nachweis kann nicht verändert werden.\n\nFalls Sie einen Fehler in Ihren Angaben feststellen, wenden Sie sich bitte an den Aussteller.\nEr kann Ihnen einen neuen korrigierten Nachweis ausstellen.</string>
     <string name="tk_receive_scanning_alt">Kamera sucht QR-Code</string>
     <string name="tk_receive_scanning_notfound_alt">Kein QR-Code gefunden. Versuchen Sie die Kamera neu zu positionieren.</string>
     <string name="tk_global_add">Hinzufügen</string>
@@ -327,7 +329,7 @@
     <string name="tk_onboarding_code_android_alt">%s Zeichen eingegeben</string>
     <string name="tk_onboarding_passwordlength_notification">Passwort muss mindestens 6 Zeichen lang sein</string>
     <string name="tk_menu_homeList_menu_add">Beta-ID hinzufügen</string>
-    <string name="tk_getBetaId_link">https://www.bcs.admin.ch/bcs-web/</string>
+    <string name="tk_getBetaId_link">https://www.bcs.admin.ch/bcs-web/?lang=DE</string>
     <string name="tk_menu_imprint_department_note">Federal Finance Administration FFA\nFederal Office of Information Technology, Systems and Telecommunication FOITT</string>
     <string name="tk_menu_imprint_admin_link_text">www.bit.admin.ch</string>
     <string name="tk_menu_imprint_subtitle3">Haftungsauschluss</string>
@@ -352,7 +354,7 @@
     <string name="tk_menu_imprint_title">Impressum</string>
     <string name="tk_menu_imprint_github_link_text">www.github.com/admin-ch</string>
     <string name="tk_error_notusable_title">QR-Code nicht mehr gültig</string>
-    <string name="tk_error_notusable_body">Dieser QR-Code kann nicht mehr verwendet werden, da er bereits benutzt wurde.</string>
+    <string name="tk_error_notusable_body">Dieser QR-Code ist nicht mehr gültig, bitte erneut erstellen.</string>
     <string name="tk_error_issuer_notregistered_title">Unbekannter Aussteller</string>
     <string name="tk_error_issuer_notregistered_body">Dieser Aussteller ist nicht registriert.</string>
     <string name="tk_error_connectionproblem_title">Verbindungsprobleme</string>
@@ -371,7 +373,7 @@
     <string name="tk_getBetaId_error_title">Ups, da ist etwas schiefgelaufen!</string>
     <string name="tk_getBetaId_firstUse_title">Leere Wallet</string>
     <string name="tk_getBetaId_create_title">Beta-ID erstellen</string>
-    <string name="tk_getBetaId_create_body">Testen Sie jetzt die Swiss Wallet App und die Vorteile von digitalen Nachweisen.\n\nAuf der nachfolgenden Webseite können Sie zu Testzwecken individuelle Beta-IDs erstellen und in die Swiss Wallet App importieren.</string>
+    <string name="tk_getBetaId_create_body">Über den folgenden Link kommen Sie zu einer externen Webseite, auf der Sie Beta-IDs erstellen können.\n\nDanach können Sie diese importieren und die swiyu App damit testen.</string>
     <string name="tk_getBetaId_firstUse_body">Starten Sie mit dem Erstellen einer Beta-ID.</string>
     <string name="tk_getBetaId_approval_title">Möchte folgenden Nachweis ausstellen:</string>
     <string name="tk_getBetaId_added_note">Neue Beta-ID wurde hinzugefügt</string>
@@ -429,7 +431,7 @@
         <item quantity="one">Das Passwort ist falsch. Sie haben noch %s Versuch.</item>
         <item quantity="other">Das Passwort ist falsch. Sie haben noch %s Versuche.</item>
     </plurals>
-    <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web</string>
+    <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web/?lang=DE</string>
     <string name="tk_menu_securityPrivacy_status_passwordChangeSuccessful">Passwort erfolgreich geändert</string>
     <string name="tk_present_approval_subtitle_affectedDetails_android">Möchte %s Angaben lesen</string>
     <string name="tk_onboarding_confirm_note">Passwort bestätigen</string>
@@ -454,7 +456,7 @@
     <string name="tk_getEid_startScan_linkText">Wo finde ich den Nummernbereich?</string>
     <string name="tk_getEid_startScan_body">Bitte halten Sie Ihren Ausweis bereit und richten Sie die Kamera auf den Bereich mit der Codezeile.\n Erlauben Sie dafür den Zugriff auf die Kamera, damit der Scanvorgang durchgeführt werden kann.</string>
     <string name="tk_getId_notification_eidReady_body">Ihre e-ID ist bereit. Bitte starten Sie den Identifizierungsprozess bis spätestens [Datum in 72 Stunden].</string>
-    <string name="tk_getEid_queuing_body2_android">Voraussichtlicher Termin: %s</string>
+    <string name="tk_getEid_queuing_body2_android">Voraussichtlicher Termin:</string>
     <string name="tk_onboarding_code2_alt">Passwort besteht aus sechs bis vierundsechzig Zeichen</string>
     <string name="tk_receive_jump_to_details">Zu den persönlichen Angaben</string>
     <string name="tk_receive_jump_to_top">Zurück nach oben</string>
@@ -470,7 +472,7 @@
     <string name="tk_getEid_dataPrivacy_body">Wir legen grössten Wert auf den Schutz Ihrer Daten und Ihre Privatsphäre. Um eine e-ID erstellen zu können, benötigen wir Ihre Zustimmung zur Datenschutzerklärung.</string>
     <string name="tk_getEid_dataPrivacy_primaryButton">Zustimmen und weiter</string>
     <string name="tk_receive_cameraaccessneeded2_title">Zugriff auf Kamera erlauben</string>
-    <string name="tk_menu_setting_wallet_feedback_link_value">https://findmind.ch/c/rBVu-3vyY</string>
+    <string name="tk_menu_setting_wallet_feedback_link_value">https://findmind.ch/c/feedback_public_beta_de</string>
     <string name="tk_global_trust_status_trusted">Verifiziert</string>
     <string name="tk_global_trust_status_notTrusted">Nicht verifiziert</string>
     <string name="tk_receive_incorrectdata_link_value">https://www.eid.admin.ch/de/help-publicbeta</string>
@@ -479,4 +481,10 @@
     <string name="tk_credential_offer_issuer_name_unknown">Unbekannter Aussteller</string>
     <string name="tk_global_getEid_greenButton">e-ID bestellen</string>
     <string name="tk_getEid_intro_title">Bestellen Sie Ihre e-ID</string>
+    <string name="tk_present_invalidcredential_title">Die Überprüfung der übertragenen Daten war nicht erfolgreich.</string>
+    <string name="tk_present_invalidcredential_subtitle">Bitte prüfen Sie die Gültigkeit Ihres Nachweises.</string>
+    <string name="tk_getEid_notification_eidExpired_title_android">e-ID Order for %s expired (deep)</string>
+    <string name="tk_getEid_notification_eidExpired_body">You did not fully complete the ordering process. Please restart it to receive your e-ID. (deepl)</string>
+    <string name="tk_home_notification_credential_accepted">Nachweis wurde hinzugefügt.</string>
+    <string name="tk_home_notification_credential_declined">Der Nachweis wurde abgelehnt.</string>
 </resources>

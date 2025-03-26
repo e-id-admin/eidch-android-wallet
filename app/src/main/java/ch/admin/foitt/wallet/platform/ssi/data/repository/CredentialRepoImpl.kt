@@ -41,7 +41,7 @@ class CredentialRepoImpl @Inject constructor(
         SsiError.Unexpected(throwable)
     }
 
-    override suspend fun getById(id: Long): Result<Credential?, CredentialRepositoryError> = runSuspendCatching {
+    override suspend fun getById(id: Long): Result<Credential, CredentialRepositoryError> = runSuspendCatching {
         withContext(ioDispatcher) {
             dao().getById(id)
         }

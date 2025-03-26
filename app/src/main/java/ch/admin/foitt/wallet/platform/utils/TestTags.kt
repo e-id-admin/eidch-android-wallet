@@ -24,10 +24,21 @@ enum class TestTags {
 
     // Home screen
     NO_CREDENTIAL_ICON,
+    CREDENTIAL_LIST,
     SCAN_TEXT_BUTTON,
 
     // Pin
     TOP_BAR_TITLE,
     PIN_FIELD,
     SHOW_PASSPHRASE_ICON,
+
+    // eid request
+    EID_INTRO_ICON,
+
+    // qr scan
+    PERMISSION_INTRO_ICON,
+    SCANNING_VIEW,
+
+    // credential offer
+    OFFER_CREDENTIAL,
 }

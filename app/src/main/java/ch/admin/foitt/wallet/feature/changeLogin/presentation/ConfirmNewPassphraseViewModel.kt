@@ -5,7 +5,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.changeLogin.domain.usecase.ChangePassphrase
-import ch.admin.foitt.wallet.platform.eventToast.domain.repository.PassphraseChangeSuccessToastRepository
+import ch.admin.foitt.wallet.platform.messageEvents.domain.model.PassphraseChangeEvent
+import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.PassphraseChangeEventRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseInputFieldState
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseValidationState
@@ -34,7 +35,7 @@ class ConfirmNewPassphraseViewModel @Inject constructor(
     private val navManager: NavigationManager,
     private val validatePassphrase: ValidatePassphrase,
     private val changePassphrase: ChangePassphrase,
-    private val passphraseChangeSuccessToastRepository: PassphraseChangeSuccessToastRepository,
+    private val passphraseChangeEventRepository: PassphraseChangeEventRepository,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
     savedStateHandle: SavedStateHandle,
@@ -97,7 +98,7 @@ class ConfirmNewPassphraseViewModel @Inject constructor(
     private suspend fun onValidPassphrase() = changePassphrase(textFieldValue.value.text).mapBoth(
         success = {
             _passphraseInputFieldState.value = PassphraseInputFieldState.Success
-            passphraseChangeSuccessToastRepository.showPassphraseChangeSuccess()
+            passphraseChangeEventRepository.setEvent(PassphraseChangeEvent.CHANGED)
             navManager.popBackStackTo(SecuritySettingsScreenDestination, false)
         },
         failure = { error ->

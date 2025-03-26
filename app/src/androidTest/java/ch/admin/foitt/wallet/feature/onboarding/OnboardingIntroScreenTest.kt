@@ -13,6 +13,7 @@ import ch.admin.foitt.wallet.feature.onboarding.screens.OnboardingSuccessScreen
 import ch.admin.foitt.wallet.feature.onboarding.screens.OnboardingUserPrivacyScreen
 import ch.admin.foitt.wallet.feature.onboarding.screens.PasswordConfirmationScreen
 import ch.admin.foitt.wallet.feature.onboarding.screens.PasswordEntryScreen
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.screens.EIdRequestIntroScreen
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.test.runTest
@@ -144,9 +145,11 @@ class OnboardingIntroScreenTest {
         val successScreen = OnboardingSuccessScreen(activityRule)
         successScreen.isDisplayed()
         successScreen.nextScreen()
+        val eidIntroScreen = EIdRequestIntroScreen(activityRule)
+        eidIntroScreen.isDisplayed()
+        eidIntroScreen.nextScreen()
         val homeScreen = HomeScreen(activityRule)
         homeScreen.isDisplayed()
-
     }
 
 }

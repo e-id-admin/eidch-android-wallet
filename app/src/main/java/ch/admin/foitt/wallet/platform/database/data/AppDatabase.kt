@@ -14,10 +14,8 @@ import ch.admin.foitt.wallet.platform.database.data.dao.CredentialClaimDisplayDa
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialDisplayDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialIssuerDisplayDao
-import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDetailsDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDisplaysAndClaimsDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithDisplaysDao
-import ch.admin.foitt.wallet.platform.database.data.dao.CredentialWithIssuerAndDisplaysDao
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseDao
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseWithStateDao
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestStateDao
@@ -56,10 +54,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun credentialClaimDisplayDao(): CredentialClaimDisplayDao
     abstract fun credentialDisplayDao(): CredentialDisplayDao
     abstract fun credentialIssuerDisplayDao(): CredentialIssuerDisplayDao
-    abstract fun credentialWithDetailsDao(): CredentialWithDetailsDao
     abstract fun credentialWithDisplaysAndClaimsDao(): CredentialWithDisplaysAndClaimsDao
     abstract fun credentialWithDisplaysDao(): CredentialWithDisplaysDao
-    abstract fun credentialWithIssuerAndDisplaysDao(): CredentialWithIssuerAndDisplaysDao
 
     abstract fun eIdRequestCaseDao(): EIdRequestCaseDao
     abstract fun eIdRequestStateDao(): EIdRequestStateDao

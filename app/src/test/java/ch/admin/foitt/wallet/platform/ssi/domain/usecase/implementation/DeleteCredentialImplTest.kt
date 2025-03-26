@@ -57,17 +57,6 @@ class DeleteCredentialImplTest {
     }
 
     @Test
-    fun `Deletion is not attempted if the returned credential is already null`() = runTest {
-        coEvery { mockCredentialRepository.getById(CREDENTIAL_ID) } returns Ok(null)
-
-        useCase(CREDENTIAL_ID).assertOk()
-
-        coVerify(exactly = 0) {
-            mockCredentialRepository.deleteById(CREDENTIAL_ID)
-        }
-    }
-
-    @Test
     fun `Deleting a credential maps errors from getting the credential`() = runTest {
         coEvery { mockCredentialRepository.getById(CREDENTIAL_ID) } returns Err(SsiError.Unexpected(Exception()))
 

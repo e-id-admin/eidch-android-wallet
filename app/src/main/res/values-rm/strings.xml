@@ -66,7 +66,7 @@
     <string name="tk_changepassword_error1_note1">Pled-clav actual</string>
     <string name="tk_home_firstuse_title">Wallet vida</string>
     <string name="tk_error_notusable_title">Il code QR n’è betg pli valaivel.</string>
-    <string name="tk_error_notusable_body">Quest code QR na po betg pli vegnir utilisà, perquai ch’el è gia vegnì utilisà.</string>
+    <string name="tk_error_notusable_body">Quest code QR n\'è betg pli valaivel, per plaschair creai da nov.</string>
     <string name="tk_error_issuer_notregistered_title">Emittent nunenconuschent</string>
     <string name="tk_error_connectionproblem_title">Problems da colliaziun</string>
     <string name="tk_error_connectionproblem_body">Per plaschair empruvai da nov.</string>
@@ -88,6 +88,8 @@
     <string name="tk_displaydelete_displaycredential1_title2">Detagls</string>
     <string name="tk_displaydelete_displaycredential1_title4">Valaivladad</string>
     <string name="tk_displaydelete_displaycredential1_title5">Emess da</string>
+    <string name="tk_displaydelete_wrongdata_title">Rapportar infurmaziuns incorrectas</string>
+    <string name="tk_displaydelete_wrongdata_body">Ina cumprova ch’è vegnida emessa ina giada na po betg vegnir midada.\n\nSche Vus constatais in sbagl en Vossas indicaziuns, As drizzai per plaschair a l’emittur.\nEl As po emetter ina nova cumprova ch’è vegnida curregida.</string>
     <string name="tk_qrscanner_scanning_title">Scannar il code QR</string>
     <string name="tk_qrscanner_invalidcode_link_text">È quest code QR vegnì utilisà senza Voss savair?</string>
     <string name="tk_changepassword_error3_note1">Confermar il nov pled-clav</string>
@@ -117,7 +119,7 @@
     <string name="tk_displaydelete_credentialdelete_title">Stizzar la cumprova?</string>
     <string name="tk_error_nosuchcredential_title">Nagina cumprova correspundenta disponibla</string>
     <string name="tk_receive_deny1_body">Sche Vus refusais uss la cumprova, è quella immediatamain nunvalaivla.\n\nPer retschaiver ina nova cumprova, la stuais Vus empustar da nov.</string>
-    <string name="tk_receive_incorrectdata_body">Ina cumprova ch\'è vegnida emessa ina giada na po betg vegnir midada.\n\nSche Vus constatais in sbagl en Vossas indicaziuns, As drizzai p.pl. a l\'emittur.\nEl As po preschentar ina nova cumprova ch\'è vegnida curregida.</string>
+    <string name="tk_receive_incorrectdata_body">Ina cumprova ch\'è vegnida emessa ina giada na po betg vegnir midada.\n\nSche Vus constatais in sbagl en Vossas indicaziuns, As drizzai per plaschair a l\'emittur.\nEl As po emetter ina nova cumprova ch\'è vegnida curregida.</string>
     <string name="tk_home_empthyhome_body">Agiuntai permiss e documents d’identitad cun scannar il code QR u avrir il SMS-link.</string>
     <string name="tk_onboarding_introductionStep_security_primary">Conservar documents d’identitad en moda segira</string>
     <string name="tk_receive_deny1_primarybutton">Refusar la cumprova</string>
@@ -194,7 +196,7 @@
         <item quantity="other">Il pled-clav è sbaglià. Vus avais anc %s emprovas.</item>
     </plurals>
     <string name="tk_present_multiplecredentials_title">Eleger il permiss u document d’identitad</string>
-    <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web</string>
+    <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web/?lang=RM</string>
     <string name="tk_menu_securityPrivacy_status_passwordChangeSuccessful">Pled-clav midà cun success</string>
     <string name="tk_displaydelete_credentialdelete_body">Questa cumprova vegn stizzada cumplettamain cun tut las datas appartegnentas da l’apparat.</string>
     <string name="tk_onboarding_password_input_subtitle">Il pled-clav sto consister d\'almain 6 segns</string>
@@ -226,7 +228,7 @@
     <string name="tk_onboarding_confirm_note">Confermar il pled-clav</string>
     <string name="tk_global_verified">Verifitgà</string>
     <string name="tk_global_notVerified">Betg verifitgà</string>
-    <string name="tk_onboarding_introductionStep_yourData_tertiary_link_value">https://www.eid.admin.ch/en/technology</string>
+    <string name="tk_onboarding_introductionStep_yourData_tertiary_link_value">https://www.eid.admin.ch/de/technologie</string>
     <string name="tk_receive_incorrectdata_link_value">https://www.eid.admin.ch/de/help-publicbeta</string>
     <string name="tk_login_confirmPassword_alt">Confermar il pled-clav swiyu</string>
     <string name="tk_onboarding_passworderror_title">L\'endrizzament dad il pled-clav n\'ha betg funcziunà</string>
@@ -241,7 +243,7 @@
     <string name="settings_contactLink">https://forms.eid.admin.ch/</string>
     <string name="securitySettings_dataProtectionLink">https://www.eid.admin.ch/de/swiyu-privacy</string>
     <string name="impressum_legals_link">https://www.eid.admin.ch/de/swiyu-terms</string>
-    <string name="tk_menu_setting_wallet_feedback_link_value">https://findmind.ch/c/rBVu-3vyY</string>
+    <string name="tk_menu_setting_wallet_feedback_link_value">https://findmind.ch/c/feedback_public_beta_en</string>
     <string name="settings_contact">Contact</string>
     <string name="impressum_github_link_text">www.github.com/swiyu-admin-ch</string>
     <string name="impressum_github_link">https://www.github.com/swiyu-admin-ch</string>
@@ -302,4 +304,11 @@
     <string name="tk_login_locked_secondarybutton_value">https://www.eid.admin.ch/de/help-publicbeta</string>
     <string name="tk_menu_deactivatingBiometrics_android_note">Entrai per plaschair Voss pled-clav da Schwyu per impedir ina bloccada biometrica.</string>
     <string name="tk_menu_activatingBiometrics_android_body">Entrai per plaschair Voss pled-clav da Schwyu per activar il schluccament biometric.</string>
+    <string name="tk_menu_homeList_menu_add">Crear ina Beta-ID</string>
+    <string name="impressum_title">Impressum</string>
+    <string name="tk_getBetaId_link">https://www.bcs.admin.ch/bcs-web/?lang=RM</string>
+    <string name="tk_present_invalidcredential_title">L\'examinaziun da las datas transferidas n\'ha betg gì success.</string>
+    <string name="tk_present_invalidcredential_subtitle">Controllai per plaschair la valaivladad da Vossa cumprova.</string>
+    <string name="tk_home_notification_credential_accepted">Cumprova è vegnì agiuntà.</string>
+    <string name="tk_home_notification_credential_declined">Cumprova refusada.</string>
 </resources>

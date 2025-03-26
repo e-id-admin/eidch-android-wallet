@@ -18,17 +18,23 @@ internal class SafeJson @Inject constructor(
         string: String
     ): Result<T, JsonParsingError> = runSuspendCatching {
         json.decodeFromString<T>(string)
-    }.mapError(Throwable::toJsonError)
+    }.mapError { throwable ->
+        throwable.toJsonError("SafeJson decodeFromString error")
+    }
 
     inline fun <reified T> safeEncodeObjectToString(objectToEncode: T): Result<String, JsonParsingError> = runSuspendCatching {
         json.encodeToString(objectToEncode)
-    }.mapError(Throwable::toJsonError)
+    }.mapError { throwable ->
+        throwable.toJsonError("SafeJson encodeToString error")
+    }
 
     fun safeDecodeToJsonObject(
         string: String,
     ): Result<JsonObject, JsonParsingError> = runSuspendCatching {
         json.parseToJsonElement(string).jsonObject
-    }.mapError(Throwable::toJsonError)
+    }.mapError { throwable ->
+        throwable.toJsonError("SafeJson parseToJsonElement error")
+    }
 }
 
 internal interface JsonError {
@@ -37,7 +43,7 @@ internal interface JsonError {
 
 internal sealed interface JsonParsingError
 
-internal fun Throwable.toJsonError(): JsonParsingError {
-    Timber.e(this)
+internal fun Throwable.toJsonError(message: String): JsonParsingError {
+    Timber.e(t = this, message = message)
     return JsonError.Unexpected(this)
 }

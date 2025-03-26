@@ -12,7 +12,7 @@ data class TrustStatement(
     @SerialName("iss")
     val iss: String,
     @SerialName("logoUri")
-    val logoUri: Map<String, String>,
+    val logoUri: Map<String, String>?,
     @SerialName("nbf")
     val nbf: Long,
     @SerialName("orgName")

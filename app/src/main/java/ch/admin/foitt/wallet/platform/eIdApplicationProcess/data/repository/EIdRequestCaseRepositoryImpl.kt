@@ -24,7 +24,9 @@ class EIdRequestCaseRepositoryImpl @Inject constructor(
     ): Result<Unit, EIdRequestCaseRepositoryError> = withContext(ioDispatcher) {
         runSuspendCatching {
             eIdRequestCaseDao().insert(case)
-        }.mapError(Throwable::toEIdRequestCaseRepositoryError)
+        }.mapError { throwable ->
+            throwable.toEIdRequestCaseRepositoryError("EIdRequestCaseRepository error")
+        }
     }
 
     private val eIdRequestCaseDaoFlow = daoProvider.eIdRequestCaseDaoFlow

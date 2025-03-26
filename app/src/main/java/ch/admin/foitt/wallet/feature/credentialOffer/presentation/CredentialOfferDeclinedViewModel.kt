@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.model.DeclineCredentialOfferUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
+import ch.admin.foitt.wallet.platform.messageEvents.domain.model.CredentialOfferEvent
+import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialOfferEventRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
@@ -29,6 +31,7 @@ class CredentialOfferDeclinedViewModel @Inject constructor(
     private val getActorUiState: GetActorUiState,
     private val deleteCredential: DeleteCredential,
     private val navManager: NavigationManager,
+    private val credentialOfferEventRepository: CredentialOfferEventRepository,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
     savedStateHandle: SavedStateHandle,
@@ -62,6 +65,7 @@ class CredentialOfferDeclinedViewModel @Inject constructor(
             }
         }
         delay(NAV_DELAY)
+        credentialOfferEventRepository.setEvent(CredentialOfferEvent.DECLINED)
         navigateToHome()
     }
 

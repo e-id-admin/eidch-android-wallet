@@ -21,7 +21,9 @@ class ParseTokenStatusListImpl @Inject constructor() : ParseTokenStatusList {
             bits = statusList.bits,
             index = index
         )
-    }.mapError(Throwable::toParseTokenStatusStatusListError)
+    }.mapError { throwable ->
+        throwable.toParseTokenStatusStatusListError("ParseTokenStatusList error")
+    }
 
     /**
      * @param index Index of the status list entry

@@ -108,6 +108,18 @@ class FetchStatusFromTokenStatusListImplTest {
         assertEquals(exception.message, error.cause?.message)
     }
 
+    @Test
+    fun `Fetching token status with DidDocumentDeactivated error will return Unexpected error`(): Unit = runTest {
+        setDefaultMockedReturns()
+        val exception = CredentialStatusError.Unexpected(null)
+        coEvery { mockValidateTokenStatusList(any(), any(), any()) } returns Err(CredentialStatusError.DidDocumentDeactivated)
+
+        val result = useCase(CREDENTIAL_ISSUER, mockTokenStatusListProperties)
+
+        val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
+        assertEquals(exception, error)
+    }
+
     private fun setDefaultMockedReturns(statusValue: Int = 0) {
         every { mockTokenStatusListProperties.statusList.index } returns INDEX
         every { mockTokenStatusListProperties.statusList.uri } returns URI

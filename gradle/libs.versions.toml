@@ -12,8 +12,9 @@ constraintlayout-compose = "1.0.1"
 core-ktx = "1.13.1"
 core-splashscreen = "1.0.1"
 devtools-ksp = "2.0.20-1.0.24" # keep in sync with 'kotlin' [libs.versions.toml] and 'kotlinVersion' [build-logic/build.gradle.kts]
-didresolver = "1.0.1"
+didresolver = "2.0.0"
 espresso-core = "3.6.1"
+espresso-intents = "3.6.1"
 hilt = "2.51.1"
 hilt-compiler = "1.2.0"
 hilt-navigation-compose = "1.2.0"
@@ -38,6 +39,7 @@ slf4j-android = "1.7.36"
 slf4j-nop = "2.0.13"
 sqlcipher-android = "4.6.0"
 timber = "5.0.1"
+ui-automator = "2.3.0"
 zxing-cpp = "2.2.0"
 
 [libraries]
@@ -51,6 +53,7 @@ androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constr
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "core-splashscreen" }
 androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso-core" }
+androidx-espresso-intents = { module = "androidx.test.espresso:espresso-intents", version.ref = "espresso-intents" }
 androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hilt-compiler" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hilt-navigation-compose" }
 androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle-runtime-compose" }
@@ -61,6 +64,7 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 androidx-runner = { module = "androidx.test:runner", version.ref = "runner" }
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "security-crypto" }
+androidx-ui-automator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "ui-automator" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 coil = { module = "io.coil-kt:coil-base", version.ref = "coil" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }

@@ -66,7 +66,7 @@
     <string name="tk_home_firstuse_title">Le Wallet est vide</string>
     <string name="tk_qrscanner_lighton_title">La lampe torche est activée</string>
     <string name="tk_error_notusable_title">Le code QR n’est plus valable</string>
-    <string name="tk_error_notusable_body">Ce code n’est plus valable, car il a déjà été utilisé.</string>
+    <string name="tk_error_notusable_body">Ce code QR n\'est plus valide, veuillez le recréer.</string>
     <string name="tk_error_issuer_notregistered_title">Émetteur inconnu</string>
     <string name="tk_error_connectionproblem_title">Connexion interrompue</string>
     <string name="tk_error_connectionproblem_body">Veuillez réessayer.</string>
@@ -81,6 +81,8 @@
     <string name="tk_displaydelete_displaycredential1_title2">Informations</string>
     <string name="tk_displaydelete_displaycredential1_title4">Validité</string>
     <string name="tk_displaydelete_displaycredential1_title3">Compléments</string>
+    <string name="tk_displaydelete_wrongdata_title">Signaler des données incorrectes</string>
+    <string name="tk_displaydelete_wrongdata_body">Une fois délivré, un document ne peut plus être modifié.\n\nSi vous constatez une erreur dans vos données, veuillez contacter l’autorité émettrice.\nElle pourra vous délivrer un nouveau document corrigé.</string>
     <string name="tk_home_empthyhome_title">Le Wallet est vide</string>
     <string name="tk_receive_incorrectdata_subtitle">Les données sont incorrectes ?</string>
     <string name="tk_changepassword_error3_note1">Confirmez le nouveau mot de passe</string>
@@ -115,7 +117,7 @@
     <string name="tk_changepassword_step2_passwordlength_alt">Nouveau mot de passe d\'au moins six caractères</string>
     <string name="tk_displaydelete_credentialmenu_primarybutton">Supprimer le moyen de preuve</string>
     <string name="tk_displaydelete_credentialdelete_title">Voulez-vous vraiment supprimer ce moyen de preuve ?</string>
-    <string name="tk_receive_incorrectdata_body">Une fois délivrée, un moyen de preuve ne peut plus être modifiée.\n\nSi vous constatez une erreur dans vos données, veuillez contacter l\'émetteur.\nIl pourra vous délivrer une nouvelle moyen de preuve corrigée.</string>
+    <string name="tk_receive_incorrectdata_body">Une fois délivré, un document ne peut plus être modifié.\n\nSi vous constatez une erreur dans vos données, veuillez contacter l\'autorité émettrice.\nElle pourra vous délivrer un nouveau document corrigé.</string>
     <string name="tk_home_firstuse_body">Ajoutez des justificatifs et des documents en scannant le code QR ou en ouvrant le lien obtenu par SMS.</string>
     <string name="tk_error_nosuchcredential_title">Aucun moyen de preuve disponible pour cette demande</string>
     <string name="tk_onboarding_introductionStep_neverForget_primary">N’oubliez plus vos documents</string>
@@ -199,7 +201,7 @@
         <item quantity="other"/>
     </plurals>
     <string name="tk_present_multiplecredentials_title">Choisir un moyen de preuve</string>
-    <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web</string>
+    <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web/?lang=FR</string>
     <string name="tk_menu_securityPrivacy_status_passwordChangeSuccessful">Changement de mot de passe réussi</string>
     <string name="tk_displaydelete_credentialdelete_body">Le moyen de preuve et toutes les données qui s’y rapportent seront complètement supprimés de votre appareil.</string>
     <string name="tk_onboarding_password_input_subtitle">Le mot de passe doit comporter au moins 6 caractères</string>
@@ -237,7 +239,7 @@
     <string name="tk_onboarding_introductionStep_yourData_tertiary_link_value">https://www.eid.admin.ch/fr/technologie-architecture-decentralisee</string>
     <string name="tk_receive_incorrectdata_link_value">https://www.eid.admin.ch/fr/help-publicbeta-f</string>
     <string name="tk_login_confirmPassword_alt">Confirmer le mot de passe swiyu</string>
-    <string name="tk_getBetaId_create_body">En cliquant sur le lien suivant, vous accédez à une page web externe sur laquelle vous pouvez créer des Beta-ID. Vous pouvez ensuite les importer et les utiliser pour tester l\'application swiyu.</string>
+    <string name="tk_getBetaId_create_body">En cliquant sur le lien suivant, vous accédez à une page web externe sur laquelle vous pouvez créer des Beta-ID.\n\nVous pouvez ensuite les importer et les utiliser pour tester l\'application swiyu.</string>
     <string name="tk_getBetaId_added_note">Beta-ID a été ajouté(e)</string>
     <string name="tk_getBetaId_approval_title">Aimerait délivrer le document suivant:</string>
     <string name="tk_onboarding_passworderror_title">La configuration du mot de passe n\'a pas fonctionné</string>
@@ -261,13 +263,13 @@
     <string name="securitySettings_title">Protection des données et sécurité</string>
     <string name="languageSettings_systemDefaultLanguage_button">Utiliser la langue par défaut du système</string>
     <string name="settings_impressum">Mentions légales</string>
-    <string name="securitySettings_analysisTitle">Analyse et améliorations</string>
+    <string name="securitySettings_analysisTitle">Analyse &amp; améliorations</string>
     <string name="dataAnalysis_title">Analyse et amélioration</string>
     <string name="securitySettings_dataProtection">Déclaration de protection</string>
     <string name="securitySettings_shareAnalysis">Partager les messages d\'erreur anonymisés</string>
     <string name="securitySettings_shareAnalysis_text">Contribuez à améliorer l\'application swiyu en partageant de manière anonyme les rapports d\'erreur et les plantages, afin de la rendre encore meilleure.</string>
     <string name="securitySettings_dataAnalysis">Plus d\'informations</string>
-    <string name="tk_menu_setting_wallet_feedback_link_value">https://findmind.ch/c/rBVu-3vyY</string>
+    <string name="tk_menu_setting_wallet_feedback_link_value">https://findmind.ch/c/feedback_public_beta_fr</string>
     <string name="impressum_github_link_text">www.github.com/swiyu-admin-ch</string>
     <string name="impressum_github_link">https://www.github.com/swiyu-admin-ch</string>
     <string name="impressum_more_information_link_text">https://www.bit.admin.ch</string>
@@ -309,4 +311,10 @@
     <string name="tk_login_locked_secondarybutton_value">https://www.eid.admin.ch/fr/help-publicbeta-f</string>
     <string name="tk_menu_activatingBiometrics_android_body">Veuillez saisir votre mot de passe swiyu pour activer le déverrouillage biométrique.</string>
     <string name="tk_menu_deactivatingBiometrics_android_note">Veuillez saisir votre mot de passe swiyu pour désactiver le déverrouillage biométrique.</string>
+    <string name="tk_getEid_queuing_body2_android">Date prévue (deepl)</string>
+    <string name="tk_getBetaId_link">https://www.bcs.admin.ch/bcs-web/?lang=FR</string>
+    <string name="tk_present_invalidcredential_title">La vérification des données transmises a échoué.</string>
+    <string name="tk_present_invalidcredential_subtitle">Veuillez vérifier la validité de votre document.</string>
+    <string name="tk_home_notification_credential_accepted">Document a été ajouté.</string>
+    <string name="tk_home_notification_credential_declined">Le document a été rejeté.</string>
 </resources>

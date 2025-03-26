@@ -12,18 +12,21 @@ import javax.inject.Inject
 class SafeJson @Inject constructor(
     val json: Json
 ) {
-
     inline fun <reified T> safeDecodeStringTo(
         string: String,
     ): Result<T, JsonParsingError> = runSuspendCatching {
         json.decodeFromString<T>(string)
-    }.mapError(Throwable::toJsonError)
+    }.mapError { throwable ->
+        throwable.toJsonError("safeDecodeStringTo error")
+    }
 
     inline fun <reified T> safeDecodeElementTo(
         jsonElement: JsonElement,
     ): Result<T, JsonParsingError> = runSuspendCatching {
         json.decodeFromJsonElement<T>(jsonElement)
-    }.mapError(Throwable::toJsonError)
+    }.mapError { throwable ->
+        throwable.toJsonError("safeDecodeElementTo error")
+    }
 }
 
 interface JsonError {
@@ -32,7 +35,7 @@ interface JsonError {
 
 sealed interface JsonParsingError
 
-fun Throwable.toJsonError(): JsonParsingError {
-    Timber.e(this)
+fun Throwable.toJsonError(message: String): JsonParsingError {
+    Timber.e(t = this, message = message)
     return JsonError.Unexpected(this)
 }

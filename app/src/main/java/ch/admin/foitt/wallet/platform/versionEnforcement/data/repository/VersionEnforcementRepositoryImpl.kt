@@ -31,12 +31,14 @@ class VersionEnforcementRepositoryImpl @Inject constructor(
                 .firstOrNull {
                     it.priority == VersionEnforcement.Priority.HIGH && it.platform == VersionEnforcement.Platform.ANDROID
                 }
-        }.mapError(Throwable::toFetchVersionEnforcementInfoError)
+        }.mapError { throwable ->
+            throwable.toFetchVersionEnforcementInfoError("VersionEnforcementRepository fetchLatestHighPriority error")
+        }
 
     private fun parseDate(from: String): Instant = OffsetDateTime.parse(from).toInstant()
 }
 
-private fun Throwable.toFetchVersionEnforcementInfoError(): FetchVersionEnforcementError {
-    Timber.e(this)
+private fun Throwable.toFetchVersionEnforcementInfoError(message: String): FetchVersionEnforcementError {
+    Timber.e(t = this, message = message)
     return VersionEnforcementError.Unexpected(this)
 }

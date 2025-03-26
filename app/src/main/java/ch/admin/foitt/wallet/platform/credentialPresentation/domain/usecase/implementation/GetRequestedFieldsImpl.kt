@@ -55,7 +55,9 @@ class GetRequestedFieldsImpl @Inject constructor(
                 null
             }
         }
-    }.mapError(Throwable::toGetRequestedFieldsError)
+    }.mapError { throwable ->
+        throwable.toGetRequestedFieldsError("getMatchingClaims error")
+    }
 
     private fun getMatchingClaim(credentialDocument: DocumentContext, field: Field): Pair<String, List<Any>>? {
         field.path.forEach { path ->

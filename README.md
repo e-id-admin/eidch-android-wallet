@@ -19,7 +19,7 @@ This repository is part of the ecosystem developed for the future official Swiss
 The goal of this repository is to engage with the community and collaborate on developing the Swiss ecosystem for E-ID and other credentials.
 We warmly encourage you to engage with us by creating an issue in the repository.
 
-For more information about the project please visit the [introduction into open source of the public beta](https://github.com/e-id-admin/eidch-public-beta).
+For more information about the project please visit the [introduction into Public Beta](https://www.eid.admin.ch/de/public-beta). The technical documentation of the swiyu Public Beta Trust Infrastructure can be found [here](https://swiyu-admin-ch.github.io/).
 
 ## Installation and building
 

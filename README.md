@@ -39,7 +39,7 @@ You can then find the generated APK under `app/build/outputs/apk/prod/release/ap
 
 ## Known Issues
 
-The swiyu Public Beta Trust Infrastructure was deliberately released at an early stage to enable future ecosystem participants. There may still be minor bugs or security vulnerabilities in the test system. We will publish them in the near future as ‘KnownIssues’ in this repository.
+The swiyu Public Beta Trust Infrastructure was deliberately released at an early stage to enable future ecosystem participants. There may still be minor bugs or security vulnerabilities in the test system. We will publish them in the near future as [‘KnownIssues’](https://github.com/swiyu-admin-ch/eidch-android-wallet/issues?q=is%3Aissue%20state%3Aopen%20type%3AKnownIssue) in this repository.
 
 ## Contributions and feedback
 

@@ -189,6 +189,7 @@ dependencies {
     testImplementation(libs.konsist)
     testImplementation(libs.mockk)
     testImplementation(libs.androidx.room.testing)
+    testImplementation(libs.kotlin.reflect)
 
     val junitBom = platform(libs.junit.jupiter.bom)
     testImplementation(junitBom)

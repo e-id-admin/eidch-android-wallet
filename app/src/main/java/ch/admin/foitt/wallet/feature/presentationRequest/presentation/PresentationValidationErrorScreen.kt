@@ -7,16 +7,13 @@ import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.credential.presentation.CredentialActionFeedbackCardError
-import ch.admin.foitt.wallet.platform.navArgs.domain.model.PresentationValidationErrorNavArg
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.theme.WalletTheme
 import com.ramcosta.composedestinations.annotation.Destination
 
 @Composable
-@Destination(
-    navArgsDelegate = PresentationValidationErrorNavArg::class,
-)
+@Destination
 fun PresentationValidationErrorScreen(viewModel: PresentationValidationErrorViewModel) {
     val verifierUiState = viewModel.verifierUiState.collectAsStateWithLifecycle().value
 

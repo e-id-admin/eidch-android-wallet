@@ -10,12 +10,15 @@ import ch.admin.foitt.walletcomposedestinations.appDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.Destination
 import ch.admin.foitt.walletcomposedestinations.destinations.HomeScreenDestination
 import com.ramcosta.composedestinations.navigation.navigate
+import com.ramcosta.composedestinations.spec.DestinationSpec
 import com.ramcosta.composedestinations.spec.Direction
+import com.ramcosta.composedestinations.spec.NavGraphSpec
 import com.ramcosta.composedestinations.utils.route
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -26,11 +29,14 @@ class NavigationManagerImpl @Inject constructor(
     @IoDispatcherScope private val ioDispatcherScope: CoroutineScope,
 ) : NavigationManager {
     private var destinationFlowJob: Job? = null
+    private var backStackFlowJob: Job? = null
+
     private var navHost: WeakReference<NavHostController> = WeakReference(null)
 
     override fun setNavHost(navHost: NavHostController) {
         this.navHost = WeakReference(navHost)
         initDestinationFlow(navHost)
+        initBackStackFlow(navHost)
     }
 
     override fun navigateTo(direction: Direction) {
@@ -85,6 +91,26 @@ class NavigationManagerImpl @Inject constructor(
 
     private val _currentDestinationFlow: MutableStateFlow<Destination?> = MutableStateFlow(null)
     override val currentDestinationFlow = _currentDestinationFlow.asStateFlow()
+
+    @SuppressLint("RestrictedApi")
+    private fun initBackStackFlow(navigationHost: NavHostController) {
+        backStackFlowJob?.cancel()
+        backStackFlowJob = ioDispatcherScope.launch {
+            navigationHost.currentBackStack.collect { backStack ->
+                _currentBackStackFlow.update {
+                    backStack.mapNotNull { backStackEntry ->
+                        when (backStackEntry.route()) {
+                            is DestinationSpec<*> -> backStackEntry.appDestination()
+                            is NavGraphSpec -> null
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private val _currentBackStackFlow = MutableStateFlow<List<Destination>>(listOf())
+    override val currentBackStackFlow = _currentBackStackFlow.asStateFlow()
 
     override fun popBackStack() {
         navHost.get()?.popBackStack()

@@ -5,6 +5,7 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOfferErro
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.VcSdJwtCredentialConfiguration
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtCredential
+import ch.admin.foitt.openid4vc.domain.usecase.FetchCredentialByConfig
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.FetchVcSdJwtCredential
 import ch.admin.foitt.openid4vc.util.assertErrorType
 import ch.admin.foitt.openid4vc.util.assertOk
@@ -35,7 +36,7 @@ class FetchCredentialByConfigImplTest {
     @MockK
     private lateinit var mockCredentialOffer: CredentialOffer
 
-    private lateinit var useCase: FetchCredentialByConfigImpl
+    private lateinit var useCase: FetchCredentialByConfig
 
     @BeforeEach
     fun setUp() {
@@ -46,6 +47,9 @@ class FetchCredentialByConfigImplTest {
         )
 
         every { mockVcSdJwtCredentialConfig.format } returns CredentialFormat.VC_SD_JWT
+        coEvery {
+            mockFetchVcSdJwtCredential(mockVcSdJwtCredentialConfig, mockCredentialOffer)
+        } returns Ok(mockVcSdJwtCredential)
         coEvery {
             mockFetchVcSdJwtCredential(mockVcSdJwtCredentialConfig, mockCredentialOffer)
         } returns Ok(mockVcSdJwtCredential)

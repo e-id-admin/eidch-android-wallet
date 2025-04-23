@@ -123,12 +123,12 @@ private fun CompactContent(
 ) {
     val lazyListState = rememberLazyListState()
     HiddenScrollToButton(
-        text = stringResource(id = R.string.tk_receive_approval_hiddenlink_text),
+        text = stringResource(id = R.string.tk_receive_credentialOffer_hiddenGoToDetails),
         lazyListState = lazyListState,
         index = 3,
     )
     HiddenScrollToTopButton(
-        text = stringResource(id = R.string.tk_receive_jump_to_top),
+        text = stringResource(id = R.string.tk_global_hiddenGoToTop),
         lazyListState = lazyListState,
     )
     LazyColumn(
@@ -152,7 +152,7 @@ private fun CompactContent(
         }
         item {
             WalletTexts.BodyLarge(
-                text = stringResource(R.string.tk_receive_approval_subtitle),
+                text = stringResource(R.string.tk_receive_credentialOffer_headerSection_secondary),
                 modifier = Modifier.padding(horizontal = Sizes.s04)
             )
             Spacer(modifier = Modifier.height(Sizes.s04))
@@ -168,7 +168,7 @@ private fun CompactContent(
         }
 
         credentialClaimItems(
-            title = R.string.tk_displaydelete_displaycredential1_title2,
+            title = R.string.tk_receive_credentialOffer_contentSection_primary,
             claims = credentialOffer.claims,
             onWrongData = onWrongData,
         )
@@ -306,14 +306,14 @@ private fun DetailsWithHeader(
 
             item {
                 WalletTexts.BodyLarge(
-                    text = stringResource(R.string.tk_receive_approval_subtitle),
+                    text = stringResource(R.string.tk_receive_credentialOffer_headerSection_secondary),
                     modifier = Modifier.padding(horizontal = Sizes.s04)
                 )
                 Spacer(modifier = Modifier.height(Sizes.s04))
             }
 
             credentialClaimItems(
-                title = R.string.tk_displaydelete_displaycredential1_title2,
+                title = R.string.tk_receive_credentialOffer_contentSection_primary,
                 claims = credentialOffer.claims,
                 onWrongData = onWrongData,
             )
@@ -328,7 +328,7 @@ private fun DetailsWithHeader(
             onAccept
         )
         HiddenScrollToTopButton(
-            text = stringResource(id = R.string.tk_receive_jump_to_top),
+            text = stringResource(id = R.string.tk_global_hiddenGoToTop),
             lazyListState = lazyListState,
         )
     }
@@ -359,13 +359,13 @@ private fun StickyButtons(
         ) {
             Buttons.FilledPrimary(
                 modifier = Modifier.weight(1f),
-                text = stringResource(id = R.string.tk_global_decline_secondarybutton),
+                text = stringResource(id = R.string.tk_receive_credentialOffer_button_decline),
                 startIcon = painterResource(id = R.drawable.wallet_ic_cross),
                 onClick = onDecline,
             )
             Buttons.FilledTertiary(
                 modifier = Modifier.weight(1f),
-                text = stringResource(id = R.string.tk_global_add_primarybutton),
+                text = stringResource(id = R.string.tk_receive_credentialOffer_button_accept),
                 startIcon = painterResource(id = R.drawable.wallet_ic_checkmark),
                 onClick = onAccept,
             )
@@ -391,7 +391,7 @@ private fun CredentialOfferButtons(
             modifier = Modifier
                 .weight(1f)
                 .testTag(TestTags.DECLINE_BUTTON.name),
-            text = stringResource(id = R.string.tk_global_decline_secondarybutton),
+            text = stringResource(id = R.string.tk_receive_credentialOffer_button_decline),
             startIcon = painterResource(id = R.drawable.wallet_ic_cross),
             onClick = onDecline,
         )
@@ -399,7 +399,7 @@ private fun CredentialOfferButtons(
             modifier = Modifier
                 .weight(1f)
                 .testTag(TestTags.ACCEPT_BUTTON.name),
-            text = stringResource(id = R.string.tk_global_add_primarybutton),
+            text = stringResource(id = R.string.tk_receive_credentialOffer_button_accept),
             startIcon = painterResource(id = R.drawable.wallet_ic_checkmark),
             onClick = onAccept,
         )

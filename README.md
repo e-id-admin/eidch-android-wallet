@@ -1,6 +1,10 @@
-![swiyu GitHub banner](https://github.com/swiyu-admin-ch/swiyu-admin-ch.github.io/blob/main/assets/images/github-banner.jpg)
+![Public Beta banner](https://github.com/e-id-admin/eidch-public-beta/blob/main/assets/github-banner-publicbeta.jpg)
 
 # swiyu - Android wallet
+
+<div align="left">
+<img src="app/src/main/ic_launcher-playstore.png" width="200" />
+</div>
 
 An official Swiss Government project made by the [Federal Office of Information Technology, Systems and Telecommunication FOITT](https://www.bit.admin.ch/)
 as part of the electronic identity (E-ID) project.
@@ -9,7 +13,6 @@ as part of the electronic identity (E-ID) project.
 
 - [Overview](#overview)
 - [Installation and building](#installation-and-building)
-- [Known Issues](#known-issues)
 - [Contributions and feedback](#contributions-and-feedback)
 - [License](#license)
 
@@ -19,7 +22,7 @@ This repository is part of the ecosystem developed for the future official Swiss
 The goal of this repository is to engage with the community and collaborate on developing the Swiss ecosystem for E-ID and other credentials.
 We warmly encourage you to engage with us by creating an issue in the repository.
 
-For more information about the project please visit the [introduction into Public Beta](https://www.eid.admin.ch/de/public-beta). The technical documentation of the swiyu Public Beta Trust Infrastructure can be found [here](https://swiyu-admin-ch.github.io/).
+For more information about the project please visit the [introduction into open source of the public beta](https://github.com/e-id-admin/eidch-public-beta).
 
 ## Installation and building
 
@@ -36,10 +39,6 @@ You can then find the generated APK under `app/build/outputs/apk/prod/release/ap
 
 > [!NOTE]
 > Please be aware that for building from the command line, you must have set up your own keystore.
-
-## Known Issues
-
-The swiyu Public Beta Trust Infrastructure was deliberately released at an early stage to enable future ecosystem participants. There may still be minor bugs or security vulnerabilities in the test system. We will publish them in the near future as [‘KnownIssues’](https://github.com/swiyu-admin-ch/eidch-android-wallet/issues?q=is%3Aissue%20state%3Aopen%20type%3AKnownIssue) in this repository.
 
 ## Contributions and feedback
 

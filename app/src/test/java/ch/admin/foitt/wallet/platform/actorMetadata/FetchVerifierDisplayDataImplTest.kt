@@ -7,8 +7,10 @@ import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationReq
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorField
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchVerifierDisplayData
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementation.FetchVerifierDisplayDataImpl
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchAndCacheVerifierDisplayData
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.InitializeActorForScope
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementation.FetchAndCacheVerifierDisplayDataImpl
+import ch.admin.foitt.wallet.platform.navigation.domain.model.ComponentScope
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustRegistryError
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatement
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
@@ -20,6 +22,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.impl.annotations.MockK
+import io.mockk.just
+import io.mockk.runs
+import io.mockk.slot
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -38,25 +43,45 @@ class FetchVerifierDisplayDataImplTest {
     @MockK
     private lateinit var mockTrustStatement01: TrustStatement
 
-    private lateinit var useCase: FetchVerifierDisplayData
+    @MockK
+    private lateinit var mockInitializeActorForScope: InitializeActorForScope
+
+    private lateinit var useCase: FetchAndCacheVerifierDisplayData
 
     @BeforeEach
     fun setup() {
         MockKAnnotations.init(this)
-        useCase = FetchVerifierDisplayDataImpl(
+        useCase = FetchAndCacheVerifierDisplayDataImpl(
             fetchTrustStatementFromDid = mockFetchTrustStatementFromDid,
+            initializeActorForScope = mockInitializeActorForScope,
         )
 
         coEvery { mockTrustStatement01.orgName } returns mockTrustedNames
         coEvery { mockTrustStatement01.prefLang } returns mockPreferredLanguage
 
         coEvery { mockFetchTrustStatementFromDid.invoke(did = any()) } returns Ok(mockTrustStatement01)
+        coEvery {
+            mockInitializeActorForScope.invoke(any(), componentScope = ComponentScope.Verifier)
+        } just runs
         defaultPresentationRequestMocks()
     }
 
     @AfterEach
     fun tearDown() {
         unmockkAll()
+    }
+
+    @Test
+    fun `Fetching the verifier display data is following specific steps`(): Unit = runTest {
+        useCase(
+            presentationRequest = mockPresentationRequest,
+            shouldFetchTrustStatement = true,
+        )
+
+        coVerifyOrder {
+            mockFetchTrustStatementFromDid.invoke(did = any())
+            mockInitializeActorForScope.invoke(any(), componentScope = ComponentScope.Verifier)
+        }
     }
 
     @Test
@@ -73,23 +98,33 @@ class FetchVerifierDisplayDataImplTest {
 
     @Test
     fun `A valid trust statement will display as trusted`(): Unit = runTest {
-        val displayData: ActorDisplayData = useCase(
+        useCase(
             presentationRequest = mockPresentationRequest,
             shouldFetchTrustStatement = true,
         )
 
-        assertEquals(TrustStatus.TRUSTED, displayData.trustStatus)
+        val capturedDisplayData = slot<ActorDisplayData>()
+        coVerifyOrder {
+            mockInitializeActorForScope.invoke(actorDisplayData = capture(capturedDisplayData), any())
+        }
+
+        assertEquals(TrustStatus.TRUSTED, capturedDisplayData.captured.trustStatus)
     }
 
     @Test
     fun `An invalid trust statement will display as not trusted`(): Unit = runTest {
         coEvery { mockFetchTrustStatementFromDid.invoke(did = any()) } returns trustRegistryError
-        val displayData: ActorDisplayData = useCase(
+        useCase(
             presentationRequest = mockPresentationRequest,
             shouldFetchTrustStatement = true,
         )
 
-        assertEquals(TrustStatus.NOT_TRUSTED, displayData.trustStatus)
+        val capturedDisplayData = slot<ActorDisplayData>()
+        coVerifyOrder {
+            mockInitializeActorForScope.invoke(actorDisplayData = capture(capturedDisplayData), any())
+        }
+
+        assertEquals(TrustStatus.NOT_TRUSTED, capturedDisplayData.captured.trustStatus)
     }
 
     @Test
@@ -106,26 +141,36 @@ class FetchVerifierDisplayDataImplTest {
 
     @Test
     fun `Valid trust statement data is shown first`(): Unit = runTest {
-        val displayData: ActorDisplayData = useCase(
+        useCase(
             presentationRequest = mockPresentationRequest,
             shouldFetchTrustStatement = true,
         )
 
-        assertEquals(mockTrustedNamesDisplay, displayData.name)
+        val capturedDisplayData = slot<ActorDisplayData>()
+        coVerifyOrder {
+            mockInitializeActorForScope.invoke(actorDisplayData = capture(capturedDisplayData), any())
+        }
+
+        assertEquals(mockTrustedNamesDisplay, capturedDisplayData.captured.name)
         // logo of the trust statement is ignored for now -> metadata logo is used instead
-        assertEquals(mockMetadataLogoDisplays, displayData.image)
+        assertEquals(mockMetadataLogoDisplays, capturedDisplayData.captured.image)
     }
 
     @Test
     fun `In case of invalid trust statement, falls back to the presentation request metadata`(): Unit = runTest {
         coEvery { mockFetchTrustStatementFromDid.invoke(did = any()) } returns trustRegistryError
-        val displayData: ActorDisplayData = useCase(
+        useCase(
             presentationRequest = mockPresentationRequest,
             shouldFetchTrustStatement = true,
         )
 
-        assertEquals(mockMetadataNameDisplays, displayData.name)
-        assertEquals(mockMetadataLogoDisplays, displayData.image)
+        val capturedDisplayData = slot<ActorDisplayData>()
+        coVerifyOrder {
+            mockInitializeActorForScope.invoke(actorDisplayData = capture(capturedDisplayData), any())
+        }
+
+        assertEquals(mockMetadataNameDisplays, capturedDisplayData.captured.name)
+        assertEquals(mockMetadataLogoDisplays, capturedDisplayData.captured.image)
     }
 
     @Test
@@ -133,19 +178,23 @@ class FetchVerifierDisplayDataImplTest {
         coEvery { mockFetchTrustStatementFromDid.invoke(did = any()) } returns trustRegistryError
         coEvery { mockPresentationRequest.clientMetaData } returns null
 
-        val displayData: ActorDisplayData = useCase(
+        useCase(
             presentationRequest = mockPresentationRequest,
             shouldFetchTrustStatement = true,
         )
 
-        assertEquals(emptyActorDisplayData, displayData)
+        val capturedDisplayData = slot<ActorDisplayData>()
+        coVerifyOrder {
+            mockInitializeActorForScope.invoke(actorDisplayData = capture(capturedDisplayData), any())
+        }
+
+        assertEquals(emptyActorDisplayData, capturedDisplayData.captured)
     }
 
     private fun defaultPresentationRequestMocks() {
         coEvery { mockPresentationRequest.clientId } returns clientId
         coEvery { mockPresentationRequest.clientMetaData } returns mockClientMetadata
     }
-
     //region mock data
 
     private val clientId = "clientId1"

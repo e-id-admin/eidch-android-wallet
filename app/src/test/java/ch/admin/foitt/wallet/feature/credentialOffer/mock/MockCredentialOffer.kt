@@ -133,13 +133,11 @@ object MockCredentialOffer {
     )
 
     val credentialOffer = CredentialOffer(
-        issuerDisplayData = mockIssuerDisplayData,
         credential = credentialDisplayData,
         claims = listOf(claimData1, claimData2)
     )
 
     val credentialOffer2 = CredentialOffer(
-        issuerDisplayData = mockIssuerDisplayData,
         credential = credentialDisplayData,
         claims = listOf(claimData1, claimData2)
     )

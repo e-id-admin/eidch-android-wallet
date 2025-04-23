@@ -4,6 +4,8 @@ package ch.admin.foitt.wallet.platform.credential.domain.model
 
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchCredentialByConfigError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchIssuerCredentialInformationError
+import ch.admin.foitt.wallet.platform.oca.domain.model.FetchOcaBundleByFormatError
+import ch.admin.foitt.wallet.platform.oca.domain.model.OcaError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialOfferRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
@@ -101,4 +103,10 @@ fun Throwable.toAnyCredentialError(message: String): AnyCredentialError {
 
 fun AnyCredentialError.toMapToCredentialDisplayDataError(): MapToCredentialDisplayDataError = when (this) {
     is CredentialError.Unexpected -> this
+}
+
+fun FetchOcaBundleByFormatError.toFetchCredentialError(): FetchCredentialError = when (this) {
+    is OcaError.InvalidOca -> CredentialError.InvalidCredentialOffer
+    is OcaError.NetworkError -> CredentialError.NetworkError
+    is OcaError.Unexpected -> CredentialError.Unexpected(cause)
 }

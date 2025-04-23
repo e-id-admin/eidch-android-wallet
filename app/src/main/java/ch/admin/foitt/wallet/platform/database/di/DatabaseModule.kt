@@ -11,12 +11,14 @@ import ch.admin.foitt.wallet.platform.database.domain.usecase.CloseAppDatabase
 import ch.admin.foitt.wallet.platform.database.domain.usecase.CreateAppDatabase
 import ch.admin.foitt.wallet.platform.database.domain.usecase.IsAppDatabaseOpen
 import ch.admin.foitt.wallet.platform.database.domain.usecase.OpenAppDatabase
+import ch.admin.foitt.wallet.platform.database.domain.usecase.RunInTransaction
 import ch.admin.foitt.wallet.platform.database.domain.usecase.implementation.ChangeDatabasePassphraseImpl
 import ch.admin.foitt.wallet.platform.database.domain.usecase.implementation.CheckDatabasePassphraseImpl
 import ch.admin.foitt.wallet.platform.database.domain.usecase.implementation.CloseAppDatabaseImpl
 import ch.admin.foitt.wallet.platform.database.domain.usecase.implementation.CreateAppDatabaseImpl
 import ch.admin.foitt.wallet.platform.database.domain.usecase.implementation.IsAppDatabaseOpenImpl
 import ch.admin.foitt.wallet.platform.database.domain.usecase.implementation.OpenAppDatabaseImpl
+import ch.admin.foitt.wallet.platform.database.domain.usecase.implementation.RunInTransactionImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -57,4 +59,7 @@ internal interface DatabaseBindModule {
 
     @Binds
     fun bindIsAppDatabaseOpen(useCase: IsAppDatabaseOpenImpl): IsAppDatabaseOpen
+
+    @Binds
+    fun runInTransaction(useCase: RunInTransactionImpl): RunInTransaction
 }

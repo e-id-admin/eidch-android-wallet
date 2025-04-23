@@ -307,7 +307,7 @@ private fun StickyButtons(
         maxItemsInEachRow = 2,
     ) {
         Buttons.FilledPrimary(
-            text = stringResource(id = R.string.tk_global_decline_secondarybutton),
+            text = stringResource(id = R.string.tk_receive_credentialOffer_button_decline),
             startIcon = painterResource(id = R.drawable.wallet_ic_cross),
             onClick = onDecline,
         )

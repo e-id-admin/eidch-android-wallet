@@ -10,6 +10,7 @@ import ch.admin.foitt.wallet.platform.database.domain.model.EIdRequestState
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.CaseResponse
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.StateResponse
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.FetchSIdStatus
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.GetHasLegalGuardian
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.EIdQueueNavArg
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
@@ -40,6 +41,7 @@ class MrzChooserViewModel @Inject constructor(
     private val navManager: NavigationManager,
     private val fetchSIdCase: FetchSIdCase,
     private val fetchSIdStatus: FetchSIdStatus,
+    private val getHasLegalGuardian: GetHasLegalGuardian,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
 ) : ScreenViewModel(setTopBarState, setFullscreenState) {
@@ -51,8 +53,6 @@ class MrzChooserViewModel @Inject constructor(
     private val mockOther = safeJson.safeDecodeStringTo<List<MrzData>>(MockMRZData.otherMock)
 
     val mrzData = mockUnderAge.getOr(emptyList()) + mockAdult.getOr(emptyList()) + mockOther.getOr(emptyList())
-    private val _hasLegalRepresentative = MutableStateFlow(false)
-    val hasLegalRepresentative = _hasLegalRepresentative.asStateFlow()
 
     private val _errorMessage = MutableStateFlow("")
     val errorMessage = _errorMessage.asStateFlow()
@@ -64,7 +64,7 @@ class MrzChooserViewModel @Inject constructor(
 
     fun onMrzItemClick(index: Int) {
         viewModelScope.launch {
-            val request = mrzData[index].payload.copy(legalRepresentant = hasLegalRepresentative.value)
+            val request = mrzData[index].payload.copy(legalRepresentant = getHasLegalGuardian().value)
             fetchSIdCase(request)
                 .onSuccess { caseResponse ->
                     checkStatus(caseResponse, mrzData[index])
@@ -74,10 +74,6 @@ class MrzChooserViewModel @Inject constructor(
                     _showErrorDialog.value = true
                 }
         }
-    }
-
-    fun onToggleLegalRepresentative(isEnabled: Boolean) {
-        _hasLegalRepresentative.value = isEnabled
     }
 
     private suspend fun checkStatus(caseResponse: CaseResponse, mrzData: MrzData) {

@@ -131,13 +131,13 @@ internal fun CredentialDisplayStatus.getIcon() = when (this) {
 
 @Composable
 internal fun CredentialDisplayStatus.getText(): String = when (this) {
-    CredentialDisplayStatus.Valid -> stringResource(R.string.tk_global_credential_status_valid)
+    CredentialDisplayStatus.Valid -> stringResource(R.string.tk_credential_status_valid)
     CredentialDisplayStatus.Unsupported,
-    CredentialDisplayStatus.Unknown -> stringResource(R.string.tk_global_credential_status_unknown)
+    CredentialDisplayStatus.Unknown -> stringResource(R.string.tk_credential_status_unknown)
     is CredentialDisplayStatus.NotYetValid -> getNotYetValidText(validFrom, isAltText = false)
-    is CredentialDisplayStatus.Expired -> stringResource(R.string.tk_global_credential_status_invalid)
-    CredentialDisplayStatus.Revoked -> stringResource(R.string.tk_global_credential_status_revoked)
-    CredentialDisplayStatus.Suspended -> stringResource(R.string.tk_global_credential_status_suspended)
+    is CredentialDisplayStatus.Expired -> stringResource(R.string.tk_credential_status_invalid)
+    CredentialDisplayStatus.Revoked -> stringResource(R.string.tk_credential_status_revoked)
+    CredentialDisplayStatus.Suspended -> stringResource(R.string.tk_credential_status_suspended)
 }
 
 @Composable
@@ -146,22 +146,22 @@ private fun getNotYetValidText(validFrom: Instant, isAltText: Boolean): String {
     val isValidInLessThan24h = numberOfDays < 1
 
     return when {
-        isValidInLessThan24h && isAltText -> stringResource(R.string.tk_global_credential_status_soon_alt)
-        isValidInLessThan24h -> stringResource(R.string.tk_global_credential_status_soon)
-        isAltText -> stringResource(R.string.tk_global_credential_status_validindays_android_alt, numberOfDays)
-        else -> stringResource(R.string.tk_global_credential_status_validindays_android, numberOfDays)
+        isValidInLessThan24h && isAltText -> stringResource(R.string.tk_credential_status_soon_alt)
+        isValidInLessThan24h -> stringResource(R.string.tk_credential_status_soon)
+        isAltText -> stringResource(R.string.tk_credential_status_notValidYet_alt, numberOfDays)
+        else -> stringResource(R.string.tk_credential_status_notValidYet, numberOfDays)
     }
 }
 
 @Composable
 internal fun CredentialDisplayStatus.getAltText(): String = when (this) {
-    CredentialDisplayStatus.Valid -> stringResource(R.string.tk_global_credential_status_valid_alt)
+    CredentialDisplayStatus.Valid -> stringResource(R.string.tk_credential_status_valid_alt)
     CredentialDisplayStatus.Unsupported,
-    CredentialDisplayStatus.Unknown -> stringResource(R.string.tk_global_credential_status_unknown_alt)
+    CredentialDisplayStatus.Unknown -> stringResource(R.string.tk_credential_status_unknown_alt)
     is CredentialDisplayStatus.NotYetValid -> getNotYetValidText(validFrom, isAltText = true)
-    is CredentialDisplayStatus.Expired -> stringResource(R.string.tk_global_credential_status_invalid_alt)
-    CredentialDisplayStatus.Revoked -> stringResource(R.string.tk_global_credential_status_revoked_alt)
-    CredentialDisplayStatus.Suspended -> stringResource(R.string.tk_global_credential_status_suspended_alt)
+    is CredentialDisplayStatus.Expired -> stringResource(R.string.tk_credential_status_invalid_alt)
+    CredentialDisplayStatus.Revoked -> stringResource(R.string.tk_credential_status_revoked_alt)
+    CredentialDisplayStatus.Suspended -> stringResource(R.string.tk_credential_status_suspended_alt)
 }
 
 private class CredentialStatusProvider : PreviewParameterProvider<CredentialDisplayStatus> {

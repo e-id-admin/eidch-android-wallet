@@ -34,11 +34,11 @@ private fun CredentialOfferWrongDataScreenContent() = WalletLayouts.ScrollableCo
 ) {
     Spacer(modifier = Modifier.height(Sizes.s06))
     WalletTexts.TitleLarge(
-        text = stringResource(id = R.string.tk_receive_incorrectdata_subtitle),
+        text = stringResource(id = R.string.tk_receive_credentialOffer_wrongData_primary),
     )
     Spacer(modifier = Modifier.height(Sizes.s05))
     WalletTexts.BodyLarge(
-        text = stringResource(id = R.string.tk_receive_incorrectdata_body),
+        text = stringResource(id = R.string.tk_receive_credentialOffer_wrongData_secondary),
         modifier = Modifier.fillMaxWidth(),
     )
 }

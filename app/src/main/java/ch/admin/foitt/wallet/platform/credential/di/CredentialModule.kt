@@ -1,12 +1,12 @@
 package ch.admin.foitt.wallet.platform.credential.di
 
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchCredential
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchAndSaveCredential
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetAnyCredential
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetAnyCredentials
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.IsBetaIssuer
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.MapToCredentialDisplayData
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.SaveCredential
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.FetchCredentialImpl
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.FetchAndSaveCredentialImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.GetAnyCredentialImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.GetAnyCredentialsImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.IsBetaIssuerImpl
@@ -24,9 +24,9 @@ import dagger.hilt.android.components.ActivityRetainedComponent
 internal interface CredentialModule {
 
     @Binds
-    fun bindFetchCredential(
-        useCase: FetchCredentialImpl
-    ): FetchCredential
+    fun bindFetchAndSaveCredential(
+        useCase: FetchAndSaveCredentialImpl
+    ): FetchAndSaveCredential
 
     @Binds
     fun bindSaveCredential(

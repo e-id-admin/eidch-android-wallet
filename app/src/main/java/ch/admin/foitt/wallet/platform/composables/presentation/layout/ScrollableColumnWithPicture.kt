@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
@@ -32,7 +33,7 @@ import ch.admin.foitt.wallet.theme.WalletTheme
 fun WalletLayouts.ScrollableColumnWithPicture(
     modifier: Modifier = Modifier,
     stickyBottomBackgroundColor: Color = WalletTheme.colorScheme.surface.copy(alpha = 0.85f),
-    stickyBottomContent: (@Composable () -> Unit)?,
+    stickyBottomContent: @Composable (RowScope.() -> Unit)?,
     stickyStartContent: @Composable ColumnScope.() -> Unit,
     scaffoldPaddings: PaddingValues = LocalScaffoldPaddings.current,
     contentPadding: PaddingValues = PaddingValues(

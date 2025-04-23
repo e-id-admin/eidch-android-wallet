@@ -3,7 +3,7 @@ package ch.admin.foitt.wallet.platform.invitation.domain.usecase.implementation
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOffer
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestContainer
 import ch.admin.foitt.wallet.platform.credential.domain.model.FetchCredentialError
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchCredential
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchAndSaveCredential
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.ProcessPresentationRequestError
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.ProcessPresentationRequestResult
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.usecase.ProcessPresentationRequest
@@ -24,7 +24,7 @@ import javax.inject.Inject
 
 internal class ProcessInvitationImpl @Inject constructor(
     private val validateInvitation: ValidateInvitation,
-    private val fetchCredential: FetchCredential,
+    private val fetchAndSaveCredential: FetchAndSaveCredential,
     private val processPresentationRequest: ProcessPresentationRequest,
 ) : ProcessInvitation {
     override suspend fun invoke(
@@ -48,7 +48,7 @@ internal class ProcessInvitationImpl @Inject constructor(
             }.mapError(ProcessPresentationRequestError::toProcessInvitationError)
 
     private suspend fun processCredentialOffer(credentialOffer: CredentialOffer): Result<ProcessInvitationResult, ProcessInvitationError> =
-        fetchCredential(credentialOffer)
+        fetchAndSaveCredential(credentialOffer)
             .map { credentialId ->
                 ProcessInvitationResult.CredentialOffer(credentialId)
             }.mapError(FetchCredentialError::toProcessInvitationError)

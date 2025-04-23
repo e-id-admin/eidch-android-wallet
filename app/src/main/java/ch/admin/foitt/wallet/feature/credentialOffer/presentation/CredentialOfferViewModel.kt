@@ -5,13 +5,16 @@ import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.model.CredentialOffer
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.usecase.GetCredentialOfferFlow
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.model.CredentialOfferUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.GetActorForScope
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.appSetupState.domain.usecase.SaveFirstCredentialWasAdded
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateCredentialStatus
 import ch.admin.foitt.wallet.platform.messageEvents.domain.model.CredentialOfferEvent
 import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialOfferEventRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
+import ch.admin.foitt.wallet.platform.navigation.domain.model.ComponentScope
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
@@ -27,6 +30,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -41,6 +45,7 @@ class CredentialOfferViewModel @Inject constructor(
     private val getCredentialCardState: GetCredentialCardState,
     private val saveFirstCredentialWasAdded: SaveFirstCredentialWasAdded,
     private val getActorUiState: GetActorUiState,
+    getActorForScope: GetActorForScope,
     private val credentialOfferEventRepository: CredentialOfferEventRepository,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
@@ -50,6 +55,12 @@ class CredentialOfferViewModel @Inject constructor(
 
     private val navArgs = CredentialOfferScreenDestination.argsFrom(savedStateHandle)
     private val credentialId = navArgs.credentialId
+
+    private val issuerUiState = getActorForScope(ComponentScope.CredentialIssuer).map { displayData ->
+        getActorUiState(
+            actorDisplayData = displayData,
+        )
+    }.toStateFlow(ActorUiState.EMPTY, 0)
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
@@ -68,8 +79,17 @@ class CredentialOfferViewModel @Inject constructor(
             )
         }.toStateFlow(null)
 
-    val credentialOfferUiState: StateFlow<CredentialOfferUiState> = credentialOffer.map { credentialOffer ->
-        credentialOffer?.toUiState()
+    val credentialOfferUiState: StateFlow<CredentialOfferUiState> = combine(
+        credentialOffer,
+        issuerUiState,
+    ) { credentialOffer, issuerUiState ->
+        credentialOffer?.let {
+            CredentialOfferUiState(
+                issuer = issuerUiState,
+                credential = getCredentialCardState(credentialOffer.credential),
+                claims = credentialOffer.claims,
+            )
+        }
     }
         .filterNotNull()
         .toStateFlow(CredentialOfferUiState.EMPTY)
@@ -79,14 +99,6 @@ class CredentialOfferViewModel @Inject constructor(
             updateCredentialStatus(credentialId)
         }
     }
-
-    private suspend fun CredentialOffer.toUiState(): CredentialOfferUiState = CredentialOfferUiState(
-        issuer = getActorUiState(
-            actorDisplayData = this.issuerDisplayData,
-        ),
-        credential = getCredentialCardState(this.credential),
-        claims = this.claims,
-    )
 
     fun onAcceptClicked() {
         viewModelScope.launch {
@@ -101,7 +113,6 @@ class CredentialOfferViewModel @Inject constructor(
             navManager.navigateTo(
                 DeclineCredentialOfferScreenDestination(
                     credentialId = credentialId,
-                    issuerDisplayData = credentialOffer.issuerDisplayData,
                 )
             )
         } ?: navigateToErrorScreen()

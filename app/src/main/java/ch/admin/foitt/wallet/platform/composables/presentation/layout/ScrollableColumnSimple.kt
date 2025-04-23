@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
@@ -37,7 +38,7 @@ fun WalletLayouts.ScrollableColumnSimple(
     stickyStartContent: @Composable ColumnScope.() -> Unit,
     stickyBottomHorizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(Sizes.s02, Alignment.CenterHorizontally),
     stickyBottomBackgroundColor: Color = Color.Transparent,
-    stickyBottomContent: (@Composable () -> Unit)?,
+    stickyBottomContent: (@Composable RowScope.() -> Unit)?,
     centerContent: Boolean = false,
     contentScrollState: ScrollState = rememberScrollState(),
     contentPadding: PaddingValues = PaddingValues(

@@ -101,7 +101,7 @@ private fun BiometricsBodyContent(screenState: RegisterBiometricsScreenState) = 
     RegisterBiometricsScreenState.Error -> BiometricsContent(
         title = R.string.tk_onboarding_biometricsPermission_primary,
         description = R.string.tk_onboarding_biometricsPermissionLater_secondary,
-        infoText = R.string.tk_onboarding_biometricsPermissionLater_secondary,
+        infoText = null,
     )
 
     RegisterBiometricsScreenState.DisabledOnDevice -> BiometricsContent(

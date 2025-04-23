@@ -27,4 +27,6 @@ interface DatabaseRepository {
 
     @CheckResult
     fun isOpen(): Boolean
+
+    suspend fun <V> runInTransaction(block: suspend () -> V): V?
 }

@@ -8,4 +8,5 @@ interface EnvironmentSetupRepository {
     val betaIdRequestEnabled: Boolean
     val eIdRequestEnabled: Boolean
     val sidBackendUrl: String
+    val fetchOca: Boolean
 }

@@ -4,7 +4,7 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOffer
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestContainer
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchCredential
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchAndSaveCredential
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.CompatibleCredential
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.CredentialPresentationError
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.ProcessPresentationRequestResult
@@ -35,7 +35,7 @@ class ProcessInvitationImplTest {
     private lateinit var mockValidateInvitation: ValidateInvitation
 
     @MockK
-    private lateinit var mockFetchCredential: FetchCredential
+    private lateinit var mockFetchAndSaveCredential: FetchAndSaveCredential
 
     @MockK
     private lateinit var mockProcessPresentationRequest: ProcessPresentationRequest
@@ -54,7 +54,7 @@ class ProcessInvitationImplTest {
 
         useCase = ProcessInvitationImpl(
             validateInvitation = mockValidateInvitation,
-            fetchCredential = mockFetchCredential,
+            fetchAndSaveCredential = mockFetchAndSaveCredential,
             processPresentationRequest = mockProcessPresentationRequest,
         )
     }
@@ -67,7 +67,7 @@ class ProcessInvitationImplTest {
     @Test
     fun `Processing a valid credential offer returns a credential id`() = runTest {
         coEvery { mockValidateInvitation(INVITATION_URI) } returns Ok(mockCredentialOffer)
-        coEvery { mockFetchCredential(mockCredentialOffer) } returns Ok(CREDENTIAL_ID)
+        coEvery { mockFetchAndSaveCredential(mockCredentialOffer) } returns Ok(CREDENTIAL_ID)
 
         val result = useCase(INVITATION_URI)
 
@@ -79,7 +79,7 @@ class ProcessInvitationImplTest {
     fun `Processing a valid credential maps errors from fetching credential`() = runTest {
         val exception = IllegalStateException()
         coEvery { mockValidateInvitation(INVITATION_URI) } returns Ok(mockCredentialOffer)
-        coEvery { mockFetchCredential(mockCredentialOffer) } returns Err(CredentialError.Unexpected(exception))
+        coEvery { mockFetchAndSaveCredential(mockCredentialOffer) } returns Err(CredentialError.Unexpected(exception))
 
         val result = useCase(INVITATION_URI)
 

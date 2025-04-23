@@ -21,7 +21,7 @@ import kotlin.coroutines.resume
 
 internal class AndroidBiometricPrompt(
     private val activity: FragmentActivity,
-    private val allowedAuthenticators: Int,
+    private val allowedAuthenticators: Int = BiometricPromptWrapper.ALLOWED_AUTHENTICATORS,
     private val promptType: BiometricPromptType,
 ) : BiometricPromptWrapper {
     override suspend fun launchPrompt(
@@ -60,12 +60,16 @@ internal class AndroidBiometricPrompt(
             }
         }
 
-        val prompt = BiometricPrompt(activity, executor, callback)
-
-        prompt.authenticate(
-            promptInfo,
-            cryptoObject,
-        )
+        runSuspendCatching {
+            val prompt = BiometricPrompt(activity, executor, callback)
+            prompt.authenticate(
+                promptInfo,
+                cryptoObject,
+            )
+        }.mapError {
+            Timber.e(t = it, message = "Biometric prompt failed to launch")
+            continuation.resume(Err(BiometricPromptError(0, "Biometric prompt failed to launch")))
+        }
     }
 
     private fun handlePromptError(

@@ -24,6 +24,7 @@ junit-bom = "5.11.1"
 junit5-mannodermaus = "1.11.2.0"
 konsist = "0.15.1"
 kotlin = "2.0.20" # keep in sync with 'devtools-ksp' [libs.versions.toml] and 'kotlinVersion' [build-logic/build.gradle.kts]
+kotlin-reflect = "2.0.21"
 kotlin-result = "2.0.0"
 kotlinx-coroutines-test = "1.8.1"
 kotlinx-serialization-json = "1.6.3"
@@ -77,6 +78,7 @@ hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", vers
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 json-path = { module = "com.jayway.jsonpath:json-path", version.ref = "json-path" }
 konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin-reflect" }
 kotlin-result = { module = "com.michael-bull.kotlin-result:kotlin-result", version.ref = "kotlin-result" }
 kotlin-result-coroutines = { module = "com.michael-bull.kotlin-result:kotlin-result-coroutines", version.ref = "kotlin-result" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines-test" }

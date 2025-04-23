@@ -2,7 +2,9 @@ package ch.admin.foitt.wallet.feature.credentialDetail.presentation.composables
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
+import androidx.compose.ui.unit.dp
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.composables.presentation.spaceBarKeyClickable
 import ch.admin.foitt.wallet.platform.preview.WalletComponentPreview
@@ -33,6 +36,7 @@ fun MenuBottomSheet(
     sheetState: SheetState,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
+    onWrongData: () -> Unit,
 ) {
     ModalBottomSheet(
         onDismissRequest = {
@@ -53,6 +57,26 @@ fun MenuBottomSheet(
             ListItem(
                 colors = ListItemDefaults.colors(containerColor = WalletTheme.colorScheme.surfaceContainerHighest),
                 modifier = Modifier
+                    .clickable(onClick = onWrongData)
+                    .spaceBarKeyClickable(onWrongData),
+                leadingContent = {
+                    Icon(
+                        modifier = Modifier.width(18.dp).height(18.dp),
+                        painter = painterResource(R.drawable.wallet_ic_wrong_data),
+                        tint = WalletTheme.colorScheme.onBackground,
+                        contentDescription = null,
+                    )
+                },
+                headlineContent = {
+                    WalletTexts.BodyLarge(
+                        text = stringResource(id = R.string.tk_global_wrongdata),
+                        color = WalletTheme.colorScheme.onBackground,
+                    )
+                },
+            )
+            ListItem(
+                colors = ListItemDefaults.colors(containerColor = WalletTheme.colorScheme.surfaceContainerHighest),
+                modifier = Modifier
                     .clickable(onClick = onDelete)
                     .spaceBarKeyClickable(onDelete),
                 leadingContent = {
@@ -64,7 +88,7 @@ fun MenuBottomSheet(
                 },
                 headlineContent = {
                     WalletTexts.BodyLarge(
-                        text = stringResource(id = R.string.credential_menu_delete_text),
+                        text = stringResource(id = R.string.tk_displaydelete_credentialmenu_primarybutton),
                         color = WalletTheme.colorScheme.onLightError,
                     )
                 },
@@ -83,7 +107,8 @@ private fun CredentialDetailBottomSheetContentPreview() {
                 initialValue = SheetValue.Expanded
             ),
             onDismiss = {},
-            onDelete = {}
+            onDelete = {},
+            onWrongData = {}
         )
     }
 }

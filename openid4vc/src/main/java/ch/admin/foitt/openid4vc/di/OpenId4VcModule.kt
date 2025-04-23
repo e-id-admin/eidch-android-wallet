@@ -4,10 +4,12 @@ import ch.admin.foitt.openid4vc.data.CredentialOfferRepositoryImpl
 import ch.admin.foitt.openid4vc.data.FetchDidLogRepositoryImpl
 import ch.admin.foitt.openid4vc.data.PresentationRequestRepositoryImpl
 import ch.admin.foitt.openid4vc.data.TypeMetadataRepositoryImpl
+import ch.admin.foitt.openid4vc.data.VcSchemaRepositoryImpl
 import ch.admin.foitt.openid4vc.domain.repository.CredentialOfferRepository
 import ch.admin.foitt.openid4vc.domain.repository.FetchDidLogRepository
 import ch.admin.foitt.openid4vc.domain.repository.PresentationRequestRepository
 import ch.admin.foitt.openid4vc.domain.repository.TypeMetadataRepository
+import ch.admin.foitt.openid4vc.domain.repository.VcSchemaRepository
 import ch.admin.foitt.openid4vc.domain.usecase.CreateAnyDescriptorMaps
 import ch.admin.foitt.openid4vc.domain.usecase.CreateAnyVerifiablePresentation
 import ch.admin.foitt.openid4vc.domain.usecase.CreateCredentialRequestProofJwt
@@ -249,4 +251,10 @@ internal interface OpenId4VCBindings {
     fun bindTypeMetadataRepository(
         repo: TypeMetadataRepositoryImpl
     ): TypeMetadataRepository
+
+    @Binds
+    @ActivityRetainedScoped
+    fun bindVcSchemaRepository(
+        repo: VcSchemaRepositoryImpl
+    ): VcSchemaRepository
 }

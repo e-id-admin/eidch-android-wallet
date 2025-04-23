@@ -11,6 +11,7 @@ interface NavigationManager {
     val currentDestination: Destination?
     val previousDestination: Destination?
     val currentDestinationFlow: StateFlow<Destination?>
+    val currentBackStackFlow: StateFlow<List<Destination>>
 
     fun setNavHost(navHost: NavHostController)
 

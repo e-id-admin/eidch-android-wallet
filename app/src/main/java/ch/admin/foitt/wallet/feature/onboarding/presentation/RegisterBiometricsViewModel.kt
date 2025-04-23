@@ -8,7 +8,6 @@ import ch.admin.foitt.wallet.feature.onboarding.domain.usecase.SaveOnboardingSta
 import ch.admin.foitt.wallet.platform.biometricPrompt.domain.model.BiometricManagerResult
 import ch.admin.foitt.wallet.platform.biometricPrompt.domain.model.BiometricPromptType
 import ch.admin.foitt.wallet.platform.biometricPrompt.domain.usecase.BiometricsStatus
-import ch.admin.foitt.wallet.platform.biometricPrompt.domain.usecase.GetAuthenticators
 import ch.admin.foitt.wallet.platform.biometricPrompt.presentation.AndroidBiometricPrompt
 import ch.admin.foitt.wallet.platform.biometrics.domain.model.BiometricsError
 import ch.admin.foitt.wallet.platform.biometrics.domain.model.EnableBiometricsError
@@ -46,7 +45,6 @@ class RegisterBiometricsViewModel @Inject constructor(
     val initializePassphrase: InitializePassphrase,
     val saveUseBiometricLogin: SaveUseBiometricLogin,
     val biometricsStatus: BiometricsStatus,
-    val getAuthenticators: GetAuthenticators,
     val saveOnboardingState: SaveOnboardingState,
     private val navManager: NavigationManager,
     @ApplicationContext private val appContext: Context,
@@ -88,7 +86,6 @@ class RegisterBiometricsViewModel @Inject constructor(
         Timber.d("Passphrase: Showing biometric dialog")
         val biometricPromptWrapper = AndroidBiometricPrompt(
             activity = activity,
-            allowedAuthenticators = getAuthenticators(),
             promptType = BiometricPromptType.Setup,
         )
 

@@ -348,14 +348,14 @@ private fun CredentialActionFeedbackCardPreview() {
                 trustStatus = TrustStatus.TRUSTED,
                 actorType = ActorType.ISSUER,
             ),
-            contentTextFirstParagraphText = R.string.tk_receive_deny1_title,
-            contentTextSecondParagraphText = R.string.tk_receive_deny1_body,
+            contentTextFirstParagraphText = R.string.tk_receive_declineOffer_primary,
+            contentTextSecondParagraphText = R.string.tk_receive_declineOffer_secondary,
             contentTextThirdParagraphText = R.string.tk_getBetaId_error_smallbody,
             contentIcon = R.drawable.wallet_ic_circular_questionmark,
             iconAlwaysVisible = true,
             onSecondaryButton = {},
             onPrimaryButton = {},
-            primaryButtonText = R.string.tk_receive_deny1_primarybutton,
+            primaryButtonText = R.string.tk_receive_declineOffer_primaryButton,
             secondaryButtonText = R.string.tk_global_cancel,
         )
     }

@@ -6,7 +6,6 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.biometricPrompt.domain.model.BiometricPromptType
-import ch.admin.foitt.wallet.platform.biometricPrompt.domain.usecase.GetAuthenticators
 import ch.admin.foitt.wallet.platform.biometricPrompt.presentation.AndroidBiometricPrompt
 import ch.admin.foitt.wallet.platform.biometrics.domain.usecase.ResetBiometrics
 import ch.admin.foitt.wallet.platform.deeplink.domain.usecase.HandleDeeplink
@@ -49,7 +48,6 @@ class LockoutViewModel @Inject constructor(
     private val resetLockout: ResetLockout,
     private val canUseBiometricsForLogin: CanUseBiometricsForLogin,
     private val resetBiometrics: ResetBiometrics,
-    private val getAuthenticators: GetAuthenticators,
     private val loginWithBiometrics: LoginWithBiometrics,
     private val fetchAppVersionInfo: FetchAppVersionInfo,
     private val handleDeeplink: HandleDeeplink,
@@ -120,7 +118,6 @@ class LockoutViewModel @Inject constructor(
 
         val biometricPromptWrapper = AndroidBiometricPrompt(
             activity = activity,
-            allowedAuthenticators = getAuthenticators(),
             promptType = BiometricPromptType.Login,
         )
 

@@ -3,7 +3,6 @@ package ch.admin.foitt.wallet.feature.login.presentation
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.platform.biometricPrompt.domain.model.BiometricPromptType
-import ch.admin.foitt.wallet.platform.biometricPrompt.domain.usecase.GetAuthenticators
 import ch.admin.foitt.wallet.platform.biometricPrompt.presentation.AndroidBiometricPrompt
 import ch.admin.foitt.wallet.platform.biometrics.domain.usecase.ResetBiometrics
 import ch.admin.foitt.wallet.platform.deeplink.domain.usecase.HandleDeeplink
@@ -39,7 +38,6 @@ import javax.inject.Inject
 @HiltViewModel
 class BiometricLoginViewModel @Inject constructor(
     private val navManager: NavigationManager,
-    private val getAuthenticators: GetAuthenticators,
     private val canUseBiometricsForLogin: CanUseBiometricsForLogin,
     private val loginWithBiometrics: LoginWithBiometrics,
     private val resetBiometrics: ResetBiometrics,
@@ -94,7 +92,6 @@ class BiometricLoginViewModel @Inject constructor(
 
             val biometricPromptWrapper = AndroidBiometricPrompt(
                 activity = activity,
-                allowedAuthenticators = getAuthenticators(),
                 promptType = BiometricPromptType.Login,
             )
 

@@ -22,5 +22,7 @@ internal class TypeMetadataRepositoryImpl @Inject constructor(
         httpClient.get(url) {
             contentType(ContentType.Application.Json)
         }.body()
-    }.mapError(Throwable::toTypeMetadataRepositoryError)
+    }.mapError { throwable ->
+        throwable.toTypeMetadataRepositoryError("Fetch type metadata error")
+    }
 }

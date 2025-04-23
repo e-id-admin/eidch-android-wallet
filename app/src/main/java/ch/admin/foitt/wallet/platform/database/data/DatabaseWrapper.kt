@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.platform.database.data
 
+import androidx.room.withTransaction
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialClaimDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialClaimDisplayDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialDao
@@ -136,6 +137,8 @@ internal class DatabaseWrapper @Inject constructor(
     override fun isOpen(): Boolean {
         return database.value != null
     }
+
+    override suspend fun <V> runInTransaction(block: suspend () -> V): V? = database.value?.withTransaction(block)
 
     private fun <T> getDaoFlow(mapper: (AppDatabase?) -> T?): StateFlow<T?> = database.map { mapper(it) }.stateIn(
         coroutineScope,

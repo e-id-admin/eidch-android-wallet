@@ -1,13 +1,22 @@
 package ch.admin.foitt.wallet.platform.actorMetadata.di
 
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchIssuerDisplayData
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchVerifierDisplayData
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementation.FetchIssuerDisplayDataImpl
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementation.FetchVerifierDisplayDataImpl
+import ch.admin.foitt.wallet.platform.actorMetadata.data.repository.ActorRepositoryImpl
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.repository.ActorRepository
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchAndCacheIssuerDisplayData
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchAndCacheVerifierDisplayData
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.GetActorForScope
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.InitializeActorForScope
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementation.FetchAndCacheIssuerDisplayDataImpl
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementation.FetchAndCacheVerifierDisplayDataImpl
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementation.GetActorForScopeImpl
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.implementation.InitializeActorForScopeImpl
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.implementation.GetActorUiStateImpl
+import ch.admin.foitt.wallet.platform.navigation.DestinationScopedComponent
+import ch.admin.foitt.wallet.platform.navigation.DestinationsScoped
 import dagger.Binds
 import dagger.Module
+import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
 
@@ -16,16 +25,42 @@ import dagger.hilt.android.components.ActivityRetainedComponent
 internal interface ActorMetadataModule {
     @Binds
     fun bindFetchIssuerDisplayData(
-        useCase: FetchIssuerDisplayDataImpl
-    ): FetchIssuerDisplayData
+        useCase: FetchAndCacheIssuerDisplayDataImpl
+    ): FetchAndCacheIssuerDisplayData
 
     @Binds
     fun bindFetchVerifierDisplayData(
-        useCase: FetchVerifierDisplayDataImpl
-    ): FetchVerifierDisplayData
+        useCase: FetchAndCacheVerifierDisplayDataImpl
+    ): FetchAndCacheVerifierDisplayData
 
     @Binds
     fun bindGetActorUiState(
         adapter: GetActorUiStateImpl
     ): GetActorUiState
+
+    @Binds
+    fun bindInitializeActorForScope(
+        useCase: InitializeActorForScopeImpl
+    ): InitializeActorForScope
+
+    @Binds
+    fun bindGetActorForScope(
+        useCase: GetActorForScopeImpl
+    ): GetActorForScope
+}
+
+@Module
+@InstallIn(DestinationScopedComponent::class)
+internal interface ActorRepositoryModule {
+    @Binds
+    @DestinationsScoped
+    fun bindGetActorRepository(
+        repo: ActorRepositoryImpl
+    ): ActorRepository
+}
+
+@EntryPoint
+@InstallIn(DestinationScopedComponent::class)
+interface ActorRepositoryEntryPoint {
+    fun actorRepository(): ActorRepository
 }

@@ -28,7 +28,6 @@ class SettingsViewModel @Inject constructor(
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
 ) : ScreenViewModel(setTopBarState, setFullscreenState) {
-
     override val topBarState = TopBarState.Details(navManager::navigateUp, R.string.settings_title)
     override val fullscreenState = FullscreenState.Insets
 

@@ -15,8 +15,7 @@ import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.cr
 import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.credentialDisplays
 import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.credentialOffer
 import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.credentialOffer2
-import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.mockIssuerDisplayData
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchIssuerDisplayData
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchAndCacheIssuerDisplayData
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.MapToCredentialDisplayData
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
@@ -33,6 +32,8 @@ import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.just
+import io.mockk.runs
 import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
@@ -57,7 +58,7 @@ class GetCredentialOfferFlowImplTest {
     lateinit var mockMapToCredentialClaimData: MapToCredentialClaimData
 
     @MockK
-    lateinit var mockFetchIssuerDisplayData: FetchIssuerDisplayData
+    lateinit var mockFetchAndCacheIssuerDisplayData: FetchAndCacheIssuerDisplayData
 
     @MockK
     lateinit var mockCredential: Credential
@@ -75,7 +76,7 @@ class GetCredentialOfferFlowImplTest {
             mockCredentialWithDisplaysAndClaimsRepository,
             mockMapToCredentialDisplayData,
             mockMapToCredentialClaimData,
-            mockFetchIssuerDisplayData,
+            mockFetchAndCacheIssuerDisplayData,
         )
 
         setupDefaultMocks()
@@ -94,7 +95,6 @@ class GetCredentialOfferFlowImplTest {
         result?.assertOk()
 
         val expected = CredentialOffer(
-            issuerDisplayData = credentialOffer.issuerDisplayData,
             credential = credentialOffer.credential,
             claims = credentialOffer.claims,
         )
@@ -180,6 +180,6 @@ class GetCredentialOfferFlowImplTest {
         coEvery {
             mockMapToCredentialClaimData(claimWithDisplays2)
         } returns Ok(claimData2)
-        coEvery { mockFetchIssuerDisplayData(CREDENTIAL_ID, ISSUER) } returns mockIssuerDisplayData
+        coEvery { mockFetchAndCacheIssuerDisplayData(CREDENTIAL_ID, ISSUER) } just runs
     }
 }

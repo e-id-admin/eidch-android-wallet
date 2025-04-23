@@ -1,12 +1,10 @@
 package ch.admin.foitt.wallet.platform.navArgs.domain.model
 
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequest
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.CompatibleCredential
 
 data class PresentationFailureNavArg(
     val compatibleCredential: CompatibleCredential,
     val presentationRequest: PresentationRequest,
-    val issuerDisplayData: ActorDisplayData,
     val shouldFetchTrustStatement: Boolean,
 )

@@ -9,13 +9,14 @@ import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.Presentati
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.GetPresentationRequestFlow
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.SubmitPresentation
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.model.PresentationRequestUiState
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchVerifierDisplayData
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchAndCacheVerifierDisplayData
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.GetActorForScope
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
 import ch.admin.foitt.wallet.platform.di.IoDispatcherScope
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
+import ch.admin.foitt.wallet.platform.navigation.domain.model.ComponentScope
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
@@ -48,12 +49,13 @@ import javax.inject.Inject
 class PresentationRequestViewModel @Inject constructor(
     private val navManager: NavigationManager,
     getPresentationRequestFlow: GetPresentationRequestFlow,
-    private val fetchVerifierDisplayData: FetchVerifierDisplayData,
+    private val fetchAndCacheVerifierDisplayData: FetchAndCacheVerifierDisplayData,
     private val submitPresentation: SubmitPresentation,
     private val declinePresentation: DeclinePresentation,
     @IoDispatcherScope private val ioDispatcherScope: CoroutineScope,
     private val getCredentialCardState: GetCredentialCardState,
     private val getActorUiState: GetActorUiState,
+    getActorForScope: GetActorForScope,
     savedStateHandle: SavedStateHandle,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
@@ -65,8 +67,8 @@ class PresentationRequestViewModel @Inject constructor(
     private val compatibleCredential = navArgs.compatibleCredential
     private val presentationRequest = navArgs.presentationRequest
 
-    private val _verifierDisplayData: MutableStateFlow<ActorDisplayData> = MutableStateFlow(ActorDisplayData.EMPTY)
-    val verifierUiState = _verifierDisplayData.map { verifierDisplayData ->
+    private val verifierDisplayData = getActorForScope(ComponentScope.Verifier)
+    val verifierUiState = verifierDisplayData.map { verifierDisplayData ->
         getActorUiState(
             actorDisplayData = verifierDisplayData,
         )
@@ -142,34 +144,28 @@ class PresentationRequestViewModel @Inject constructor(
             }
         }
         navManager.navigateToAndClearCurrent(
-            direction = PresentationDeclinedScreenDestination(
-                issuerDisplayData = _verifierDisplayData.value,
-            )
+            direction = PresentationDeclinedScreenDestination
         )
     }
 
     private suspend fun updateVerifierDisplayData() {
-        val verifierDisplayData: ActorDisplayData = fetchVerifierDisplayData(
+        fetchAndCacheVerifierDisplayData(
             navArgs.presentationRequest,
             navArgs.shouldFetchTrustStatement,
         )
-        _verifierDisplayData.value = verifierDisplayData
     }
 
     private fun navigateToSuccess() {
         navManager.navigateToAndClearCurrent(
             direction = PresentationSuccessScreenDestination(
                 sentFields = getSentFields(),
-                issuerDisplayData = _verifierDisplayData.value,
             )
         )
     }
 
     private fun navigateToValidationError() {
         navManager.navigateToAndClearCurrent(
-            direction = PresentationValidationErrorScreenDestination(
-                issuerDisplayData = _verifierDisplayData.value
-            )
+            direction = PresentationValidationErrorScreenDestination
         )
     }
 
@@ -177,16 +173,13 @@ class PresentationRequestViewModel @Inject constructor(
         navManager.navigateToAndClearCurrent(
             direction = PresentationInvalidCredentialErrorScreenDestination(
                 sentFields = getSentFields(),
-                issuerDisplayData = _verifierDisplayData.value
             )
         )
     }
 
     private fun navigateToVerificationError() {
         navManager.navigateToAndClearCurrent(
-            direction = PresentationVerificationErrorScreenDestination(
-                issuerDisplayData = _verifierDisplayData.value
-            )
+            direction = PresentationVerificationErrorScreenDestination
         )
     }
 
@@ -199,7 +192,6 @@ class PresentationRequestViewModel @Inject constructor(
         PresentationFailureScreenDestination(
             compatibleCredential = compatibleCredential,
             presentationRequest = presentationRequest,
-            issuerDisplayData = _verifierDisplayData.value,
             shouldFetchTrustStatement = navArgs.shouldFetchTrustStatement,
         )
     )

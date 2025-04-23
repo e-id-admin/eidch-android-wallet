@@ -32,16 +32,12 @@ fun MrzChooserScreen(
 ) {
     val errorMessage = viewModel.errorMessage.collectAsStateWithLifecycle().value
     val showErrorMessage = viewModel.showErrorDialog.collectAsStateWithLifecycle().value
-    val hasLegalRepresentative = viewModel.hasLegalRepresentative.collectAsStateWithLifecycle().value
-
     MrzChooserScreenContent(
         errorMessage = errorMessage,
         showErrorMessage = showErrorMessage,
         screenData = viewModel.mrzData,
         onMrzItemClick = viewModel::onMrzItemClick,
         onCloseDialog = viewModel::onCloseErrorDialog,
-        isLegalRepresentativeEnabled = hasLegalRepresentative,
-        onToggleLegalRepresentative = viewModel::onToggleLegalRepresentative,
     )
 }
 
@@ -52,19 +48,12 @@ private fun MrzChooserScreenContent(
     screenData: List<MrzData>,
     onMrzItemClick: (Int) -> Unit,
     onCloseDialog: () -> Unit,
-    isLegalRepresentativeEnabled: Boolean,
-    onToggleLegalRepresentative: (Boolean) -> Unit,
 ) {
     Column {
         Spacer(
             modifier = Modifier.padding(
                 top = LocalScaffoldPaddings.current.calculateTopPadding()
             )
-        )
-        WalletListItems.SwitchListItem(
-            title = "Has legal representant",
-            isSwitchChecked = isLegalRepresentativeEnabled,
-            onSwitchChange = onToggleLegalRepresentative,
         )
         WalletLayouts.LazyColumn(
             useBottomInsets = false,
@@ -131,7 +120,7 @@ fun ErrorDialog(
 
 @WalletAllScreenPreview
 @Composable
-fun MrzScreenPreview() {
+private fun MrzScreenPreview() {
     WalletTheme {
         MrzChooserScreenContent(
             screenData = listOf(
@@ -157,8 +146,6 @@ fun MrzScreenPreview() {
             onMrzItemClick = {},
             errorMessage = "error message",
             showErrorMessage = false,
-            isLegalRepresentativeEnabled = true,
-            onToggleLegalRepresentative = {},
             onCloseDialog = {},
         )
     }

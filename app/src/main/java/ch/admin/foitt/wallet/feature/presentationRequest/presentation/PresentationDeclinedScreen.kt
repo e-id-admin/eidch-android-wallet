@@ -7,15 +7,12 @@ import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.credential.presentation.CredentialActionFeedbackCard
-import ch.admin.foitt.wallet.platform.navArgs.domain.model.PresentationDeclineNavArg
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.theme.WalletTheme
 import com.ramcosta.composedestinations.annotation.Destination
 
-@Destination(
-    navArgsDelegate = PresentationDeclineNavArg::class,
-)
+@Destination
 @Composable
 fun PresentationDeclinedScreen(viewModel: PresentationDeclinedViewModel) {
     val verifierUiState = viewModel.verifierUiState.collectAsStateWithLifecycle().value

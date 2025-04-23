@@ -95,6 +95,9 @@ fun CredentialDetailScreen(
             onDelete = {
                 scope.hideModalSheet(menuSheetState, onHidden = viewModel::onDelete)
             },
+            onWrongData = {
+                scope.hideModalSheet(menuSheetState, onHidden = viewModel::onWrongData)
+            }
         )
     }
     if (visibleBottomSheet == VisibleBottomSheet.DELETE) {
@@ -172,7 +175,7 @@ private fun BoxWithConstraintsScope.CredentialDetailCompact(
         index = 1,
     )
     HiddenScrollToTopButton(
-        text = stringResource(id = R.string.tk_receive_jump_to_top),
+        text = stringResource(id = R.string.tk_global_hiddenGoToTop),
         lazyListState = lazyListState
     )
     WalletLayouts.LazyColumn(
@@ -241,7 +244,7 @@ private fun BoxWithConstraintsScope.CredentialDetailLarge(
                 )
             }
             HiddenScrollToTopButton(
-                text = stringResource(id = R.string.tk_receive_jump_to_top),
+                text = stringResource(id = R.string.tk_global_hiddenGoToTop),
                 lazyListState = lazyListState
             )
         }

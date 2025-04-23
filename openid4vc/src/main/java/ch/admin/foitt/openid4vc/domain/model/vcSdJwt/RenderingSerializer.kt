@@ -3,6 +3,7 @@ package ch.admin.foitt.openid4vc.domain.model.vcSdJwt
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.Rendering.Companion.RENDERING_METHOD_IDENTIFIER
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.Rendering.Simple.Companion.RENDERING_METHOD_SIMPLE_KEY
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.Rendering.SvgTemplates.Companion.RENDERING_METHOD_SVG_TEMPLATE_KEY
+import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.Rendering.VcSdJwtOcaRendering.Companion.RENDERING_METHOD_OCA_KEY
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -19,7 +20,8 @@ internal object RenderingSerializer :
         val renderings = buildJsonArray {
             element.jsonObject.forEach { rendering ->
                 when (rendering.key) {
-                    RENDERING_METHOD_SIMPLE_KEY -> {
+                    RENDERING_METHOD_SIMPLE_KEY,
+                    RENDERING_METHOD_OCA_KEY -> {
                         addJsonObject {
                             put(RENDERING_METHOD_IDENTIFIER, rendering.key)
                             rendering.value.jsonObject.forEach {

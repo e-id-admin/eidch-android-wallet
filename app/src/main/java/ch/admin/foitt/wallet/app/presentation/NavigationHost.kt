@@ -20,6 +20,8 @@ import ch.admin.foitt.wallet.feature.credentialOffer.presentation.CredentialOffe
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.CredentialOfferWrongDataViewModel
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.DeclineCredentialOfferScreen
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.DeclineCredentialOfferViewModel
+import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdGuardianshipScreen
+import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdGuardianshipViewModel
 import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdInfoScreen
 import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdInfoViewModel
 import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdIntroScreen
@@ -130,6 +132,7 @@ import ch.admin.foitt.walletcomposedestinations.destinations.CredentialOfferScre
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialOfferWrongDataScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.DataAnalysisScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.DeclineCredentialOfferScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.EIdGuardianshipScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.EIdInfoScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.EIdIntroScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.EIdPrivacyPolicyScreenDestination
@@ -401,6 +404,10 @@ fun NavigationHost(
 
         screenDestination(EIdPrivacyPolicyScreenDestination) { viewModel: EIdPrivacyPolicyViewModel ->
             EIdPrivacyPolicyScreen(viewModel)
+        }
+
+        screenDestination(EIdGuardianshipScreenDestination) { viewModel: EIdGuardianshipViewModel ->
+            EIdGuardianshipScreen(viewModel)
         }
 
         screenDestination(EIdInfoScreenDestination) { viewModel: EIdInfoViewModel ->

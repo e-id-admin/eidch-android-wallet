@@ -2,8 +2,10 @@ package ch.admin.foitt.wallet.feature.credentialOffer.presentation
 
 import androidx.lifecycle.SavedStateHandle
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.model.DeclineCredentialOfferUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.GetActorForScope
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
+import ch.admin.foitt.wallet.platform.navigation.domain.model.ComponentScope
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
@@ -15,13 +17,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 @HiltViewModel
 class DeclineCredentialOfferViewModel @Inject constructor(
     private val getActorUiState: GetActorUiState,
     private val navManager: NavigationManager,
+    getActorForScope: GetActorForScope,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
     savedStateHandle: SavedStateHandle,
@@ -31,28 +34,26 @@ class DeclineCredentialOfferViewModel @Inject constructor(
 
     private val navArgs = DeclineCredentialOfferScreenDestination.argsFrom(savedStateHandle)
     private val credentialId = navArgs.credentialId
-    private val issuerDisplayData = navArgs.issuerDisplayData
+    private val issuerDisplayData = getActorForScope(ComponentScope.CredentialIssuer)
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
-    val uiState: StateFlow<DeclineCredentialOfferUiState> = flow {
+    val uiState: StateFlow<DeclineCredentialOfferUiState> = issuerDisplayData.map { displayData ->
         val uiState = DeclineCredentialOfferUiState(
             issuer = getActorUiState(
-                actorDisplayData = issuerDisplayData,
+                actorDisplayData = displayData,
             ),
         )
-        emit(uiState)
         _isLoading.value = false
-    }
-        .toStateFlow(DeclineCredentialOfferUiState.EMPTY, 0)
+        uiState
+    }.toStateFlow(DeclineCredentialOfferUiState.EMPTY, 0)
 
     fun onCancel() = navManager.popBackStack()
 
     fun onDecline() = navManager.navigateTo(
         CredentialOfferDeclinedScreenDestination(
             credentialId = credentialId,
-            issuerDisplayData = issuerDisplayData,
         )
     )
 }

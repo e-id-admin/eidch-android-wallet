@@ -38,11 +38,11 @@ private fun DeclineCredentialOfferScreenContent(
     CredentialActionFeedbackCard(
         isLoading = isLoading,
         issuer = issuer,
-        contentTextFirstParagraphText = R.string.tk_receive_deny1_title,
-        contentTextSecondParagraphText = R.string.tk_receive_deny1_body,
+        contentTextFirstParagraphText = R.string.tk_receive_declineOffer_primary,
+        contentTextSecondParagraphText = R.string.tk_receive_declineOffer_secondary,
         iconAlwaysVisible = false,
         contentIcon = R.drawable.wallet_ic_circular_questionmark,
-        primaryButtonText = R.string.tk_receive_deny1_primarybutton,
+        primaryButtonText = R.string.tk_receive_declineOffer_primaryButton,
         secondaryButtonText = R.string.tk_global_cancel,
         onPrimaryButton = onDecline,
         onSecondaryButton = onCancel

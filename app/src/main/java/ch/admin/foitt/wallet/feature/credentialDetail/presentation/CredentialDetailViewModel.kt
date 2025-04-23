@@ -140,6 +140,7 @@ class CredentialDetailViewModel @Inject constructor(
 
     fun onWrongData() {
         navManager.navigateTo(CredentialDetailWrongDataScreenDestination)
+        onBottomSheetDismiss()
     }
 
     private suspend fun IssuerDisplay?.toActorUiState() = this?.let {

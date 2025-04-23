@@ -4,13 +4,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.GetPresentationRequestCredentialListFlow
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.model.PresentationCredentialListUiState
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchVerifierDisplayData
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchAndCacheVerifierDisplayData
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.GetActorForScope
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.PresentationRequestNavArg
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
+import ch.admin.foitt.wallet.platform.navigation.domain.model.ComponentScope
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
@@ -34,9 +35,10 @@ import javax.inject.Inject
 class PresentationCredentialListViewModel @Inject constructor(
     private val navManager: NavigationManager,
     getPresentationRequestCredentialListFlow: GetPresentationRequestCredentialListFlow,
-    private val fetchVerifierDisplayData: FetchVerifierDisplayData,
+    private val fetchAndCacheVerifierDisplayData: FetchAndCacheVerifierDisplayData,
     private val getCredentialCardState: GetCredentialCardState,
     private val getActorUiState: GetActorUiState,
+    getActorForScope: GetActorForScope,
     savedStateHandle: SavedStateHandle,
     setTopBarState: SetTopBarState,
     setFullscreenState: SetFullscreenState,
@@ -49,8 +51,8 @@ class PresentationCredentialListViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
-    private val _verifierDisplayData: MutableStateFlow<ActorDisplayData> = MutableStateFlow(ActorDisplayData.EMPTY)
-    val verifierUiState = _verifierDisplayData.map { verifierDisplayData ->
+    private val verifierDisplayData = getActorForScope(ComponentScope.Verifier)
+    val verifierUiState = verifierDisplayData.map { verifierDisplayData ->
         getActorUiState(
             actorDisplayData = verifierDisplayData,
         )
@@ -96,11 +98,10 @@ class PresentationCredentialListViewModel @Inject constructor(
     fun onBack() = navManager.navigateUpOrToRoot()
 
     private suspend fun updateVerifierDisplayData() {
-        val verifierDisplayData: ActorDisplayData = fetchVerifierDisplayData(
+        fetchAndCacheVerifierDisplayData(
             presentationRequest = navArgs.presentationRequest,
             shouldFetchTrustStatement = navArgs.shouldFetchTrustStatement,
         )
-        _verifierDisplayData.value = verifierDisplayData
     }
 
     private fun navigateToErrorScreen() {

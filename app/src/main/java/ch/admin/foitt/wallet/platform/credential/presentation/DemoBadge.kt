@@ -23,7 +23,7 @@ internal fun DemoBadge(
     textColor: Color = WalletTheme.colorScheme.onSecondaryFixed,
     backgroundColor: Color = WalletTheme.colorScheme.secondaryFixed,
 ) {
-    val altText = stringResource(id = R.string.tk_global_credential_status_demo_alt)
+    val altText = stringResource(id = R.string.tk_credential_status_demo_alt)
     Box(
         modifier = Modifier
             .heightIn(min = Sizes.labelHeight)
@@ -38,7 +38,7 @@ internal fun DemoBadge(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = stringResource(id = R.string.tk_global_credential_status_demo),
+            text = stringResource(id = R.string.tk_credential_status_demo),
             color = textColor,
             style = WalletTheme.typography.labelMedium,
         )

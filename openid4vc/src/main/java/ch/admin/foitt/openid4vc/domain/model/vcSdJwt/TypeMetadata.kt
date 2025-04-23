@@ -19,12 +19,12 @@ data class TypeMetadata(
     @SerialName("extends")
     val extends: String?,
     @SerialName("display")
-    val display: List<TypeMetadataDisplay>?,
+    val displays: List<TypeMetadataDisplay>?,
     @SerialName("claims")
     val claims: List<ClaimMetadata>?,
     @SerialName("schema")
     val schema: String?, // not supported by swiss profile
-    @SerialName("schemaUrl")
+    @SerialName("schema_url")
     val schemaUrl: String?,
     @SerialName("schema_url#integrity")
     val schemaUrlIntegrity: String?,
@@ -40,13 +40,26 @@ data class TypeMetadataDisplay(
     val description: String?,
     @Serializable(with = RenderingSerializer::class)
     @SerialName("rendering")
-    val rendering: List<Rendering>?,
+    val renderings: List<Rendering>?,
 )
 
 @Serializable(RenderingItemSerializer::class)
 sealed class Rendering {
     @SerialName(RENDERING_METHOD_IDENTIFIER)
     abstract val name: String
+
+    @Serializable
+    data class VcSdJwtOcaRendering(
+        override val name: String = RENDERING_METHOD_OCA_KEY,
+        @SerialName("uri")
+        val uri: String,
+        @SerialName("uri#integrity")
+        val uriIntegrity: String?,
+    ) : Rendering() {
+        companion object {
+            const val RENDERING_METHOD_OCA_KEY = "oca"
+        }
+    }
 
     @Serializable
     data class Simple(

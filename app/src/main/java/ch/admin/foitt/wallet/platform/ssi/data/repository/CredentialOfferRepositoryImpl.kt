@@ -18,6 +18,7 @@ import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialIssuerDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayConst
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayLanguage
+import ch.admin.foitt.wallet.platform.database.domain.usecase.RunInTransaction
 import ch.admin.foitt.wallet.platform.di.IoDispatcher
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialOfferRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.toCredentialOfferRepositoryError
@@ -32,7 +33,8 @@ import javax.inject.Inject
 
 class CredentialOfferRepositoryImpl @Inject constructor(
     daoProvider: DaoProvider,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    private val runInTransaction: RunInTransaction,
 ) : CredentialOfferRepository {
 
     override suspend fun saveCredentialOffer(
@@ -124,15 +126,23 @@ class CredentialOfferRepositoryImpl @Inject constructor(
         credentialDisplays: List<CredentialDisplay>,
         claims: Map<CredentialClaim, List<CredentialClaimDisplay>>
     ): Result<Long, CredentialOfferRepositoryError> = runSuspendCatching {
-        val credentialId = credentialDao().insert(credential)
-        credentialIssuerDisplayDao().insertAll(issuerDisplays.map { it.copy(credentialId = credentialId) })
-        credentialDisplayDao().insertAll(credentialDisplays.map { it.copy(credentialId = credentialId) })
-        claims.forEach { claimsMap ->
-            val claim = claimsMap.key.copy(credentialId = credentialId)
-            val claimId = credentialClaimDao().insert(claim)
-            val displays = claimsMap.value.map { it.copy(claimId = claimId) }
-            credentialClaimDisplayDao().insertAll(displays)
+        val credentialId = runInTransaction {
+            val credentialId = credentialDao().insert(credential)
+            credentialIssuerDisplayDao().insertAll(issuerDisplays.map { it.copy(credentialId = credentialId) })
+            credentialDisplayDao().insertAll(credentialDisplays.map { it.copy(credentialId = credentialId) })
+            claims.forEach { claimsMap ->
+                val claim = claimsMap.key.copy(credentialId = credentialId)
+                val claimId = credentialClaimDao().insert(claim)
+                val displays = claimsMap.value.map { it.copy(claimId = claimId) }
+                credentialClaimDisplayDao().insertAll(displays)
+            }
+            credentialId
         }
+
+        if (credentialId == null) {
+            error("credential id == null")
+        }
+
         credentialId
     }.mapError { throwable ->
         throwable.toCredentialOfferRepositoryError("saveCredentialOffer error")

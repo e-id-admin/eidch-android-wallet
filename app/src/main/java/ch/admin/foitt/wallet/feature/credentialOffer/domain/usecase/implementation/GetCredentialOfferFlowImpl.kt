@@ -4,7 +4,7 @@ import ch.admin.foitt.wallet.feature.credentialOffer.domain.model.CredentialOffe
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.model.GetCredentialOfferFlowError
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.model.toGetCredentialOfferFlowError
 import ch.admin.foitt.wallet.feature.credentialOffer.domain.usecase.GetCredentialOfferFlow
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchIssuerDisplayData
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchAndCacheIssuerDisplayData
 import ch.admin.foitt.wallet.platform.credential.domain.model.MapToCredentialDisplayDataError
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.MapToCredentialDisplayData
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimWithDisplays
@@ -26,7 +26,7 @@ class GetCredentialOfferFlowImpl @Inject constructor(
     private val credentialWithDisplaysAndClaimsRepository: CredentialWithDisplaysAndClaimsRepository,
     private val mapToCredentialDisplayData: MapToCredentialDisplayData,
     private val mapToCredentialClaimData: MapToCredentialClaimData,
-    private val fetchIssuerDisplayData: FetchIssuerDisplayData,
+    private val fetchAndCacheIssuerDisplayData: FetchAndCacheIssuerDisplayData,
 ) : GetCredentialOfferFlow {
     override fun invoke(credentialId: Long): Flow<Result<CredentialOffer?, GetCredentialOfferFlowError>> =
         credentialWithDisplaysAndClaimsRepository.getNullableCredentialWithDisplaysAndClaimsFlowById(credentialId)
@@ -41,13 +41,10 @@ class GetCredentialOfferFlowImpl @Inject constructor(
                             credentialDisplays = credentialWithDisplaysAndClaims.credentialDisplays,
                         ).mapError(MapToCredentialDisplayDataError::toGetCredentialOfferFlowError)
                             .bind()
+                        fetchAndCacheIssuerDisplayData(credentialId, credential.issuer)
 
                         val claims = getCredentialClaimData(credentialWithDisplaysAndClaims.claims.sortByOrder()).bind()
-
-                        val issuerDisplayData = fetchIssuerDisplayData(credentialId, credential.issuer)
-
                         CredentialOffer(
-                            issuerDisplayData = issuerDisplayData,
                             credential = credentialDisplayData,
                             claims = claims
                         )

@@ -39,7 +39,7 @@ private fun CredentialOfferDeclinedScreenContent(
     CredentialActionFeedbackCard(
         isLoading = isLoading,
         issuer = issuer,
-        contentTextFirstParagraphText = R.string.tk_receive_deny2_title,
+        contentTextFirstParagraphText = R.string.tk_receive_declinedOffer_primary,
         iconAlwaysVisible = true,
         contentIcon = R.drawable.wallet_ic_circular_cross,
     )

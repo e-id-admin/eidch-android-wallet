@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import timber.log.Timber
@@ -45,11 +46,33 @@ fun Context.openLink(uri: String) {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
     }.onFailure {
-        Timber.w(it, "Could not open uri: $uri")
+        Timber.w(t = it, message = "Could not open uri: $uri")
     }
 }
 
 fun Context.isScreenReaderOn(): Boolean {
     val manager = getSystemService(ACCESSIBILITY_SERVICE) as AccessibilityManager?
     return manager != null && manager.isEnabled && manager.isTouchExplorationEnabled
+}
+
+fun Context.shareText(
+    title: String? = null,
+    textContent: String,
+    mimeType: String,
+) {
+    runSuspendCatching {
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            title?.let {
+                putExtra(Intent.EXTRA_TITLE, it)
+            }
+            putExtra(Intent.EXTRA_TEXT, textContent)
+            type = mimeType
+        }
+
+        val shareIntent = Intent.createChooser(sendIntent, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        ContextCompat.startActivity(this, shareIntent, null)
+    }.onFailure {
+        Timber.w(t = it, message = "Failed sharing text")
+    }
 }

@@ -25,8 +25,8 @@ class JwtTest {
         assertEquals(ISS, jwt.iss)
         assertEquals(SUB, jwt.subject)
         assertEquals(Instant.ofEpochSecond(IAT.toLong()), jwt.issuedAt)
-        assertEquals(Instant.ofEpochSecond(EXP.toLong()), jwt.expiredAt)
-        assertEquals(Instant.ofEpochSecond(NBF.toLong()), jwt.notBefore)
+        assertEquals(Instant.ofEpochSecond(EXP.toLong()), jwt.expInstant)
+        assertEquals(Instant.ofEpochSecond(NBF.toLong()), jwt.nbfInstant)
     }
 
     @Test
@@ -69,13 +69,13 @@ class JwtTest {
     @Test
     fun `Parsing a valid jwt without exp claim succeeds but has null field`() = runTest {
         val jwt = Jwt(JWT_MISSING_EXP)
-        assertNull(jwt.expiredAt)
+        assertNull(jwt.expInstant)
     }
 
     @Test
     fun `Parsing a valid jwt without nbf claim succeeds but has null field`() = runTest {
         val jwt = Jwt(JWT_MISSING_NBF)
-        assertNull(jwt.notBefore)
+        assertNull(jwt.nbfInstant)
     }
 
     @Test

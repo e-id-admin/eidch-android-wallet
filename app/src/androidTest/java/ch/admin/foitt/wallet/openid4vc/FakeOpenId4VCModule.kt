@@ -3,6 +3,7 @@ package ch.admin.foitt.wallet.openid4vc
 import ch.admin.foitt.openid4vc.di.ExternalOpenId4VcBindings
 import ch.admin.foitt.openid4vc.di.ExternalOpenId4VcModule
 import ch.admin.foitt.openid4vc.domain.repository.CredentialOfferRepository
+import ch.admin.foitt.openid4vc.domain.repository.PresentationRequestRepository
 import ch.admin.foitt.openid4vc.domain.usecase.VerifyJwtSignature
 import ch.admin.foitt.wallet.platform.utils.SafeJson
 import dagger.Binds
@@ -21,6 +22,10 @@ class FakeOpenId4VCModule {
     fun provideCredentialOfferRepository(
         safeJson: SafeJson,
     ): CredentialOfferRepository = FakeCredentialOfferRepositoryImpl(safeJson)
+
+    @Provides
+    fun providePresentationRequestRepository(
+    ): PresentationRequestRepository = FakePresentationRequestRepositoryImpl()
 }
 
 @Module

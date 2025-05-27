@@ -8,18 +8,20 @@ import ch.admin.foitt.wallet.feature.mrzScan.presentation.model.MrzData
 import ch.admin.foitt.wallet.platform.database.domain.model.EIdRequestCase
 import ch.admin.foitt.wallet.platform.database.domain.model.EIdRequestState
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.CaseResponse
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.LegalRepresentant
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.StateResponse
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.toLegalRepresentativeConsent
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.FetchSIdStatus
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.GetHasLegalGuardian
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.EIdQueueNavArg
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.extension.navigateUpOrToRoot
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.SafeJson
+import ch.admin.foitt.walletcomposedestinations.destinations.EIdGuardianSelectionScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.EIdIntroScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.EIdQueueScreenDestination
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.get
@@ -43,10 +45,8 @@ class MrzChooserViewModel @Inject constructor(
     private val fetchSIdStatus: FetchSIdStatus,
     private val getHasLegalGuardian: GetHasLegalGuardian,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
     override val topBarState = TopBarState.Details(navManager::navigateUp, null)
-    override val fullscreenState = FullscreenState.Insets
 
     private val mockUnderAge = safeJson.safeDecodeStringTo<List<MrzData>>(MockMRZData.underAgeMock)
     private val mockAdult = safeJson.safeDecodeStringTo<List<MrzData>>(MockMRZData.adultMock)
@@ -81,10 +81,25 @@ class MrzChooserViewModel @Inject constructor(
             .onSuccess { stateResponse ->
                 val rawMrz = mrzData.payload.mrz.joinToString(";")
                 saveData(rawMrz, caseResponse, stateResponse)
+
+                if (isLegalCaseNeeded(stateResponse.legalRepresentant)) {
+                    navManager.navigateTo(
+                        EIdGuardianSelectionScreenDestination(
+                            sIdCaseId = caseResponse.caseId
+                        )
+                    )
+                } else {
+                    navManager.navigateTo(
+                        EIdQueueScreenDestination(
+                            navArgs = EIdQueueNavArg(
+                                rawDeadline = stateResponse.queueInformation?.expectedOnlineSessionStart
+                            )
+                        )
+                    )
+                }
             }
-            .onFailure { stateRequestError ->
-                _errorMessage.value = stateRequestError.toString()
-                _showErrorDialog.value = true
+            .onFailure {
+                navManager.navigateBackToHome(EIdIntroScreenDestination)
             }
     }
 
@@ -114,17 +129,17 @@ class MrzChooserViewModel @Inject constructor(
             state = stateResponseBody.state,
             lastPolled = Instant.now().epochSecond,
             onlineSessionStartOpenAt = onlineSessionStartOpenAt,
-            onlineSessionStartTimeoutAt = onlineSessionStartTimeoutAt
+            onlineSessionStartTimeoutAt = onlineSessionStartTimeoutAt,
+            legalRepresentativeConsent = stateResponseBody.toLegalRepresentativeConsent(),
         )
 
         saveEIdRequestCase(eIdRequestCase)
         saveEIdRequestState(eIdRequestState)
+    }
 
-        navManager.navigateTo(
-            EIdQueueScreenDestination(
-                navArgs = EIdQueueNavArg(rawDeadline = stateResponseBody.queueInformation?.expectedOnlineSessionStart)
-            )
-        )
+    private fun isLegalCaseNeeded(legalRepresentant: LegalRepresentant?): Boolean = when {
+        legalRepresentant != null && legalRepresentant.verified.not() -> true
+        else -> false
     }
 
     private object MockMRZData {

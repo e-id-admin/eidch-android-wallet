@@ -25,6 +25,13 @@ class HomeScreen(composeTestRule: ComposeContentTestRule) : BaseScreen(composeTe
         scanButton.assertIsDisplayed()
     }
 
+    fun isDisplayedWithCredentials() {
+        noCredentialIcon.assertIsNotDisplayed()
+        credentialList.assertIsDisplayed()
+        menuButton.assertIsDisplayed()
+        scanButton.assertIsDisplayed()
+    }
+
     @OptIn(ExperimentalTestApi::class)
     fun credentialListIsDisplayed() {
         composeTestRule.waitUntilAtLeastOneExists(hasTestTag(TestTags.CREDENTIAL_LIST.name), 10000)

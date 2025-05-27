@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.composables.Buttons
 import ch.admin.foitt.wallet.platform.composables.presentation.ScreenMainImage
@@ -27,18 +26,16 @@ import com.ramcosta.composedestinations.annotation.Destination
 fun EIdQueueScreen(
     viewModel: EIdQueueViewModel,
 ) {
-    val deadlineTime = viewModel.deadline.collectAsStateWithLifecycle().value
-
     EIdQueueScreenContent(
+        deadlineText = viewModel.formattedDate,
         onNext = viewModel::onNext,
-        deadlineText = deadlineTime,
     )
 }
 
 @Composable
 private fun EIdQueueScreenContent(
+    deadlineText: String?,
     onNext: () -> Unit,
-    deadlineText: String,
 ) {
     WalletLayouts.ScrollableColumnWithPicture(
         stickyStartContent = {
@@ -64,7 +61,7 @@ private fun EIdQueueScreenContent(
             modifier = Modifier.fillMaxWidth(),
             text = stringResource(id = R.string.tk_getEid_queuing_body),
         )
-        if (deadlineText.isNotEmpty()) {
+        deadlineText?.let {
             Spacer(modifier = Modifier.height(Sizes.s06))
             WalletTexts.BodyLarge(
                 modifier = Modifier.fillMaxWidth(),
@@ -83,8 +80,8 @@ private fun EIdQueueScreenContent(
 private fun EIdQueueScreenPreview() {
     WalletTheme {
         EIdQueueScreenContent(
+            deadlineText = "10. Januar 2025",
             onNext = {},
-            deadlineText = "25 January 2025"
         )
     }
 }

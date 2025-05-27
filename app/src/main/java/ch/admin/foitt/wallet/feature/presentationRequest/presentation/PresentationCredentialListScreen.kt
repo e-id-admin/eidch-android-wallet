@@ -130,7 +130,7 @@ private fun ListHeader(verifierUiState: ActorUiState) {
     WalletTexts.BodyLarge(
         modifier = Modifier
             .padding(start = Sizes.s04, end = Sizes.s04),
-        text = stringResource(id = R.string.tk_present_multiplecredentials_title)
+        text = stringResource(id = R.string.tk_present_compatibleCredentials_primary)
     )
     Spacer(modifier = Modifier.height(Sizes.s04))
 }

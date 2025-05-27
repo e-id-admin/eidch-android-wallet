@@ -32,7 +32,7 @@ class ValidateTokenStatusListImpl @Inject constructor(
             check(jwt.type == SUPPORTED_STATUS_TYPE) { "Status list token is not of proper type" }
             checkNotNull(jwt.issuedAt) { "Status list token iat claim is missing" }
             check(subject == jwt.subject) { "Subject does not match" }
-            jwt.expiredAt?.let { expirationTime ->
+            jwt.expInstant?.let { expirationTime ->
                 check(expirationTime.isAfter(Instant.now())) { "Status list token is expired" }
             }
 

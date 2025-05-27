@@ -41,7 +41,7 @@ fun MainScreen(
         }
 
         LaunchedEffect(activity.intent) {
-            viewModel.parseIntent(activity.intent)
+            viewModel.handleIntent(activity)
         }
     }
 }

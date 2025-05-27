@@ -65,6 +65,14 @@ private fun WalletTopAppBarContent(
             actionButton = {},
         )
 
+        is TopBarState.EmptyWithCloseButton -> TopBarEmptyWithClose(
+            actionButton = {
+                CloseButton(
+                    onClose = topBarState.onClose
+                )
+            },
+        )
+
         is TopBarState.OnGradient -> TopAppBarOnGradient(
             titleId = topBarState.titleId,
             onUp = topBarState.onUp,
@@ -74,6 +82,17 @@ private fun WalletTopAppBarContent(
         TopBarState.Empty -> TopBarEmpty()
     }
 }
+
+@Composable
+private fun TopBarEmptyWithClose(
+    actionButton: @Composable () -> Unit,
+) = TopAppBar(
+    title = {},
+    actions = {
+        actionButton()
+    },
+    colors = WalletTopBarColors.transparent(),
+)
 
 @Composable
 private fun TopBarEmpty() = TopAppBar(
@@ -210,7 +229,7 @@ fun TopBarButton(
 
 private class TopBarPreviewParamsProvider : PreviewParameterProvider<TopBarState> {
     override val values = sequenceOf(
-        TopBarState.DetailsWithCloseButton(onUp = {}, titleId = R.string.tk_present_accept_title, onClose = {}),
+        TopBarState.DetailsWithCloseButton(onUp = {}, titleId = R.string.tk_present_result_success_primary, onClose = {}),
         TopBarState.Details(onUp = {}, titleId = R.string.settings_title),
         TopBarState.None
     )

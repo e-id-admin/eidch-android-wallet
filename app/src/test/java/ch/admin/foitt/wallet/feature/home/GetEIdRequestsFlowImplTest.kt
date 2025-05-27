@@ -6,6 +6,7 @@ import ch.admin.foitt.wallet.feature.home.domain.usecase.implementation.GetEIdRe
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.EIdRequestCaseWithStateRepository
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.mock.EIdRequestMocks.eIdRequestCaseWithState
+import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetCurrentAppLocale
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
 import com.github.michaelbull.result.Err
@@ -21,11 +22,15 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.Locale
 
 class GetEIdRequestsFlowImplTest {
 
     @MockK
     private lateinit var mockEIdRequestCaseWithStateRepository: EIdRequestCaseWithStateRepository
+
+    @MockK
+    private lateinit var mockGetCurrentAppLocale: GetCurrentAppLocale
 
     lateinit var getEIdRequestsFlow: GetEIdRequestsFlow
 
@@ -33,7 +38,14 @@ class GetEIdRequestsFlowImplTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        getEIdRequestsFlow = GetEIdRequestsFlowImpl(mockEIdRequestCaseWithStateRepository)
+        getEIdRequestsFlow = GetEIdRequestsFlowImpl(
+            eIdRequestCaseWithStateRepository = mockEIdRequestCaseWithStateRepository,
+            getCurrentAppLocale = mockGetCurrentAppLocale
+        )
+
+        coEvery {
+            mockGetCurrentAppLocale.invoke()
+        } returns Locale.ENGLISH
     }
 
     @AfterEach

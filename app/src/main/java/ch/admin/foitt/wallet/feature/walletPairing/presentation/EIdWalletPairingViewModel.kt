@@ -1,9 +1,7 @@
 package ch.admin.foitt.wallet.feature.walletPairing.presentation
 
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.extension.navigateUpOrToRoot
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
@@ -14,14 +12,12 @@ import javax.inject.Inject
 class EIdWalletPairingViewModel @Inject constructor(
     private val navManager: NavigationManager,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
 
     override val topBarState = TopBarState.Details(
         onUp = navManager::navigateUpOrToRoot,
         titleId = null
     )
-    override val fullscreenState = FullscreenState.Insets
 
     fun onSingleDeviceFlow() = navManager.navigateUpOrToRoot()
 

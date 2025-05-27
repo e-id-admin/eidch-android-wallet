@@ -15,9 +15,7 @@ import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseInputFieldState
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseValidationState
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.usecase.ValidatePassphrase
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.trackCompletion
@@ -42,12 +40,10 @@ class AuthWithPassphraseViewModel @Inject constructor(
     private val increaseFailedLoginAttemptsCounter: IncreaseFailedLoginAttemptsCounter,
     private val resetBiometrics: ResetBiometrics,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
     savedStateHandle: SavedStateHandle,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
 
     override val topBarState = TopBarState.Details(navManager::navigateUp, R.string.change_biometrics_title)
-    override val fullscreenState = FullscreenState.Insets
 
     private val navArgs = AuthWithPassphraseScreenDestination.argsFrom(savedStateHandle)
     val enableBiometrics = navArgs.enableBiometrics

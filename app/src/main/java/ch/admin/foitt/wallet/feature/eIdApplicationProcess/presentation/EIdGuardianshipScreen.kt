@@ -40,12 +40,12 @@ private fun EIdGuardianshipScreenContent(
         },
         stickyBottomBackgroundColor = Color.Transparent,
         stickyBottomContent = {
-            Buttons.Outlined(
+            Buttons.TonalSecondary(
                 text = stringResource(R.string.tk_getEid_guardianship_button_yes),
                 onClick = { onDeclareGuardianship(true) },
                 modifier = Modifier.weight(1f),
             )
-            Buttons.Outlined(
+            Buttons.TonalSecondary(
                 text = stringResource(R.string.tk_getEid_guardianship_button_no),
                 onClick = { onDeclareGuardianship(false) },
                 modifier = Modifier.weight(1f),

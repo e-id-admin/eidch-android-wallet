@@ -116,7 +116,7 @@ class ValidatePresentationRequestImpl @Inject constructor(
     private companion object {
         const val ID_SCHEME_DID = "did"
         const val VP_TOKEN = "vp_token"
-        val DID_REGEX = Regex("^did:[a-z0-9]+:[a-zA-Z0-9.\\-_:]+\$")
+        val DID_REGEX = Regex("^did:[a-z0-9]+:[a-zA-Z0-9.\\-_:]+$")
         const val DIRECT_POST = "direct_post"
         const val CLAIM_RESPONSE_URI = "response_uri"
     }

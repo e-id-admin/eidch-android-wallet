@@ -9,7 +9,7 @@ import ch.admin.foitt.openid4vc.domain.model.presentationRequest.SubmitPresentat
 import com.github.michaelbull.result.Result
 import java.net.URL
 
-internal interface PresentationRequestRepository {
+interface PresentationRequestRepository {
     @CheckResult
     suspend fun fetchPresentationRequest(url: URL): Result<String, FetchPresentationRequestError>
 

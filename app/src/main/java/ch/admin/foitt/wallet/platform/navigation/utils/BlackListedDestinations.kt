@@ -4,7 +4,6 @@ import ch.admin.foitt.walletcomposedestinations.destinations.AppVersionBlockedSc
 import ch.admin.foitt.walletcomposedestinations.destinations.BiometricLoginScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.LockScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.LockoutScreenDestination
-import ch.admin.foitt.walletcomposedestinations.destinations.NoDevicePinSetScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.OnboardingConfirmPassphraseScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.OnboardingErrorScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.OnboardingIntroScreenDestination
@@ -16,13 +15,14 @@ import ch.admin.foitt.walletcomposedestinations.destinations.OnboardingPresentSc
 import ch.admin.foitt.walletcomposedestinations.destinations.PassphraseLoginScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.RegisterBiometricsScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.StartScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.UnsecuredDeviceScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.UserPrivacyPolicyScreenDestination
 
 // Destinations that should not trigger a lock screen
 // it implicitly means that the database should either not exist, or be closed and encrypted, on these destinations
 val blackListedDestinationsLockScreen = listOf(
     StartScreenDestination,
-    NoDevicePinSetScreenDestination,
+    UnsecuredDeviceScreenDestination,
     AppVersionBlockedScreenDestination,
     LockScreenDestination,
     OnboardingIntroScreenDestination,

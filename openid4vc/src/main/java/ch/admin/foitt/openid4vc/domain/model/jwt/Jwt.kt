@@ -1,6 +1,7 @@
 package ch.admin.foitt.openid4vc.domain.model.jwt
 
 import ch.admin.foitt.openid4vc.domain.model.anycredential.CredentialValidity
+import ch.admin.foitt.openid4vc.domain.model.anycredential.getCredentialValidity
 import com.nimbusds.jwt.SignedJWT
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -25,22 +26,8 @@ open class Jwt(
     open val subject: String? = signedJwt.jwtClaimsSet.subject
     open val issuedAt: Instant? = signedJwt.jwtClaimsSet.issueTime?.toInstant()
 
-    val expiredAt: Instant? = signedJwt.jwtClaimsSet.expirationTime?.toInstant()
-    val notBefore: Instant? = signedJwt.jwtClaimsSet.notBeforeTime?.toInstant()
+    val expInstant: Instant? = signedJwt.jwtClaimsSet.expirationTime?.toInstant()
+    val nbfInstant: Instant? = signedJwt.jwtClaimsSet.notBeforeTime?.toInstant()
 
-    val jwtValidity: CredentialValidity
-        get() {
-            val notBeforeWithLeeway = notBefore?.minusSeconds(LEEWAY)
-            val expiredAtWithLeeway = expiredAt?.plusSeconds(LEEWAY)
-            val now = Instant.now()
-            return when {
-                notBeforeWithLeeway != null && now.isBefore(notBeforeWithLeeway) -> CredentialValidity.NotYetValid(notBefore)
-                expiredAtWithLeeway != null && now.isAfter(expiredAtWithLeeway) -> CredentialValidity.Expired(expiredAt)
-                else -> CredentialValidity.Valid
-            }
-        }
-
-    private companion object {
-        const val LEEWAY = 15L
-    }
+    val jwtValidity: CredentialValidity = getCredentialValidity(nbfInstant?.epochSecond, expInstant?.epochSecond)
 }

@@ -6,7 +6,9 @@ import androidx.test.core.app.ApplicationProvider
 import ch.admin.foitt.wallet.platform.database.data.AppDatabase
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseDao
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestStateDao
+import ch.admin.foitt.wallet.platform.database.domain.model.EIdRequestState
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestQueueState
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.LegalRepresentativeConsent
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.mock.EIdRequestMocks.eIdRequestCaseMock
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.mock.EIdRequestMocks.eIdRequestStateMock
 import kotlinx.coroutines.test.runTest
@@ -14,6 +16,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.assertThrows
 import java.time.Instant
 
 class EIdRequestStateDaoTest {
@@ -55,19 +58,23 @@ class EIdRequestStateDaoTest {
         val lastPolled = Instant.now().epochSecond
         val onlineSessionStartOpenAt = Instant.now().epochSecond
         val onlineSessionStartTimeout = Instant.now().epochSecond
-        eIdRequestStateDao.updateByCaseId(
-            caseId = eIdRequestCaseMock().id,
+        val legalRepresentativeConsent = LegalRepresentativeConsent.NOT_VERIFIED
+        eIdRequestStateDao.updateByCaseId(EIdRequestState(
+            eIdRequestCaseId = eIdRequestCaseMock().id,
             state = newState,
             lastPolled = lastPolled,
             onlineSessionStartOpenAt = onlineSessionStartOpenAt,
-            onlineSessionStartTimeout = onlineSessionStartTimeout,
-        )
+            onlineSessionStartTimeoutAt = onlineSessionStartTimeout,
+            legalRepresentativeConsent = legalRepresentativeConsent,
+        ))
 
         val updatedRequestState = eIdRequestStateDao.getEIdRequestStateById(id)
-        assertEquals(newState, updatedRequestState.state)
-        assertEquals(lastPolled, updatedRequestState.lastPolled)
-        assertEquals(onlineSessionStartOpenAt, updatedRequestState.onlineSessionStartOpenAt)
-        assertEquals(onlineSessionStartTimeout, updatedRequestState.onlineSessionStartTimeoutAt)
+        assertEquals(newState, updatedRequestState?.state)
+        assertEquals(lastPolled, updatedRequestState?.lastPolled)
+        assertEquals(onlineSessionStartOpenAt, updatedRequestState?.onlineSessionStartOpenAt)
+        assertEquals(onlineSessionStartTimeout, updatedRequestState?.onlineSessionStartTimeoutAt)
+        assertEquals(legalRepresentativeConsent, updatedRequestState?.legalRepresentativeConsent)
+
     }
 
     @Test(expected = SQLiteConstraintException::class)
@@ -86,5 +93,16 @@ class EIdRequestStateDaoTest {
         val caseIds = eIdRequestStateDao.getAllStateCaseIds()
 
         assertEquals(2, caseIds.size)
+    }
+
+    @Test
+    fun deleteEIdRequestCaseTestWillDeleteState() = runTest {
+        insertEIdRequestStateTest()
+        eIdRequestCaseDao.deleteById(eIdRequestCaseMock().id)
+
+        assertThrows<Throwable> {
+            eIdRequestCaseDao.getEIdRequestCaseById(eIdRequestCaseMock().id)
+            eIdRequestStateDao.getEIdRequestStateById(eIdRequestStateMock().id)
+        }
     }
 }

@@ -10,6 +10,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.assertThrows
 
 class EIdRequestCaseDaoTest {
 
@@ -36,5 +37,15 @@ class EIdRequestCaseDaoTest {
 
         val case = eIdRequestCaseDao.getEIdRequestCaseById(eIdRequestCaseMock().id)
         assertEquals(eIdRequestCaseMock(), case)
+    }
+
+    @Test
+    fun deleteEIdRequestCaseTest() = runTest {
+        eIdRequestCaseDao.insert(eIdRequestCaseMock())
+        eIdRequestCaseDao.deleteById(eIdRequestCaseMock().id)
+
+        assertThrows<Throwable> {
+            eIdRequestCaseDao.getEIdRequestCaseById(eIdRequestCaseMock().id)
+        }
     }
 }

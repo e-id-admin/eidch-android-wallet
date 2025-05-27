@@ -44,14 +44,7 @@ class GetAnyCredentialImplTest {
 
     @Test
     fun `Getting any credential matching vc+sd_jwt credential returns it`() = runTest {
-        val mockCredential = Credential(
-            id = CREDENTIAL_ID,
-            keyBindingIdentifier = KEY_BINDING_ID,
-            payload = PAYLOAD,
-            format = CredentialFormat.VC_SD_JWT,
-            keyBindingAlgorithm = KEY_BINDING_ALGORITHM.stdName,
-            issuer = "issuer"
-        )
+        val mockCredential = createMockCredential()
         coEvery { mockCredentialRepository.getById(CREDENTIAL_ID) } returns Ok(mockCredential)
 
         val credential = useCase(CREDENTIAL_ID).assertOk()
@@ -73,14 +66,7 @@ class GetAnyCredentialImplTest {
 
     @Test
     fun `Getting any credential with other format returns an error`() = runTest {
-        val mockCredential = Credential(
-            id = CREDENTIAL_ID,
-            keyBindingIdentifier = KEY_BINDING_ID,
-            payload = PAYLOAD,
-            format = CredentialFormat.UNKNOWN,
-            keyBindingAlgorithm = KEY_BINDING_ALGORITHM.stdName,
-            issuer = "issuer"
-        )
+        val mockCredential = createMockCredential(format = CredentialFormat.UNKNOWN)
         coEvery { mockCredentialRepository.getById(CREDENTIAL_ID) } returns Ok(mockCredential)
 
         val result = useCase(CREDENTIAL_ID)
@@ -90,14 +76,7 @@ class GetAnyCredentialImplTest {
 
     @Test
     fun `Getting any credential with unknown signing algorithm returns an error`() = runTest {
-        val mockCredential = Credential(
-            id = CREDENTIAL_ID,
-            keyBindingIdentifier = KEY_BINDING_ID,
-            payload = PAYLOAD,
-            format = CredentialFormat.UNKNOWN,
-            keyBindingAlgorithm = "other",
-            issuer = "issuer"
-        )
+        val mockCredential = createMockCredential(keyBindingAlgorithm = "other")
         coEvery { mockCredentialRepository.getById(CREDENTIAL_ID) } returns Ok(mockCredential)
 
         val result = useCase(CREDENTIAL_ID)
@@ -116,10 +95,25 @@ class GetAnyCredentialImplTest {
         assertEquals(exception, error.cause)
     }
 
+    private fun createMockCredential(
+        format: CredentialFormat = CredentialFormat.VC_SD_JWT,
+        keyBindingAlgorithm: String = KEY_BINDING_ALGORITHM.stdName,
+    ) = Credential(
+        id = CREDENTIAL_ID,
+        keyBindingIdentifier = KEY_BINDING_ID,
+        payload = PAYLOAD,
+        format = format,
+        keyBindingAlgorithm = keyBindingAlgorithm,
+        issuer = "issuer",
+        validFrom = 0,
+        validUntil = 17768026519L,
+    )
+
     private companion object {
         const val CREDENTIAL_ID = 1L
         const val KEY_BINDING_ID = "privateKeyIdentifier"
-        const val PAYLOAD = "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJpc3MiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJ2Y3QiOiJ2Y3QiCn0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJc0NpQWdJbXRwWkNJNkltdGxlVWxrSWdwOS4uNHNwTXBzWE1nYlNyY0lqMFdNbXJNYXdhcVRzeG9GWmItcjdwTWlubEhvZklRRUhhS2pzV1J0dENzUTkyd0tfa3RpaDQta2VCdjdVbkc2MkRPa2NDbGc"
+        const val PAYLOAD =
+            "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJpc3MiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJ2Y3QiOiJ2Y3QiCn0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJc0NpQWdJbXRwWkNJNkltdGxlVWxrSWdwOS4uNHNwTXBzWE1nYlNyY0lqMFdNbXJNYXdhcVRzeG9GWmItcjdwTWlubEhvZklRRUhhS2pzV1J0dENzUTkyd0tfa3RpaDQta2VCdjdVbkc2MkRPa2NDbGc"
         val KEY_BINDING_ALGORITHM = SigningAlgorithm.ES512
     }
 }

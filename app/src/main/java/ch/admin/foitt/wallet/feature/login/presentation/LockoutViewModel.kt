@@ -16,9 +16,7 @@ import ch.admin.foitt.wallet.platform.login.domain.usecase.LoginWithBiometrics
 import ch.admin.foitt.wallet.platform.login.domain.usecase.ResetLockout
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.PassphraseLoginNavArg
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.openLink
@@ -52,10 +50,8 @@ class LockoutViewModel @Inject constructor(
     private val fetchAppVersionInfo: FetchAppVersionInfo,
     private val handleDeeplink: HandleDeeplink,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
-) : ScreenViewModel(setTopBarState, setFullscreenState, systemBarsFixedLightColor = true) {
+) : ScreenViewModel(setTopBarState, systemBarsFixedLightColor = true) {
     override val topBarState = TopBarState.None
-    override val fullscreenState = FullscreenState.Fullscreen
 
     private var _countdown = MutableStateFlow(Pair(4L, TimeUnit.MINUTES))
     val countdown = _countdown.asStateFlow()

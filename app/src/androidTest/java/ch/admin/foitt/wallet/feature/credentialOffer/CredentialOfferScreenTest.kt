@@ -18,6 +18,7 @@ import ch.admin.foitt.wallet.feature.onboarding.screens.OnboardingSuccessScreen
 import ch.admin.foitt.wallet.feature.onboarding.screens.OnboardingUserPrivacyScreen
 import ch.admin.foitt.wallet.feature.onboarding.screens.PasswordConfirmationScreen
 import ch.admin.foitt.wallet.feature.onboarding.screens.PasswordEntryScreen
+import ch.admin.foitt.wallet.feature.qrscan.infra.implementation.FakeQrScannerImpl
 import ch.admin.foitt.wallet.feature.qrscan.screens.QrScanPermissionScreen
 import ch.admin.foitt.wallet.feature.qrscan.screens.QrScannerScreen
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.screens.EIdRequestIntroScreen
@@ -28,6 +29,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import javax.inject.Inject
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
@@ -39,11 +41,18 @@ class CredentialOfferScreenTest {
     @get:Rule(order = 1)
     var activityRule = createAndroidComposeRule<MainActivity>()
 
+    private lateinit var fakeQrScanner: FakeQrScannerImpl
+
     private val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
     @Before
     fun init() {
         hiltRule.inject()
+    }
+
+    @Inject
+    fun setFakeQrScanner(qrScanner: FakeQrScannerImpl) {
+        fakeQrScanner = qrScanner
     }
 
     @Test
@@ -82,7 +91,7 @@ class CredentialOfferScreenTest {
         eidIntroScreen.nextScreen()
 
         val homeScreen = HomeScreen(activityRule)
-        homeScreen.isDisplayed()
+        homeScreen.isDisplayedWithCredentials()
         homeScreen.nextScreen()
 
         val cameraPermissionScreen = QrScanPermissionScreen(activityRule)
@@ -92,6 +101,8 @@ class CredentialOfferScreenTest {
         // accept camera permission
         device.wait(Until.hasObject(By.text("While using the app")), 5000)
         device.findObject(By.text("While using the app")).click()
+
+        fakeQrScanner.setFakeQrCode("openid-credential-offer://?credential_offer=%7B%22grants%22%3A%7B%22urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Apre-authorized_code%22%3A%7B%22pre-authorized_code%22%3A%22code%22%7D%7D%2C%22version%22%3A%221.0%22%2C%22credential_issuer%22%3A%22https%3A%2F%2Fissuer.domain.com%22%2C%22credential_configuration_ids%22%3A%5B%22elfa-sdjwt%22%5D%7D")
 
         val scannerScreen = QrScannerScreen(activityRule)
         scannerScreen.isDisplayed()

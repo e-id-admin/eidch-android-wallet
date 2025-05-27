@@ -35,8 +35,8 @@ private fun PresentationInvalidCredentialErrorContent(
 ) {
     CredentialActionFeedbackCardError(
         issuer = verifierUiState,
-        contentTextFirstParagraphText = R.string.tk_present_invalidcredential_title,
-        contentTextSecondParagraphText = R.string.tk_present_invalidcredential_subtitle,
+        contentTextFirstParagraphText = R.string.tk_present_result_invalidCredential_primary,
+        contentTextSecondParagraphText = R.string.tk_present_result_invalidCredential_secondary,
         contentIcon = R.drawable.wallet_ic_refused,
         iconAlwaysVisible = true,
         primaryButtonText = R.string.tk_global_close,

@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestQueueState
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.LegalRepresentativeConsent
 
 @Entity(
     foreignKeys = [
@@ -28,4 +29,5 @@ data class EIdRequestState(
     val lastPolled: Long,
     val onlineSessionStartOpenAt: Long? = null,
     val onlineSessionStartTimeoutAt: Long? = null,
+    val legalRepresentativeConsent: LegalRepresentativeConsent = LegalRepresentativeConsent.NOT_REQUIRED,
 )

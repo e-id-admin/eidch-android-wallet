@@ -7,9 +7,7 @@ import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseInputFieldState
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseValidationState
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.usecase.ValidatePassphrase
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.walletcomposedestinations.destinations.ConfirmNewPassphraseScreenDestination
@@ -25,10 +23,8 @@ class EnterNewPassphraseViewModel @Inject constructor(
     private val navManager: NavigationManager,
     private val validatePassphrase: ValidatePassphrase,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
     override val topBarState = TopBarState.Details(navManager::navigateUp, R.string.tk_global_newpassword)
-    override val fullscreenState = FullscreenState.Insets
 
     private val _textFieldValue = MutableStateFlow(TextFieldValue(""))
     val textFieldValue = _textFieldValue.asStateFlow()

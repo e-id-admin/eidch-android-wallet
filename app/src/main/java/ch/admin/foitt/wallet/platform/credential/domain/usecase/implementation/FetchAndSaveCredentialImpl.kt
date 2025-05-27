@@ -13,12 +13,14 @@ import ch.admin.foitt.wallet.platform.credential.domain.model.toFetchCredentialE
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchAndSaveCredential
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.SaveCredential
 import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
-import ch.admin.foitt.wallet.platform.oca.domain.model.FetchOcaBundleByFormatError
-import ch.admin.foitt.wallet.platform.oca.domain.usecase.FetchOcaBundleByFormat
+import ch.admin.foitt.wallet.platform.oca.domain.model.FetchVcMetadataByFormatError
+import ch.admin.foitt.wallet.platform.oca.domain.usecase.FetchVcMetadataByFormat
+import ch.admin.foitt.wallet.platform.oca.domain.usecase.OcaBundler
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
+import com.github.michaelbull.result.get
 import com.github.michaelbull.result.mapError
 import timber.log.Timber
 import javax.inject.Inject
@@ -27,7 +29,8 @@ class FetchAndSaveCredentialImpl @Inject constructor(
     private val fetchIssuerCredentialInformation: FetchIssuerCredentialInformation,
     private val fetchCredentialByConfig: FetchCredentialByConfig,
     private val environmentSetupRepository: EnvironmentSetupRepository,
-    private val fetchOcaBundleByFormat: FetchOcaBundleByFormat,
+    private val fetchVcMetadataByFormat: FetchVcMetadataByFormat,
+    private val ocaBundler: OcaBundler,
     private val saveCredential: SaveCredential,
 ) : FetchAndSaveCredential {
     override suspend fun invoke(credentialOffer: CredentialOffer): Result<Long, FetchCredentialError> = coroutineBinding {
@@ -47,11 +50,15 @@ class FetchAndSaveCredentialImpl @Inject constructor(
 
         // temporary feature flag
         if (environmentSetupRepository.fetchOca) {
-            val rawOcaBundle = fetchOcaBundleByFormat(credential)
-                .mapError(FetchOcaBundleByFormatError::toFetchCredentialError)
+            val vcMetadata = fetchVcMetadataByFormat(credential)
+                .mapError(FetchVcMetadataByFormatError::toFetchCredentialError)
                 .bind()
 
-            Timber.d("rawOcaBundle: $rawOcaBundle")
+            val ocaBundle = vcMetadata.rawOcaBundle?.let {
+                ocaBundler(it.rawOcaBundle)
+            }
+
+            Timber.d("ocaBundle: ${ocaBundle?.get()}")
         }
 
         saveCredential(

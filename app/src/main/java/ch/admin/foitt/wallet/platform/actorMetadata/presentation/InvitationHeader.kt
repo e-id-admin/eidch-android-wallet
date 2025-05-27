@@ -97,12 +97,12 @@ private fun RowScope.TrustIcon(trustStatus: TrustStatus) = when (trustStatus) {
 @Composable
 private fun RowScope.TrustLabel(trustStatus: TrustStatus) = when (trustStatus) {
     TrustStatus.TRUSTED -> WalletTexts.LabelLarge(
-        text = stringResource(R.string.tk_global_trust_status_trusted),
+        text = stringResource(R.string.tk_issuer_trusted),
         color = WalletTheme.colorScheme.tertiary,
         modifier = Modifier.weight(1f)
     )
     TrustStatus.NOT_TRUSTED -> WalletTexts.LabelLarge(
-        text = stringResource(R.string.tk_global_trust_status_notTrusted),
+        text = stringResource(R.string.tk_issuer_notTrusted),
         color = WalletTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.weight(1f)
     )

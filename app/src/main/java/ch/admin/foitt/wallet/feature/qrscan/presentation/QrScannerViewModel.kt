@@ -12,9 +12,7 @@ import ch.admin.foitt.wallet.platform.invitation.domain.model.ProcessInvitationE
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.HandleInvitationProcessingSuccess
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.ProcessInvitation
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.extension.hasCameraPermission
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
@@ -43,15 +41,9 @@ class QrScannerViewModel @Inject constructor(
     private val navManager: NavigationManager,
     savedStateHandle: SavedStateHandle,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
-) : ScreenViewModel(
-    setTopBarState,
-    setFullscreenState,
-    systemBarsFixedLightColor = true,
-) {
+) : ScreenViewModel(setTopBarState, systemBarsFixedLightColor = true) {
 
     override val topBarState = TopBarState.None
-    override val fullscreenState = FullscreenState.Fullscreen
 
     private val firstCredentialWasAdded = QrScannerScreenDestination.argsFrom(savedStateHandle).firstCredentialWasAdded
 

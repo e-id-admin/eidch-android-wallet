@@ -30,7 +30,7 @@ private fun PresentationDeclinedContent(
 ) {
     CredentialActionFeedbackCard(
         issuer = verifierUiState,
-        contentTextFirstParagraphText = R.string.tk_present_decline_title,
+        contentTextFirstParagraphText = R.string.tk_present_result_declined_primary,
         iconAlwaysVisible = true,
         contentIcon = R.drawable.wallet_ic_circular_cross,
         primaryButtonText = R.string.tk_global_close,

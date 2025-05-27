@@ -7,12 +7,15 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.SigningAlg
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
+import java.time.Instant
 
 class VcSdJwtCredential(
     override val id: Long? = null,
     override val keyBindingIdentifier: String?,
     override val keyBindingAlgorithm: SigningAlgorithm?,
     override val payload: String,
+    validFrom: Long? = null,
+    validUntil: Long? = null,
 ) : VcSdJwt(payload), AnyCredential {
 
     override val issuer: String = this.vcIssuer
@@ -22,6 +25,10 @@ class VcSdJwtCredential(
         get() = jwtValidity
 
     override val claimsPath = "$"
+
+    override val validFromInstant: Instant? = validFrom?.let { Instant.ofEpochSecond(it) } ?: nbfInstant
+
+    override val validUntilInstant: Instant? = validUntil?.let { Instant.ofEpochSecond(it) } ?: expInstant
 
     /**
      * @returns all claims that we want to save in the database (i. e. only the disclosable claims)

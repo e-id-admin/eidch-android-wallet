@@ -5,17 +5,18 @@
     <string name="tk_global_delete">Supprimer</string>
     <string name="tk_credential_status_demo">Démo</string>
     <string name="tk_global_close">Fermer</string>
-    <string name="tk_global_repeat_primarybutton">Nouvel essai</string>
+    <string name="tk_present_result_error_button_retry">Nouvel essai</string>
     <string name="tk_global_welcomeback">Bienvenue !</string>
-    <string name="tk_global_cancel_primarybutton">Annuler</string>
     <string name="tk_global_login_primarybutton">Connexion</string>
     <string name="tk_global_newpassword">Nouveau mot de passe</string>
     <string name="tk_global_scan_primarybutton">Scanner</string>
     <string name="tk_global_changepassword">Modifier le mot de passe</string>
     <string name="tk_global_decline">Rejeter</string>
-    <string name="tk_global_pleasewait">Veuillez patienter</string>
+    <string name="tk_present_review_loading">Veuillez patienter</string>
     <string name="tk_onboarding_password_title">Saisir le mot de passe</string>
     <string name="tk_receive_credentialOffer_button_decline">Rejeter</string>
+    <string name="tk_receive_credentialOffer_button_accept">Ajouter</string>
+    <string name="tk_present_review_button_decline">Rejeter</string>
     <string name="tk_global_loginpassword_secondarybutton">Connexion avec un mot de passe</string>
     <string name="tk_credential_status_soon">Bientôt valable</string>
     <string name="tk_global_skip">Ingorer</string>
@@ -27,7 +28,6 @@
     <string name="tk_global_scanqrcode">Scanner le code QR</string>
     <string name="tk_global_wrongdata">Signaler des données incorrectes</string>
     <string name="tk_global_add">Ajouter</string>
-    <string name="tk_receive_credentialOffer_button_accept">Ajouter</string>
     <string name="tk_global_checkage">veut vérifier votre âge</string>
     <string name="tk_onboarding_passwordConfirmation_title">Confirmer le mot de passe</string>
     <string name="tk_credential_status_valid">Valable</string>
@@ -105,12 +105,12 @@
     <string name="tk_error_issuer_notregistered_body">L’émetteur n’est pas répertorié.</string>
     <string name="tk_global_loginbiometric_primarybutton">Connexion biométrique</string>
     <string name="tk_present_warning_alt">Avertissement</string>
-    <string name="tk_present_accept_title">Vérification réussie de vos données</string>
+    <string name="tk_present_result_success_primary">Vérification réussie de vos données</string>
     <string name="tk_present_confirm_alt">Confirmation</string>
     <string name="tk_receive_scanning_notfound_alt">Le code QR n’a pas été trouvé. Essayez de repositionner la caméra.</string>
     <string name="tk_receive_scanning_alt">La caméra cherche le code QR.</string>
     <string name="tk_present_approval_title">Données demandées</string>
-    <string name="tk_global_pleasewait_alt">Veuillez patienter. L’envoi de vos données est en cours.</string>
+    <string name="tk_present_review_loading_alt">Veuillez patienter. L’envoi de vos données est en cours.</string>
     <string name="tk_displaydelete_displaycredential1_hiddenlink2_text">Accéder aux données personnelles</string>
     <string name="tk_login_spinner_alt">Connexion réussie. Veuillez patienter.</string>
     <string name="tk_changepassword_error2_note2">Longueur maximale atteinte (64 caractères)</string>
@@ -138,7 +138,7 @@
     <string name="tk_login_passwordfailed_alt">Mot de passe incorrect. Veuillez réessayer.</string>
     <string name="tk_global_invisible_alt">Afficher le mot de passe</string>
     <string name="tk_onboarding_nopasswordmismatch_alt">Veuillez confirmer le mot de passe.</string>
-    <string name="tk_global_checkcredential">Souhaite vérifier votre document</string>
+    <string name="tk_present_review_credential_section_primary">Souhaite vérifier votre document</string>
     <string name="tk_credential_status_valid_alt">Le document est valable</string>
     <string name="tk_global_back_alt">Retour</string>
     <string name="tk_credential_status_unknown_alt">Statut de validité inconnu</string>
@@ -201,7 +201,7 @@
         <item quantity="many">Le mot de passe est incorrect. Il vous reste %s tentatives.</item>
         <item quantity="other">Le mot de passe est incorrect. Il vous reste %s tentatives.</item>
     </plurals>
-    <string name="tk_present_multiplecredentials_title">Choisir un moyen de preuve</string>
+    <string name="tk_present_compatibleCredentials_primary">Choisir un moyen de preuve</string>
     <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web/?lang=FR</string>
     <string name="tk_menu_securityPrivacy_status_passwordChangeSuccessful">Changement de mot de passe réussi</string>
     <string name="tk_displaydelete_credentialdelete_body">Le moyen de preuve et toutes les données qui s’y rapportent seront complètement supprimés de votre appareil.</string>
@@ -215,14 +215,16 @@
     <string name="tk_receive_cameraaccessneeded3_body">Veuillez autoriser l’accès aux paramètres de votre appareil.\n\nSans caméra, vous ne pouvez pas ajouter de justificatifs ou de documents sur votre application, et vous ne pouvez pas les utiliser pour prouver votre identité.</string>
     <string name="tk_global_details_alt">Afficher la vue détaillée</string>
     <string name="tk_onboarding_analytics_button_secondary">Rejeter</string>
-    <string name="tk_global_allow_primarybutton">Autoriser</string>
+    <string name="tk_present_review_button_accept">Autoriser</string>
     <plurals name="tk_login_locked_body_seconds_android">
         <item quantity="one">Veuillez réessayer dans %s seconde.</item>
         <item quantity="many">Veuillez réessayer dans %s secondes.</item>
         <item quantity="other">Veuillez réessayer dans %s secondes.</item>
     </plurals>
     <string name="tk_onboarding_code2_alt">Le mot de passe doit comporter entre six et soixante-quatre caractères.</string>
-    <string name="tk_present_approval_subtitle_affectedDetails_android">Demande l’accès à %s donnée(s)</string>
+    <string name="tk_present_review_claims_section_primary">Demande l’accès à %s donnée(s)</string>
+    <string name="tk_present_result_canceledVerification_primary">Aborted verification (deepl)</string>
+    <string name="tk_present_result_canceledVerification_secondary">The verification was canceled and no data was transferred. (deepl)</string>
     <string name="tk_login_passwordfailed_android_subtitle">Il vous reste %s tentative(s)</string>
     <string name="tk_receive_jump_to_details">Accéder aux données personnelles</string>
     <string name="tk_global_hiddenGoToTop">Retour en haut de page</string>
@@ -244,8 +246,8 @@
     <string name="tk_getBetaId_added_note">Beta-ID a été ajouté(e)</string>
     <string name="tk_getBetaId_approval_title">Aimerait délivrer le document suivant:</string>
     <string name="tk_onboarding_passworderror_title">La configuration du mot de passe n\'a pas fonctionné</string>
-    <string name="tk_present_error_subtitle">Veuillez réessayer</string>
-    <string name="tk_present_error_title">Oups, quelque chose s\'est mal passé !</string>
+    <string name="tk_present_result_error_secondary">Veuillez réessayer</string>
+    <string name="tk_present_result_error_primary">Oups, quelque chose s\'est mal passé !</string>
     <string name="login_biometricTitle">Se connecter à l\'application swiyu</string>
     <string name="tk_receive_cameraaccessneeded2_title">Autorisez l’accès à votre caméra</string>
     <string name="settings_helpLink">https://www.eid.admin.ch/fr/help-publicbeta-f</string>
@@ -276,7 +278,7 @@
     <string name="impressum_more_information_link_text">https://www.bit.admin.ch</string>
     <string name="impressum_build_number">Build number</string>
     <string name="impressum_app_version">App Version</string>
-    <string name="tk_present_decline_title">Les données n\'ont pas été transmises.</string>
+    <string name="tk_present_result_declined_primary">Les données n\'ont pas été transmises.</string>
     <string name="tk_menu_setting_wallet_feedback">Envoyer un feedback</string>
     <string name="impressum_disclaimer_title">Clause de non-responsabilité</string>
     <string name="impressum_disclaimer_text">L\'auteur n\'assume aucune responsabilité quant à la fiabilité et à l\'exhaustivité des informations. Les références et les liens vers des sites web tiers ne relèvent pas de notre responsabilité.</string>
@@ -293,8 +295,8 @@
     <string name="licences_more_information_text">Informations complémentaires</string>
     <string name="impressum_legals_title">Informations juridiques</string>
     <string name="impressum_legals_link_text">Conditions d’utilisation</string>
-    <string name="tk_global_trust_status_trusted">Vérifié</string>
-    <string name="tk_global_trust_status_notTrusted">Non vérifié</string>
+    <string name="tk_issuer_trusted">Vérifié</string>
+    <string name="tk_issuer_notTrusted">Non vérifié</string>
     <string name="biometricsPrompt_reason">Vous pouvez toujours vous connecter avec votre mot de passe si la biométrie ne fonctionne pas.</string>
     <string name="impressum_more_information_link">https://www.bit.admin.ch/fr</string>
     <string name="tk_global_close_alt">Fermer</string>
@@ -314,8 +316,8 @@
     <string name="tk_menu_deactivatingBiometrics_android_note">Veuillez saisir votre mot de passe swiyu pour désactiver le déverrouillage biométrique.</string>
     <string name="tk_getEid_queuing_body2_android">Date prévue (deepl)</string>
     <string name="tk_getBetaId_link">https://www.bcs.admin.ch/bcs-web/?lang=FR</string>
-    <string name="tk_present_invalidcredential_title">La vérification des données transmises a échoué.</string>
-    <string name="tk_present_invalidcredential_subtitle">Veuillez vérifier la validité de votre document.</string>
+    <string name="tk_present_result_invalidCredential_primary">La vérification des données transmises a échoué.</string>
+    <string name="tk_present_result_invalidCredential_secondary">Veuillez vérifier la validité de votre document.</string>
     <string name="tk_home_notification_credential_accepted">Document a été ajouté.</string>
     <string name="tk_home_notification_credential_declined">Le document a été rejeté.</string>
     <string name="version_enforcement_button">Mettre à jour l\'app</string>

@@ -14,9 +14,7 @@ import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateCred
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayConst
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayLanguage
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialDetail
@@ -51,11 +49,9 @@ class CredentialDetailViewModel @Inject constructor(
     private val navManager: NavigationManager,
     private val deleteCredential: DeleteCredential,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
     savedStateHandle: SavedStateHandle
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
     override val topBarState = TopBarState.None
-    override val fullscreenState = FullscreenState.Fullscreen
 
     private val navArgs = CredentialDetailScreenDestination.argsFrom(savedStateHandle)
 

@@ -1,10 +1,6 @@
 package ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation
 
-import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
-import ch.admin.foitt.openid4vc.domain.model.anycredential.CredentialValidity
-import ch.admin.foitt.wallet.feature.credentialOffer.mock.MockCredentialOffer.CREDENTIAL_ID
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
-import ch.admin.foitt.wallet.platform.credential.domain.model.toAnyCredential
 import ch.admin.foitt.wallet.platform.credential.domain.model.toDisplayStatus
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.IsBetaIssuer
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.MapToCredentialDisplayData
@@ -14,13 +10,10 @@ import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedDisplay
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -36,9 +29,6 @@ class MapToCredentialDisplayDataImplTest {
 
     @MockK
     private lateinit var mockIsBetaIssuer: IsBetaIssuer
-
-    @MockK
-    private lateinit var mockAnyCredential: AnyCredential
 
     @MockK
     private lateinit var mockCredential: Credential
@@ -77,15 +67,6 @@ class MapToCredentialDisplayDataImplTest {
     }
 
     @Test
-    fun `Mapping the credential display data maps error from the AnyCredential`() = runTest {
-        val exception = IllegalStateException("any credential error")
-        every { mockCredential.toAnyCredential() } returns Err(CredentialError.Unexpected(exception))
-
-        val result = useCase(mockCredential, credentialDisplays)
-        result.assertErrorType(CredentialError.Unexpected::class)
-    }
-
-    @Test
     fun `Credential issuer beta check is indicated in the result`() = runTest {
         coEvery { mockIsBetaIssuer(ISSUER) } returns false
 
@@ -106,11 +87,9 @@ class MapToCredentialDisplayDataImplTest {
     private fun setupDefaultMocks() {
         every { mockCredential.id } returns CREDENTIAL_ID
         every { mockCredential.status } returns CredentialStatus.VALID
-
-        every { mockAnyCredential.issuer } returns ISSUER
-        every { mockAnyCredential.validity } returns CredentialValidity.Valid
-        mockkStatic(Credential::toAnyCredential)
-        every { mockCredential.toAnyCredential() } returns Ok(mockAnyCredential)
+        every { mockCredential.validFrom } returns 0
+        every { mockCredential.validUntil } returns 17768026519L
+        every { mockCredential.issuer } returns ISSUER
 
         coEvery { mockGetLocalizedDisplay(listOf(credentialDisplay)) } returns credentialDisplay
         coEvery { mockIsBetaIssuer(ISSUER) } returns true

@@ -10,9 +10,7 @@ import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.model.Permi
 import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.usecase.CheckCameraPermission
 import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.usecase.ShouldAutoTriggerPermissionPrompt
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.extension.hasCameraPermission
 import ch.admin.foitt.wallet.platform.scaffold.extension.shouldShowRationale
@@ -37,11 +35,9 @@ class QrScanPermissionViewModel @Inject constructor(
     private val navManager: NavigationManager,
     @ApplicationContext private val appContext: Context,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
 
     override val topBarState = TopBarState.Details(navManager::navigateUp, null)
-    override val fullscreenState = FullscreenState.Insets
 
     private val cameraPermission by lazy { Manifest.permission.CAMERA }
 

@@ -42,6 +42,8 @@ class CredentialOfferRepositoryImpl @Inject constructor(
         keyBindingAlgorithm: SigningAlgorithm?,
         payload: String,
         format: CredentialFormat,
+        validFrom: Long?,
+        validUntil: Long?,
         issuer: String?,
         issuerDisplays: List<OidIssuerDisplay>,
         credentialDisplays: List<OidCredentialDisplay>,
@@ -52,7 +54,9 @@ class CredentialOfferRepositoryImpl @Inject constructor(
             signingAlgorithm = keyBindingAlgorithm,
             payload = payload,
             format = format,
-            issuer = issuer
+            issuer = issuer,
+            validFrom = validFrom,
+            validUntil = validUntil,
         )
         val credentialIssuerDisplays = createCredentialIssuerDisplays(issuerDisplays)
         val credDisplays = createCredentialDisplays(credentialDisplays)
@@ -71,13 +75,17 @@ class CredentialOfferRepositoryImpl @Inject constructor(
         signingAlgorithm: SigningAlgorithm?,
         payload: String,
         format: CredentialFormat,
+        validFrom: Long?,
+        validUntil: Long?,
         issuer: String?
     ) = Credential(
         keyBindingIdentifier = privateKeyIdentifier,
         keyBindingAlgorithm = signingAlgorithm?.stdName,
         payload = payload,
         format = format,
-        issuer = issuer
+        issuer = issuer,
+        validFrom = validFrom,
+        validUntil = validUntil,
     )
 
     private fun createCredentialIssuerDisplays(

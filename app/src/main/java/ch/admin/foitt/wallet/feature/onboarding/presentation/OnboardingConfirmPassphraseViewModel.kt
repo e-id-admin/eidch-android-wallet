@@ -14,9 +14,7 @@ import ch.admin.foitt.wallet.platform.passphrase.domain.usecase.InitializePassph
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseInputFieldState
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseValidationState
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.usecase.ValidatePassphrase
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.trackCompletion
@@ -44,11 +42,9 @@ class OnboardingConfirmPassphraseViewModel @Inject constructor(
     private val validatePassphrase: ValidatePassphrase,
     private val navManager: NavigationManager,
     private val setTopBarState: SetTopBarState,
-    private val setFullscreenState: SetFullscreenState,
     savedStateHandle: SavedStateHandle,
-) : ScreenViewModel(setTopBarState, setFullscreenState, systemBarsFixedLightColor = true) {
+) : ScreenViewModel(setTopBarState, systemBarsFixedLightColor = true) {
     override val topBarState = TopBarState.OnGradient(navManager::navigateUp, R.string.tk_onboarding_passwordConfirmation_title)
-    override val fullscreenState = FullscreenState.Fullscreen
 
     private val originalPassphrase = OnboardingConfirmPassphraseScreenDestination.argsFrom(savedStateHandle).pin
 
@@ -105,7 +101,6 @@ class OnboardingConfirmPassphraseViewModel @Inject constructor(
 
     private fun initializePassphrase(passphrase: String) = viewModelScope.launch {
         setTopBarState(TopBarState.Empty)
-        setFullscreenState(FullscreenState.Insets)
         initializePassphrase(passphrase, null).mapBoth(
             success = {
                 saveOnboardingState.invoke(isCompleted = true)

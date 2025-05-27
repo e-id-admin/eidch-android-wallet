@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.platform.ssi.data.source.local.mock
 
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
+import ch.admin.foitt.wallet.feature.credentialOffer.mock.CredentialOfferMocks.CREDENTIAL_PAYLOAD
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimDisplay
@@ -35,7 +36,9 @@ object CredentialTestData {
         createdAt = 1,
         updatedAt = 1,
         keyBindingAlgorithm = SIGNING_ALGORITHM,
-        issuer = "issuer"
+        issuer = "issuer",
+        validFrom = 0,
+        validUntil = 17768026519L,
     )
     val credential2 = Credential(
         id = 2,
@@ -46,7 +49,22 @@ object CredentialTestData {
         createdAt = 2,
         updatedAt = 2,
         keyBindingAlgorithm = SIGNING_ALGORITHM,
-        issuer = "issuer"
+        issuer = "issuer",
+        validFrom = 0,
+        validUntil = 17768026519L,
+    )
+    val credentialWithPayload = Credential(
+        id = 3,
+        status = CredentialStatus.VALID,
+        keyBindingIdentifier = "key1",
+        payload = CREDENTIAL_PAYLOAD,
+        format = CredentialFormat.VC_SD_JWT,
+        createdAt = 3,
+        updatedAt = 3,
+        keyBindingAlgorithm = "ES256",
+        issuer = "issuer",
+        validFrom = 0,
+        validUntil = 17768026519L,
     )
 
     val credentialClaim1 = CredentialClaim(id = 1, credentialId = 1, key = KEY, value = VALUE, valueType = null)

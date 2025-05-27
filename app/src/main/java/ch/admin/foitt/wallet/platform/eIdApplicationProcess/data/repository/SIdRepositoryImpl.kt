@@ -1,12 +1,11 @@
 package ch.admin.foitt.wallet.platform.eIdApplicationProcess.data.repository
 
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.ApplyRequest
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.ApplyRequestError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.CaseResponse
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.StateRequestError
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.GuardianVerificationResponse
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.SIdRepositoryError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.StateResponse
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.toFetchSIdCaseError
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.toFetchSIdStateError
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.toSIdRepositoryError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.SIdRepository
 import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import com.github.michaelbull.result.Result
@@ -25,22 +24,31 @@ class SIdRepositoryImpl @Inject constructor(
     private val httpClient: HttpClient,
     private val environmentSetupRepo: EnvironmentSetupRepository,
 ) : SIdRepository {
-    override suspend fun fetchSIdCase(applyRequest: ApplyRequest): Result<CaseResponse, ApplyRequestError> =
+    override suspend fun fetchSIdCase(applyRequest: ApplyRequest): Result<CaseResponse, SIdRepositoryError> =
         runSuspendCatching<CaseResponse> {
             httpClient.post(environmentSetupRepo.sidBackendUrl + "/eid/apply") {
                 contentType(ContentType.Application.Json)
                 setBody(applyRequest)
             }.body()
         }.mapError { throwable ->
-            throwable.toFetchSIdCaseError("fetchSIdCase error")
+            throwable.toSIdRepositoryError("fetchSIdCase error")
         }
 
-    override suspend fun fetchSIdState(caseId: String): Result<StateResponse, StateRequestError> =
+    override suspend fun fetchSIdState(caseId: String): Result<StateResponse, SIdRepositoryError> =
         runSuspendCatching<StateResponse> {
             httpClient.get(environmentSetupRepo.sidBackendUrl + "/eid/$caseId/state") {
                 contentType(ContentType.Application.Json)
             }.body()
         }.mapError { throwable ->
-            throwable.toFetchSIdStateError("fetchSIdState error")
+            throwable.toSIdRepositoryError("fetchSIdState error")
+        }
+
+    override suspend fun fetchSIdGuardianVerification(caseId: String): Result<GuardianVerificationResponse, SIdRepositoryError> =
+        runSuspendCatching<GuardianVerificationResponse> {
+            httpClient.get(environmentSetupRepo.sidBackendUrl + "/eid/$caseId/legal-representant-verification") {
+                contentType(ContentType.Application.Json)
+            }.body()
+        }.mapError { throwable ->
+            throwable.toSIdRepositoryError("fetchSIdGuardianVerification error")
         }
 }

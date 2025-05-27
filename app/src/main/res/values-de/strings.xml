@@ -193,7 +193,7 @@
     <string name="tk_receive_credentialOffer_wrongData_primary">Falsche Angaben gefunden?</string>
     <string name="tk_receive_credentialOffer_wrongData_secondary">Ein einmal ausgestellter Nachweis kann nicht verändert werden.\n\nFalls Sie einen Fehler in Ihren Angaben feststellen, wenden Sie sich bitte an den Aussteller.\nEr kann Ihnen einen neuen korrigierten Nachweis ausstellen.</string>
     <string name="tk_receive_incorrectdata_link_text">Falsche Angaben melden</string>
-    <string name="tk_global_pleasewait">Bitte warten</string>
+    <string name="tk_present_review_loading">Bitte warten</string>
     <string name="tk_global_delete">Löschen</string>
     <string name="tk_displaydelete_credentialdelete_body">Dieser Nachweis mit allen dazugehörenden Daten wird auf diesem Gerät komplett gelöscht.</string>
     <string name="tk_global_credential">Nachweis</string>
@@ -225,22 +225,21 @@
     <string name="tk_displaydelete_credentialmenu_primarybutton">Nachweis löschen</string>
     <string name="tk_receive_credentialOffer_button_decline">Ablehnen</string>
     <string name="tk_receive_credentialOffer_button_accept">Hinzufügen</string>
-    <string name="tk_global_pleasewait_alt">Bitte warten. Ihre Angaben werden gesendet</string>
-    <string name="tk_global_repeat_primarybutton">Erneut versuchen</string>
-    <string name="tk_present_error_title">Ups, da ist etwas schiefgelaufen!</string>
+    <string name="tk_present_review_button_decline">Ablehnen</string>
+    <string name="tk_present_review_loading_alt">Bitte warten. Ihre Angaben werden gesendet</string>
+    <string name="tk_present_result_error_button_retry">Erneut versuchen</string>
+    <string name="tk_present_result_error_primary">Ups, da ist etwas schiefgelaufen!</string>
     <string name="tk_present_approval_title">Angeforderte Angaben</string>
-    <string name="tk_present_error_subtitle">Bitte versuche es noch einmal</string>
-    <string name="tk_present_canceledverification_title">Abgebrochene Verifizierung</string>
-    <string name="tk_present_decline_title">Daten wurden nicht übermittelt</string>
-    <string name="tk_present_canceledverification_subtitle">Die Verifizierung wurde abgebrochen und keine Daten wurden übertragen.</string>
-    <string name="tk_global_cancel_primarybutton">Abbrechen</string>
+    <string name="tk_present_result_error_secondary">Bitte versuche es noch einmal</string>
+    <string name="tk_present_result_canceledVerification_primary">Abgebrochene Verifizierung</string>
+    <string name="tk_present_result_declined_primary">Daten wurden nicht übermittelt</string>
+    <string name="tk_present_result_canceledVerification_secondary">Die Verifizierung wurde abgebrochen und keine Daten wurden übertragen.</string>
     <string name="tk_global_checkage">Möchte Ihr Alter überprüfen</string>
-    <string name="tk_global_checkcredential">Möchte Ihren Nachweis überprüfen</string>
+    <string name="tk_present_review_credential_section_primary">Möchte Ihren Nachweis überprüfen</string>
     <string name="tk_present_noinformationprovided_title">Leider konnten keine Angaben gesendet werden.</string>
     <string name="tk_present_warning_alt">Warnung</string>
-    <string name="tk_present_accept_title">Ihre Angaben wurden erfolgreich überprüft.</string>
+    <string name="tk_present_result_success_primary">Ihre Angaben wurden erfolgreich überprüft.</string>
     <string name="tk_present_confirm_alt">Bestätigung</string>
-    <string name="tk_present_accept_title2">Erforderlicher Nachweis vorhanden</string>
     <string name="tk_present_agenotmet_title">Erforderliches Alter nicht erfüllt</string>
     <string name="tk_receive_credentialOffer_hiddenGoToDetails">Zu den Details</string>
     <string name="tk_displaydelete_displaycredential1_hiddenlink1_text">Zurück nach oben</string>
@@ -417,7 +416,7 @@
     <string name="tk_menu_imprint_subtitle_disclaimer">Haftungsauschluss</string>
     <string name="tk_menu_diagnosticData_communicationError">Kommunikationsfehler</string>
     <string name="tk_menu_diagnosticData_appCrash">App Absturz</string>
-    <string name="tk_present_multiplecredentials_title">Ausweis oder Dokument auswählen</string>
+    <string name="tk_present_compatibleCredentials_primary">Ausweis oder Dokument auswählen</string>
     <string name="tk_menu_securityPrivacy_android_status_deactivating">Biometrische Entsperrung wurde deaktiviert.</string>
     <string name="tk_global_skip">Überspringen</string>
     <string name="tk_onboarding_biometricsPermissionLater_primary">Biometrische Entsperrung nicht verfügbar</string>
@@ -432,7 +431,7 @@
     </plurals>
     <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web/?lang=DE</string>
     <string name="tk_menu_securityPrivacy_status_passwordChangeSuccessful">Passwort erfolgreich geändert</string>
-    <string name="tk_present_approval_subtitle_affectedDetails_android">Möchte %s Angaben lesen</string>
+    <string name="tk_present_review_claims_section_primary">Möchte %s Angaben lesen</string>
     <string name="tk_onboarding_confirm_note">Passwort bestätigen</string>
     <string name="tk_onboarding_password_input_subtitle">Passwort muss mindestens 6 Zeichen lang sein</string>
     <plurals name="tk_login_locked_body_android">
@@ -440,7 +439,7 @@
         <item quantity="other">Versuchen Sie es in %s Minuten erneut.</item>
     </plurals>
     <string name="tk_login_confirmPassword_alt">Swiyu App Passwort bestätigen</string>
-    <string name="tk_global_allow_primarybutton">Erlauben</string>
+    <string name="tk_present_review_button_accept">Erlauben</string>
     <plurals name="tk_login_locked_body_seconds_android">
         <item quantity="one">Versuchen Sie es in %s Sekunde erneut.</item>
         <item quantity="other">Versuchen Sie es in %s Sekunden erneut.</item>
@@ -463,29 +462,36 @@
     <string name="tk_global_notVerified">Nicht verifiziert</string>
     <string name="tk_global_verified">Verifiziert</string>
     <string name="tk_qrscanner_invalidcode_link_value">https://www.eid.admin.ch/de</string>
-    <string name="tk_getEid_notification_eidProgress_title_android">e-ID für %s in Bearbeitung</string>
-    <string name="tk_getEid_notification_eidProgress_body_android">Ihre e-ID ist voraussichtlich am %s bereit. Wir benachrichtigen Sie, sobald es so weit ist.</string>
-    <string name="tk_getEid_notification_eidReady_title_android">e-ID für %s bereit</string>
-    <string name="tk_getEid_notification_eidReady_body_android">Ihre e-ID ist bereit. Bitte starten Sie den Identifizierungsprozess bis spätestens %s.</string>
+    <string name="tk_getEid_notification_eidProgress_primary">e-ID für %s in Bearbeitung</string>
+    <string name="tk_getEid_notification_eidProgress_secondary">Ihre e-ID ist voraussichtlich am %s bereit. Wir benachrichtigen Sie, sobald es so weit ist.</string>
+    <string name="tk_getEid_notification_eidReady_primary">e-ID für %s bereit</string>
+    <string name="tk_getEid_notification_eidReady_secondary">Ihre e-ID ist bereit. Bitte starten Sie den Identifizierungsprozess bis spätestens %s.</string>
     <string name="tk_getEid_notification_eidReady_greenButton">Identifizierung starten</string>
     <string name="tk_getEid_dataPrivacy_body">Wir legen grössten Wert auf den Schutz Ihrer Daten und Ihre Privatsphäre. Um eine e-ID erstellen zu können, benötigen wir Ihre Zustimmung zur Datenschutzerklärung.</string>
     <string name="tk_getEid_dataPrivacy_primaryButton">Zustimmen und weiter</string>
     <string name="tk_receive_cameraaccessneeded2_title">Zugriff auf Kamera erlauben</string>
     <string name="tk_menu_setting_wallet_feedback_link_value">https://findmind.ch/c/feedback_public_beta_de</string>
-    <string name="tk_global_trust_status_trusted">Verifiziert</string>
-    <string name="tk_global_trust_status_notTrusted">Nicht verifiziert</string>
+    <string name="tk_issuer_trusted">Verifiziert</string>
+    <string name="tk_issuer_notTrusted">Nicht verifiziert</string>
     <string name="tk_receive_incorrectdata_link_value">https://www.eid.admin.ch/de/help-publicbeta</string>
     <string name="tk_changepassword_successful_notification">Passwort erfolgreich geändert</string>
     <string name="tk_global_close_alt">Schliessen</string>
     <string name="tk_credential_offer_issuer_name_unknown">Unbekannter Aussteller</string>
     <string name="tk_global_getEid_greenButton">e-ID bestellen</string>
     <string name="tk_getEid_intro_title">Bestellen Sie Ihre e-ID</string>
-    <string name="tk_present_invalidcredential_title">Die Überprüfung der übertragenen Daten war nicht erfolgreich.</string>
-    <string name="tk_present_invalidcredential_subtitle">Bitte prüfen Sie die Gültigkeit Ihres Nachweises.</string>
-    <string name="tk_getEid_notification_eidExpired_title_android">e-ID Order for %s expired (deep)</string>
-    <string name="tk_getEid_notification_eidExpired_body">You did not fully complete the ordering process. Please restart it to receive your e-ID. (deepl)</string>
+    <string name="tk_present_result_invalidCredential_primary">Die Überprüfung der übertragenen Daten war nicht erfolgreich.</string>
+    <string name="tk_present_result_invalidCredential_secondary">Bitte prüfen Sie die Gültigkeit Ihres Nachweises.</string>
+    <string name="tk_getEid_notification_eidExpired_primary">e-ID Order for %s expired (deep)</string>
+    <string name="tk_getEid_notification_eidExpired_secondary">You did not fully complete the ordering process. Please restart it to receive your e-ID. (deepl)</string>
     <string name="tk_home_notification_credential_accepted">Nachweis wurde hinzugefügt.</string>
     <string name="tk_home_notification_credential_declined">Der Nachweis wurde abgelehnt.</string>
     <string name="version_enforcement_button">App aktualisieren</string>
     <string name="version_enforcement_store_link">https://play.google.com/store/apps/details?id=ch.admin.foitt.swiyu</string>
+    <string name="tk_getEid_guardianship_secondary">Comprehensive guardianship means that another person (not your parents) makes all important decisions for you. (deepl)</string>
+    <string name="tk_getEid_guardianship_button_yes">Ja</string>
+    <string name="tk_getEid_guardianship_button_no">Nein</string>
+    <string name="tk_getEid_guardianSelection_primary">We need the consent of the parents or guardian to create this ID. (deepl)</string>
+    <string name="tk_getEid_guardianSelection_secondary">How would you like to proceed? (deepl)</string>
+    <string name="tk_getEid_guardianSelection_button_obtainConsent">Obtain consent (deepl)</string>
+    <string name="tk_getEid_guardianSelection_button_continueAsGuardian">Continue as a parent/guardian (deepl)</string>
 </resources>

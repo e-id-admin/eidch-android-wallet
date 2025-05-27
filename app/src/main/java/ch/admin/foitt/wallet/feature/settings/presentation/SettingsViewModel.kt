@@ -4,9 +4,7 @@ import android.content.Context
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.openLink
@@ -26,10 +24,8 @@ class SettingsViewModel @Inject constructor(
     environmentSetupRepository: EnvironmentSetupRepository,
     @ApplicationContext private val appContext: Context,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
     override val topBarState = TopBarState.Details(navManager::navigateUp, R.string.settings_title)
-    override val fullscreenState = FullscreenState.Insets
 
     val showEIdRequestButton = environmentSetupRepository.eIdRequestEnabled
     val showBetaIdRequestButton = environmentSetupRepository.betaIdRequestEnabled
@@ -37,7 +33,6 @@ class SettingsViewModel @Inject constructor(
     fun onRequestEId() = navManager.navigateTo(EIdIntroScreenDestination)
 
     fun onRequestBetaId() = navManager.navigateTo(BetaIdScreenDestination)
-
     fun onSecurityScreen() = navManager.navigateTo(SecuritySettingsScreenDestination)
 
     fun onLanguageScreen() = navManager.navigateTo(LanguageScreenDestination)

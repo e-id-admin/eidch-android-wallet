@@ -16,9 +16,7 @@ import ch.admin.foitt.wallet.platform.biometrics.domain.usecase.SaveUseBiometric
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.passphrase.domain.model.InitializePassphraseError
 import ch.admin.foitt.wallet.platform.passphrase.domain.usecase.InitializePassphrase
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.openSecuritySettings
@@ -49,11 +47,9 @@ class RegisterBiometricsViewModel @Inject constructor(
     private val navManager: NavigationManager,
     @ApplicationContext private val appContext: Context,
     private val setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
     savedStateHandle: SavedStateHandle,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
     override val topBarState = TopBarState.Details(navManager::navigateUp, null)
-    override val fullscreenState = FullscreenState.Insets
 
     private val navArgs = RegisterBiometricsScreenDestination.argsFrom(savedStateHandle)
     private val passphrase = navArgs.passphrase

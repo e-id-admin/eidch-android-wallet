@@ -143,7 +143,7 @@ open class SdJwt(
             "($SD_JWT_SEPARATOR?" + // 0..1 separators
             "(?<$DISCLOSURES>(([A-Za-z0-9-_]+)$SD_JWT_SEPARATOR)+)?" + // 0..* Disclosures + "~"
             "(?<$KEYBINDING_JWT>([A-Za-z0-9-_]+)\\.([A-Za-z0-9-_]+)\\.([A-Za-z0-9-_]+))?" + // 0..1 Key Binding JWT
-            ")\$"
+            ")$"
 
         const val DIGESTS_KEY = "_sd"
         const val DEFAULT_DIGEST_ALGORITHM = "SHA-256"

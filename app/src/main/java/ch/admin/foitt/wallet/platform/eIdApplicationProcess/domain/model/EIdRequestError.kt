@@ -7,8 +7,10 @@ interface EIdRequestError {
         EIdRequestCaseRepositoryError,
         EIdRequestStateRepositoryError,
         EIdRequestCaseWithStateRepositoryError,
+        SIdRepositoryError,
         ApplyRequestError,
-        StateRequestError
+        StateRequestError,
+        GuardianVerificationError
 }
 
 sealed interface EIdRequestCaseRepositoryError
@@ -16,6 +18,20 @@ sealed interface EIdRequestStateRepositoryError
 sealed interface EIdRequestCaseWithStateRepositoryError
 sealed interface ApplyRequestError
 sealed interface StateRequestError
+sealed interface GuardianVerificationError
+sealed interface SIdRepositoryError
+
+internal fun SIdRepositoryError.toApplyRequestError(): ApplyRequestError = when (this) {
+    is EIdRequestError.Unexpected -> this
+}
+
+internal fun SIdRepositoryError.toStateRequestError(): StateRequestError = when (this) {
+    is EIdRequestError.Unexpected -> this
+}
+
+internal fun SIdRepositoryError.toGuardianVerificationError(): GuardianVerificationError = when (this) {
+    is EIdRequestError.Unexpected -> this
+}
 
 internal fun EIdRequestStateRepositoryError.toUpdateEIdRequestStateError() = when (this) {
     is EIdRequestError.Unexpected -> this
@@ -36,12 +52,7 @@ internal fun Throwable.toEIdRequestCaseWithStateRepositoryError(message: String)
     return EIdRequestError.Unexpected(this)
 }
 
-internal fun Throwable.toFetchSIdStateError(message: String): StateRequestError {
-    Timber.e(t = this, message = message)
-    return EIdRequestError.Unexpected(this)
-}
-
-internal fun Throwable.toFetchSIdCaseError(message: String): ApplyRequestError {
+internal fun Throwable.toSIdRepositoryError(message: String): SIdRepositoryError {
     Timber.e(t = this, message = message)
     return EIdRequestError.Unexpected(this)
 }

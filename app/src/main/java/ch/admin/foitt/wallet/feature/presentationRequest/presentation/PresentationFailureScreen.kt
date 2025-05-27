@@ -35,11 +35,11 @@ private fun PresentationFailureContent(
 ) {
     CredentialActionFeedbackCardError(
         issuer = verifierUiState,
-        contentTextFirstParagraphText = R.string.tk_present_error_title,
-        contentTextSecondParagraphText = R.string.tk_present_error_subtitle,
+        contentTextFirstParagraphText = R.string.tk_present_result_error_primary,
+        contentTextSecondParagraphText = R.string.tk_present_result_error_secondary,
         iconAlwaysVisible = true,
         contentIcon = R.drawable.wallet_ic_error_general,
-        primaryButtonText = R.string.tk_global_repeat_primarybutton,
+        primaryButtonText = R.string.tk_present_result_error_button_retry,
         secondaryButtonText = R.string.tk_global_cancel,
         onPrimaryButton = onRetry,
         onSecondaryButton = onClose,

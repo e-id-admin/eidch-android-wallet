@@ -81,6 +81,8 @@ class SaveCredentialImplTest {
                 issuerDisplays = any(),
                 credentialDisplays = any(),
                 claims = any(),
+                validFrom = any(),
+                validUntil = any(),
             )
         }
     }
@@ -97,6 +99,8 @@ class SaveCredentialImplTest {
                 issuerDisplays = any(),
                 credentialDisplays = any(),
                 claims = any(),
+                validFrom = any(),
+                validUntil = any(),
             )
         } returns Ok(1L)
 
@@ -133,6 +137,8 @@ class SaveCredentialImplTest {
                 issuerDisplays = any(),
                 credentialDisplays = any(),
                 claims = any(),
+                validFrom = any(),
+                validUntil = any(),
             )
         }
     }

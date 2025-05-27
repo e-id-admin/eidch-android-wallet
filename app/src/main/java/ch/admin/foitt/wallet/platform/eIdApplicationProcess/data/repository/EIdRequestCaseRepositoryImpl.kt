@@ -25,7 +25,17 @@ class EIdRequestCaseRepositoryImpl @Inject constructor(
         runSuspendCatching {
             eIdRequestCaseDao().insert(case)
         }.mapError { throwable ->
-            throwable.toEIdRequestCaseRepositoryError("EIdRequestCaseRepository error")
+            throwable.toEIdRequestCaseRepositoryError("EIdRequestCaseRepository save error")
+        }
+    }
+
+    override suspend fun deleteEIdRequestCase(
+        caseId: String
+    ): Result<Unit, EIdRequestCaseRepositoryError> = withContext(ioDispatcher) {
+        runSuspendCatching {
+            eIdRequestCaseDao().deleteById(caseId)
+        }.mapError { throwable ->
+            throwable.toEIdRequestCaseRepositoryError("EIdRequestCaseRepository delete error")
         }
     }
 

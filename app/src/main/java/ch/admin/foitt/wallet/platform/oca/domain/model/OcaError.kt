@@ -1,27 +1,59 @@
+@file:Suppress("TooManyFunctions")
+
 package ch.admin.foitt.wallet.platform.oca.domain.model
 
-import ch.admin.foitt.jsonSchema.domain.model.JsonSchemaError
-import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.TypeMetadataRepositoryError
-import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSchemaRepositoryError
-import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtError
+import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.FetchTypeMetadataError
+import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.FetchVcSchemaError
+import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.TypeMetadataError
+import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSchemaError
+import ch.admin.foitt.openid4vc.utils.SafeGetError
+import ch.admin.foitt.openid4vc.utils.SafeGetUrlError
+import ch.admin.foitt.sriValidator.domain.model.SRIError
+import ch.admin.foitt.wallet.platform.jsonSchema.domain.model.JsonSchemaError
 import ch.admin.foitt.wallet.platform.utils.JsonError
 import ch.admin.foitt.wallet.platform.utils.JsonParsingError
 import timber.log.Timber
 import java.io.IOException
 
 sealed interface OcaError {
-    data object InvalidOca : FetchOcaBundleByFormatError
+    data object InvalidOca : FetchVcMetadataByFormatError, FetchOcaBundleError, OcaBundlerError
+    data object InvalidJsonScheme : FetchVcMetadataByFormatError
     data object NetworkError :
         OcaRepositoryError,
-        FetchOcaBundleByFormatError
+        FetchVcMetadataByFormatError,
+        FetchOcaBundleError
+
+    data object InvalidCaptureBases : OcaBundlerError
+    data object InvalidOverlays : OcaBundlerError
+    data object InvalidJsonObject : OcaBundlerError
+
+    data object InvalidRootCaptureBase : OcaCaptureBaseValidationError
+    data object InvalidCaptureBaseReferenceAttribute : OcaCaptureBaseValidationError
+    data object CaptureBaseCycleError : OcaCaptureBaseValidationError
+
+    data object MissingMandatoryOverlay : OcaOverlayValidationError
+    data object InvalidOverlayCaptureBaseDigest : OcaOverlayValidationError
+    data object InvalidOverlayLanguageCode : OcaOverlayValidationError
+    data object InvalidDataSourceOverlay : OcaOverlayValidationError
+
+    data class InvalidCESRHash(val msg: String) : OcaCesrHashValidatorError, OcaBundlerError
 
     data class Unexpected(val cause: Throwable?) :
         OcaRepositoryError,
-        FetchOcaBundleByFormatError
+        OcaCesrHashValidatorError,
+        FetchOcaBundleError,
+        FetchVcMetadataByFormatError,
+        OcaBundlerError
 }
 
 sealed interface OcaRepositoryError
-sealed interface FetchOcaBundleByFormatError
+sealed interface FetchVcMetadataByFormatError
+sealed interface FetchOcaBundleError
+sealed interface OcaCesrHashValidatorError
+sealed interface OcaBundlerError
+sealed interface OcaCaptureBaseValidationError
+sealed interface OcaOverlayValidationError
+sealed interface OcaOverlayTransformationError
 
 fun Throwable.toOcaRepositoryError(message: String): OcaRepositoryError {
     Timber.e(t = this, message = message)
@@ -31,33 +63,69 @@ fun Throwable.toOcaRepositoryError(message: String): OcaRepositoryError {
     }
 }
 
-fun Throwable.toFetchOcaBundleByFormatError(message: String): FetchOcaBundleByFormatError {
-    Timber.e(t = this, message = message)
-    return when (this) {
-        is IOException -> OcaError.NetworkError
-        else -> OcaError.Unexpected(this)
-    }
+fun SafeGetUrlError.toFetchOcaBundleError(): FetchOcaBundleError = when (this) {
+    is SafeGetError.Unexpected -> OcaError.InvalidOca
 }
 
-fun OcaRepositoryError.toFetchOcaBundleByFormatError(): FetchOcaBundleByFormatError = when (this) {
+fun OcaRepositoryError.toFetchOcaBundleError(): FetchOcaBundleError = when (this) {
+    is OcaError.Unexpected -> this
+    is OcaError.NetworkError -> this
+}
+
+fun SRIError.toFetchOcaBundleError(): FetchOcaBundleError = when (this) {
+    is SRIError.UnsupportedAlgorithm,
+    is SRIError.MalformedIntegrity,
+    is SRIError.ValidationFailed -> OcaError.InvalidOca
+}
+
+fun FetchTypeMetadataError.toFetchVcMetadataByFormatError(): FetchVcMetadataByFormatError = when (this) {
+    is TypeMetadataError.InvalidData -> OcaError.InvalidOca
+    is TypeMetadataError.NetworkError -> OcaError.NetworkError
+    is TypeMetadataError.Unexpected -> OcaError.Unexpected(cause)
+}
+
+internal fun JsonParsingError.toCesrHashValidatorError(): OcaCesrHashValidatorError = when (this) {
+    is JsonError.Unexpected -> OcaError.Unexpected(throwable)
+}
+
+fun SafeGetUrlError.toFetchVcMetadataByFormatError(): FetchVcMetadataByFormatError = when (this) {
+    SafeGetError.Unexpected -> OcaError.InvalidOca
+}
+
+fun FetchVcSchemaError.toFetchVcMetadataByFormatError(): FetchVcMetadataByFormatError = when (this) {
+    is VcSchemaError.InvalidVcSchema -> OcaError.InvalidOca
+    is VcSchemaError.NetworkError -> OcaError.NetworkError
+    is VcSchemaError.Unexpected -> OcaError.Unexpected(cause)
+}
+
+fun FetchOcaBundleError.toFetchVcMetadataByFormatError(): FetchVcMetadataByFormatError = when (this) {
+    is OcaError.InvalidOca -> this
     is OcaError.NetworkError -> this
     is OcaError.Unexpected -> this
 }
 
-fun TypeMetadataRepositoryError.toFetchOcaBundleByFormatError(): FetchOcaBundleByFormatError = when (this) {
-    is VcSdJwtError.NetworkError -> OcaError.NetworkError
-    is VcSdJwtError.Unexpected -> OcaError.Unexpected(cause)
+fun JsonParsingError.toOcaBundlerError(): OcaBundlerError = when (this) {
+    is JsonError.Unexpected -> OcaError.InvalidJsonObject
 }
 
-internal fun JsonParsingError.toFetchOcaBundleByFormatError(): FetchOcaBundleByFormatError = when (this) {
-    is JsonError.Unexpected -> OcaError.Unexpected(throwable)
+fun OcaCesrHashValidatorError.toOcaBundlerError(): OcaBundlerError = when (this) {
+    is OcaError.InvalidCESRHash -> this
+    is OcaError.Unexpected -> this
 }
 
-internal fun VcSchemaRepositoryError.toFetchOcaBundleByFormatError(): FetchOcaBundleByFormatError = when (this) {
-    is VcSdJwtError.NetworkError -> OcaError.NetworkError
-    is VcSdJwtError.Unexpected -> OcaError.Unexpected(cause)
+fun OcaCaptureBaseValidationError.toOcaBundlerError(): OcaBundlerError = when (this) {
+    is OcaError.InvalidRootCaptureBase,
+    is OcaError.InvalidCaptureBaseReferenceAttribute,
+    is OcaError.CaptureBaseCycleError -> OcaError.InvalidCaptureBases
 }
 
-internal fun JsonSchemaError.toFetchOcaBundleByFormatError(): FetchOcaBundleByFormatError = when (this) {
-    JsonSchemaError.Unexpected -> OcaError.InvalidOca
+fun OcaOverlayValidationError.toOcaBundlerError(): OcaBundlerError = when (this) {
+    is OcaError.MissingMandatoryOverlay,
+    is OcaError.InvalidOverlayCaptureBaseDigest,
+    is OcaError.InvalidDataSourceOverlay,
+    is OcaError.InvalidOverlayLanguageCode -> OcaError.InvalidOverlays
+}
+
+fun JsonSchemaError.toFetchVcMetadataByFormatError(): FetchVcMetadataByFormatError = when (this) {
+    JsonSchemaError.ValidationFailed -> OcaError.InvalidJsonScheme
 }

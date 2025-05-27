@@ -20,16 +20,7 @@ import ch.admin.foitt.wallet.feature.credentialOffer.presentation.CredentialOffe
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.CredentialOfferWrongDataViewModel
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.DeclineCredentialOfferScreen
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.DeclineCredentialOfferViewModel
-import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdGuardianshipScreen
-import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdGuardianshipViewModel
-import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdInfoScreen
-import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdInfoViewModel
-import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdIntroScreen
-import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdIntroViewModel
-import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdPrivacyPolicyScreen
-import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdPrivacyPolicyViewModel
-import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdQueueScreen
-import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.EIdQueueViewModel
+import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.eIdApplicationProcessDestinations
 import ch.admin.foitt.wallet.feature.home.presentation.BetaIdScreen
 import ch.admin.foitt.wallet.feature.home.presentation.BetaIdViewModel
 import ch.admin.foitt.wallet.feature.home.presentation.HomeScreen
@@ -40,10 +31,10 @@ import ch.admin.foitt.wallet.feature.login.presentation.LockScreen
 import ch.admin.foitt.wallet.feature.login.presentation.LockViewModel
 import ch.admin.foitt.wallet.feature.login.presentation.LockoutScreen
 import ch.admin.foitt.wallet.feature.login.presentation.LockoutViewModel
-import ch.admin.foitt.wallet.feature.login.presentation.NoDevicePinSetScreen
-import ch.admin.foitt.wallet.feature.login.presentation.NoDevicePinSetViewModel
 import ch.admin.foitt.wallet.feature.login.presentation.PassphraseLoginScreen
 import ch.admin.foitt.wallet.feature.login.presentation.PassphraseLoginViewModel
+import ch.admin.foitt.wallet.feature.login.presentation.UnsecuredDeviceScreen
+import ch.admin.foitt.wallet.feature.login.presentation.UnsecuredDeviceViewModel
 import ch.admin.foitt.wallet.feature.mrzScan.presentation.MrzChooserScreen
 import ch.admin.foitt.wallet.feature.mrzScan.presentation.MrzChooserViewModel
 import ch.admin.foitt.wallet.feature.mrzScan.presentation.MrzScanPermissionScreen
@@ -110,8 +101,6 @@ import ch.admin.foitt.wallet.feature.settings.presentation.security.DataAnalysis
 import ch.admin.foitt.wallet.feature.settings.presentation.security.DataAnalysisViewModel
 import ch.admin.foitt.wallet.feature.settings.presentation.security.SecuritySettingsScreen
 import ch.admin.foitt.wallet.feature.settings.presentation.security.SecuritySettingsViewModel
-import ch.admin.foitt.wallet.feature.walletPairing.presentation.EIdWalletPairingScreen
-import ch.admin.foitt.wallet.feature.walletPairing.presentation.EIdWalletPairingViewModel
 import ch.admin.foitt.wallet.platform.invitation.presentation.InvitationFailureScreen
 import ch.admin.foitt.wallet.platform.invitation.presentation.InvitationFailureViewModel
 import ch.admin.foitt.wallet.platform.scaffold.extension.screenDestination
@@ -132,12 +121,6 @@ import ch.admin.foitt.walletcomposedestinations.destinations.CredentialOfferScre
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialOfferWrongDataScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.DataAnalysisScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.DeclineCredentialOfferScreenDestination
-import ch.admin.foitt.walletcomposedestinations.destinations.EIdGuardianshipScreenDestination
-import ch.admin.foitt.walletcomposedestinations.destinations.EIdInfoScreenDestination
-import ch.admin.foitt.walletcomposedestinations.destinations.EIdIntroScreenDestination
-import ch.admin.foitt.walletcomposedestinations.destinations.EIdPrivacyPolicyScreenDestination
-import ch.admin.foitt.walletcomposedestinations.destinations.EIdQueueScreenDestination
-import ch.admin.foitt.walletcomposedestinations.destinations.EIdWalletPairingScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.EnableBiometricsErrorScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.EnableBiometricsLockoutScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.EnableBiometricsScreenDestination
@@ -153,7 +136,6 @@ import ch.admin.foitt.walletcomposedestinations.destinations.LockScreenDestinati
 import ch.admin.foitt.walletcomposedestinations.destinations.LockoutScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.MrzChooserScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.MrzScanPermissionScreenDestination
-import ch.admin.foitt.walletcomposedestinations.destinations.NoDevicePinSetScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.OnboardingConfirmPassphraseScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.OnboardingErrorScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.OnboardingIntroScreenDestination
@@ -178,6 +160,7 @@ import ch.admin.foitt.walletcomposedestinations.destinations.RegisterBiometricsS
 import ch.admin.foitt.walletcomposedestinations.destinations.SecuritySettingsScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.SettingsScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.StartScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.UnsecuredDeviceScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.UserPrivacyPolicyScreenDestination
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.spec.NavHostEngine
@@ -200,8 +183,8 @@ fun NavigationHost(
             LockScreen(viewModel)
         }
 
-        screenDestination(NoDevicePinSetScreenDestination) { viewModel: NoDevicePinSetViewModel ->
-            NoDevicePinSetScreen(viewModel)
+        screenDestination(UnsecuredDeviceScreenDestination) { viewModel: UnsecuredDeviceViewModel ->
+            UnsecuredDeviceScreen(viewModel)
         }
 
         screenDestination(AppVersionBlockedScreenDestination) { viewModel: AppVersionBlockedViewModel ->
@@ -398,36 +381,13 @@ fun NavigationHost(
             BetaIdScreen(viewModel)
         }
 
-        screenDestination(EIdIntroScreenDestination) { viewModel: EIdIntroViewModel ->
-            EIdIntroScreen(viewModel)
-        }
-
-        screenDestination(EIdPrivacyPolicyScreenDestination) { viewModel: EIdPrivacyPolicyViewModel ->
-            EIdPrivacyPolicyScreen(viewModel)
-        }
-
-        screenDestination(EIdGuardianshipScreenDestination) { viewModel: EIdGuardianshipViewModel ->
-            EIdGuardianshipScreen(viewModel)
-        }
-
-        screenDestination(EIdInfoScreenDestination) { viewModel: EIdInfoViewModel ->
-            EIdInfoScreen(viewModel)
-        }
+        eIdApplicationProcessDestinations()
 
         screenDestination(MrzScanPermissionScreenDestination) { viewModel: MrzScanPermissionViewModel ->
             MrzScanPermissionScreen(viewModel)
         }
-
-        screenDestination(EIdQueueScreenDestination) { viewModel: EIdQueueViewModel ->
-            EIdQueueScreen(viewModel)
-        }
-
         screenDestination(MrzChooserScreenDestination) { viewModel: MrzChooserViewModel ->
             MrzChooserScreen(viewModel)
-        }
-
-        screenDestination(EIdWalletPairingScreenDestination) { viewModel: EIdWalletPairingViewModel ->
-            EIdWalletPairingScreen(viewModel)
         }
     }
 }

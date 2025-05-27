@@ -59,8 +59,8 @@ internal class ValidateTrustStatementImpl @Inject constructor(
 
             // Claim checks
             checkNotNull(trustStatement.issuedAt) { "$errorMessageStart iat is missing" }
-            checkNotNull(trustStatement.notBefore) { "$errorMessageStart nbf is missing" }
-            checkNotNull(trustStatement.expiredAt) { "$errorMessageStart exp is missing" }
+            checkNotNull(trustStatement.nbfInstant) { "$errorMessageStart nbf is missing" }
+            checkNotNull(trustStatement.expInstant) { "$errorMessageStart exp is missing" }
             checkNotNull(trustStatement.subject) { "$errorMessageStart sub is missing" }
             check(trustStatement.jwtValidity == CredentialValidity.Valid) {
                 "$errorMessageStart is ${trustStatement.jwtValidity}"

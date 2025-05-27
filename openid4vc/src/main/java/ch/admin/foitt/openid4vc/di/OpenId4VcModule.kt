@@ -44,10 +44,14 @@ import ch.admin.foitt.openid4vc.domain.usecase.implementation.SubmitAnyCredentia
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.VerifyJwtSignatureImpl
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.CreateVcSdJwtDescriptorMap
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.CreateVcSdJwtVerifiablePresentation
+import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.FetchTypeMetadata
+import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.FetchVcSchema
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.FetchVcSdJwtCredential
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.VerifyPublicKey
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.CreateVcSdJwtDescriptorMapImpl
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.CreateVcSdJwtVerifiablePresentationImpl
+import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.FetchTypeMetadataImpl
+import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.FetchVcSchemaImpl
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.FetchVcSdJwtCredentialImpl
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.VerifyPublicKeyImpl
 import ch.admin.foitt.openid4vc.utils.SafeJson
@@ -80,6 +84,12 @@ class ExternalOpenId4VcModule {
         httpClient: HttpClient,
         safeJson: SafeJson,
     ): CredentialOfferRepository = CredentialOfferRepositoryImpl(httpClient, safeJson)
+
+    @Provides
+    internal fun providesPresentationRequestRepository(
+        httpClient: HttpClient,
+        safeJson: SafeJson,
+    ): PresentationRequestRepository = PresentationRequestRepositoryImpl(httpClient, safeJson)
 }
 
 @Module(includes = [OpenId4VCBindings::class])
@@ -145,11 +155,6 @@ internal interface OpenId4VCBindings {
     fun bindFetchDidLogRepository(
         repository: FetchDidLogRepositoryImpl
     ): FetchDidLogRepository
-
-    @Binds
-    fun bindPresentationRequestRepository(
-        repository: PresentationRequestRepositoryImpl
-    ): PresentationRequestRepository
 
     @Binds
     fun bindFetchIssuerCredentialInformation(
@@ -253,8 +258,18 @@ internal interface OpenId4VCBindings {
     ): TypeMetadataRepository
 
     @Binds
+    fun bindFetchTypeMetadataByFormat(
+        useCase: FetchTypeMetadataImpl
+    ): FetchTypeMetadata
+
+    @Binds
     @ActivityRetainedScoped
     fun bindVcSchemaRepository(
         repo: VcSchemaRepositoryImpl
     ): VcSchemaRepository
+
+    @Binds
+    fun bindFetchVcSchema(
+        useCase: FetchVcSchemaImpl
+    ): FetchVcSchema
 }

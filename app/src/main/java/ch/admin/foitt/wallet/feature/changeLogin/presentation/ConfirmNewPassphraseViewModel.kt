@@ -11,9 +11,7 @@ import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseInputFieldState
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.model.PassphraseValidationState
 import ch.admin.foitt.wallet.platform.passphraseInput.domain.usecase.ValidatePassphrase
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.trackCompletion
@@ -37,11 +35,9 @@ class ConfirmNewPassphraseViewModel @Inject constructor(
     private val changePassphrase: ChangePassphrase,
     private val passphraseChangeEventRepository: PassphraseChangeEventRepository,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
     savedStateHandle: SavedStateHandle,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
     override val topBarState = TopBarState.Details(navManager::navigateUp, R.string.pin_change_title)
-    override val fullscreenState = FullscreenState.Insets
 
     private val originalPassphrase = ConfirmNewPassphraseScreenDestination.argsFrom(savedStateHandle).passphrase
 

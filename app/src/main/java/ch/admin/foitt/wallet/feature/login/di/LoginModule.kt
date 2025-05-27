@@ -1,8 +1,8 @@
 package ch.admin.foitt.wallet.feature.login.di
 
-import ch.admin.foitt.wallet.feature.login.domain.usecase.IsDevicePinSet
+import ch.admin.foitt.wallet.feature.login.domain.usecase.IsDeviceSecureLockScreenConfigured
 import ch.admin.foitt.wallet.feature.login.domain.usecase.LockTrigger
-import ch.admin.foitt.wallet.feature.login.domain.usecase.implementation.IsDevicePinSetImpl
+import ch.admin.foitt.wallet.feature.login.domain.usecase.implementation.IsDeviceSecureLockScreenConfiguredImpl
 import ch.admin.foitt.wallet.feature.login.domain.usecase.implementation.LockTriggerImpl
 import dagger.Binds
 import dagger.Module
@@ -22,7 +22,7 @@ internal interface LoginBindingsModule {
     ): LockTrigger
 
     @Binds
-    fun bindIsDevicePinSet(
-        useCase: IsDevicePinSetImpl
-    ): IsDevicePinSet
+    fun bindIsDeviceSecureLockScreenConfigured(
+        useCase: IsDeviceSecureLockScreenConfiguredImpl
+    ): IsDeviceSecureLockScreenConfigured
 }

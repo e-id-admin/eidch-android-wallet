@@ -18,6 +18,8 @@ data class Credential(
     val payload: String,
     val issuer: String?,
     val format: CredentialFormat,
+    val validFrom: Long?,
+    val validUntil: Long?,
     val createdAt: Long = Instant.now().epochSecond,
     val updatedAt: Long? = null,
 )

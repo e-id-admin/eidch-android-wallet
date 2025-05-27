@@ -50,6 +50,8 @@ object Buttons {
         startIcon: Painter? = null,
         endIcon: Painter? = null,
         enabled: Boolean = true,
+        isActive: Boolean = false,
+        activeText: String? = null,
     ) = BaseButton(
         text = text,
         onClick = onClick,
@@ -57,7 +59,8 @@ object Buttons {
         startIcon = startIcon,
         endIcon = endIcon,
         enabled = enabled,
-        isActive = false,
+        isActive = isActive,
+        activeText = activeText,
         colors = WalletButtonColors.primary(),
     )
 

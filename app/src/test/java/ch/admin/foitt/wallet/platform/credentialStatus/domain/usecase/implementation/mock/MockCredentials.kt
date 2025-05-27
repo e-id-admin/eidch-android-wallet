@@ -19,7 +19,9 @@ object MockCredentials {
         createdAt = 1700463600000,
         updatedAt = null,
         keyBindingAlgorithm = signingAlgorithm,
-        issuer = "issuer"
+        issuer = "issuer",
+        validFrom = 0,
+        validUntil = 17768026519L,
     )
 
     val credentials = listOf(

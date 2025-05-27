@@ -2,6 +2,7 @@ package ch.admin.foitt.wallet.platform.credential.domain.model
 
 import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
 import ch.admin.foitt.openid4vc.domain.model.anycredential.CredentialValidity
+import ch.admin.foitt.openid4vc.domain.model.anycredential.getCredentialValidity
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.SigningAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtCredential
@@ -10,7 +11,6 @@ import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.runSuspendCatching
-import com.github.michaelbull.result.getOrElse
 import com.github.michaelbull.result.mapError
 
 internal fun Credential.toAnyCredential(): Result<AnyCredential, AnyCredentialError> = runSuspendCatching {
@@ -20,6 +20,8 @@ internal fun Credential.toAnyCredential(): Result<AnyCredential, AnyCredentialEr
             keyBindingIdentifier = keyBindingIdentifier,
             keyBindingAlgorithm = if (keyBindingAlgorithm != null) SigningAlgorithm.valueOf(keyBindingAlgorithm) else null,
             payload = payload,
+            validFrom = validFrom,
+            validUntil = validUntil,
         )
 
         CredentialFormat.UNKNOWN -> error("Unsupported credential format")
@@ -28,10 +30,8 @@ internal fun Credential.toAnyCredential(): Result<AnyCredential, AnyCredentialEr
     throwable.toAnyCredentialError("Credential.toAnyCredential() error")
 }
 
-internal fun AnyCredential.getDisplayStatus(status: CredentialStatus): CredentialDisplayStatus {
-    val validity = runSuspendCatching { validity }.getOrElse {
-        return CredentialDisplayStatus.Unknown
-    }
+internal fun Credential.getDisplayStatus(status: CredentialStatus): CredentialDisplayStatus {
+    val validity = getCredentialValidity(validFrom, validUntil)
     return status.getDisplayStatus(validity)
 }
 

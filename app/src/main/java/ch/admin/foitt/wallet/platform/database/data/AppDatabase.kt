@@ -44,7 +44,7 @@ import timber.log.Timber
         EIdRequestState::class,
     ],
     version = DATABASE_VERSION,
-    exportSchema = false
+    exportSchema = true,
 )
 @Suppress("TooManyFunctions")
 abstract class AppDatabase : RoomDatabase() {
@@ -76,7 +76,7 @@ abstract class AppDatabase : RoomDatabase() {
             decryptionTestDao().test()
             Unit
         }.mapError { throwable ->
-            Timber.d(message = "error", t = throwable)
+            Timber.d(t = throwable, message = "error",)
             DatabaseError.WrongPassphrase(throwable)
         }
     }
@@ -90,6 +90,6 @@ abstract class AppDatabase : RoomDatabase() {
     }
 
     companion object {
-        internal const val DATABASE_VERSION = 1
+        internal const val DATABASE_VERSION = 3
     }
 }

@@ -1,6 +1,8 @@
 package ch.admin.foitt.wallet.feature.home.di
 
+import ch.admin.foitt.wallet.feature.home.domain.usecase.DeleteEIdRequestCase
 import ch.admin.foitt.wallet.feature.home.domain.usecase.GetEIdRequestsFlow
+import ch.admin.foitt.wallet.feature.home.domain.usecase.implementation.DeleteEIdRequestCaseImpl
 import ch.admin.foitt.wallet.feature.home.domain.usecase.implementation.GetEIdRequestsFlowImpl
 import dagger.Binds
 import dagger.Module
@@ -14,4 +16,9 @@ interface HomeModule {
     fun bindGetEIdRequestsFlow(
         useCase: GetEIdRequestsFlowImpl
     ): GetEIdRequestsFlow
+
+    @Binds
+    fun bindDeleteEIdRequestCase(
+        useCase: DeleteEIdRequestCaseImpl
+    ): DeleteEIdRequestCase
 }

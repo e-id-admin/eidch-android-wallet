@@ -2,46 +2,55 @@ package ch.admin.foitt.wallet.platform.oca.mock
 
 object TypeMetadataMocks {
     const val VCT_URL = "https://credentials.example.com/identity_credential"
-    const val VCT_INTEGRITY = "sha256-abcdef"
+    const val VCT_URL_INTEGRITY = "sha256-vctIntegrity"
     const val VC_SCHEMA_URL = "https://exampleuniversity.com/public/credential-schema-0.9"
     const val VC_SCHEMA_URL_INTEGRITY = "sha256-o984vn819a48ui1llkwPmKjZ5t0WRL5ca_xGgX3c1VLmXfh"
     const val OCA_URL = "https://example.com/oca/oca-bundle.json"
     const val OCA_URL_INTEGRITY = "sha256-9cLlJNXN-TsMk-PmKjZ5t0WRL5ca_xGgX3c1VLmXfh-WRL5"
-    const val OCA_DATA_URI = "data:application/json;base64,ewogICAiY2FwdHVyZV9iYXNlcyI6WwogICAgICAKICAgXSwKICAgIm92ZXJsYXlzIjpbCiAgICAgIAogICBdCn0="
+    const val OCA_DATA_URI =
+        "data:application/json;base64,ewogICAiY2FwdHVyZV9iYXNlcyI6WwogICAgICAKICAgXSwKICAgIm92ZXJsYXlzIjpbCiAgICAgIAogICBdCn0="
+    val OCA_DATA_URI_CONTENT = """
+        {
+           "capture_bases":[
+              
+           ],
+           "overlays":[
+              
+           ]
+        }
+    """.trimIndent()
     const val OCA_DATA_URI_INTEGRITY = "sha256-9cLlJNXN-TsMk-PmKjZ5t0WRL5ca_xGgX3c1VLmXfh-WRL5"
-    private const val OCA_INVALID_URI = "notHttpsOrDataUri"
+    const val OCA_INVALID_URI = "notHttpsOrDataUri"
+    const val OCA_INVALID_HTTPS_URI = "https://:invalid"
 
-    val typeMetadataInvalid = """{}""".trimIndent()
-
-    val typeMetadataVctOther = """
-        {
-          "vct": "somethingOtherThanInTheCredential"
-        }
-    """.trimIndent()
-
-    val typeMetadataWithoutSchemaUrl = """
-        {
-          "vct": "$VCT_URL"
-        }
-    """.trimIndent()
-
-    val typeMetadataWithoutSchemaUrlIntegrity = """
+    val typeMetadataWithoutVcSchemaUrl = """
         {
           "vct": "$VCT_URL",
-          "schema_url": "$VC_SCHEMA_URL",
           "display": [
             {
               "lang": "en-US",
               "name": "Betelgeuse Education Credential",
               "description": "An education credential for all carbon-based life forms on Betelgeusians",
               "rendering": {
-                "oca": {
-                  "uri":"$OCA_URL",
-                  "uri#integrity":"$OCA_URL_INTEGRITY"
+                "simple": {
+                  "logo": {
+                    "uri": "https://betelgeuse.example.com/public/education-logo.png",
+                    "uri#integrity": "sha256-LmXfh-9cLlJNXN-TsMk-PmKjZ5t0WRL5ca_xGgX3c1V",
+                    "alt_text": "Betelgeuse Ministry of Education logo"
+                  },
+                  "background_color": "#12107c",
+                  "text_color": "#FFFFFF"
                 }
               }   
             }
           ]
+        }
+    """.trimIndent()
+
+    val typeMetadataWithInvalidVcSchemaUrl = """
+        {
+          "vct": "$VCT_URL",
+          "schema_url": "invalidUrl"
         }
     """.trimIndent()
 
@@ -97,108 +106,6 @@ object TypeMetadataMocks {
                   "uri#integrity":"$OCA_DATA_URI_INTEGRITY"
                 }
               }
-            }
-          ]
-        }
-    """.trimIndent()
-
-    val typeMetadataWithOcaUrl = """
-        {
-          "vct": "$VCT_URL",
-          "schema_url": "$VC_SCHEMA_URL",
-          "schema_url#integrity": "$VC_SCHEMA_URL_INTEGRITY",
-          "display": [
-            {
-              "lang": "en-US",
-              "name": "Betelgeuse Education Credential",
-              "description": "An education credential for all carbon-based life forms on Betelgeusians",
-              "rendering": {
-                "oca": {
-                  "uri":"$OCA_URL",
-                  "uri#integrity":"$OCA_URL_INTEGRITY"
-                }
-              }   
-            }
-          ]
-        }
-    """.trimIndent()
-
-    val typeMetadataWithOcaMissingUrlIntegrity = """
-        {
-          "vct": "$VCT_URL",
-          "schema_url": "$VC_SCHEMA_URL",
-          "schema_url#integrity": "$VC_SCHEMA_URL_INTEGRITY",
-          "display": [
-            {
-              "lang": "en-US",
-              "name": "Betelgeuse Education Credential",
-              "description": "An education credential for all carbon-based life forms on Betelgeusians",
-              "rendering": {
-                "oca": {
-                  "uri":"$OCA_URL"                 
-                }
-              }   
-            }
-          ]
-        }
-    """.trimIndent()
-
-    val typeMetadataWithOcaDataUri = """
-        {
-          "vct": "$VCT_URL",
-          "schema_url": "$VC_SCHEMA_URL",
-          "schema_url#integrity": "$VC_SCHEMA_URL_INTEGRITY",
-          "display": [
-            {
-              "lang": "en-US",
-              "name": "Betelgeuse Education Credential",
-              "description": "An education credential for all carbon-based life forms on Betelgeusians",
-              "rendering": {
-                "oca": {
-                  "uri":"$OCA_DATA_URI",
-                  "uri#integrity":"$OCA_DATA_URI_INTEGRITY"         
-                }
-              }   
-            }
-          ]
-        }
-    """.trimIndent()
-
-    val typeMetadataWithOcaDataUriMissingIntegrity = """
-        {
-          "vct": "$VCT_URL",
-          "schema_url": "$VC_SCHEMA_URL",
-          "schema_url#integrity": "$VC_SCHEMA_URL_INTEGRITY",
-          "display": [
-            {
-              "lang": "en-US",
-              "name": "Betelgeuse Education Credential",
-              "description": "An education credential for all carbon-based life forms on Betelgeusians",
-              "rendering": {
-                "oca": {
-                  "uri":"$OCA_DATA_URI"     
-                }
-              }   
-            }
-          ]
-        }
-    """.trimIndent()
-
-    val typeMetadataWithOcaInvalidUri = """
-        {
-          "vct": "$VCT_URL",
-          "schema_url": "$VC_SCHEMA_URL",
-          "schema_url#integrity": "$VC_SCHEMA_URL_INTEGRITY",
-          "display": [
-            {
-              "lang": "en-US",
-              "name": "Betelgeuse Education Credential",
-              "description": "An education credential for all carbon-based life forms on Betelgeusians",
-              "rendering": {
-                "oca": {
-                  "uri":"$OCA_INVALID_URI"     
-                }
-              }   
             }
           ]
         }

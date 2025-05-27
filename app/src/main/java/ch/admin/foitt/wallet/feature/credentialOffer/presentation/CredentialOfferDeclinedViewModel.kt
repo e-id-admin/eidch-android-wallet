@@ -9,9 +9,7 @@ import ch.admin.foitt.wallet.platform.messageEvents.domain.model.CredentialOffer
 import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialOfferEventRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.navigation.domain.model.ComponentScope
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
@@ -36,11 +34,9 @@ class CredentialOfferDeclinedViewModel @Inject constructor(
     private val credentialOfferEventRepository: CredentialOfferEventRepository,
     getActorForScope: GetActorForScope,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
     savedStateHandle: SavedStateHandle,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
     override val topBarState = TopBarState.None
-    override val fullscreenState = FullscreenState.Fullscreen
 
     private val navArgs = CredentialOfferDeclinedScreenDestination.argsFrom(savedStateHandle)
     private val credentialId = navArgs.credentialId

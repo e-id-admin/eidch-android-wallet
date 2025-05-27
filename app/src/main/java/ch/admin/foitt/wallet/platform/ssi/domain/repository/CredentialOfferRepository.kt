@@ -1,3 +1,5 @@
+@file:Suppress("LongParameterList")
+
 package ch.admin.foitt.wallet.platform.ssi.domain.repository
 
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
@@ -15,6 +17,8 @@ interface CredentialOfferRepository {
         keyBindingAlgorithm: SigningAlgorithm?,
         payload: String,
         format: CredentialFormat,
+        validFrom: Long?,
+        validUntil: Long?,
         issuer: String?,
         issuerDisplays: List<OidIssuerDisplay>,
         credentialDisplays: List<OidCredentialDisplay>,

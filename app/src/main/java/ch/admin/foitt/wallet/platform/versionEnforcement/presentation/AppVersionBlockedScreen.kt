@@ -3,7 +3,6 @@ package ch.admin.foitt.wallet.platform.versionEnforcement.presentation
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
@@ -13,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.composables.Buttons
+import ch.admin.foitt.wallet.platform.composables.presentation.centerHorizontallyOnFullscreen
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.ScrollableColumnWithFullscreenGradient
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.AppVersionBlockedNavArg
@@ -49,7 +49,7 @@ private fun AppVersionBlockedScreenContent(title: String?, text: String?, onPlay
         scrollableContent = {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .centerHorizontallyOnFullscreen(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 title?.let {

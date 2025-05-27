@@ -33,7 +33,7 @@ fun MediumCredentialBox(
     modifier: Modifier = Modifier,
 ) = Column {
     WalletTexts.BodyLarge(
-        text = stringResource(id = R.string.tk_global_checkcredential),
+        text = stringResource(id = R.string.tk_present_review_credential_section_primary),
         modifier = modifier.padding(start = Sizes.s04, end = Sizes.s04, bottom = Sizes.s04)
     )
     Box(

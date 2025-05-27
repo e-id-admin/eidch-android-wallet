@@ -7,6 +7,7 @@ import ch.admin.foitt.wallet.platform.di.IoDispatcher
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestStateRepositoryError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.StateResponse
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.toEIdRequestStateRepositoryError
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.toLegalRepresentativeConsent
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.EIdRequestStateRepository
 import ch.admin.foitt.wallet.platform.utils.suspendUntilNonNull
 import com.github.michaelbull.result.Result
@@ -46,11 +47,14 @@ class EIdRequestStateRepositoryImpl @Inject constructor(
 
         runSuspendCatching {
             eIdRequestStateDao().updateByCaseId(
-                caseId = caseId,
-                state = stateResponse.state,
-                onlineSessionStartTimeout = onlineSessionStartTimeoutAt,
-                onlineSessionStartOpenAt = onlineSessionStartOpenAt,
-                lastPolled = Instant.now().epochSecond
+                EIdRequestState(
+                    eIdRequestCaseId = caseId,
+                    state = stateResponse.state,
+                    onlineSessionStartTimeoutAt = onlineSessionStartTimeoutAt,
+                    onlineSessionStartOpenAt = onlineSessionStartOpenAt,
+                    lastPolled = Instant.now().epochSecond,
+                    legalRepresentativeConsent = stateResponse.toLegalRepresentativeConsent(),
+                )
             )
         }.mapError { throwable ->
             throwable.toEIdRequestStateRepositoryError("EIdRequestStateRepository updateStatusByCaseId error")

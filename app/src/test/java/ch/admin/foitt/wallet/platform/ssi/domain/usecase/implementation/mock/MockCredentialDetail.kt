@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation.mock
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialDisplayData
 import ch.admin.foitt.wallet.platform.credential.domain.model.toDisplayStatus
@@ -18,7 +19,7 @@ object MockCredentialDetail {
     const val CREDENTIAL_ID = 5L
     private const val CLAIM_ID_1 = 1L
     private const val CLAIM_ID_2 = 2L
-    const val ISSUER = "issuer"
+    private const val ISSUER = "issuer"
 
     private val credential = Credential(
         id = CREDENTIAL_ID,
@@ -27,15 +28,18 @@ object MockCredentialDetail {
         payload = "payload",
         format = CredentialFormat.VC_SD_JWT,
         keyBindingAlgorithm = "signingAlgorithm",
-        issuer = ISSUER
+        issuer = ISSUER,
+        validFrom = 0,
+        validUntil = 17768026519L,
     )
 
-    val credentialDisplay1 = CredentialDisplay(
+    @OptIn(ExperimentalStdlibApi::class)
+    private val credentialDisplay1 = CredentialDisplay(
         id = 23,
         credentialId = CREDENTIAL_ID,
         locale = "locale1",
         name = "name1",
-        backgroundColor = Color.Black.toString()
+        backgroundColor = "#" + Color.Black.toArgb().toHexString()
     )
 
     private val credentialDisplay2 = CredentialDisplay(

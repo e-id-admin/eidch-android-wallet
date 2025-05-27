@@ -7,7 +7,7 @@ import java.net.URL
 
 interface OcaRepository {
     @CheckResult
-    suspend fun fetchVcSdJwtOcaBundle(
+    suspend fun fetchOcaBundleByUrl(
         url: URL,
     ): Result<String, OcaRepositoryError>
 }

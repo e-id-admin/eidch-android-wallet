@@ -41,4 +41,7 @@ enum class TestTags {
 
     // credential offer
     OFFER_CREDENTIAL,
+
+    // credential request
+    REQUEST_CREDENTIAL,
 }

@@ -12,9 +12,7 @@ import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredent
 import ch.admin.foitt.wallet.platform.navArgs.domain.model.PresentationRequestNavArg
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.navigation.domain.model.ComponentScope
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.extension.navigateUpOrToRoot
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
@@ -41,10 +39,8 @@ class PresentationCredentialListViewModel @Inject constructor(
     getActorForScope: GetActorForScope,
     savedStateHandle: SavedStateHandle,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
     override val topBarState = TopBarState.None
-    override val fullscreenState = FullscreenState.Fullscreen
 
     private val navArgs = PresentationCredentialListScreenDestination.argsFrom(savedStateHandle)
 

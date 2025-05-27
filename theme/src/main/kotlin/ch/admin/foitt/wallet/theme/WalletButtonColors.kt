@@ -70,7 +70,7 @@ object WalletButtonColors {
         containerColor = WalletTheme.colorScheme.secondaryContainer,
         contentColor = WalletTheme.colorScheme.onSecondaryContainer,
         disabledContainerColor = WalletTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-        disabledContentColor = WalletTheme.colorScheme.onSurface,
+        disabledContentColor = WalletTheme.colorScheme.onSurface.copy(alpha = 0.12f),
     )
 
     @Composable

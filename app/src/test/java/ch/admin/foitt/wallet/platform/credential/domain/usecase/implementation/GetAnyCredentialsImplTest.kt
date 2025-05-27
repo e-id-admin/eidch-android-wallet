@@ -53,14 +53,7 @@ class GetAnyCredentialsImplTest {
 
     @Test
     fun `Getting any credentials with one vc+sd_jwt available returns it`() = runTest {
-        val mockCredential = Credential(
-            id = CREDENTIAL_ID,
-            keyBindingIdentifier = KEY_BINDING_IDENTIFIER,
-            payload = PAYLOAD,
-            format = CredentialFormat.VC_SD_JWT,
-            keyBindingAlgorithm = KEY_BINDING_ALGORITHM.stdName,
-            issuer = "issuer"
-        )
+        val mockCredential = createMockCredential()
         coEvery { mockCredentialRepository.getAll() } returns Ok(listOf(mockCredential))
 
         val result = useCase().assertOk()
@@ -76,21 +69,11 @@ class GetAnyCredentialsImplTest {
 
     @Test
     fun `Getting any credentials with two vc+sd_jwt available returns both`() = runTest {
-        val mockCredential = Credential(
-            id = CREDENTIAL_ID,
-            keyBindingIdentifier = KEY_BINDING_IDENTIFIER,
-            payload = PAYLOAD,
-            format = CredentialFormat.VC_SD_JWT,
-            keyBindingAlgorithm = KEY_BINDING_ALGORITHM.stdName,
-            issuer = "issuer"
-        )
-        val mockCredential2 = Credential(
+        val mockCredential = createMockCredential()
+        val mockCredential2 = createMockCredential(
             id = CREDENTIAL_ID_2,
             keyBindingIdentifier = KEY_BINDING_IDENTIFIER_2,
-            payload = PAYLOAD_2,
-            format = CredentialFormat.VC_SD_JWT,
             keyBindingAlgorithm = KEY_BINDING_ALGORITHM_2.stdName,
-            issuer = "issuer"
         )
         coEvery { mockCredentialRepository.getAll() } returns Ok(listOf(mockCredential, mockCredential2))
 
@@ -113,14 +96,7 @@ class GetAnyCredentialsImplTest {
 
     @Test
     fun `Getting any credentials with other format available returns an empty list`() = runTest {
-        val mockCredential = Credential(
-            id = CREDENTIAL_ID,
-            keyBindingIdentifier = KEY_BINDING_IDENTIFIER,
-            payload = PAYLOAD,
-            format = CredentialFormat.UNKNOWN,
-            keyBindingAlgorithm = KEY_BINDING_ALGORITHM.stdName,
-            issuer = "issuer"
-        )
+        val mockCredential = createMockCredential(format = CredentialFormat.UNKNOWN)
         coEvery { mockCredentialRepository.getAll() } returns Ok(listOf(mockCredential))
 
         val result = useCase().assertOk()
@@ -129,14 +105,8 @@ class GetAnyCredentialsImplTest {
 
     @Test
     fun `Getting any credentials with unknown signing algorithm returns an empty list`() = runTest {
-        val mockCredential = Credential(
-            id = CREDENTIAL_ID,
-            keyBindingIdentifier = KEY_BINDING_IDENTIFIER,
-            payload = PAYLOAD,
-            format = CredentialFormat.VC_SD_JWT,
-            keyBindingAlgorithm = "other",
-            issuer = "issuer"
-        )
+        val mockCredential = createMockCredential(keyBindingAlgorithm = "other")
+
         coEvery { mockCredentialRepository.getAll() } returns Ok(listOf(mockCredential))
 
         val result = useCase().assertOk()
@@ -154,13 +124,31 @@ class GetAnyCredentialsImplTest {
         assertEquals(exception, error.cause)
     }
 
+    private fun createMockCredential(
+        id: Long = CREDENTIAL_ID,
+        keyBindingIdentifier: String = KEY_BINDING_IDENTIFIER,
+        format: CredentialFormat = CredentialFormat.VC_SD_JWT,
+        keyBindingAlgorithm: String = KEY_BINDING_ALGORITHM.stdName,
+    ) = Credential(
+        id = id,
+        keyBindingIdentifier = keyBindingIdentifier,
+        payload = PAYLOAD,
+        format = format,
+        keyBindingAlgorithm = keyBindingAlgorithm,
+        issuer = "issuer",
+        validFrom = 0,
+        validUntil = 17768026519L,
+    )
+
     private companion object {
         const val CREDENTIAL_ID = 1L
         const val CREDENTIAL_ID_2 = 2L
         const val KEY_BINDING_IDENTIFIER = "privateKeyIdentifier"
         const val KEY_BINDING_IDENTIFIER_2 = "privateKeyIdentifier2"
-        const val PAYLOAD = "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJpc3MiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJ2Y3QiOiJ2Y3QiCn0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJc0NpQWdJbXRwWkNJNkltdGxlVWxrSWdwOS4uNHNwTXBzWE1nYlNyY0lqMFdNbXJNYXdhcVRzeG9GWmItcjdwTWlubEhvZklRRUhhS2pzV1J0dENzUTkyd0tfa3RpaDQta2VCdjdVbkc2MkRPa2NDbGc"
-        const val PAYLOAD_2 = "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJpc3MiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJ2Y3QiOiJ2Y3QiCn0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJc0NpQWdJbXRwWkNJNkltdGxlVWxrSWdwOS4uNHNwTXBzWE1nYlNyY0lqMFdNbXJNYXdhcVRzeG9GWmItcjdwTWlubEhvZklRRUhhS2pzV1J0dENzUTkyd0tfa3RpaDQta2VCdjdVbkc2MkRPa2NDbGc"
+        const val PAYLOAD =
+            "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJpc3MiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJ2Y3QiOiJ2Y3QiCn0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJc0NpQWdJbXRwWkNJNkltdGxlVWxrSWdwOS4uNHNwTXBzWE1nYlNyY0lqMFdNbXJNYXdhcVRzeG9GWmItcjdwTWlubEhvZklRRUhhS2pzV1J0dENzUTkyd0tfa3RpaDQta2VCdjdVbkc2MkRPa2NDbGc"
+        const val PAYLOAD_2 =
+            "ewogICJ0eXAiOiJ2YytzZC1qd3QiLAogICJhbGciOiJFUzI1NiIsCiAgImtpZCI6ImtleUlkIgp9.ewogICJpc3MiOiJkaWQ6dGR3OmlkZW50aWZpZXIiLAogICJ2Y3QiOiJ2Y3QiCn0.ZXdvZ0lDSjBlWEFpT2lKMll5dHpaQzFxZDNRaUxBb2dJQ0poYkdjaU9pSkZVekkxTmlJc0NpQWdJbXRwWkNJNkltdGxlVWxrSWdwOS4uNHNwTXBzWE1nYlNyY0lqMFdNbXJNYXdhcVRzeG9GWmItcjdwTWlubEhvZklRRUhhS2pzV1J0dENzUTkyd0tfa3RpaDQta2VCdjdVbkc2MkRPa2NDbGc"
         val KEY_BINDING_ALGORITHM = SigningAlgorithm.ES512
         val KEY_BINDING_ALGORITHM_2 = SigningAlgorithm.ES512
     }

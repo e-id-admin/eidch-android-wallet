@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -49,6 +50,7 @@ import ch.admin.foitt.wallet.platform.navArgs.domain.model.PresentationRequestNa
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimData
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
+import ch.admin.foitt.wallet.platform.utils.TestTags
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTexts
 import ch.admin.foitt.wallet.theme.WalletTheme
@@ -142,11 +144,13 @@ private fun CompactContent(
             },
         ) {
             MediumCredentialBox(
+                modifier = Modifier
+                    .testTag(TestTags.REQUEST_CREDENTIAL.name),
                 credentialCardState = credentialCardState,
             )
             Spacer(modifier = Modifier.height(Sizes.s04))
             CredentialClaimItemsColumn(
-                R.string.tk_present_approval_subtitle_affectedDetails_android,
+                R.string.tk_present_review_claims_section_primary,
                 requestedClaims,
             )
         }
@@ -192,7 +196,7 @@ private fun LargeContent(
             Spacer(modifier = Modifier.height(Sizes.s06))
             InvitationHeader(verifierUiState = verifierUiState)
             CredentialClaimItemsColumn(
-                R.string.tk_present_approval_subtitle_affectedDetails_android,
+                R.string.tk_present_review_claims_section_primary,
                 requestedClaims,
             )
         }
@@ -285,7 +289,7 @@ private fun LoadingIndicator(
             strokeWidth = Sizes.line02,
         )
         if (showDelayReason) {
-            WalletTexts.Body(text = stringResource(R.string.tk_global_pleasewait))
+            WalletTexts.Body(text = stringResource(R.string.tk_present_review_loading))
         }
     }
 }
@@ -307,12 +311,16 @@ private fun StickyButtons(
         maxItemsInEachRow = 2,
     ) {
         Buttons.FilledPrimary(
-            text = stringResource(id = R.string.tk_receive_credentialOffer_button_decline),
+            modifier = Modifier
+                .testTag(TestTags.DECLINE_BUTTON.name),
+            text = stringResource(id = R.string.tk_present_review_button_decline),
             startIcon = painterResource(id = R.drawable.wallet_ic_cross),
             onClick = onDecline,
         )
         Buttons.FilledTertiary(
-            text = stringResource(id = R.string.tk_global_allow_primarybutton),
+            modifier = Modifier
+                .testTag(TestTags.ACCEPT_BUTTON.name),
+            text = stringResource(id = R.string.tk_present_review_button_accept),
             startIcon = painterResource(id = R.drawable.wallet_ic_checkmark),
             onClick = onAccept,
         )

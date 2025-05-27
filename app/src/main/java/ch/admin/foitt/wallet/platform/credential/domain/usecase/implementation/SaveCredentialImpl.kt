@@ -64,6 +64,8 @@ class SaveCredentialImpl @Inject constructor(
             keyBindingAlgorithm = anyCredential.keyBindingAlgorithm,
             payload = anyCredential.payload,
             format = anyCredential.format,
+            validFrom = anyCredential.validFromInstant?.epochSecond,
+            validUntil = anyCredential.validUntilInstant?.epochSecond,
             issuer = anyCredential.issuer,
             issuerDisplays = localizedIssuerDisplays,
             credentialDisplays = localizedCredentialDisplays,
@@ -78,12 +80,14 @@ class SaveCredentialImpl @Inject constructor(
         credentialConfiguration: AnyCredentialConfiguration,
         credential: AnyCredential,
     ): Result<Map<CredentialClaim, List<OidClaimDisplay>>, SaveCredentialError> = coroutineBinding {
+        // Map<Attribute, Claim>, e.g. mapOf("family_name" to Claim)
         val metadataClaims = getMetadataClaims(credentialConfiguration = credentialConfiguration).bind()
 
         val credentialJson = runSuspendCatching { credential.getClaimsToSave() }
             .mapError { throwable -> throwable.toSaveCredentialError("getClaimsToSave error") }
             .bind()
         val conf: Configuration = Configuration.builder().options(Option.SUPPRESS_EXCEPTIONS, Option.ALWAYS_RETURN_LIST).build()
+        // Map<JsonPath, value>
         val credentialClaims: Map<String, String> = using(conf)
             .parse(credentialJson)
             .read<List<Map<String, JsonElement>>>(credential.claimsPath)

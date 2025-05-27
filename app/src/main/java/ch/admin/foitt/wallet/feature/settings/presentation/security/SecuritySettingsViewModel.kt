@@ -13,9 +13,7 @@ import ch.admin.foitt.wallet.platform.navArgs.domain.model.AuthWithPassphraseNav
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.passphrase.domain.usecase.GetPassphraseWasDeleted
 import ch.admin.foitt.wallet.platform.passphrase.domain.usecase.SavePassphraseWasDeleted
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.openLink
@@ -43,11 +41,9 @@ class SecuritySettingsViewModel @Inject constructor(
     private val savePassphraseWasDeleted: SavePassphraseWasDeleted,
     private val passphraseChangeEventRepository: PassphraseChangeEventRepository,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
 
     override val topBarState = TopBarState.Details(navManager::navigateUp, R.string.securitySettings_title)
-    override val fullscreenState = FullscreenState.Insets
 
     val biometricsHardwareIsAvailable: Flow<Boolean> = flow {
         emit(

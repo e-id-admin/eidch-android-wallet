@@ -4,9 +4,7 @@ import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.platform.appSetupState.domain.repository.OnboardingStateRepository
 import ch.admin.foitt.wallet.platform.login.domain.usecase.NavigateToLogin
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.suspendUntilNonNull
@@ -22,11 +20,9 @@ class StartViewModel @Inject constructor(
     private val navigateToLogin: NavigateToLogin,
     private val navManager: NavigationManager,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
 
     override val topBarState = TopBarState.None
-    override val fullscreenState = FullscreenState.Insets
 
     fun navigateToFirstScreen() {
         viewModelScope.launch {

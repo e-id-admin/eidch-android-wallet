@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 class EidApplicationProcessRepositoryImpl @Inject constructor() : EidApplicationProcessRepository {
-
     private val _hasLegalGuardian = MutableStateFlow(false)
     override val hasLegalGuardian = _hasLegalGuardian.asStateFlow()
 

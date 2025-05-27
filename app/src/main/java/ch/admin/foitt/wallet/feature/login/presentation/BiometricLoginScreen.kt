@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,14 +13,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.window.core.layout.WindowWidthSizeClass
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.composables.Buttons
-import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
 import ch.admin.foitt.wallet.platform.composables.presentation.centerHorizontallyOnFullscreen
+import ch.admin.foitt.wallet.platform.composables.presentation.layout.ScrollableColumnWithFullscreenGradient
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
-import ch.admin.foitt.wallet.platform.scaffold.presentation.FullscreenGradient
 import ch.admin.foitt.wallet.platform.utils.LocalActivity
 import ch.admin.foitt.wallet.platform.utils.OnResumeEventHandler
 import ch.admin.foitt.wallet.theme.Sizes
@@ -61,37 +58,18 @@ fun BiometricLoginScreenContent(
     onLoginWithBiometrics: () -> Unit,
     onLoginWithPassphrase: () -> Unit,
 ) {
-    FullscreenGradient()
-    when (currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass) {
-        WindowWidthSizeClass.COMPACT -> WalletLayouts.CompactContainerFloatingBottom(
-            content = {
-                Content()
-            },
-            stickyBottomContent = {
-                BottomButtons(
-                    showBiometricsLoginButton = showBiometricsLoginButton,
-                    onLoginWithBiometrics = onLoginWithBiometrics,
-                    onLoginWithPassphrase = onLoginWithPassphrase,
-                )
-            },
-        )
-        else -> WalletLayouts.LargeContainerFloatingBottom(
-            content = {
-                Content()
-            },
-            stickyBottomContent = {
-                BottomButtons(
-                    showBiometricsLoginButton = showBiometricsLoginButton,
-                    onLoginWithBiometrics = onLoginWithBiometrics,
-                    onLoginWithPassphrase = onLoginWithPassphrase,
-                )
-            }
-        )
-    }
-
-    LoadingOverlay(
-        showOverlay = isLoading,
-        color = WalletTheme.colorScheme.primaryFixed
+    WalletLayouts.ScrollableColumnWithFullscreenGradient(
+        isLoading = isLoading,
+        stickyBottomContent = {
+            BottomButtons(
+                showBiometricsLoginButton = showBiometricsLoginButton,
+                onLoginWithBiometrics = onLoginWithBiometrics,
+                onLoginWithPassphrase = onLoginWithPassphrase,
+            )
+        },
+        scrollableContent = {
+            Content()
+        }
     )
 }
 

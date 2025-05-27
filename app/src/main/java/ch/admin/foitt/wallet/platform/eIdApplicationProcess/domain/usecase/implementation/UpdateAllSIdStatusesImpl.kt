@@ -24,7 +24,7 @@ class UpdateAllSIdStatusesImpl @Inject constructor(
                 }
             }
             .onFailure { error ->
-                Timber.e(error.toString(), "Could not get Case Ids for status update")
+                Timber.d("Could not get Case Ids for status update")
             } // silently fail
     }
 
@@ -34,7 +34,7 @@ class UpdateAllSIdStatusesImpl @Inject constructor(
                 updateState(caseId, stateResponse)
             }
             .onFailure { error ->
-                Timber.e(error.toString(), "Could not get case Id &s for status update", caseId)
+                Timber.d(message = "Could not get case Id &s for status update, caseId $caseId")
             } // silently fail
     }
 

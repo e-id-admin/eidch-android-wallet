@@ -7,28 +7,28 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-fun ZonedDateTime.asDayAndMonth(locale: Locale = Locale.getDefault()): String {
+fun ZonedDateTime.asDayAndMonth(locale: Locale): String {
     val localizedPattern = DateFormat.getBestDateTimePattern(locale, "ddMMM")
     return formatPattern(localizedPattern, locale)
 }
 
-fun ZonedDateTime.asHourMinutes(locale: Locale = Locale.getDefault()): String {
+fun ZonedDateTime.asHourMinutes(locale: Locale): String {
     val localizedPattern = DateFormat.getBestDateTimePattern(locale, "HHmm")
     return formatPattern(localizedPattern, locale)
 }
 
-fun ZonedDateTime.asDayMonthYear(locale: Locale = Locale.getDefault()): String {
+fun ZonedDateTime.asDayMonthYear(locale: Locale): String {
     val localizedPattern = DateFormat.getBestDateTimePattern(locale, "ddMMMyyyy")
     return formatPattern(localizedPattern, locale)
 }
 
-fun ZonedDateTime.asDayFullMonthYear(locale: Locale = Locale.getDefault()): String {
+fun ZonedDateTime.asDayFullMonthYear(locale: Locale): String {
     val localizedPattern = DateFormat.getBestDateTimePattern(locale, "ddMMMMyyyy")
     return formatPattern(localizedPattern, locale)
 }
 
-fun ZonedDateTime.asMonthYear(locale: Locale = Locale.getDefault()): String {
-    val localizedPattern = DateFormat.getBestDateTimePattern(locale, "MMMM yyyy")
+fun ZonedDateTime.asDayFullMonthYearHoursMinutes(locale: Locale): String {
+    val localizedPattern = DateFormat.getBestDateTimePattern(locale, "ddMMMMyyyy hh:mm a")
     return formatPattern(localizedPattern, locale).uppercase(locale)
 }
 

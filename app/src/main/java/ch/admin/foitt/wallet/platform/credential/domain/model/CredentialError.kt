@@ -4,7 +4,22 @@ package ch.admin.foitt.wallet.platform.credential.domain.model
 
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchCredentialByConfigError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchIssuerCredentialInformationError
-import ch.admin.foitt.wallet.platform.oca.domain.model.FetchOcaBundleByFormatError
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.CredentialParsingError
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.DatabaseError
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.IntegrityCheckFailed
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.InvalidCredentialOffer
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.InvalidGrant
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.InvalidJsonScheme
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.InvalidMetadataClaims
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.NetworkError
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.Unexpected
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.UnknownIssuer
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.UnsupportedCredentialFormat
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.UnsupportedCredentialIdentifier
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.UnsupportedCryptographicSuite
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.UnsupportedGrantType
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.UnsupportedProofType
+import ch.admin.foitt.wallet.platform.oca.domain.model.FetchVcMetadataByFormatError
 import ch.admin.foitt.wallet.platform.oca.domain.model.OcaError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialOfferRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialRepositoryError
@@ -25,6 +40,7 @@ sealed interface CredentialError {
     data object CredentialParsingError : FetchCredentialError, SaveCredentialError
     data object IntegrityCheckFailed : FetchCredentialError
     data object InvalidMetadataClaims : FetchCredentialError, SaveCredentialError
+    data object InvalidJsonScheme : FetchCredentialError
     data object DatabaseError : FetchCredentialError, SaveCredentialError
     data object NetworkError : FetchCredentialError
     data object UnknownIssuer : FetchCredentialError
@@ -45,68 +61,65 @@ sealed interface AnyCredentialError
 sealed interface MapToCredentialDisplayDataError
 
 fun FetchIssuerCredentialInformationError.toFetchCredentialError(): FetchCredentialError = when (this) {
-    OpenIdCredentialOfferError.NetworkInfoError -> CredentialError.NetworkError
-    is OpenIdCredentialOfferError.Unexpected -> CredentialError.Unexpected(cause)
+    OpenIdCredentialOfferError.NetworkInfoError -> NetworkError
+    is OpenIdCredentialOfferError.Unexpected -> Unexpected(cause)
 }
 
 fun FetchCredentialByConfigError.toFetchCredentialError(): FetchCredentialError = when (this) {
-    is OpenIdCredentialOfferError.InvalidGrant -> CredentialError.InvalidGrant
-    is OpenIdCredentialOfferError.InvalidCredentialOffer -> CredentialError.InvalidCredentialOffer
-    is OpenIdCredentialOfferError.UnsupportedCryptographicSuite -> CredentialError.UnsupportedCryptographicSuite
-    is OpenIdCredentialOfferError.UnsupportedGrantType -> CredentialError.UnsupportedGrantType
-    is OpenIdCredentialOfferError.UnsupportedProofType -> CredentialError.UnsupportedProofType
-    is OpenIdCredentialOfferError.IntegrityCheckFailed -> CredentialError.IntegrityCheckFailed
-    is OpenIdCredentialOfferError.NetworkInfoError -> CredentialError.NetworkError
-    is OpenIdCredentialOfferError.UnsupportedCredentialIdentifier -> CredentialError.UnsupportedCredentialIdentifier
-    is OpenIdCredentialOfferError.UnsupportedCredentialFormat -> CredentialError.UnsupportedCredentialFormat
-    is OpenIdCredentialOfferError.Unexpected -> CredentialError.Unexpected(cause)
-    is OpenIdCredentialOfferError.UnknownIssuer -> CredentialError.UnknownIssuer
+    is OpenIdCredentialOfferError.InvalidGrant -> InvalidGrant
+    is OpenIdCredentialOfferError.InvalidCredentialOffer -> InvalidCredentialOffer
+    is OpenIdCredentialOfferError.UnsupportedCryptographicSuite -> UnsupportedCryptographicSuite
+    is OpenIdCredentialOfferError.UnsupportedGrantType -> UnsupportedGrantType
+    is OpenIdCredentialOfferError.UnsupportedProofType -> UnsupportedProofType
+    is OpenIdCredentialOfferError.IntegrityCheckFailed -> IntegrityCheckFailed
+    is OpenIdCredentialOfferError.NetworkInfoError -> NetworkError
+    is OpenIdCredentialOfferError.UnsupportedCredentialIdentifier -> UnsupportedCredentialIdentifier
+    is OpenIdCredentialOfferError.UnsupportedCredentialFormat -> UnsupportedCredentialFormat
+    is OpenIdCredentialOfferError.Unexpected -> Unexpected(cause)
+    is OpenIdCredentialOfferError.UnknownIssuer -> UnknownIssuer
 }
 
 fun SaveCredentialError.toFetchCredentialError(): FetchCredentialError = when (this) {
-    is CredentialError.CredentialParsingError -> this
-    is CredentialError.DatabaseError -> this
-    is CredentialError.Unexpected -> this
-    is CredentialError.UnsupportedCredentialFormat -> this
-    is CredentialError.InvalidMetadataClaims -> this
+    is CredentialParsingError -> this
+    is DatabaseError -> this
+    is Unexpected -> this
+    is UnsupportedCredentialFormat -> this
+    is InvalidMetadataClaims -> this
 }
 
 fun JsonParsingError.toSaveCredentialError(): SaveCredentialError = when (this) {
-    is JsonError.Unexpected -> CredentialError.UnsupportedCredentialFormat
+    is JsonError.Unexpected -> UnsupportedCredentialFormat
 }
 
 fun Throwable.toSaveCredentialError(message: String): SaveCredentialError {
     Timber.e(t = this, message = message)
-    return CredentialError.Unexpected(this)
+    return Unexpected(this)
 }
 
 fun CredentialOfferRepositoryError.toSaveCredentialError(): SaveCredentialError = when (this) {
-    is SsiError.Unexpected -> CredentialError.Unexpected(cause)
+    is SsiError.Unexpected -> Unexpected(cause)
 }
 
 fun CredentialRepositoryError.toGetAnyCredentialError(): GetAnyCredentialError = when (this) {
-    is SsiError.Unexpected -> CredentialError.Unexpected(cause)
+    is SsiError.Unexpected -> Unexpected(cause)
 }
 
 fun CredentialRepositoryError.toGetAnyCredentialsError(): GetAnyCredentialsError = when (this) {
-    is SsiError.Unexpected -> CredentialError.Unexpected(cause)
+    is SsiError.Unexpected -> Unexpected(cause)
 }
 
 fun AnyCredentialError.toGetAnyCredentialError(): GetAnyCredentialError = when (this) {
-    is CredentialError.Unexpected -> this
+    is Unexpected -> this
 }
 
 fun Throwable.toAnyCredentialError(message: String): AnyCredentialError {
     Timber.e(t = this, message = message)
-    return CredentialError.Unexpected(this)
+    return Unexpected(this)
 }
 
-fun AnyCredentialError.toMapToCredentialDisplayDataError(): MapToCredentialDisplayDataError = when (this) {
-    is CredentialError.Unexpected -> this
-}
-
-fun FetchOcaBundleByFormatError.toFetchCredentialError(): FetchCredentialError = when (this) {
-    is OcaError.InvalidOca -> CredentialError.InvalidCredentialOffer
-    is OcaError.NetworkError -> CredentialError.NetworkError
-    is OcaError.Unexpected -> CredentialError.Unexpected(cause)
+fun FetchVcMetadataByFormatError.toFetchCredentialError(): FetchCredentialError = when (this) {
+    is OcaError.InvalidOca -> InvalidCredentialOffer
+    is OcaError.NetworkError -> NetworkError
+    is OcaError.Unexpected -> Unexpected(cause)
+    OcaError.InvalidJsonScheme -> InvalidJsonScheme
 }

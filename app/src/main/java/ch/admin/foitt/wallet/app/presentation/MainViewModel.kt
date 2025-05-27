@@ -2,8 +2,10 @@ package ch.admin.foitt.wallet.app.presentation
 
 import android.content.Intent
 import android.os.CountDownTimer
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavHostController
+import ch.admin.foitt.wallet.BuildConfig
 import ch.admin.foitt.wallet.feature.login.domain.usecase.LockTrigger
 import ch.admin.foitt.wallet.feature.sessionTimeout.domain.SessionTimeoutNavigation
 import ch.admin.foitt.wallet.feature.sessionTimeout.domain.UserInteractionFlow
@@ -14,7 +16,6 @@ import ch.admin.foitt.wallet.platform.deeplink.domain.usecase.SetDeepLinkIntent
 import ch.admin.foitt.wallet.platform.di.IoDispatcherScope
 import ch.admin.foitt.wallet.platform.login.domain.usecase.AfterLoginWork
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
-import ch.admin.foitt.wallet.platform.scaffold.domain.repository.FullscreenStateRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +34,6 @@ class MainViewModel @Inject constructor(
     private val afterLoginWork: AfterLoginWork,
     private val closeAppDatabase: CloseAppDatabase,
     private val setDeepLinkIntent: SetDeepLinkIntent,
-    private val fullscreenStateRepository: FullscreenStateRepository,
     private val navManager: NavigationManager,
     @IoDispatcherScope private val ioDispatcherScope: CoroutineScope,
 ) : ViewModel() {
@@ -41,8 +41,6 @@ class MainViewModel @Inject constructor(
     private var sessionTimeoutJob: Job? = null
     private var appLifecycleJob: Job? = null
     private var afterLoginWorkJob: Job? = null
-
-    val fullscreenState get() = fullscreenStateRepository.state
 
     private val countdown = object : CountDownTimer(SESSION_TIMEOUT, 1000) {
         @Suppress("EmptyFunctionBlock")
@@ -63,21 +61,24 @@ class MainViewModel @Inject constructor(
         navManager.setNavHost(navHostController)
     }
 
-    fun parseIntent(intent: Intent) {
+    fun handleIntent(activity: FragmentActivity) {
+        val intent = activity.intent
         Timber.d("Intent received,\naction: ${intent.action},\ndata: ${intent.dataString}")
-        val isLauncherIntent = intent.action == Intent.ACTION_MAIN && intent.categories != null &&
-            intent.categories.contains(Intent.CATEGORY_LAUNCHER)
-        // when we come back to the app after a deeplink was opened we get an intent that just contains the package name and main activity
-        val intentHasNullProperties = intent.action == null || intent.scheme == null || intent.dataString == null
-
-        if (isLauncherIntent || intentHasNullProperties) {
-            Timber.d("Intent considered useless")
-        } else {
+        if (intent.isDeeplinkIntent) {
             intent.dataString?.let { intentDataString ->
                 setDeepLinkIntent(intentDataString)
+                // clear intent to avoid re-handling it on activity recreation
+                activity.intent = Intent()
             } ?: Timber.w("Intent dataString null")
+        } else {
+            Timber.d("Intent considered useless $intent")
         }
     }
+
+    private val Intent.isDeeplinkIntent get() =
+        action == Intent.ACTION_VIEW &&
+            (scheme == BuildConfig.SCHEME_CREDENTIAL_OFFER || scheme == BuildConfig.SCHEME_CREDENTIAL_OFFER_SWIYU) &&
+            dataString != null
 
     init {
         Timber.d("MainViewModel initialized")

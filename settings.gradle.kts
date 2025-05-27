@@ -25,3 +25,4 @@ rootProject.name = "PublicBetaWallet"
 include(":app")
 include(":theme")
 include(":openid4vc")
+

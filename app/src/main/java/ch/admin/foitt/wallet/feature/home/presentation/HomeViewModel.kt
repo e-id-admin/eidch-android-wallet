@@ -2,27 +2,26 @@ package ch.admin.foitt.wallet.feature.home.presentation
 
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
-import ch.admin.foitt.wallet.feature.home.domain.model.toEIdRequest
+import ch.admin.foitt.wallet.feature.home.domain.usecase.DeleteEIdRequestCase
 import ch.admin.foitt.wallet.feature.home.domain.usecase.GetEIdRequestsFlow
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialDisplayData
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateAllCredentialStatuses
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestCaseWithState
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.SIdRequestDisplayData
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.SIdRequestDisplayStatus
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.UpdateAllSIdStatuses
 import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
-import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetCurrentAppLocale
 import ch.admin.foitt.wallet.platform.messageEvents.domain.model.CredentialOfferEvent
 import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialOfferEventRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.GetCredentialsWithDisplaysFlow
 import ch.admin.foitt.wallet.platform.utils.trackCompletion
 import ch.admin.foitt.walletcomposedestinations.destinations.BetaIdScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.CredentialDetailScreenDestination
+import ch.admin.foitt.walletcomposedestinations.destinations.EIdGuardianSelectionScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.EIdIntroScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.EIdWalletPairingScreenDestination
 import ch.admin.foitt.walletcomposedestinations.destinations.ErrorScreenDestination
@@ -45,15 +44,13 @@ class HomeViewModel @Inject constructor(
     private val getCredentialCardState: GetCredentialCardState,
     private val updateAllCredentialStatuses: UpdateAllCredentialStatuses,
     private val updateAllSIdStatuses: UpdateAllSIdStatuses,
+    private val deleteEIdRequestCase: DeleteEIdRequestCase,
     private val environmentSetupRepository: EnvironmentSetupRepository,
-    private val getCurrentAppLocale: GetCurrentAppLocale,
     private val navManager: NavigationManager,
     private val credentialOfferEventRepository: CredentialOfferEventRepository,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
     override val topBarState = TopBarState.None
-    override val fullscreenState = FullscreenState.Fullscreen
 
     private val _eventMessage = MutableStateFlow<Int?>(null)
     val eventMessage = _eventMessage.asStateFlow()
@@ -98,27 +95,39 @@ class HomeViewModel @Inject constructor(
 
     private suspend fun mapToUiState(
         credentials: List<CredentialDisplayData>,
-        eIdRequestCasesWithStates: List<EIdRequestCaseWithState>
+        eIdRequestCases: List<SIdRequestDisplayData>
     ): HomeScreenState = when {
         credentials.isNotEmpty() -> {
             HomeScreenState.CredentialList(
-                eIdRequests = eIdRequestCasesWithStates.map { it.toEIdRequest(getCurrentAppLocale()) },
+                eIdRequests = filterEIdRequests(eIdRequestCases),
                 credentials = getCredentialStateList(credentials),
                 onCredentialClick = ::onCredentialPreviewClick,
             )
         }
 
         else -> HomeScreenState.NoCredential(
-            eIdRequests = eIdRequestCasesWithStates.map { it.toEIdRequest(getCurrentAppLocale()) },
+            eIdRequests = filterEIdRequests(eIdRequestCases),
             showBetaIdRequestButton = environmentSetupRepository.betaIdRequestEnabled,
             showEIdRequestButton = environmentSetupRepository.eIdRequestEnabled,
         )
+    }
+
+    private fun filterEIdRequests(eIdRequestCases: List<SIdRequestDisplayData>): List<SIdRequestDisplayData> {
+        return eIdRequestCases.filter { requestCase ->
+            requestCase.status != SIdRequestDisplayStatus.OTHER
+        }
     }
 
     private suspend fun getCredentialStateList(credentialDisplayData: List<CredentialDisplayData>) = credentialDisplayData
         .map { credentialPreview -> getCredentialCardState(credentialPreview) }
 
     fun onStartOnlineIdentification() = navManager.navigateTo(EIdWalletPairingScreenDestination)
+
+    fun onCloseEId(caseId: String) {
+        viewModelScope.launch {
+            deleteEIdRequestCase(caseId)
+        }
+    }
 
     fun onQrScan() = navManager.navigateTo(QrScanPermissionScreenDestination)
 
@@ -129,6 +138,18 @@ class HomeViewModel @Inject constructor(
             updateAllCredentialStatuses()
             updateAllSIdStatuses()
         }.trackCompletion(_isRefreshing)
+    }
+
+    fun onRefreshSIdStatuses() {
+        if (!isRefreshing.value) {
+            viewModelScope.launch {
+                updateAllSIdStatuses()
+            }.trackCompletion(_isRefreshing)
+        }
+    }
+
+    fun onObtainConsent(caseId: String) {
+        navManager.navigateTo(EIdGuardianSelectionScreenDestination(sIdCaseId = caseId))
     }
 
     private fun onCredentialPreviewClick(credentialId: Long) {

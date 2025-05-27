@@ -10,5 +10,5 @@ enum class EIdRequestQueueState {
     REFUSED,
     CANCELLED,
     TIMEOUT,
-    CLOSED,
+    CLOSED
 }

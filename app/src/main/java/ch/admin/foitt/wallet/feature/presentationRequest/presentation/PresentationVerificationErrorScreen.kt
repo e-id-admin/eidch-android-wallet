@@ -30,8 +30,8 @@ private fun PresentationVerificationErrorContent(
 ) {
     CredentialActionFeedbackCardError(
         issuer = verifierUiState,
-        contentTextFirstParagraphText = R.string.tk_present_canceledverification_title,
-        contentTextSecondParagraphText = R.string.tk_present_canceledverification_subtitle,
+        contentTextFirstParagraphText = R.string.tk_present_result_canceledVerification_primary,
+        contentTextSecondParagraphText = R.string.tk_present_result_canceledVerification_secondary,
         contentIcon = R.drawable.wallet_ic_error_general,
         iconAlwaysVisible = true,
         primaryButtonText = R.string.tk_global_close,

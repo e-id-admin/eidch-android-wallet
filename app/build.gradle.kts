@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.devtools.ksp)
     alias(libs.plugins.junit5)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.room)
 }
 
 android {
@@ -99,6 +100,15 @@ android {
         )
         arg("room.generateKotlin", "true")
     }
+
+    room {
+        schemaDirectory("$projectDir/schemas")
+    }
+
+    sourceSets {
+        // Adds exported schema location as test app assets.
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
 }
 
 dependencies {
@@ -135,6 +145,7 @@ dependencies {
     // scanner
     implementation(libs.bundles.androidx.camera)
     implementation(libs.zxing.cpp)
+    implementation(libs.qrcode.kotlin)
 
     // security
     implementation(libs.androidx.security.crypto)
@@ -163,6 +174,9 @@ dependencies {
     implementation(libs.nimbus.jose.jwt)
     implementation(libs.json.path)
 
+    // OCA
+    implementation(libs.java.json.canonicalization)
+
     // Logging
     implementation(libs.timber)
 
@@ -181,6 +195,9 @@ dependencies {
     implementation(libs.aboutlibraries.core)
     implementation(libs.aboutlibraries.compose)
 
+    // Json schema validator
+    implementation(libs.json.schema.validator)
+
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
@@ -188,7 +205,6 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.konsist)
     testImplementation(libs.mockk)
-    testImplementation(libs.androidx.room.testing)
     testImplementation(libs.kotlin.reflect)
 
     val junitBom = platform(libs.junit.jupiter.bom)
@@ -208,5 +224,7 @@ dependencies {
     androidTestImplementation(libs.hilt.android.testing)
     androidTestImplementation(libs.androidx.ui.automator)
     androidTestImplementation(libs.androidx.espresso.intents)
+    androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.mockk.android)
     kspAndroidTest(libs.hilt.android.compiler)
 }

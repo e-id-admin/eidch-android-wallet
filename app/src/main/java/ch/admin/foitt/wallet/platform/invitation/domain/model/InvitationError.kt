@@ -63,6 +63,7 @@ internal fun FetchCredentialError.toProcessInvitationError(): ProcessInvitationE
     CredentialError.UnsupportedProofType,
     CredentialError.UnsupportedCryptographicSuite,
     CredentialError.CredentialParsingError,
+    CredentialError.InvalidJsonScheme,
     CredentialError.InvalidMetadataClaims -> InvitationError.InvalidCredentialOffer
     CredentialError.NetworkError -> InvitationError.NetworkError
     CredentialError.DatabaseError,

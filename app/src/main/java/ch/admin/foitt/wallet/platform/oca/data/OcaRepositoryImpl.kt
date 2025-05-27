@@ -17,7 +17,7 @@ import javax.inject.Inject
 class OcaRepositoryImpl @Inject constructor(
     private val httpClient: HttpClient,
 ) : OcaRepository {
-    override suspend fun fetchVcSdJwtOcaBundle(url: URL): Result<String, OcaRepositoryError> = runSuspendCatching<String> {
+    override suspend fun fetchOcaBundleByUrl(url: URL): Result<String, OcaRepositoryError> = runSuspendCatching<String> {
         httpClient.get(url) {
             accept(ContentType.Application.Json)
         }.body()

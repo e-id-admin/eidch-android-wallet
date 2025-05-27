@@ -35,7 +35,7 @@ private fun PresentationSuccessContent(
 ) {
     CredentialActionFeedbackCardSuccess(
         issuer = verifierUiState,
-        contentTextFirstParagraphText = R.string.tk_present_accept_title,
+        contentTextFirstParagraphText = R.string.tk_present_result_success_primary,
         iconAlwaysVisible = true,
         contentIcon = R.drawable.wallet_ic_check_circle_complete_thin,
         primaryButtonText = R.string.tk_global_close,

@@ -19,6 +19,10 @@ sealed interface TopBarState {
         val titleId: Int?,
     ) : TopBarState
 
+    data class EmptyWithCloseButton(
+        val onClose: () -> Unit,
+    ) : TopBarState
+
     data class OnGradient(
         val onUp: () -> Unit,
         @StringRes

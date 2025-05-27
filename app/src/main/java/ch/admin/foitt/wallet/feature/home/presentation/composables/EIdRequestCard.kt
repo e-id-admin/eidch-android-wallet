@@ -1,6 +1,5 @@
 package ch.admin.foitt.wallet.feature.home.presentation.composables
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,11 +22,11 @@ import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import ch.admin.foitt.wallet.R
-import ch.admin.foitt.wallet.feature.home.domain.model.EIdRequest
 import ch.admin.foitt.wallet.platform.composables.Buttons
 import ch.admin.foitt.wallet.platform.composables.presentation.spaceBarKeyClickable
 import ch.admin.foitt.wallet.platform.credential.presentation.CredentialCardVerySmallSquare
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestQueueState
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.SIdRequestDisplayData
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.SIdRequestDisplayStatus
 import ch.admin.foitt.wallet.platform.preview.WalletComponentPreview
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTexts
@@ -36,45 +34,74 @@ import ch.admin.foitt.wallet.theme.WalletTheme
 
 @Composable
 fun EIdRequestCard(
-    eIdRequest: EIdRequest,
+    eIdRequest: SIdRequestDisplayData,
     onStartOnlineIdentification: () -> Unit,
-) = when (eIdRequest.state) {
-    // state unknown
-    null -> {}
-
-    EIdRequestQueueState.IN_QUEUING -> EIdRequestCardGeneric(
+    onRefresh: () -> Unit,
+    onObtainConsent: () -> Unit,
+    onCloseClick: (() -> Unit)?,
+) = when (eIdRequest.status) {
+    SIdRequestDisplayStatus.AV_READY,
+    SIdRequestDisplayStatus.AV_READY_LEGAL_CONSENT_OK -> EIdRequestCardGeneric(
         title = stringResource(
-            R.string.tk_getEid_notification_eidProgress_title_android,
+            R.string.tk_getEid_notification_eidReady_primary,
             "${eIdRequest.firstName} ${eIdRequest.lastName}"
         ),
         body = stringResource(
-            R.string.tk_getEid_notification_eidProgress_body_android,
-            eIdRequest.onlineSessionStartOpenAt ?: "" // this can not be null here
-        )
-    )
-
-    EIdRequestQueueState.READY_FOR_ONLINE_SESSION -> EIdRequestCardGeneric(
-        title = stringResource(
-            R.string.tk_getEid_notification_eidReady_title_android,
-            "${eIdRequest.firstName} ${eIdRequest.lastName}"
-        ),
-        body = stringResource(
-            R.string.tk_getEid_notification_eidReady_body_android,
+            R.string.tk_getEid_notification_eidReady_secondary,
             eIdRequest.onlineSessionStartTimeoutAt ?: "" // this can not be null here
         ),
         buttonText = stringResource(R.string.tk_getEid_notification_eidReady_greenButton),
         onButtonClick = onStartOnlineIdentification,
     )
-
-    EIdRequestQueueState.CLOSED,
-    EIdRequestQueueState.IN_TARGET_WALLET_PAIRING,
-    EIdRequestQueueState.IN_AUTO_VERIFICATION,
-    EIdRequestQueueState.READY_FOR_FINAL_ENTITLEMENT_CHECK,
-    EIdRequestQueueState.IN_ISSUANCE,
-    EIdRequestQueueState.REFUSED,
-    EIdRequestQueueState.CANCELLED,
-    EIdRequestQueueState.TIMEOUT -> {
-    }
+    SIdRequestDisplayStatus.AV_READY_LEGAL_CONSENT_PENDING -> EIdRequestCardGeneric(
+        title = stringResource(R.string.tk_getEid_notification_eidReady_noConsent_primary),
+        body = stringResource(R.string.tk_getEid_notification_eidReady_noConsent_secondary),
+        buttonText = stringResource(R.string.tk_getEid_notification_eidReady_noConsent_button),
+        onButtonClick = onObtainConsent,
+    )
+    SIdRequestDisplayStatus.QUEUEING,
+    SIdRequestDisplayStatus.QUEUEING_LEGAL_CONSENT_OK -> EIdRequestCardGeneric(
+        title = stringResource(
+            R.string.tk_getEid_notification_eidProgress_primary,
+            "${eIdRequest.firstName} ${eIdRequest.lastName}"
+        ),
+        body = stringResource(
+            R.string.tk_getEid_notification_eidProgress_secondary,
+            eIdRequest.onlineSessionStartOpenAt ?: "" // this can not be null here
+        )
+    )
+    SIdRequestDisplayStatus.QUEUEING_LEGAL_CONSENT_PENDING -> EIdRequestCardGeneric(
+        title = stringResource(R.string.tk_getEid_notification_eidQueue_noConsent_primary),
+        body = stringResource(R.string.tk_getEid_notification_eidQueue_noConsent_secondary),
+        buttonText = stringResource(R.string.tk_getEid_notification_eidQueue_noConsent_button),
+        onButtonClick = onObtainConsent,
+    )
+    SIdRequestDisplayStatus.AV_EXPIRED,
+    SIdRequestDisplayStatus.AV_EXPIRED_LEGAL_CONSENT_OK,
+    SIdRequestDisplayStatus.AV_EXPIRED_LEGAL_CONSENT_PENDING -> EIdRequestCardGeneric(
+        title = stringResource(
+            R.string.tk_getEid_notification_eidExpired_primary,
+            "${eIdRequest.firstName} ${eIdRequest.lastName}"
+        ),
+        body = stringResource(
+            R.string.tk_getEid_notification_eidExpired_secondary,
+            eIdRequest.onlineSessionStartOpenAt ?: "" // this can not be null here
+        ),
+        onCloseClick = onCloseClick,
+    )
+    SIdRequestDisplayStatus.UNKNOWN -> EIdRequestCardGeneric(
+        title = stringResource(
+            R.string.tk_getEid_notification_unknown_primary,
+            "${eIdRequest.firstName} ${eIdRequest.lastName}"
+        ),
+        body = stringResource(
+            R.string.tk_getEid_notification_unknown_secondary,
+        ),
+        useTertiaryButton = false,
+        buttonText = stringResource(R.string.tk_getEid_notification_unknown_button_refresh),
+        onButtonClick = onRefresh,
+    )
+    SIdRequestDisplayStatus.OTHER -> { /* Nothing to show */ }
 }
 
 @Composable
@@ -87,7 +114,7 @@ fun EIdRequestCardGeneric(
     onButtonClick: () -> Unit = {},
     onCloseClick: (() -> Unit)? = null,
 ) = Surface(
-    color = WalletTheme.colorScheme.lightPrimary,
+    color = WalletTheme.colorScheme.surfaceContainerHighest,
     shape = RoundedCornerShape(Sizes.s05),
 ) {
     Row(
@@ -123,13 +150,11 @@ fun EIdRequestCardGeneric(
                         onClick = onButtonClick,
                     )
                 } else {
-                    Buttons.Text(
+                    Buttons.FilledPrimary(
                         modifier = Modifier.semantics {
                             traversalIndex = -2f
                         },
                         text = buttonText,
-                        startIcon = painterResource(R.drawable.wallet_ic_pull_to_refresh),
-                        enabled = false,
                         onClick = onButtonClick,
                     )
                 }
@@ -140,16 +165,11 @@ fun EIdRequestCardGeneric(
             IconButton(
                 modifier = Modifier
                     .size(Sizes.s08)
-                    .background(
-                        color = WalletTheme.colorScheme.secondaryContainer,
-                        shape = CircleShape
-                    )
                     .padding(Sizes.s01)
                     .spaceBarKeyClickable(onCloseClick),
                 onClick = onCloseClick,
             ) {
                 Icon(
-
                     painter = painterResource(id = R.drawable.wallet_ic_cross),
                     contentDescription = "close",
                     tint = WalletTheme.colorScheme.onSecondaryContainer,
@@ -159,39 +179,43 @@ fun EIdRequestCardGeneric(
     }
 }
 
-private class EIdRequestCardPreviewParams : PreviewParameterProvider<EIdRequest> {
-    override val values: Sequence<EIdRequest> = sequenceOf(
-        getEIdRequestForPreview(null),
-        getEIdRequestForPreview(EIdRequestQueueState.IN_QUEUING),
-        getEIdRequestForPreview(EIdRequestQueueState.READY_FOR_ONLINE_SESSION),
-        getEIdRequestForPreview(EIdRequestQueueState.IN_TARGET_WALLET_PAIRING),
-        getEIdRequestForPreview(EIdRequestQueueState.IN_AUTO_VERIFICATION),
-        getEIdRequestForPreview(EIdRequestQueueState.READY_FOR_FINAL_ENTITLEMENT_CHECK),
-        getEIdRequestForPreview(EIdRequestQueueState.IN_ISSUANCE),
-        getEIdRequestForPreview(EIdRequestQueueState.REFUSED),
-        getEIdRequestForPreview(EIdRequestQueueState.CANCELLED),
-        getEIdRequestForPreview(EIdRequestQueueState.TIMEOUT),
-        getEIdRequestForPreview(EIdRequestQueueState.CLOSED),
+private class EIdRequestCardPreviewParams : PreviewParameterProvider<SIdRequestDisplayData> {
+    override val values: Sequence<SIdRequestDisplayData> = sequenceOf(
+        getEIdRequestForPreview(SIdRequestDisplayStatus.AV_READY),
+        getEIdRequestForPreview(SIdRequestDisplayStatus.AV_READY_LEGAL_CONSENT_OK),
+        getEIdRequestForPreview(SIdRequestDisplayStatus.AV_READY_LEGAL_CONSENT_PENDING),
+        getEIdRequestForPreview(SIdRequestDisplayStatus.QUEUEING),
+        getEIdRequestForPreview(SIdRequestDisplayStatus.QUEUEING_LEGAL_CONSENT_OK),
+        getEIdRequestForPreview(SIdRequestDisplayStatus.QUEUEING_LEGAL_CONSENT_PENDING),
+        getEIdRequestForPreview(SIdRequestDisplayStatus.AV_EXPIRED),
+        getEIdRequestForPreview(SIdRequestDisplayStatus.AV_EXPIRED_LEGAL_CONSENT_OK),
+        getEIdRequestForPreview(SIdRequestDisplayStatus.AV_EXPIRED_LEGAL_CONSENT_PENDING),
+        getEIdRequestForPreview(SIdRequestDisplayStatus.UNKNOWN),
+        getEIdRequestForPreview(SIdRequestDisplayStatus.OTHER),
     )
 }
 
-private fun getEIdRequestForPreview(queueingState: EIdRequestQueueState?) = EIdRequest(
-    state = queueingState,
+private fun getEIdRequestForPreview(queueingState: SIdRequestDisplayStatus) = SIdRequestDisplayData(
+    status = queueingState,
     firstName = "Seraina",
     lastName = "Muster",
     onlineSessionStartOpenAt = "06.02.2025",
     onlineSessionStartTimeoutAt = "08.02.2025",
+    caseId = "1",
 )
 
 @WalletComponentPreview
 @Composable
 private fun EIdRequestCardPreview(
-    @PreviewParameter(EIdRequestCardPreviewParams::class) eIdRequest: EIdRequest,
+    @PreviewParameter(EIdRequestCardPreviewParams::class) eIdRequest: SIdRequestDisplayData,
 ) {
     WalletTheme {
         EIdRequestCard(
             eIdRequest = eIdRequest,
             onStartOnlineIdentification = {},
+            onRefresh = {},
+            onObtainConsent = {},
+            onCloseClick = {},
         )
     }
 }

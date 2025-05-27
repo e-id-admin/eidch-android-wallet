@@ -13,4 +13,7 @@ interface EIdRequestCaseDao {
 
     @Query("SELECT * FROM eidrequestcase WHERE id = :id")
     fun getEIdRequestCaseById(id: String): EIdRequestCase
+
+    @Query("DELETE FROM eidrequestcase WHERE id = :id")
+    fun deleteById(id: String)
 }

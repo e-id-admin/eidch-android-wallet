@@ -2,26 +2,35 @@ package ch.admin.foitt.sriValidator.domain.implementation
 
 import ch.admin.foitt.sriValidator.domain.SRIValidator
 import ch.admin.foitt.sriValidator.domain.model.SRIError
-import ch.admin.foitt.sriValidator.domain.model.SRIError.UnsupportedAlgorithm
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.binding
 import java.security.MessageDigest
 import java.util.Base64
 import javax.inject.Inject
 
 class SRIValidatorImpl @Inject constructor() : SRIValidator {
-    override fun validate(data: ByteArray, integrity: String): Boolean {
+    override fun invoke(data: ByteArray, integrity: String): Result<Unit, SRIError> = binding {
         val (algorithm, digest) = integrity.split("-", limit = 2).let { splits ->
             if (splits.size != 2) {
-                throw SRIError.MalformedIntegrity
+                Err(SRIError.MalformedIntegrity).bind<SRIError>()
             }
             listOf(splits[0], splits[1])
         }
 
-        if (algorithm.lowercase() !in supportedAlgorithms) throw UnsupportedAlgorithm(algorithm)
+        if (algorithm.lowercase() !in supportedAlgorithms) {
+            Err(SRIError.UnsupportedAlgorithm(algorithm)).bind<SRIError>()
+        }
 
         val messageDigest = MessageDigest.getInstance(algorithm)
         val dataHash = messageDigest.digest(data)
         val dataHashBase64 = dataHash.toBase64ByteArray()
-        return dataHashBase64.contentEquals(digest.encodeToByteArray())
+
+        if (dataHashBase64.contentEquals(digest.encodeToByteArray()).not()) {
+            Err(SRIError.ValidationFailed).bind<SRIError>()
+        }
+
+        Unit
     }
 
     private fun ByteArray.toBase64ByteArray(): ByteArray =

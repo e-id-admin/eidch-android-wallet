@@ -27,9 +27,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import zxingcpp.BarcodeReader
 import java.util.concurrent.Executors
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
+@Singleton
 class FakeQrScannerImpl @Inject constructor() : QrScanner {
     private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     private val previewStream = Preview.Builder().build()
@@ -50,6 +52,12 @@ class FakeQrScannerImpl @Inject constructor() : QrScanner {
 
     private val _flashLightState = MutableStateFlow(FlashLightState.UNKNOWN)
     override val flashLightState = _flashLightState.asStateFlow()
+
+    private val _qrCodeFlow = MutableStateFlow<String?>(null)
+
+    fun setFakeQrCode(link: String) {
+        _qrCodeFlow.value = link
+    }
 
     override fun initAnalyser(
         onBarcodesScanned: (List<String>) -> Unit,
@@ -172,7 +180,10 @@ class FakeQrScannerImpl @Inject constructor() : QrScanner {
             return
         }
 
-        onQrDetected(listOf("openid-credential-offer://?credential_offer=%7B%22grants%22%3A%7B%22urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Apre-authorized_code%22%3A%7B%22pre-authorized_code%22%3A%22code%22%7D%7D%2C%22version%22%3A%221.0%22%2C%22credential_issuer%22%3A%22https%3A%2F%2Fissuer.domain.com%22%2C%22credential_configuration_ids%22%3A%5B%22elfa-sdjwt%22%5D%7D"))
+        _qrCodeFlow.value?.let {
+            onQrDetected(listOf(it))
+        }
+
         imageProxy.close()
         return
     }

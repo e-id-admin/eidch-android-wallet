@@ -3,6 +3,7 @@ package ch.admin.foitt.openid4vc.domain.model.anycredential
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.SigningAlgorithm
 import kotlinx.serialization.json.JsonElement
+import java.time.Instant
 
 interface AnyCredential {
     val id: Long?
@@ -13,6 +14,8 @@ interface AnyCredential {
     val claimsPath: String
     val validity: CredentialValidity
     val issuer: String?
+    val validFromInstant: Instant?
+    val validUntilInstant: Instant?
 
     fun getClaimsToSave(): JsonElement
     fun getClaimsForPresentation(): JsonElement

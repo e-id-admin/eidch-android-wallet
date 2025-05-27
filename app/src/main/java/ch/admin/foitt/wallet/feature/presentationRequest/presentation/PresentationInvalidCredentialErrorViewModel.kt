@@ -6,9 +6,7 @@ import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActo
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.navigation.domain.model.ComponentScope
-import ch.admin.foitt.wallet.platform.scaffold.domain.model.FullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
-import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetFullscreenState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.extension.navigateUpOrToRoot
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
@@ -24,10 +22,8 @@ class PresentationInvalidCredentialErrorViewModel @Inject constructor(
     getActorForScope: GetActorForScope,
     savedStateHandle: SavedStateHandle,
     setTopBarState: SetTopBarState,
-    setFullscreenState: SetFullscreenState,
-) : ScreenViewModel(setTopBarState, setFullscreenState) {
+) : ScreenViewModel(setTopBarState) {
     override val topBarState = TopBarState.None
-    override val fullscreenState = FullscreenState.Fullscreen
 
     private val navArgs = PresentationInvalidCredentialErrorScreenDestination.argsFrom(savedStateHandle)
     val sentFields = navArgs.sentFields.toList()

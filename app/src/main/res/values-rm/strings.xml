@@ -10,22 +10,22 @@
     <string name="tk_onboarding_biometricsPermissionDisabled_button_primary">Davart ils configuraziuns</string>
     <string name="tk_global_tothesettings">Davart ils configuraziuns</string>
     <string name="tk_global_no">Na, grazia</string>
-    <string name="tk_global_repeat_primarybutton">Empruvar da nov</string>
+    <string name="tk_present_result_error_button_retry">Empruvar da nov</string>
     <string name="tk_global_scan_primarybutton">Scannar</string>
     <string name="tk_global_changepassword">Midar il pled-clav</string>
     <string name="tk_global_add">Agiuntar</string>
     <string name="tk_global_scanqrcode">Scannar il code QR</string>
-    <string name="tk_global_pleasewait">Spetgar per plaschair</string>
+    <string name="tk_present_review_loading">Spetgar per plaschair</string>
     <string name="tk_global_newpassword">Nov pled-clav</string>
     <string name="tk_global_cancel">Interrumper</string>
     <string name="tk_global_decline">Refusar</string>
     <string name="tk_receive_credentialOffer_button_decline">Refusar</string>
+    <string name="tk_receive_credentialOffer_button_accept">Agiuntar</string>
+    <string name="tk_present_review_button_decline">Refusar</string>
     <string name="tk_onboarding_passwordConfirmation_title">Confermar il pled-clav</string>
     <string name="tk_global_checkage">Vul controllar Vossa vegliadetgna</string>
     <string name="tk_global_welcomeback">Bainvegni enavos</string>
-    <string name="tk_receive_credentialOffer_button_accept">Agiuntar</string>
     <string name="tk_global_continue">Vinavant</string>
-    <string name="tk_global_cancel_primarybutton">Interrumper</string>
     <string name="tk_credential_status_demo">Demo</string>
     <string name="tk_global_login_primarybutton">Login</string>
     <string name="tk_global_skip">Sursiglir</string>
@@ -104,14 +104,14 @@
     <string name="tk_global_warning_alt">Avertiment</string>
     <string name="tk_receive_scanning_notfound_alt">Nagin code QR chattà. Empruvai da posiziunar da nov la camera.</string>
     <string name="tk_present_confirm_alt">Conferma</string>
-    <string name="tk_present_accept_title">Vossas infurmaziuns èn vegnidas verifitgadas cun success</string>
+    <string name="tk_present_result_success_primary">Vossas infurmaziuns èn vegnidas verifitgadas cun success</string>
     <string name="tk_global_closewarning_alt">Serrar l’avertiment</string>
     <string name="tk_qrscanner_scanning_body">Per s’identifitgar u agiuntar permiss e documents d’identitad.</string>
     <string name="tk_displaydelete_displaycredential1_hiddenlink2_text">Tar las infurmaziuns persunalas</string>
     <string name="tk_global_loginbiometric_primarybutton">Annunziar cun biometria</string>
     <string name="tk_qrscanner_processing_alt">Il code QR è vegnì scannà</string>
     <string name="tk_present_approval_title">Infurmaziuns dumandadas</string>
-    <string name="tk_global_pleasewait_alt">Spetgar per plaschair. Vossas infurmaziuns vegnan transmessas.</string>
+    <string name="tk_present_review_loading_alt">Spetgar per plaschair. Vossas infurmaziuns vegnan transmessas.</string>
     <string name="tk_receive_scanning_alt">La camera tschertga il code QR</string>
     <string name="tk_changepassword_step1_currentpassword_alt">Endatar il pled-clav actual</string>
     <string name="tk_changepassword_error2_note2">Lunghezza maximala da 64 segns è cuntanschida</string>
@@ -143,7 +143,7 @@
     <string name="tk_login_passwordfailed_alt">Il pled-clav è sbaglià. Per plaschair empruvai da nov.</string>
     <string name="tk_onboarding_nopasswordmismatch_alt">Confermai per plaschair il pled-clav</string>
     <string name="tk_global_visible_alt">Zuppar il pled-clav</string>
-    <string name="tk_global_checkcredential">Vul controllar Vossa cumprova</string>
+    <string name="tk_present_review_credential_section_primary">Vul controllar Vossa cumprova</string>
     <string name="tk_credential_status_invalid_alt">La cumprova è spirada</string>
     <string name="tk_login_forgottenpassword_alt">Dapli infurmaziuns</string>
     <string name="tk_global_logo_alt">Logo</string>
@@ -196,7 +196,7 @@
         <item quantity="one">Il pled-clav è sbaglià. Vus avais anc %s emprova.</item>
         <item quantity="other">Il pled-clav è sbaglià. Vus avais anc %s emprovas.</item>
     </plurals>
-    <string name="tk_present_multiplecredentials_title">Eleger il permiss u document d’identitad</string>
+    <string name="tk_present_compatibleCredentials_primary">Eleger il permiss u document d’identitad</string>
     <string name="tk_global_getbetaid_link_value">https://www.bcs.admin.ch/bcs-web/?lang=RM</string>
     <string name="tk_menu_securityPrivacy_status_passwordChangeSuccessful">Pled-clav midà cun success</string>
     <string name="tk_displaydelete_credentialdelete_body">Questa cumprova vegn stizzada cumplettamain cun tut las datas appartegnentas da l’apparat.</string>
@@ -209,13 +209,15 @@
     <string name="tk_receive_cameraaccessneeded3_body">Per plaschair lubi l’access en las configuraziuns.\n\nSenza camera na pudais Vus registrar nagins permiss e documents d’identitad ni As identifitgar.</string>
     <string name="tk_onboarding_analytics_button_secondary">Refusar</string>
     <string name="tk_global_details_alt">Avrir detagls</string>
-    <string name="tk_global_allow_primarybutton">Lubir</string>
+    <string name="tk_present_review_button_accept">Lubir</string>
     <plurals name="tk_login_locked_body_seconds_android">
         <item quantity="one">Empruvai da nov en %s secunda.</item>
         <item quantity="other">Empruvai da nov en %s secundas.</item>
     </plurals>
     <string name="tk_onboarding_code2_alt">Il pled-clav consista da sis fin sessantaquatter segns</string>
-    <string name="tk_present_approval_subtitle_affectedDetails_android">Vul leger %s infurmaziuns</string>
+    <string name="tk_present_review_claims_section_primary">Vul leger %s infurmaziuns</string>
+    <string name="tk_present_result_canceledVerification_primary">Aborted verification (deepl)</string>
+    <string name="tk_present_result_canceledVerification_secondary">The verification was canceled and no data was transferred. (deepl)</string>
     <string name="tk_login_passwordfailed_android_subtitle">Vus avais anc %s emprova(s)</string>
     <string name="tk_receive_jump_to_details">Tar las infurmaziuns persunalas</string>
     <string name="tk_global_hiddenGoToTop">Turnar ensi</string>
@@ -236,8 +238,8 @@
     <string name="tk_getBetaId_create_body">Il link suandant guida tar ina pagina-web externa. Sur questa pagina-web pudais vus crear ina Beta-ID.\n\nSuandant pudais vus impurtar la Beta-ID e testar la swiyu app cun ella.</string>
     <string name="tk_getBetaId_approval_title">Vul emetter la suandonta cumprova:</string>
     <string name="tk_getBetaId_added_note">La Beta-ID è vegnì agiuntà</string>
-    <string name="tk_present_error_subtitle">Per plaschair empruvar anc ina giada</string>
-    <string name="tk_present_error_title">Up, là è ì in pau en malura!</string>
+    <string name="tk_present_result_error_secondary">Per plaschair empruvar anc ina giada</string>
+    <string name="tk_present_result_error_primary">Up, là è ì in pau en malura!</string>
     <string name="login_biometricTitle">swiyu App s\'inscriver</string>
     <string name="tk_receive_cameraaccessneeded2_title">Lubir l’access a la camera</string>
     <string name="settings_helpLink">https://www.eid.admin.ch/de/help-publicbeta</string>
@@ -266,8 +268,8 @@
     <string name="securitySettings_shareAnalysis_text">Cun cundivider en moda anonima messadis d’errur e crashes gidais Vus a meglierar anc l\'app swiyu.</string>
     <string name="licences_title">Licenzas</string>
     <string name="licences_more_information_text">Dapli infurmaziuns</string>
-    <string name="tk_global_trust_status_trusted">Verifitgà</string>
-    <string name="tk_global_trust_status_notTrusted">Betg verifitgà</string>
+    <string name="tk_issuer_trusted">Verifitgà</string>
+    <string name="tk_issuer_notTrusted">Betg verifitgà</string>
     <string name="tk_onboarding_analytics_tertiary_link_value">https://www.eid.admin.ch/de/swiyu-privacy</string>
     <string name="impressum_more_information_link">https://www.bit.admin.ch/de</string>
     <string name="tk_global_close_alt">Serrar</string>
@@ -282,7 +284,7 @@
     <string name="tk_menu_licences_title">Licenzas</string>
     <string name="impressum_header_text">L\'app swiyu è open source. Voss code da funtauna po vegnir consultà sin GitHub.</string>
     <string name="tk_credential_offer_issuer_name_unknown">Emittent nunenconuschent</string>
-    <string name="tk_present_decline_title">Las datas n’èn betg vegnidas transmessas</string>
+    <string name="tk_present_result_declined_primary">Las datas n’èn betg vegnidas transmessas</string>
     <string name="tk_global_getEid_greenButton">Empustar la e-ID</string>
     <string name="securitySettings_analysisTitle">Analisa &amp; meglieraziun</string>
     <string name="securitySettings_dataProtection">Decleraziun davart la protecziun da datas</string>
@@ -308,8 +310,8 @@
     <string name="tk_menu_homeList_menu_add">Crear ina Beta-ID</string>
     <string name="impressum_title">Impressum</string>
     <string name="tk_getBetaId_link">https://www.bcs.admin.ch/bcs-web/?lang=RM</string>
-    <string name="tk_present_invalidcredential_title">L\'examinaziun da las datas transferidas n\'ha betg gì success.</string>
-    <string name="tk_present_invalidcredential_subtitle">Controllai per plaschair la valaivladad da Vossa cumprova.</string>
+    <string name="tk_present_result_invalidCredential_primary">L\'examinaziun da las datas transferidas n\'ha betg gì success.</string>
+    <string name="tk_present_result_invalidCredential_secondary">Controllai per plaschair la valaivladad da Vossa cumprova.</string>
     <string name="tk_home_notification_credential_accepted">Cumprova è vegnì agiuntà.</string>
     <string name="tk_home_notification_credential_declined">Cumprova refusada.</string>
     <string name="version_enforcement_button">Actualisar l\'app</string>

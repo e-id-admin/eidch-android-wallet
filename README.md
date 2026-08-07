@@ -6,10 +6,10 @@ An official Swiss Government project made by the [Federal Office of Information 
 as part of the electronic identity (E-ID) project.
 
 ## Table of Contents
-¨
 - [Overview](#overview)
 - [Installation and building](#installation-and-building)
-- [Known Issues](#known-issues)
+- [swiyu Sandbox Wallet](#swiyu-sandbox-wallet)
+- [Missing Features and Known Issues](#missing-features-and-known-issues)
 - [Contributions and feedback](#contributions-and-feedback)
 - [License](#license)
 
@@ -23,8 +23,7 @@ For more information about the project please visit the [introduction into Publi
 
 ## Installation and building
 
-The app requires at least Android 10 (Q).
-To be able to build the project, you need at least Java 17 and Android Studio 2023.1.1.
+The app requires at least Android 12 (S).
 
 You can also build the app directly using following command:
 
@@ -36,6 +35,39 @@ You can then find the generated APK under `app/build/outputs/apk/prod/release/ap
 
 > [!NOTE]
 > Please be aware that for building from the command line, you must have set up your own keystore.
+
+## swiyu Sandbox Wallet
+
+A sandbox version of the swiyu Wallet application is available for integration and testing purposes.
+
+### Availability
+
+The swiyu Sandbox Wallet is **not published in the Google Play Store**. It can be downloaded directly from:
+
+> [https://github.com/swiyu-admin-ch/eidch-android-wallet/releases](https://github.com/swiyu-admin-ch/eidch-android-wallet/releases)
+
+This version is intended exclusively for testing against the **Sandbox registries**. It cannot be used with the productive registries.
+
+### Current Limitations
+
+The swiyu Sandbox Wallet currently operates without dedicated backend services. Backend functionality may be added in a future release.
+
+As a result, the following features are **not available**:
+
+- Reporting of non-compliant issuers and verifiers
+- App version enforcement
+- Key Attestation and Client Attestation
+  - Consequently, **hardware-bound credentials cannot be issued**
+- e-ID issuance flow
+
+### Supported URI Schemes
+
+The sandbox wallet currently registers only the following URI schemes:
+
+- `openid-credential-offer`
+- `openid4vp`
+- `swiyu-sandbox`
+- `swiyu-verify-sandbox`
 
 ## Missing Features and Known Issues
 

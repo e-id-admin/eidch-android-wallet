@@ -18,6 +18,9 @@ import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.EI
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.EIdStartAutoVerificationRepository
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.EidApplicationProcessRepository
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.SIdRepository
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.AbortSIdProcess
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.AddWalletPairingId
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.CreateAutoVerificationDPoP
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.FetchGuardianVerification
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.FetchSIdStatus
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.GetDocumentScanResult
@@ -38,7 +41,11 @@ import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.Updat
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.UpdateSIdStatusByCaseId
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.UploadFileToCase
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.ValidateAttestations
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.VerifyWalletPairing
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.WalletPairingStatus
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.AbortSIdProcessImpl
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.AddWalletPairingIdImpl
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.CreateAutoVerificationDPoPImpl
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.FetchGuardianVerificationImpl
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.FetchSIdStatusImpl
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.GetDocumentScanResultImpl
@@ -59,6 +66,7 @@ import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.imple
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.UpdateSIdStatusByCaseIdImpl
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.UploadFileToCaseImpl
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.ValidateAttestationsImpl
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.VerifyWalletPairingImpl
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.WalletPairingStatusImpl
 import ch.admin.foitt.wallet.platform.navigation.DestinationScopedComponent
 import ch.admin.foitt.wallet.platform.navigation.DestinationsScoped
@@ -213,6 +221,26 @@ internal interface EIdApplicationProcessModule {
     fun bindPollSIdStatusByCaseId(
         useCase: PollSIdRequestAfterFileSubmitImpl
     ): PollSIdRequestAfterFileSubmit
+
+    @Binds
+    fun bindCreateAutoVerificationDPoP(
+        useCase: CreateAutoVerificationDPoPImpl,
+    ): CreateAutoVerificationDPoP
+
+    @Binds
+    fun bindAddWalletPairingId(
+        useCase: AddWalletPairingIdImpl
+    ): AddWalletPairingId
+
+    @Binds
+    fun bindVerifyWalletPairing(
+        useCase: VerifyWalletPairingImpl
+    ): VerifyWalletPairing
+
+    @Binds
+    fun bindAbortSIdProcess(
+        useCase: AbortSIdProcessImpl
+    ): AbortSIdProcess
 }
 
 @Module

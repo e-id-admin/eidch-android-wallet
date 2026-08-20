@@ -51,7 +51,7 @@ class ProximityRepositoryImpl @Inject constructor(
             when (state) {
                 is ProximityState.Error -> emit(Err(ProximitySubmissionError.Failed(state.error.message)))
                 is ProximityState.ReadyForEngagement -> emit(Ok(ProximityEngagementUpdate.QrCode(state.qrCodeData)))
-                is ProximityState.RequestingDocuments -> emit(Ok(ProximityEngagementUpdate.Request(state.raw)))
+                is ProximityState.RequestingDocuments -> emit(Ok(ProximityEngagementUpdate.Request(state.raw, state.origin)))
                 else -> {}
             }
         }

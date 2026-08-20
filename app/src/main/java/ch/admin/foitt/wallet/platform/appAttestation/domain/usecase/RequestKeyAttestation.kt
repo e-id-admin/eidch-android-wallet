@@ -10,6 +10,7 @@ import com.github.michaelbull.result.Result
 interface RequestKeyAttestation {
     @CheckResult
     suspend operator fun invoke(
+        actorDid: String? = null,
         keyAlias: String? = KeyAttestation.KEY_ALIAS,
         signingAlgorithm: SigningAlgorithm = KeyAttestation.signingAlgorithm,
         keyStorageSecurityLevels: List<KeyStorageSecurityLevel>? = null,

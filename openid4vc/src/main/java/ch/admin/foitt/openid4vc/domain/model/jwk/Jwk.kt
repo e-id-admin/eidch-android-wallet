@@ -13,7 +13,7 @@ data class Jwk(
     @SerialName("x")
     val x: String,
     @SerialName("y")
-    val y: String,
+    val y: String? = null,
     @SerialName("crv")
     val crv: String,
     @SerialName("kty")

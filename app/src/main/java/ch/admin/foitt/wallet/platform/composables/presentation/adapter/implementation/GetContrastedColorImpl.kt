@@ -1,7 +1,6 @@
 package ch.admin.foitt.wallet.platform.composables.presentation.adapter.implementation
 
 import android.content.Context
-import android.os.Build
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
@@ -23,12 +22,10 @@ class GetContrastedColorImpl @Inject constructor(
             backgroundColor.toArgb(),
         )
 
-        val opacityFilterColor =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && appContext.resources.configuration.isNightModeActive) {
-                Color.Black
-            } else {
-                Color.White
-            }
+        val opacityFilterColor = when {
+            appContext.resources.configuration.isNightModeActive -> Color.Black
+            else -> Color.White
+        }
         val opaqueBackground = ColorUtils.compositeColors(composedBackgroundColor, opacityFilterColor.toArgb())
 
         val contrastWithBlack = ColorUtils.calculateContrast(darkContentColor.toArgb(), opaqueBackground)

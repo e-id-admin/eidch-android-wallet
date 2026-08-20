@@ -10,7 +10,6 @@ import ch.admin.foitt.wallet.platform.ssi.data.source.local.mock.CredentialTestD
 import ch.admin.foitt.wallet.platform.ssi.data.source.local.mock.CredentialTestData.credential2
 import ch.admin.foitt.wallet.platform.ssi.data.source.local.mock.CredentialTestData.credentialIssuerDisplay1
 import ch.admin.foitt.wallet.platform.ssi.data.source.local.mock.CredentialTestData.credentialIssuerDisplay2
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals

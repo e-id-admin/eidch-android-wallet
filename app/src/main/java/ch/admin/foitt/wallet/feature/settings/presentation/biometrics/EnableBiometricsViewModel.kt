@@ -25,8 +25,8 @@ import ch.admin.foitt.wallet.platform.utils.trackCompletion
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.andThen
 import com.github.michaelbull.result.mapError
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -103,10 +103,10 @@ class EnableBiometricsViewModel @AssistedInject constructor(
                 saveUseBiometricLogin(true)
                 Ok(Unit)
             }
-            .onSuccess {
+            .onOk {
                 close()
             }
-            .onFailure { enableBiometricsError ->
+            .onErr { enableBiometricsError ->
                 when (enableBiometricsError) {
                     BiometricsError.Locked -> {
                         Timber.w("Enable biometric error: Lockout")

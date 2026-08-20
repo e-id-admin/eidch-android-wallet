@@ -30,8 +30,8 @@ import ch.admin.foitt.wallet.platform.scanning.di.AvBeamSdkEntryPoint
 import ch.admin.foitt.wallet.platform.utils.openNFCSettings
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.get
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -184,11 +184,14 @@ class EIdNfcScannerViewModel @AssistedInject constructor(
             sIdCaseId = caseId,
             filesDataList = packageResult.files,
             filesCategory = EIdRequestFileCategory.NFC_SCAN,
-        ).onFailure { error ->
+        ).onErr { error ->
             when (error) {
-                is EIdRequestVerificationError.Unexpected -> countAndReturnUnexpectedError("saving files", error.cause)
+                is EIdRequestVerificationError.Unexpected -> countAndReturnUnexpectedError(
+                    "saving files",
+                    error.cause
+                )
             }
-        }.onSuccess {
+        }.onOk {
             Timber.d("$logTag success saving files")
             nfcScannerState.update { NfcScannerState.ScanSuccess(packageResult) }
             triggerShowSummaryDelay()
@@ -229,9 +232,9 @@ class EIdNfcScannerViewModel @AssistedInject constructor(
                 documentScanPackageResult = packageResult,
                 config = config,
             )
-        }.onFailure {
+        }.onErr {
             countAndReturnScanFailure("starting scan", it)
-        }.onSuccess {
+        }.onOk {
             nfcScannerState.update { NfcScannerState.Scanning }
         }
     }
@@ -268,9 +271,9 @@ class EIdNfcScannerViewModel @AssistedInject constructor(
             avBeam.stopScanNfc()
             nfcScanIsFinished.update { false }
             nfcScanIsSuccessful.update { false }
-        }.onFailure {
+        }.onErr {
             countAndReturnUnexpectedError("resetting NFC", it)
-        }.onSuccess {
+        }.onOk {
             nfcScannerState.update { NfcScannerState.Ready }
         }
     }
@@ -284,7 +287,7 @@ class EIdNfcScannerViewModel @AssistedInject constructor(
                     return@launch
                 }
                 avBeam.onNewIntentNfc(intent)
-            }.onFailure {
+            }.onErr {
                 countAndReturnUnexpectedError("passing intent", it)
             }
         }
@@ -312,11 +315,14 @@ class EIdNfcScannerViewModel @AssistedInject constructor(
                         setupSdkFlowCollectionJob()
                         runSuspendCatching {
                             initScannerSdk(currentActivity)
-                            avBeam.initNfcCardReader(currentActivity, environmentSetupRepository.eIdNfcWebSocketUrl)
+                            avBeam.initNfcCardReader(
+                                currentActivity,
+                                environmentSetupRepository.eIdNfcWebSocketUrl
+                            )
                             if (nfcAdapter.isEnabled) {
                                 nfcScannerState.update { NfcScannerState.Ready }
                             }
-                        }.onFailure {
+                        }.onErr {
                             countAndReturnUnexpectedError("initializing NFC", it)
                         }
                     }
@@ -331,7 +337,7 @@ class EIdNfcScannerViewModel @AssistedInject constructor(
                                     avBeam.stopScanNfc()
                                 }
                             }
-                        }.onFailure {
+                        }.onErr {
                             countAndReturnUnexpectedError("stopping scan", it)
                         }
                         nfcScannerState.update { NfcScannerState.NfcOff }
@@ -347,7 +353,7 @@ class EIdNfcScannerViewModel @AssistedInject constructor(
                         (scannerState is NfcScannerState.Scanning || scannerState is NfcScannerState.ReadingChipData) -> {
                         runSuspendCatching {
                             avBeam.onResumeNfc()
-                        }.onFailure {
+                        }.onErr {
                             countAndReturnUnexpectedError("resuming scan", it)
                         }
                     }
@@ -357,7 +363,7 @@ class EIdNfcScannerViewModel @AssistedInject constructor(
                         runSuspendCatching {
                             avBeam.onPauseNfc()
                             avBeam.stopScanNfc()
-                        }.onFailure {
+                        }.onErr {
                             countAndReturnUnexpectedError("stopping scan", it)
                         }
                     }
@@ -365,7 +371,7 @@ class EIdNfcScannerViewModel @AssistedInject constructor(
                     activityState is ActivityState.Paused -> {
                         runSuspendCatching {
                             avBeam.onPauseNfc()
-                        }.onFailure {
+                        }.onErr {
                             countAndReturnUnexpectedError("pausing scan", it)
                         }
                     }
@@ -391,7 +397,7 @@ class EIdNfcScannerViewModel @AssistedInject constructor(
         avBeam.stopScanNfc()
         delay(SUCCESS_DELAY_MS)
         nfcScanIsFinished.update { true }
-    }.onFailure {
+    }.onErr {
         Timber.e(t = it, message = "$logTag unexpected error when stopping the NFC scan")
     }
 

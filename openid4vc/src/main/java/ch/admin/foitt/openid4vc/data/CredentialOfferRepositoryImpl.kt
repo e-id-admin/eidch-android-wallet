@@ -1,7 +1,6 @@
 package ch.admin.foitt.openid4vc.data
 
 import ch.admin.foitt.openid4vc.di.OpenId4VcModule.Companion.NAMED_DEFAULT_HTTP_CLIENT
-import ch.admin.foitt.openid4vc.domain.model.CredentialRequestType
 import ch.admin.foitt.openid4vc.domain.model.HttpErrorBody
 import ch.admin.foitt.openid4vc.domain.model.TokenType
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOfferError
@@ -19,13 +18,11 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.IssuerConf
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.IssuerConfigurationResponse
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.IssuerCredentialInfo
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.RawAndParsedIssuerCredentialInfo
-import ch.admin.foitt.openid4vc.domain.model.credentialoffer.toFetchDeferredCredentialError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.toFetchIssuerConfigurationError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.toFetchIssuerCredentialInfoError
-import ch.admin.foitt.openid4vc.domain.model.credentialoffer.toFetchVerifiableCredentialError
-import ch.admin.foitt.openid4vc.domain.model.jwe.DecryptJWEError
+import ch.admin.foitt.openid4vc.domain.model.jwe.JWEError
 import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
-import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryptionType
+import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryption
 import ch.admin.foitt.openid4vc.domain.repository.CredentialOfferRepository
 import ch.admin.foitt.openid4vc.domain.usecase.jwe.DecryptJWE
 import ch.admin.foitt.openid4vc.utils.Constants
@@ -34,21 +31,22 @@ import ch.admin.foitt.openid4vc.utils.JsonError
 import ch.admin.foitt.openid4vc.utils.JsonParsingError
 import ch.admin.foitt.openid4vc.utils.SafeJson
 import ch.admin.foitt.openid4vc.utils.acceptLanguageHeader
+import ch.admin.foitt.openid4vc.utils.authorizationHeader
 import ch.admin.foitt.openid4vc.utils.content
-import ch.admin.foitt.openid4vc.utils.toContentType
+import ch.admin.foitt.openid4vc.utils.dpopHeader
+import ch.admin.foitt.openid4vc.utils.removeEmptyPathSegments
 import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.getOrThrow
 import com.github.michaelbull.result.mapBoth
 import com.github.michaelbull.result.mapError
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onOk
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -57,7 +55,6 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
@@ -65,11 +62,10 @@ import io.ktor.http.content.TextContent
 import io.ktor.http.contentType
 import io.ktor.http.formUrlEncode
 import io.ktor.http.path
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
 import timber.log.Timber
 import java.net.URL
+import java.security.PrivateKey
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -78,30 +74,40 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
     private val safeJson: SafeJson,
     private val decryptJWE: DecryptJWE,
 ) : CredentialOfferRepository {
-
-    private val latestIssuerCredentialInfoMutex = Mutex()
-    private var latestIssuerCredentialInfo: IssuerCredentialInfo? = null
+    private val latestIssuerCredentialInfo: MutableMap<String, RawAndParsedIssuerCredentialInfo> = mutableMapOf()
 
     override suspend fun fetchRawAndParsedIssuerCredentialInformation(
         issuerEndpoint: URL,
-    ): Result<RawAndParsedIssuerCredentialInfo, FetchIssuerCredentialInfoError> = latestIssuerCredentialInfoMutex.withLock {
-        fetchRawAndParsedIssuerCredentialInfo(
-            issuerEndpoint = issuerEndpoint,
-        ).onSuccess {
-            latestIssuerCredentialInfo = it.issuerCredentialInfo
+        forceRefresh: Boolean,
+    ): Result<RawAndParsedIssuerCredentialInfo, FetchIssuerCredentialInfoError> = coroutineBinding {
+        val issuerUrl = issuerEndpoint.toString()
+        val cached = latestIssuerCredentialInfo[issuerUrl]
+
+        if (!forceRefresh && cached != null) {
+            return@coroutineBinding cached
         }
+
+        fetchRawAndParsedIssuerCredentialInfo(issuerEndpoint)
+            .onOk { latestIssuerCredentialInfo[issuerUrl] = it }
+            .bind()
     }
 
     private suspend fun fetchRawAndParsedIssuerCredentialInfo(
         issuerEndpoint: URL,
     ): Result<RawAndParsedIssuerCredentialInfo, FetchIssuerCredentialInfoError> = coroutineBinding {
         val response = fetchIssuerCredentialInfo(issuerEndpoint).bind()
-        val payload = getPayloadString(response.contentType(), response.body()).bind()
-        val info = safeJson.safeDecodeStringTo<IssuerCredentialInfo>(payload)
+        val jwt = runSuspendCatching { Jwt(response.body()) }
+            .mapError { error ->
+                val message = "issuer credential info jwt parsing failed"
+                Timber.e(t = error, message = message)
+                CredentialOfferError.InvalidSignedMetadata(error.localizedMessage ?: message)
+            }
+            .bind()
+        val info = safeJson.safeDecodeStringTo<IssuerCredentialInfo>(jwt.payloadString)
             .mapError(JsonParsingError::toFetchIssuerCredentialInfoError).bind()
         RawAndParsedIssuerCredentialInfo(
+            rawIssuerCredentialInfo = jwt,
             issuerCredentialInfo = info,
-            rawIssuerCredentialInfo = response.body()
         )
     }
 
@@ -113,14 +119,14 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
             val builder = URLBuilder(issuerEndpoint.toString())
             builder.path("/.well-known/openid-credential-issuer${issuerEndpoint.path}")
 
-            httpClient.get(builder.buildString()) {
+            httpClient.get(builder.buildString().removeEmptyPathSegments()) {
                 accept(applicationJwt)
                 acceptLanguageHeader()
             }
         }.getOrElse {
             runSuspendCatching {
                 // Second prio is OID Connect style (f. ex. https://example.com/issuer1 -> https://example.com/issuer1/.well-known/openid-credential-issuer
-                httpClient.get("$issuerEndpoint/.well-known/openid-credential-issuer") {
+                httpClient.get("$issuerEndpoint/.well-known/openid-credential-issuer".removeEmptyPathSegments()) {
                     accept(applicationJwt)
                     acceptLanguageHeader()
                 }
@@ -128,44 +134,19 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun getPayloadString(
-        contentType: ContentType?,
-        body: String
-    ): Result<String, CredentialOfferError.InvalidSignedMetadata> = coroutineBinding {
-        if (contentType?.content == applicationJwt.content) {
-            runSuspendCatching {
-                Jwt(body).payloadString
-            }.mapError { error ->
-                val message = "issuer credential info jwt parsing failed"
-                Timber.e(t = error, message = message)
-                CredentialOfferError.InvalidSignedMetadata(error.localizedMessage ?: message)
-            }.bind()
-        } else {
-            body
-        }
-    }
-
-    override suspend fun getIssuerCredentialInfo(
-        issuerEndpoint: URL
-    ): Result<IssuerCredentialInfo, FetchIssuerCredentialInfoError> = latestIssuerCredentialInfo?.let { Ok(it) } ?: Err(
-        CredentialOfferError.Unexpected(
-            null
-        )
-    )
-
     override suspend fun fetchIssuerConfiguration(issuerEndpoint: URL) = coroutineBinding {
         // First prio is OID4VCI/IETF style (f. ex. https://example.com/issuer1 -> https://example.com/.well-known/oauth-authorization-server/issuer1
         val response = runSuspendCatching {
             val builder = URLBuilder(issuerEndpoint.toString())
             builder.path("/.well-known/oauth-authorization-server${issuerEndpoint.path}")
 
-            httpClient.get(builder.buildString()) {
+            httpClient.get(builder.buildString().removeEmptyPathSegments()) {
                 accept(applicationJwt)
             }
         }.getOrElse {
             runSuspendCatching {
                 // Second prio is OID Connect style (f. ex. https://example.com/issuer1 -> https://example.com/issuer1/.well-known/oauth-authorization-server
-                httpClient.get("$issuerEndpoint/.well-known/oauth-authorization-server") {
+                httpClient.get("$issuerEndpoint/.well-known/oauth-authorization-server".removeEmptyPathSegments()) {
                     accept(applicationJwt)
                 }
             }.mapError(Throwable::toFetchIssuerConfigurationError).bind()
@@ -174,7 +155,9 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
         parseIssuerConfiguration(response).bind()
     }
 
-    private suspend fun parseIssuerConfiguration(response: HttpResponse) = coroutineBinding {
+    private suspend fun parseIssuerConfiguration(
+        response: HttpResponse,
+    ): Result<IssuerConfigurationResponse, FetchIssuerConfigurationError> = coroutineBinding {
         val rawData = response.body<String>()
         if (response.contentType()?.content == applicationJwt.content) {
             val jwt = runSuspendCatching { Jwt(rawData) }
@@ -184,9 +167,11 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
                     CredentialOfferError.InvalidSignedMetadata(error.localizedMessage ?: message)
                 }.bind()
             val info = parseIssuerConfiguration(jwt.payloadString).bind()
-            IssuerConfigurationResponse.Signed(jwt, info)
+            IssuerConfigurationResponse(jwt, info)
         } else {
-            IssuerConfigurationResponse.Plain(parseIssuerConfiguration(rawData).bind())
+            return@coroutineBinding Err(
+                CredentialOfferError.InvalidSignedMetadata("Signed metadata invalid content type")
+            ).bind<IssuerConfigurationResponse>()
         }
     }
 
@@ -219,7 +204,7 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
 
         httpClient.post(tokenEndpoint) {
             header(Constants.SWIYU_API_VERSION_HEADER, Constants.SWIYU_API_VERSION_2)
-            dpopProof?.let { header(Constants.DPOP_HEADER, it) }
+            dpopProof?.let { dpopHeader(dpopProof) }
             setBody(
                 // Using directly FormDataContent automatically adds a charset in the header, which makes the API fails.
                 TextContent(formParameters, ContentType.Application.FormUrlEncoded)
@@ -261,7 +246,7 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
     private fun handleAccessTokenErrorBody(
         errorBody: HttpErrorBody,
         dpopNonce: String?,
-    ): FetchAccessTokenError = when (errorBody.error.lowercase()) {
+    ): FetchAccessTokenError = when (errorBody.error?.lowercase()) {
         // see https://www.rfc-editor.org/rfc/rfc6749.html#section-5.2
         // see https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-6.3
         "invalid_request" -> CredentialOfferError.InvalidRequest
@@ -286,7 +271,7 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
 
         httpClient.post(tokenEndpoint) {
             header(Constants.SWIYU_API_VERSION_HEADER, Constants.SWIYU_API_VERSION_2)
-            dpopProof?.let { header(Constants.DPOP_HEADER, it) }
+            dpopProof?.let { dpopHeader(dpopProof) }
             setBody(
                 TextContent(formParameters, ContentType.Application.FormUrlEncoded)
             )
@@ -298,65 +283,37 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
     override suspend fun fetchCredential(
         issuerEndpoint: URL,
         tokenResponse: TokenResponse,
-        credentialRequestType: CredentialRequestType,
-        payloadEncryptionType: PayloadEncryptionType,
+        request: String,
+        payloadEncryption: PayloadEncryption,
         dpopProof: String?,
     ): Result<CredentialResponse, FetchVerifiableCredentialError> = coroutineBinding {
         val httpResponse = runSuspendCatching {
             httpClient.post(issuerEndpoint) {
-                contentType(credentialRequestType.toContentType())
-                addAuthorizationHeader(tokenResponse)
-                dpopProof?.let { header(Constants.DPOP_HEADER, it) }
+                contentType(applicationJwt)
+                authorizationHeader(tokenResponse.tokenType, tokenResponse.accessToken)
+                dpopProof?.let { dpopHeader(dpopProof) }
                 header(Constants.SWIYU_API_VERSION_HEADER, Constants.SWIYU_API_VERSION_2)
-                accept(ContentType.Application.Json) // without response encryption it's JSON
-                accept(applicationJwt) // with response encryption it's JWE
-                setBody(credentialRequestType.request)
+                accept(ContentType.Application.Json) // for error responses
+                accept(applicationJwt)
+                setBody(request)
             }
         }.mapError { throwable ->
             throwable.toFetchVerifiableCredentialError()
         }.bind()
 
         val responseBody = httpResponse.body<String>()
-
-        val jsonObjectString = when (httpResponse.headers[HttpHeaders.ContentType]) {
-            applicationJwt.content -> {
-                // handle jwt content type
-                if (payloadEncryptionType is PayloadEncryptionType.Response) {
-                    decryptJWE(
-                        jweString = responseBody,
-                        privateKey = payloadEncryptionType.responseEncryptionKeyPair.keyPair.keyPair.private,
-                    ).mapError(DecryptJWEError::toFetchVerifiableCredentialError)
-                        .bind()
-                } else {
-                    Err(
-                        CredentialOfferError.Unexpected(
-                            IllegalStateException("Received encrypted response without asking for it")
-                        )
-                    ).bind<String>()
-                }
-            }
-
-            else -> responseBody // handle json content type
-        }
+        val keyPair = payloadEncryption.responseEncryptionKeyPair.keyPair.keyPair.private
 
         runSuspendCatching {
             when (httpResponse.status) {
-                HttpStatusCode.OK -> decodeVerifiableCredential(jsonObjectString)
-                HttpStatusCode.Accepted -> decodeDeferredCredential(jsonObjectString)
+                HttpStatusCode.OK -> decodeVerifiableCredential(responseBody, keyPair)
+                HttpStatusCode.Accepted -> decodeCredentialPayload<CredentialResponse.DeferredCredential>(responseBody, keyPair)
                 else -> error("Unhandled credential response status: ${httpResponse.status}")
             }
         }.mapError { throwable ->
             Timber.e(t = throwable, message = "Error during fetch verifiable credential")
             CredentialOfferError.Unexpected(throwable)
         }.bind()
-    }
-
-    private fun HttpRequestBuilder.addAuthorizationHeader(tokenResponse: TokenResponse) {
-        val value = when (tokenResponse.tokenType) {
-            TokenType.BEARER -> "Bearer ${tokenResponse.accessToken}"
-            TokenType.DPOP -> "DPoP ${tokenResponse.accessToken}"
-        }
-        header("Authorization", value)
     }
 
     private suspend fun Throwable.toFetchVerifiableCredentialError(): FetchVerifiableCredentialError = when (this) {
@@ -388,24 +345,31 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
         else -> CredentialOfferError.Unexpected(this)
     }
 
-    private fun decodeVerifiableCredential(jsonObjectString: String): CredentialResponse {
-        val response = safeJson.safeDecodeStringTo<CredentialResponse.VerifiableCredential>(
-            jsonObjectString
-        ).getOrElse { error -> error("Deserialisation to VerifiableCredential failed: $error") }
+    private fun decodeVerifiableCredential(payload: String, keyPair: PrivateKey): CredentialResponse {
+        val response = decodeCredentialPayload<CredentialResponse.VerifiableCredential>(payload, keyPair)
         check(response.credentials.isNotEmpty()) { "No credentials found" }
         return response
     }
 
-    private fun decodeDeferredCredential(jsonObjectString: String): CredentialResponse {
-        return safeJson.safeDecodeStringTo<CredentialResponse.DeferredCredential>(
+    private inline fun <reified T> decodeCredentialPayload(payload: String, keyPair: PrivateKey): T {
+        val jsonObjectString = decryptJWE(
+            jweString = payload,
+            privateKey = keyPair,
+        ).mapError {
+            when (it) {
+                is JWEError.Unexpected -> throw it.throwable
+                is JWEError.PayloadSizeExceeded -> error("Decompressed JWE payload size limit exceeded")
+            }
+        }.getOrThrow()
+        return safeJson.safeDecodeStringTo<T>(
             jsonObjectString
-        ).getOrElse { error -> error("Deserialization to DeferredCredential failed: $error") }
+        ).getOrElse { error -> error("Deserialisation of credential payload failed: $error") }
     }
 
     private fun handleVerifiableCredentialErrorBody(
         errorBody: HttpErrorBody,
         dpopNonce: String?,
-    ): FetchVerifiableCredentialError = when (errorBody.error.lowercase()) {
+    ): FetchVerifiableCredentialError = when (errorBody.error?.lowercase()) {
         // see https://www.rfc-editor.org/rfc/rfc6750.html#section-3.1
         "invalid_request" -> CredentialOfferError.InvalidRequestBearerToken
         "invalid_token" -> CredentialOfferError.InvalidToken
@@ -427,51 +391,31 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
         issuerEndpoint: String,
         accessToken: String,
         tokenType: TokenType,
-        credentialRequestType: CredentialRequestType,
-        payloadEncryptionType: PayloadEncryptionType,
+        request: String,
+        payloadEncryption: PayloadEncryption,
         dpopProof: String?,
     ): Result<CredentialResponse, FetchDeferredCredentialError> = coroutineBinding {
         val httpResponse = runSuspendCatching {
             httpClient.post(issuerEndpoint) {
-                contentType(credentialRequestType.toContentType())
-                header(HttpHeaders.Authorization, authorizationHeaderValue(tokenType, accessToken))
-                dpopProof?.let { header(Constants.DPOP_HEADER, it) }
+                contentType(applicationJwt)
+                authorizationHeader(tokenType, accessToken)
+                dpopProof?.let { dpopHeader(dpopProof) }
                 header(Constants.SWIYU_API_VERSION_HEADER, Constants.SWIYU_API_VERSION_2)
-                accept(ContentType.Application.Json) // without response encryption it's JSON
-                accept(applicationJwt) // with response encryption it's JWE
-                setBody(credentialRequestType.request)
+                accept(ContentType.Application.Json) // for error responses
+                accept(applicationJwt)
+                setBody(request)
             }
         }.mapError { throwable ->
             throwable.toFetchDeferredCredentialError()
         }.bind()
 
         val responseBody = httpResponse.body<String>()
-
-        val jsonObjectString = when (httpResponse.headers[HttpHeaders.ContentType]) {
-            applicationJwt.content -> {
-                // handle jwt content type
-                if (payloadEncryptionType is PayloadEncryptionType.Response) {
-                    decryptJWE(
-                        jweString = responseBody,
-                        privateKey = payloadEncryptionType.responseEncryptionKeyPair.keyPair.keyPair.private,
-                    ).mapError(DecryptJWEError::toFetchDeferredCredentialError)
-                        .bind()
-                } else {
-                    Err(
-                        CredentialOfferError.Unexpected(
-                            IllegalStateException("Received encrypted response without asking for it")
-                        )
-                    ).bind<String>()
-                }
-            }
-
-            else -> responseBody // handle json content type
-        }
+        val keyPair = payloadEncryption.responseEncryptionKeyPair.keyPair.keyPair.private
 
         runSuspendCatching {
             when (httpResponse.status) {
-                HttpStatusCode.OK -> decodeVerifiableCredential(jsonObjectString)
-                HttpStatusCode.Accepted -> decodeDeferredCredential(jsonObjectString)
+                HttpStatusCode.OK -> decodeVerifiableCredential(responseBody, keyPair)
+                HttpStatusCode.Accepted -> decodeCredentialPayload<CredentialResponse.DeferredCredential>(responseBody, keyPair)
                 else -> error("Unhandled credential response status: ${httpResponse.status}")
             }
         }.mapError { throwable ->
@@ -516,7 +460,7 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
     private fun handleDeferredCredentialErrorBody(
         errorBody: HttpErrorBody,
         dpopNonce: String?,
-    ): FetchDeferredCredentialError = when (errorBody.error.lowercase()) {
+    ): FetchDeferredCredentialError = when (errorBody.error?.lowercase()) {
         // see https://www.rfc-editor.org/rfc/rfc6750.html#section-3.1
         "invalid_request" -> CredentialOfferError.InvalidRequestBearerToken
         "invalid_token" -> CredentialOfferError.InvalidToken
@@ -536,14 +480,9 @@ internal class CredentialOfferRepositoryImpl @Inject constructor(
         else -> CredentialOfferError.InvalidCredentialOffer
     }
 
-    private fun authorizationHeaderValue(tokenType: TokenType, accessToken: String): String = when (tokenType) {
-        TokenType.BEARER -> "Bearer $accessToken"
-        TokenType.DPOP -> "DPoP $accessToken"
-    }
-
     companion object {
         private const val PRE_AUTHORIZED_KEY = "urn:ietf:params:oauth:grant-type:pre-authorized_code"
-        private const val REFRESH_TOKEN_KEY = "urn:ietf:params:oauth:grant-type:refresh_token"
+        private const val REFRESH_TOKEN_KEY = "refresh_token"
     }
 }
 

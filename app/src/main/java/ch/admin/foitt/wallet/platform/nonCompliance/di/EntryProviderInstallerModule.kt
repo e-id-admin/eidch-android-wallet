@@ -77,8 +77,7 @@ object EntryProviderInstallerModule {
                 hiltViewModel<NonComplianceListViewModel, NonComplianceListViewModel.Factory>(
                     creationCallback = { factory ->
                         factory.create(
-                            activityId = navKey.activityId,
-                            activityType = navKey.activityType
+                            reportingData = navKey.reportingData,
                         )
                     }
                 )

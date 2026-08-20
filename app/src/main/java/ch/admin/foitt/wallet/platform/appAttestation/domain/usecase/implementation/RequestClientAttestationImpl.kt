@@ -18,6 +18,7 @@ import ch.admin.foitt.wallet.platform.appAttestation.domain.repository.CurrentCl
 import ch.admin.foitt.wallet.platform.appAttestation.domain.usecase.RequestClientAttestation
 import ch.admin.foitt.wallet.platform.appAttestation.domain.usecase.ValidateClientAttestation
 import ch.admin.foitt.wallet.platform.appAttestation.domain.util.getBase64CertificateChain
+import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import ch.admin.foitt.wallet.platform.keyPairGenerator.domain.model.CreateJWSKeyPairError
 import ch.admin.foitt.wallet.platform.keyPairGenerator.domain.usecase.CreateJWSKeyPairInHardware
 import com.github.michaelbull.result.Result
@@ -27,6 +28,7 @@ import javax.inject.Inject
 
 class RequestClientAttestationImpl @Inject constructor(
     private val appAttestationRepository: AppAttestationRepository,
+    private val environmentSetupRepository: EnvironmentSetupRepository,
     private val currentClientAttestationRepository: CurrentClientAttestationRepository,
     private val validateClientAttestation: ValidateClientAttestation,
     private val createJWSKeyPairInHardware: CreateJWSKeyPairInHardware,
@@ -46,7 +48,7 @@ class RequestClientAttestationImpl @Inject constructor(
         }
 
         val challengeResponse = appAttestationRepository
-            .fetchChallenge()
+            .fetchChallenge(environmentSetupRepository.defaultAttestationServiceUrl)
             .mapError(AppAttestationRepositoryError::toRequestClientAttestationError)
             .bind()
 

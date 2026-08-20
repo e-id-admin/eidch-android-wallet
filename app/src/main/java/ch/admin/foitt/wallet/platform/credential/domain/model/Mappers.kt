@@ -2,8 +2,9 @@ package ch.admin.foitt.wallet.platform.credential.domain.model
 
 import ch.admin.foitt.openid4vc.domain.model.SigningAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
+import ch.admin.foitt.openid4vc.domain.model.anycredential.CredentialValidity
 import ch.admin.foitt.openid4vc.domain.model.anycredential.Validity
-import ch.admin.foitt.openid4vc.domain.model.anycredential.getValidity
+import ch.admin.foitt.openid4vc.domain.model.anycredential.getCredentialValidity
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBinding
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtCredential
@@ -84,11 +85,15 @@ internal fun VerifiableCredentialEntity.getDisplayStatus(
     status: CredentialStatus,
     businessExpiryInstant: Instant? = null
 ): CredentialDisplayStatus {
-    val validity = getValidity(validFrom, validUntil, businessExpiryInstant)
+    val validity = getCredentialValidity(
+        validFrom = validFrom,
+        validUntil = validUntil,
+        businessExpiredValidity = businessExpiryInstant,
+    )
     return status.getDisplayStatus(validity, businessExpiryInstant)
 }
 
-private fun CredentialStatus.getDisplayStatus(validity: Validity, businessExpiryInstant: Instant?) = when (validity) {
+private fun CredentialStatus.getDisplayStatus(validity: CredentialValidity, businessExpiryInstant: Instant?) = when (validity) {
     // JWT expiry and notYetValid take priority
     is Validity.Expired -> CredentialDisplayStatus.Expired(validity.expiredAt)
     is Validity.NotYetValid -> if (this == CredentialStatus.REVOKED) {

@@ -25,6 +25,7 @@ import ch.admin.foitt.wallet.platform.database.data.dao.DeferredCredentialDao
 import ch.admin.foitt.wallet.platform.database.data.dao.DeferredCredentialWithDisplaysDao
 import ch.admin.foitt.wallet.platform.database.data.dao.DpopBindingDao
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseDao
+import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseWalletDao
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestCaseWithStateDao
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestFileDao
 import ch.admin.foitt.wallet.platform.database.data.dao.EIdRequestStateDao
@@ -32,6 +33,7 @@ import ch.admin.foitt.wallet.platform.database.data.dao.ImageEntityDao
 import ch.admin.foitt.wallet.platform.database.data.dao.NonComplianceReasonDisplayEntityDao
 import ch.admin.foitt.wallet.platform.database.data.dao.RawCredentialDataDao
 import ch.admin.foitt.wallet.platform.database.data.dao.VerifiableCredentialDao
+import ch.admin.foitt.wallet.platform.database.data.dao.VerifiableCredentialWithAuthenticationDao
 import ch.admin.foitt.wallet.platform.database.data.dao.VerifiableCredentialWithBatchDataAndAuthenticationDao
 import ch.admin.foitt.wallet.platform.database.data.dao.VerifiableCredentialWithBundleItemsWithKeyBindingDao
 import ch.admin.foitt.wallet.platform.database.data.dao.VerifiableCredentialWithDisplaysAndClustersDao
@@ -47,8 +49,8 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.mapError
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -123,9 +125,9 @@ internal class DatabaseWrapper @Inject constructor(
                 val createdDatabase = databaseInitializer.create(passphrase).bind()
 
                 createdDatabase.tryDecrypt()
-                    .onSuccess {
+                    .onOk {
                         database.update { createdDatabase }
-                    }.onFailure {
+                    }.onErr {
                         createdDatabase.close()
                         database.update { null }
                     }.bind()
@@ -140,7 +142,7 @@ internal class DatabaseWrapper @Inject constructor(
             coroutineBinding {
                 val createdDatabase = databaseInitializer.create(passphrase).bind()
                 createdDatabase.tryDecrypt()
-                    .onFailure {
+                    .onErr {
                         // do not close the current instance at this point
                         Timber.d("wrong passphrase")
                     }.bind()
@@ -183,6 +185,9 @@ internal class DatabaseWrapper @Inject constructor(
     override val verifiableCredentialWithBatchDataAndAuthenticationDaoFlow:
         StateFlow<VerifiableCredentialWithBatchDataAndAuthenticationDao?> =
         getDaoFlow { it?.verifiableCredentialWithBatchDataAndAuthenticationDao() }
+    override val verifiableCredentialWithAuthenticationDao: StateFlow<VerifiableCredentialWithAuthenticationDao?> =
+        getDaoFlow { it?.verifiableCredentialWithAuthenticationDao() }
+
     override val bundleItemEntityDaoFlow: StateFlow<BundleItemEntityDao?> = getDaoFlow { it?.bundleItemEntityDao() }
     override val bundleItemWithKeyBindingDaoFlow: StateFlow<BundleItemWithKeyBindingDao?> = getDaoFlow {
         it?.bundleItemWithKeyBindingDao()
@@ -232,6 +237,8 @@ internal class DatabaseWrapper @Inject constructor(
 
     override val eIdRequestCaseDaoFlow: StateFlow<EIdRequestCaseDao?> =
         getDaoFlow { it?.eIdRequestCaseDao() }
+    override val eIdRequestCaseWalletDaoFlow: StateFlow<EIdRequestCaseWalletDao?> =
+        getDaoFlow { it?.eIdRequestCaseWalletDao() }
     override val eIdRequestStateDaoFlow: StateFlow<EIdRequestStateDao?> = getDaoFlow { it?.eIdRequestStateDao() }
     override val eIdRequestCaseWithStateDaoFlow: StateFlow<EIdRequestCaseWithStateDao?> = getDaoFlow {
         it?.eIdRequestCaseWithStateDao()

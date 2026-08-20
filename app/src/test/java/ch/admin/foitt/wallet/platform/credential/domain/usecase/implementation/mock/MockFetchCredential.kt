@@ -68,6 +68,10 @@ internal object MockFetchCredential {
         every { identifier } returns CREDENTIAL_IDENTIFIER_2
     }
 
+    val mockIdentityJwt = mockk<Jwt> {
+        every { keyId } returns "keyId"
+    }
+
     val oneConfigCredentialInformation = mockk<IssuerCredentialInfo> {
         every { credentialEndpoint } returns CREDENTIAL_ENDPOINT
         every { credentialConfigurations } returns listOf(credentialConfig)
@@ -75,41 +79,27 @@ internal object MockFetchCredential {
         every { credentialResponseEncryption } returns responseEncryption
         every { credentialIssuer } returns CREDENTIAL_ISSUER_URL
         every { batchCredentialIssuance } returns null
+        every { identityTrustStatement } returns mockIdentityJwt
     }
 
     val multipleConfigCredentialInformation = mockk<IssuerCredentialInfo> {
         every { credentialEndpoint } returns CREDENTIAL_ENDPOINT
         every { credentialConfigurations } returns listOf(credentialConfig, credentialConfig2)
-        every { credentialRequestEncryption } returns null
-        every { credentialResponseEncryption } returns null
+        every { credentialRequestEncryption } returns requestEncryption
+        every { credentialResponseEncryption } returns responseEncryption
         every { credentialIssuer } returns CREDENTIAL_ISSUER_URL
         every { batchCredentialIssuance } returns null
+        every { identityTrustStatement } returns mockIdentityJwt
     }
 
     val noConfigCredentialInformation = mockk<IssuerCredentialInfo> {
         every { credentialEndpoint } returns CREDENTIAL_ENDPOINT
         every { credentialConfigurations } returns emptyList()
-        every { credentialRequestEncryption } returns null
-        every { credentialResponseEncryption } returns null
-        every { credentialIssuer } returns CREDENTIAL_ISSUER_URL
-        every { batchCredentialIssuance } returns null
-    }
-
-    val noPayloadEncryptionCredentialInformation = mockk<IssuerCredentialInfo> {
-        every { credentialEndpoint } returns CREDENTIAL_ENDPOINT
-        every { credentialConfigurations } returns listOf(credentialConfig)
-        every { credentialRequestEncryption } returns null
-        every { credentialResponseEncryption } returns null
-        every { credentialIssuer } returns CREDENTIAL_ISSUER_URL
-        every { batchCredentialIssuance } returns null
-    }
-    val onlyRequestEncryptionCredentialInformation = mockk<IssuerCredentialInfo> {
-        every { credentialEndpoint } returns CREDENTIAL_ENDPOINT
-        every { credentialConfigurations } returns listOf(credentialConfig)
         every { credentialRequestEncryption } returns requestEncryption
-        every { credentialResponseEncryption } returns null
+        every { credentialResponseEncryption } returns responseEncryption
         every { credentialIssuer } returns CREDENTIAL_ISSUER_URL
         every { batchCredentialIssuance } returns null
+        every { identityTrustStatement } returns mockIdentityJwt
     }
 
     val oneIdentifierCredentialOffer = mockk<CredentialOffer> {

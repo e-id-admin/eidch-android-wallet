@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,7 +57,7 @@ fun EnterCurrentPassphraseScreen(viewModel: EnterCurrentPassphraseViewModel) {
         textFieldValue = viewModel.textFieldValue.collectAsStateWithLifecycle().value,
         isPassphraseValid = viewModel.isPassphraseValid.collectAsStateWithLifecycle().value,
         hideSupportText = viewModel.hideSupportText.collectAsStateWithLifecycle().value,
-        remainingAuthAttempts = viewModel.remainingAuthAttempts.collectAsStateWithLifecycle().value,
+        attemptsLeft = viewModel.remainingAuthAttempts.collectAsStateWithLifecycle().value,
         isLoading = isLoading,
         onTextFieldValueChange = viewModel::onTextFieldValueChange,
         onCheckPassphrase = viewModel::onCheckPassphrase,
@@ -69,12 +70,12 @@ private fun EnterCurrentPassphraseScreenContent(
     passphraseInputFieldState: PassphraseInputFieldState,
     isPassphraseValid: Boolean,
     hideSupportText: Boolean,
-    remainingAuthAttempts: Int,
+    attemptsLeft: Int,
     isLoading: Boolean,
     onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
-    when (currentWindowAdaptiveInfo().windowWidthClass()) {
+    when (currentWindowAdaptiveInfoV2().windowWidthClass()) {
         WindowWidthClass.COMPACT -> WalletLayouts.CompactContainerFloatingBottom(
             modifier = Modifier.background(WalletTheme.colorScheme.surfaceContainerLow),
             shouldScrollUnderTopBar = false,
@@ -84,7 +85,7 @@ private fun EnterCurrentPassphraseScreenContent(
                     textFieldValue = textFieldValue,
                     passphraseInputFieldState = passphraseInputFieldState,
                     hideSupportText = hideSupportText,
-                    remainingAuthAttempts = remainingAuthAttempts,
+                    attemptsLeft = attemptsLeft,
                     onTextFieldValueChange = onTextFieldValueChange,
                     onCheckPassphrase = onCheckPassphrase
                 )
@@ -113,7 +114,7 @@ private fun EnterCurrentPassphraseScreenContent(
                     passphraseInputFieldState = passphraseInputFieldState,
                     isPassphraseValid = isPassphraseValid,
                     hideSupportText = hideSupportText,
-                    remainingAuthAttempts = remainingAuthAttempts,
+                    attemptsLeft = attemptsLeft,
                     onTextFieldValueChange = onTextFieldValueChange,
                     onCheckPassphrase = onCheckPassphrase
                 )
@@ -128,7 +129,7 @@ private fun CompactContent(
     textFieldValue: TextFieldValue,
     passphraseInputFieldState: PassphraseInputFieldState,
     hideSupportText: Boolean,
-    remainingAuthAttempts: Int,
+    attemptsLeft: Int,
     onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
@@ -137,6 +138,10 @@ private fun CompactContent(
         modifier = Modifier.fillMaxWidth(),
         colors = WalletTextFieldColors.textFieldColors(),
         passphraseInputFieldState = passphraseInputFieldState,
+        errorMessage = errorMessage(
+            hideSupportText = hideSupportText,
+            attemptsLeft = attemptsLeft,
+        ),
         textFieldValue = textFieldValue,
         label = {
             Label(
@@ -146,7 +151,8 @@ private fun CompactContent(
         supportingText = {
             if (!hideSupportText) {
                 SupportingText(
-                    remainingAuthAttempts = remainingAuthAttempts,
+                    attemptsLeft = attemptsLeft,
+                    isError = passphraseInputFieldState is PassphraseInputFieldState.Error,
                 )
             }
         },
@@ -163,7 +169,7 @@ private fun LargeContent(
     passphraseInputFieldState: PassphraseInputFieldState,
     isPassphraseValid: Boolean,
     hideSupportText: Boolean,
-    remainingAuthAttempts: Int,
+    attemptsLeft: Int,
     onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
@@ -175,6 +181,10 @@ private fun LargeContent(
             modifier = Modifier.weight(1f),
             colors = WalletTextFieldColors.textFieldColors(),
             passphraseInputFieldState = passphraseInputFieldState,
+            errorMessage = errorMessage(
+                hideSupportText = hideSupportText,
+                attemptsLeft = attemptsLeft,
+            ),
             textFieldValue = textFieldValue,
             label = {
                 Label(
@@ -184,7 +194,8 @@ private fun LargeContent(
             supportingText = {
                 if (!hideSupportText) {
                     SupportingText(
-                        remainingAuthAttempts = remainingAuthAttempts,
+                        attemptsLeft = attemptsLeft,
+                        isError = passphraseInputFieldState is PassphraseInputFieldState.Error,
                     )
                 }
             },
@@ -214,10 +225,35 @@ private fun Label(
 )
 
 @Composable
+private fun attemptsLeftText(
+    attemptsLeft: Int,
+): String = pluralStringResource(
+    R.plurals.tk_changepassword_error1_android_note2,
+    attemptsLeft,
+    attemptsLeft
+)
+
+@Composable
+private fun errorMessage(
+    hideSupportText: Boolean,
+    attemptsLeft: Int,
+): String? = if (hideSupportText) {
+    null
+} else {
+    attemptsLeftText(attemptsLeft)
+}
+
+@Composable
 private fun SupportingText(
-    remainingAuthAttempts: Int,
+    attemptsLeft: Int,
+    isError: Boolean,
 ) = WalletTexts.BodySmall(
-    text = pluralStringResource(R.plurals.tk_changepassword_error1_android_note2, remainingAuthAttempts, remainingAuthAttempts),
+    // In the error state the attempts-left info is already announced via the field's
+    // error() semantics (see errorMessage), so clear semantics here to avoid a double
+    // announcement. When not in error (e.g. arriving with attempts already reduced), the
+    // error() semantics is absent, so keep this readable as the only carrier of the info.
+    modifier = if (isError) Modifier.clearAndSetSemantics {} else Modifier,
+    text = attemptsLeftText(attemptsLeft),
     color = WalletTheme.colorScheme.error
 )
 
@@ -241,7 +277,7 @@ private fun EnterCurrentPassphraseScreenPreview() {
             passphraseInputFieldState = PassphraseInputFieldState.Error,
             isPassphraseValid = true,
             hideSupportText = false,
-            remainingAuthAttempts = 4,
+            attemptsLeft = 4,
             isLoading = false,
             onTextFieldValueChange = {},
             onCheckPassphrase = {},

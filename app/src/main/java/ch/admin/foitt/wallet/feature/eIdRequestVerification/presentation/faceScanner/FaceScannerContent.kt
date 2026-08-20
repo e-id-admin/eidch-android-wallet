@@ -25,9 +25,9 @@ internal fun FaceScannerErrorContent(
     @StringRes content: Int,
     @StringRes buttonText: Int,
     onButton: () -> Unit,
-    onHelp: () -> Unit
+    onHelp: (() -> Unit)?,
 ) {
-    FaceScannerContent(
+    FaceScannerErrorContent(
         icon = R.drawable.wallet_ic_cross_circle_colored,
         primaryText = title,
         secondaryText = content,
@@ -39,14 +39,14 @@ internal fun FaceScannerErrorContent(
 }
 
 @Composable
-private fun FaceScannerContent(
+private fun FaceScannerErrorContent(
     @DrawableRes icon: Int,
     @StringRes primaryText: Int,
     @StringRes secondaryText: Int?,
     @StringRes buttonText: Int?,
     @StringRes buttonHelp: Int,
     onRetry: () -> Unit = {},
-    onHelp: () -> Unit,
+    onHelp: (() -> Unit)?,
 ) = WalletLayouts.ScrollableColumnWithPicture(
     stickyStartContent = {
         ScreenMainImage(
@@ -80,10 +80,13 @@ private fun FaceScannerContent(
             text = stringResource(secondaryText)
         )
     }
-    Spacer(modifier = Modifier.height(Sizes.s06))
-    Buttons.TextLink(
-        text = stringResource(id = buttonHelp),
-        onClick = onHelp,
-        endIcon = painterResource(id = R.drawable.wallet_ic_external_link),
-    )
+
+    onHelp?.let {
+        Spacer(modifier = Modifier.height(Sizes.s06))
+        Buttons.TextLink(
+            text = stringResource(id = buttonHelp),
+            onClick = onHelp,
+            endIcon = painterResource(id = R.drawable.wallet_ic_external_link),
+        )
+    }
 }

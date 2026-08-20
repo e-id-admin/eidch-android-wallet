@@ -1,6 +1,7 @@
 package ch.admin.foitt.openid4vc.util.httpClient
 
 import ch.admin.foitt.openid4vc.utils.ContentLengthLimiter
+import ch.admin.foitt.openid4vc.utils.ContentSizeLimitException
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.mock.MockEngine
@@ -10,7 +11,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
-import kotlinx.io.IOException
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -37,7 +37,7 @@ class ContentLengthLimiterTest {
     @Test
     fun `GET with valid content-length header throws if content length exceeds limit`() = runTest {
         val client = createClient(setContentLengthHeader = true, contentLengthLimit = contentLength.toLong() - 1)
-        val exception = assertThrows<IOException> {
+        val exception = assertThrows<ContentSizeLimitException> {
             client.get("https://example.com")
         }
         assertTrue(exception.message?.startsWith("Content-Length exceeds limit", ignoreCase = true) ?: false)
@@ -46,7 +46,7 @@ class ContentLengthLimiterTest {
     @Test
     fun `GET without content-length header throws if content length exceeds limit`() = runTest {
         val client = createClient(setContentLengthHeader = false, contentLengthLimit = contentLength.toLong() - 1)
-        val exception = assertThrows<IOException> {
+        val exception = assertThrows<ContentSizeLimitException> {
             client.get("https://example.com")
         }
         assertTrue(exception.message?.startsWith("streamed content size exceeds limit", ignoreCase = true) ?: false)

@@ -1,18 +1,29 @@
+@file:Suppress("TooManyFunctions")
+
 package ch.admin.foitt.wallet.platform.utils
 
 import android.content.Context
-import android.content.Context.ACCESSIBILITY_SERVICE
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.usb.UsbConstants
+import android.hardware.usb.UsbManager
 import android.net.Uri
 import android.nfc.NfcAdapter
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import androidx.annotation.StringRes
+import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import com.github.michaelbull.result.coroutines.runSuspendCatching
-import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onErr
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.time.delay
 import timber.log.Timber
+import kotlin.time.Duration.Companion.milliseconds
 
 fun Context.openSecuritySettings() {
     val intent = Intent(Settings.ACTION_SECURITY_SETTINGS).apply {
@@ -47,13 +58,13 @@ fun Context.openLink(uri: String) {
         val intent = Intent(Intent.ACTION_VIEW, uri.toUri())
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
-    }.onFailure {
+    }.onErr {
         Timber.w(t = it, message = "Could not open uri: $uri")
     }
 }
 
 fun Context.isScreenReaderOn(): Boolean {
-    val manager = getSystemService(ACCESSIBILITY_SERVICE) as AccessibilityManager?
+    val manager = getSystemService<AccessibilityManager>()
     return manager != null && manager.isEnabled && manager.isTouchExplorationEnabled
 }
 
@@ -63,6 +74,48 @@ fun Context.hasNFCHardware(): Boolean =
 
 fun Context.hasGyroscope(): Boolean =
     this.packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_GYROSCOPE)
+
+val Context.isUsbImageDeviceDetected: Boolean get() {
+    Timber.d("Usb device: detection triggered")
+    val pictureTransfertProtocol = 1
+    val usbManager = getSystemService<UsbManager>() ?: return false
+    val devices = usbManager.deviceList.values
+
+    return devices.any { device ->
+        Timber.d("Usb device: detected ${device.deviceName}")
+        if (device.deviceProtocol == pictureTransfertProtocol) return@any true
+
+        if (
+            device.deviceClass == UsbConstants.USB_CLASS_VIDEO ||
+            device.deviceClass == UsbConstants.USB_CLASS_STILL_IMAGE
+        ) {
+            return@any true
+        }
+
+        (0 until device.interfaceCount).any { index ->
+            val usbInterface = device.getInterface(index)
+
+            if (usbInterface.interfaceProtocol == pictureTransfertProtocol) return@any true
+
+            if (
+                usbInterface.interfaceClass == UsbConstants.USB_CLASS_VIDEO ||
+                usbInterface.interfaceClass == UsbConstants.USB_CLASS_STILL_IMAGE
+            ) {
+                return@any true
+            } else {
+                Timber.d("Usb device: ${device.deviceName} has no image capabilities")
+                false
+            }
+        }
+    }
+}
+
+val Context.isUsbImageDeviceDetectedFlow: Flow<Boolean> get() = flow {
+    while (true) {
+        emit(isUsbImageDeviceDetected)
+        delay(500.milliseconds)
+    }
+}.distinctUntilChanged().conflate()
 
 fun Context.openNFCSettings() {
     runSuspendCatching {
@@ -81,7 +134,7 @@ fun Context.openNFCSettings() {
             }
         }
         startActivity(intent)
-    }.onFailure {
+    }.onErr {
         Timber.w(t = it, message = "Exception while trying to open NFC settings")
     }
 }
@@ -103,7 +156,7 @@ fun Context.shareText(
 
         val shareIntent = Intent.createChooser(sendIntent, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(shareIntent)
-    }.onFailure {
+    }.onErr {
         Timber.w(t = it, message = "Failed sharing text")
     }
 }

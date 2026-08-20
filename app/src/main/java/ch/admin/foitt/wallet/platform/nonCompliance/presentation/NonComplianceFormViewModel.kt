@@ -2,8 +2,8 @@ package ch.admin.foitt.wallet.platform.nonCompliance.presentation
 
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
-import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityActorDisplayData
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.GetActivityActorDisplaysFlow
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorMetadataDisplayData
 import ch.admin.foitt.wallet.platform.composables.presentation.adapter.GetDrawableFromImageData
 import ch.admin.foitt.wallet.platform.genericScreens.domain.model.GenericErrorScreenState
 import ch.admin.foitt.wallet.platform.messageEvents.domain.model.NonComplianceEvent
@@ -133,7 +133,7 @@ class NonComplianceFormViewModel @AssistedInject constructor(
     }.filterNotNull()
         .toStateFlow(NonComplianceActorUiState.EMPTY)
 
-    private suspend fun mapToUiState(activityActorDisplayData: ActivityActorDisplayData): NonComplianceActorUiState {
+    private suspend fun mapToUiState(activityActorDisplayData: ActorMetadataDisplayData): NonComplianceActorUiState {
         val drawable = activityActorDisplayData.actorImageData?.let {
             getDrawableFromImageData(it)
         }

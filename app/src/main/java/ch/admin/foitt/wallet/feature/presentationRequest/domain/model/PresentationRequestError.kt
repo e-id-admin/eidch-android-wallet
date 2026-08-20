@@ -18,7 +18,7 @@ import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationReq
 
 interface PresentationRequestError {
     data object RawSdJwtParsingError : SubmitPresentationError
-    data class ValidationError(val error: String, val description: String?) : SubmitPresentationError
+    data class ValidationError(val error: String?, val description: String?) : SubmitPresentationError
     data object InvalidCredentialError : SubmitPresentationError
     data object VerificationError : SubmitPresentationError
     data object InvalidUrl : SubmitPresentationError

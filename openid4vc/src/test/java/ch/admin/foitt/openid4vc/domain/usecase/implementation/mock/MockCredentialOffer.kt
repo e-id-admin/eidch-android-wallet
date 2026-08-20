@@ -3,7 +3,6 @@ package ch.admin.foitt.openid4vc.domain.usecase.implementation.mock
 import ch.admin.foitt.openid4vc.domain.model.DeferredCredential
 import ch.admin.foitt.openid4vc.domain.model.SigningAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.TokenType
-import ch.admin.foitt.openid4vc.domain.model.VerifiableCredential
 import ch.admin.foitt.openid4vc.domain.model.VerifiableCredentialParams
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOffer
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialRequestProofsJwt
@@ -21,10 +20,12 @@ import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBindingType
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockIssuerCredentialConfiguration.proofTypeConfigHardwareBinding
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockIssuerCredentialConfiguration.proofTypeConfigSoftwareBinding
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockIssuerCredentialConfiguration.vcSdJwtCredentialConfiguration
+import io.mockk.mockk
 import java.net.URL
 
 internal object MockCredentialOffer {
     val CREDENTIAL_ISSUER = URL("https://issuer.example.com")
+    val issuerTrustStatement = mockk<Jwt>()
     const val CREDENTIAL_IDENTIFIER = "credentialIdentifier"
     private val CREDENTIALS = listOf(CREDENTIAL_IDENTIFIER)
     private const val PRE_AUTHORIZED_CODE = "preAuthorizedCode"
@@ -72,9 +73,10 @@ internal object MockCredentialOffer {
     val validIssuerCredentialInfo = IssuerCredentialInfo(
         credentialEndpoint = CREDENTIAL_ENDPOINT,
         credentialIssuer = CREDENTIAL_ISSUER,
+        identityTrustStatement = issuerTrustStatement,
         credentialConfigurations = listOf(vcSdJwtCredentialConfiguration),
-        credentialRequestEncryption = null,
-        credentialResponseEncryption = null,
+        credentialRequestEncryption = mockk(),
+        credentialResponseEncryption = mockk(),
         display = listOf(),
         deferredCredentialEndpoint = DEFERRED_CREDENTIAL_ENDPOINT,
         nonceEndpoint = NONCE_ENDPOINT,
@@ -85,6 +87,7 @@ internal object MockCredentialOffer {
     )
 
     const val KEY_ID = "keyId"
+    const val DPOP_KEY_ID = "dpopKeyId"
     private const val PROOF_JWT = "proofJwt"
     val jwtProofs = CredentialRequestProofsJwt(listOf(PROOF_JWT))
 
@@ -109,9 +112,10 @@ internal object MockCredentialOffer {
         bindingType = KeyBindingType.SOFTWARE,
     )
 
-    val validVerifiableCredential = VerifiableCredential(
-        credential = CREDENTIAL,
-        keyBinding = keyBinding
+    private val dpopKeyBinding = KeyBinding(
+        identifier = DPOP_KEY_ID,
+        algorithm = ALGORITHM,
+        bindingType = KeyBindingType.SOFTWARE,
     )
 
     val validDeferredCredential = DeferredCredential(
@@ -123,7 +127,7 @@ internal object MockCredentialOffer {
         refreshToken = REFRESH_TOKEN,
         endpoint = DEFERRED_CREDENTIAL_ENDPOINT,
         pollInterval = POLLING_INTERVAL,
-        dpopKeyBinding = null,
+        dpopKeyBinding = dpopKeyBinding,
     )
 
     val verifiableCredentialParamsSoftwareBinding = VerifiableCredentialParams(
@@ -139,48 +143,20 @@ internal object MockCredentialOffer {
         isBatch = false,
     )
 
-    val verifiableCredentialParamsHardwareBinding = VerifiableCredentialParams(
+    val verifiableCredentialParamsHardwareBinding = verifiableCredentialParamsSoftwareBinding.copy(
         proofTypeConfig = proofTypeConfigHardwareBinding,
-        tokenEndpoint = validIssuerConfig.tokenEndpoint,
-        dpopSigningAlgValuesSupported = null,
-        grants = offerWithPreAuthorizedCode.grants,
-        issuerEndpoint = offerWithPreAuthorizedCode.credentialIssuer,
-        credentialEndpoint = validIssuerCredentialInfo.credentialEndpoint,
-        deferredCredentialEndpoint = null,
-        credentialConfiguration = vcSdJwtCredentialConfiguration,
-        nonceEndpoint = NONCE_ENDPOINT,
-        isBatch = false,
     )
 
-    val verifiableCredentialParamsWithoutBinding = VerifiableCredentialParams(
+    val verifiableCredentialParamsWithoutBinding = verifiableCredentialParamsSoftwareBinding.copy(
         proofTypeConfig = null,
-        tokenEndpoint = validIssuerConfig.tokenEndpoint,
-        dpopSigningAlgValuesSupported = null,
-        grants = offerWithPreAuthorizedCode.grants,
-        issuerEndpoint = offerWithPreAuthorizedCode.credentialIssuer,
-        credentialEndpoint = validIssuerCredentialInfo.credentialEndpoint,
-        deferredCredentialEndpoint = null,
-        credentialConfiguration = vcSdJwtCredentialConfiguration,
-        nonceEndpoint = null,
-        isBatch = false,
     )
 
-    val verifiableDeferredCredentialParamsHardwareBinding = VerifiableCredentialParams(
-        proofTypeConfig = proofTypeConfigHardwareBinding,
-        tokenEndpoint = validIssuerConfig.tokenEndpoint,
-        dpopSigningAlgValuesSupported = null,
-        grants = offerWithPreAuthorizedCode.grants,
-        issuerEndpoint = offerWithPreAuthorizedCode.credentialIssuer,
-        credentialEndpoint = validIssuerCredentialInfo.credentialEndpoint,
+    val verifiableDeferredCredentialParamsHardwareBinding = verifiableCredentialParamsHardwareBinding.copy(
         deferredCredentialEndpoint = validIssuerCredentialInfo.deferredCredentialEndpoint,
-        credentialConfiguration = vcSdJwtCredentialConfiguration,
-        nonceEndpoint = NONCE_ENDPOINT,
-        isBatch = false,
     )
 
     val verifiableCredentialParamsWithoutBindingWithDpop = verifiableCredentialParamsWithoutBinding.copy(
         tokenEndpoint = validIssuerConfigWithDpop.tokenEndpoint,
         dpopSigningAlgValuesSupported = validIssuerConfigWithDpop.dpopSigningAlgValuesSupported,
-        nonceEndpoint = NONCE_ENDPOINT,
     )
 }

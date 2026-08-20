@@ -57,7 +57,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onImprint() = navManager.navigateTo(Destination.ImpressumScreen)
 
-    val onDevsViewer = environmentSetupRepository.devsSettingsEnabled
+    val devsSettingsEnabled = environmentSetupRepository.devsSettingsEnabled
 
     val onLottieViewer: (() -> Unit)? = if (environmentSetupRepository.isLottieViewerEnabled) {
         { navManager.navigateTo(Destination.LottieViewerScreen) }

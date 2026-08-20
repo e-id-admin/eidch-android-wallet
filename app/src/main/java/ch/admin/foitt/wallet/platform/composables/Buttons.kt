@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.CircularProgressIndicator
@@ -20,7 +23,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -52,16 +57,18 @@ object Buttons {
         enabled: Boolean = true,
         isActive: Boolean = false,
         activeText: String? = text,
+        isSmall: Boolean = false,
     ) = BaseButton(
         text = text,
         onClick = onClick,
+        colors = WalletButtonColors.primary(),
         modifier = modifier,
         startIcon = startIcon,
         endIcon = endIcon,
         enabled = enabled,
         isActive = isActive,
         activeText = activeText,
-        colors = WalletButtonColors.primary(),
+        isSmall = isSmall
     )
 
     @Composable
@@ -72,15 +79,17 @@ object Buttons {
         startIcon: Painter? = null,
         endIcon: Painter? = null,
         enabled: Boolean = true,
+        isSmall: Boolean = false,
     ) = BaseButton(
         text = text,
         onClick = onClick,
+        colors = WalletButtonColors.secondary(),
         modifier = modifier,
         startIcon = startIcon,
         endIcon = endIcon,
         enabled = enabled,
         isActive = false,
-        colors = WalletButtonColors.secondary(),
+        isSmall = isSmall
     )
 
     @Composable
@@ -91,14 +100,16 @@ object Buttons {
         startIcon: Painter? = null,
         endIcon: Painter? = null,
         enabled: Boolean = true,
+        isSmall: Boolean = false,
     ) = BaseButton(
         text = text,
         onClick = onClick,
+        colors = WalletButtonColors.primaryFixed(),
         modifier = modifier,
         startIcon = startIcon,
         endIcon = endIcon,
         enabled = enabled,
-        colors = WalletButtonColors.primaryFixed(),
+        isSmall = isSmall
     )
 
     @Composable
@@ -109,14 +120,16 @@ object Buttons {
         startIcon: Painter? = null,
         endIcon: Painter? = null,
         enabled: Boolean = true,
+        isSmall: Boolean = false,
     ) = BaseButton(
         text = text,
         onClick = onClick,
+        colors = WalletButtonColors.secondaryFixed(),
         modifier = modifier,
         startIcon = startIcon,
         endIcon = endIcon,
         enabled = enabled,
-        colors = WalletButtonColors.secondaryFixed(),
+        isSmall = isSmall
     )
 
     @Composable
@@ -127,14 +140,16 @@ object Buttons {
         startIcon: Painter? = null,
         endIcon: Painter? = null,
         enabled: Boolean = true,
+        isSmall: Boolean = false,
     ) = BaseButton(
         text = text,
         onClick = onClick,
+        colors = WalletButtonColors.secondaryContainerFixed(),
         modifier = modifier,
         startIcon = startIcon,
         endIcon = endIcon,
         enabled = enabled,
-        colors = WalletButtonColors.secondaryContainerFixed(),
+        isSmall = isSmall
     )
 
     @Composable
@@ -147,16 +162,18 @@ object Buttons {
         enabled: Boolean = true,
         isActive: Boolean = false,
         activeText: String? = text,
+        isSmall: Boolean = false,
     ) = BaseButton(
         text = text,
         onClick = onClick,
+        colors = WalletButtonColors.tertiary(),
         modifier = modifier,
         startIcon = startIcon,
         endIcon = endIcon,
         enabled = enabled,
         isActive = isActive,
         activeText = activeText,
-        colors = WalletButtonColors.tertiary(),
+        isSmall = isSmall
     )
 
     @Composable
@@ -167,15 +184,17 @@ object Buttons {
         startIcon: Painter? = null,
         endIcon: Painter? = null,
         enabled: Boolean = true,
+        isSmall: Boolean = false,
     ) = BaseButton(
         text = text,
         onClick = onClick,
+        colors = WalletButtonColors.outlined(),
         modifier = modifier,
         startIcon = startIcon,
         endIcon = endIcon,
         enabled = enabled,
-        colors = WalletButtonColors.outlined(),
         hasBorder = true,
+        isSmall = isSmall
     )
 
     @Composable
@@ -183,18 +202,20 @@ object Buttons {
         text: String,
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
+        colors: ButtonColors = WalletButtonColors.text(),
         startIcon: Painter? = null,
         endIcon: Painter? = null,
         enabled: Boolean = true,
-        colors: ButtonColors = WalletButtonColors.text(),
+        isSmall: Boolean = false,
     ) = BaseButton(
         text = text,
         onClick = onClick,
+        colors = colors,
         modifier = modifier,
         startIcon = startIcon,
         endIcon = endIcon,
         enabled = enabled,
-        colors = colors
+        isSmall = isSmall
     )
 
     @Composable
@@ -205,14 +226,16 @@ object Buttons {
         startIcon: Painter? = null,
         endIcon: Painter? = null,
         enabled: Boolean = true,
+        isSmall: Boolean = false,
     ) = BaseButton(
         text = text,
         onClick = onClick,
+        colors = WalletButtonColors.tonal(),
         modifier = modifier,
         startIcon = startIcon,
         endIcon = endIcon,
         enabled = enabled,
-        colors = WalletButtonColors.tonal(),
+        isSmall = isSmall
     )
 
     @Composable
@@ -277,6 +300,7 @@ private fun BaseButton(
     text: String,
     onClick: () -> Unit,
     colors: ButtonColors,
+    isSmall: Boolean,
     modifier: Modifier = Modifier,
     startIcon: Painter? = null,
     endIcon: Painter? = null,
@@ -284,21 +308,27 @@ private fun BaseButton(
     isActive: Boolean = false,
     activeText: String? = text,
     hasBorder: Boolean = false
-) = Button(
-    onClick = onClick,
-    modifier = modifier.spaceBarKeyClickable(onClick),
-    shape = WalletTheme.shapes.extraLarge,
-    colors = colors,
-    enabled = enabled,
-    border = if (hasBorder) buttonBorder(enabled = enabled, buttonColors = colors) else null,
 ) {
-    ButtonContent(
-        text = text,
-        startIcon = startIcon,
-        endIcon = endIcon,
-        isActive = isActive,
-        activeText = activeText,
-    )
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+        Button(
+            onClick = onClick,
+            modifier = modifier
+                .defaultMinSize(minHeight = if (isSmall) Sizes.s09 else Sizes.s12)
+                .spaceBarKeyClickable(onClick),
+            shape = WalletTheme.shapes.extraLarge,
+            colors = colors,
+            enabled = enabled,
+            border = if (hasBorder) buttonBorder(enabled = enabled, buttonColors = colors) else null,
+        ) {
+            ButtonContent(
+                text = text,
+                startIcon = startIcon,
+                endIcon = endIcon,
+                isActive = isActive,
+                activeText = activeText,
+            )
+        }
+    }
 }
 
 @Composable
@@ -372,9 +402,16 @@ private fun buttonBorder(
 private fun BottomButtonPreview() {
     WalletTheme {
         Column(
+            modifier = Modifier.verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Sizes.s03)
         ) {
-            Buttons.FilledPrimary(text = "Click Me Primary", onClick = {})
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Sizes.s04),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Buttons.FilledPrimary(text = "Click Me Primary", onClick = {})
+                Buttons.FilledPrimary(text = "Click Me Primary", onClick = {}, isSmall = true)
+            }
             Buttons.FilledPrimary(text = "Primary Disable", onClick = {}, enabled = false)
             Buttons.TonalSecondary(text = "Click Me Secondary", onClick = {})
             Buttons.TonalSecondary(text = "Secondary Disable", onClick = {}, enabled = false)

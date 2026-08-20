@@ -13,7 +13,7 @@ import ch.admin.foitt.wallet.platform.database.domain.model.ImageEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.NonComplianceReasonDisplayEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableProgressionState
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 import java.net.URL
@@ -39,7 +39,7 @@ object ActivityListMocks {
         validFrom = 1,
         validUntil = 123456789,
         createdAt = 1,
-        updatedAt = 1,
+        refreshedAt = 1,
         nextPresentableBundleItemId = 1,
     )
 
@@ -158,7 +158,7 @@ object ActivityListMocks {
     )
 
     val activityActorDisplayWithImage = ActivityActorDisplayWithImage(
-        actorDisplay =activityActorDisplay4,
+        actorDisplay = activityActorDisplay4,
         image = null
     )
 }

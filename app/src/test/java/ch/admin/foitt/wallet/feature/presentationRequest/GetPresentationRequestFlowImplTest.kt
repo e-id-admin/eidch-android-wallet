@@ -2,7 +2,6 @@ package ch.admin.foitt.wallet.feature.presentationRequest
 
 import ch.admin.foitt.openid4vc.domain.model.claimsPathPointer.ClaimsPathPointerComponent
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationRequest
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.PresentationRequestError
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.implementation.GetPresentationRequestFlowImpl
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
@@ -11,6 +10,7 @@ import ch.admin.foitt.wallet.platform.credentialCluster.domain.usercase.MapToCre
 import ch.admin.foitt.wallet.platform.database.domain.model.ClusterWithDisplaysAndClaims
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimClusterEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClusterWithDisplays
+import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialWithDisplaysAndClusters
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
@@ -51,9 +51,6 @@ class GetPresentationRequestFlowImplTest {
     lateinit var mockCredentialWithDisplaysAndClusters: VerifiableCredentialWithDisplaysAndClusters
 
     val mockRequestedPath = listOf(ClaimsPathPointerComponent.String("claimKey"))
-
-    @MockK
-    lateinit var mockAuthorizationRequest: AuthorizationRequest
 
     @MockK
     lateinit var mockClusterWithDisplays: CredentialClusterWithDisplays
@@ -117,7 +114,7 @@ class GetPresentationRequestFlowImplTest {
     fun `Getting the presentation request flow maps errors from the MapToCredentialDisplayData use case`() = runTest {
         val exception = IllegalStateException("map to credential claim display data error")
         coEvery {
-            mockMapToCredentialDisplayData(any(), any(), any(), any())
+            mockMapToCredentialDisplayData(any(), any(), any(), any(), any())
         } returns Err(CredentialError.Unexpected(exception))
 
         val result = getPresentationRequestFlow(
@@ -145,6 +142,7 @@ class GetPresentationRequestFlowImplTest {
             )
         )
         coEvery { mockCredentialWithDisplaysAndClusters.credential } returns MockCredentialDetail.credential
+        every { mockCredentialWithDisplaysAndClusters.nextPresentableStatus } returns CredentialStatus.VALID
         every { mockClusterWithDisplays.cluster } returns mockCredentialClaimClusterEntity
         every { mockCredentialClaimClusterEntity.path } returns "[]"
         coEvery {
@@ -158,10 +156,10 @@ class GetPresentationRequestFlowImplTest {
                 mockVerifiableCredential,
                 MockCredentialDetail.credentialDisplays,
                 claims,
-                CredentialFormat.VC_SD_JWT
+                CredentialFormat.VC_SD_JWT,
+                CredentialStatus.VALID,
             )
         } returns Ok(MockCredentialDetail.credentialDisplayData)
-        coEvery { mockAuthorizationRequest.clientId } returns CLIENT_ID
 
         coEvery {
             mockMapToCredentialClaimCluster(any())
@@ -169,8 +167,6 @@ class GetPresentationRequestFlowImplTest {
     }
 
     private companion object {
-        const val CLIENT_ID = "clientId"
-
         const val CREDENTIAL_ID1 = 1L
     }
 }

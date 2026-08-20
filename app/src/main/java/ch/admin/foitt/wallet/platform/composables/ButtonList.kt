@@ -49,11 +49,15 @@ fun HorizontalButtonList(
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(Sizes.s02),
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(Sizes.s03),
         ) {
             val scopeContent = ButtonListItemScopeImpl(0).apply(content)
             scopeContent.items.forEachIndexed { idx, item ->
-                item.itemContent(idx) { onButtonClicked(idx) }
+                // Text buttons take only the remaining width (fill = false), so icon-only buttons
+                // keep their min width instead of being squeezed by a long label.
+                val itemModifier = if (item.hasText) Modifier.weight(1f, fill = false) else Modifier
+                item.itemContent(idx, itemModifier) { onButtonClicked(idx) }
             }
         }
     }
@@ -78,7 +82,7 @@ fun VerticalButtonList(
         ) {
             val scopeContent = ButtonListItemScopeImpl(0).apply(content)
             scopeContent.items.forEachIndexed { idx, item ->
-                item.itemContent(idx) { onButtonClicked(idx) }
+                item.itemContent(idx, Modifier) { onButtonClicked(idx) }
             }
         }
     }
@@ -104,7 +108,10 @@ interface VerticalButtonListItemScope {
 @DslMarker
 private annotation class ButtonListItemScopeMarker
 
-private data class ButtonListItem(val itemContent: @Composable (idx: Int, onClick: () -> Unit) -> Unit)
+private data class ButtonListItem(
+    val hasText: Boolean,
+    val itemContent: @Composable (idx: Int, modifier: Modifier, onClick: () -> Unit) -> Unit,
+)
 
 private class ButtonListItemScopeImpl(
     private val primaryIndex: Int,
@@ -113,13 +120,14 @@ private class ButtonListItemScopeImpl(
 
     override fun button(@DrawableRes iconId: Int, @StringRes label: Int?, @StringRes contentDescription: Int) {
         items.add(
-            ButtonListItem { idx, onClick ->
+            ButtonListItem(hasText = label != null) { idx, modifier, onClick ->
                 ButtonListButton(
                     icon = iconId,
                     text = label,
                     contentDescription = contentDescription,
                     isPrimary = primaryIndex == idx,
                     onClick = onClick,
+                    modifier = modifier,
                 )
             }
         )
@@ -127,13 +135,14 @@ private class ButtonListItemScopeImpl(
 
     override fun button(@DrawableRes iconId: Int, @StringRes contentDescription: Int) {
         items.add(
-            ButtonListItem { idx, onClick ->
+            ButtonListItem(hasText = false) { idx, modifier, onClick ->
                 ButtonListButton(
                     icon = iconId,
                     text = null,
                     contentDescription = contentDescription,
                     isPrimary = primaryIndex == idx,
                     onClick = onClick,
+                    modifier = modifier,
                 )
             }
         )
@@ -147,6 +156,7 @@ private fun ButtonListButton(
     @StringRes contentDescription: Int,
     isPrimary: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val containerColor by animateColorAsState(
         targetValue = if (isPrimary) WalletTheme.colorScheme.primary else WalletTheme.colorScheme.secondaryContainer,
@@ -164,7 +174,7 @@ private fun ButtonListButton(
             contentColor = contentColor,
         ),
         shape = CircleShape,
-        modifier = Modifier
+        modifier = modifier
             .sizeIn(minWidth = Sizes.s16, minHeight = Sizes.s16)
             .contentDescription(stringResource(contentDescription))
     ) {

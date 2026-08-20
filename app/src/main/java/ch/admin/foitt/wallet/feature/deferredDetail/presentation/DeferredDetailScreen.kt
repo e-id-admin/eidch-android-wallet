@@ -16,7 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,10 +47,10 @@ import ch.admin.foitt.wallet.platform.composables.presentation.windowWidthClass
 import ch.admin.foitt.wallet.platform.credential.presentation.CredentialCardCreditFormat
 import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialCardMocks
 import ch.admin.foitt.wallet.platform.database.domain.model.DeferredProgressionState
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.preview.AllCompactScreensPreview
 import ch.admin.foitt.wallet.platform.preview.AllLargeScreensPreview
 import ch.admin.foitt.wallet.platform.scaffold.presentation.LocalScaffoldPaddings
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 import ch.admin.foitt.wallet.theme.Sizes
@@ -121,7 +121,7 @@ private fun CoroutineScope.hideModalSheet(
 private fun DeferredDetailScreenContent(
     isLoading: Boolean,
     deferredDetail: DeferredDetailUiState,
-    windowWidthClass: WindowWidthClass = currentWindowAdaptiveInfo().windowWidthClass(),
+    windowWidthClass: WindowWidthClass = currentWindowAdaptiveInfoV2().windowWidthClass(),
     onButtonClick: () -> Unit = {},
 ) {
     Box(

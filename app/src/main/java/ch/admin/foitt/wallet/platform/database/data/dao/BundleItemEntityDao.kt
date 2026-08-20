@@ -7,8 +7,8 @@ import androidx.room.Query
 import androidx.room.Transaction
 import ch.admin.foitt.wallet.platform.database.domain.model.BundleItemEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
-import ch.admin.foitt.wallet.platform.database.domain.model.PresentableBatchItemCount
 
+@Suppress("TooManyFunctions")
 @Dao
 interface BundleItemEntityDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -22,12 +22,11 @@ interface BundleItemEntityDao {
     fun getAll(): List<BundleItemEntity>
 
     @Transaction
-    @Query("SELECT credentialId, COUNT(*) AS count FROM BundleItemEntity GROUP BY credentialId HAVING COUNT(*) > 1")
-    fun getCountOfNeverPresented(): List<PresentableBatchItemCount>
-
-    @Transaction
     @Query("SELECT * FROM BundleItemEntity WHERE credentialId = :credentialId")
     fun getAllByCredentialId(credentialId: Long): List<BundleItemEntity>
+
+    @Query("SELECT COUNT(*) FROM BundleItemEntity WHERE credentialId = :credentialId AND presented = 0")
+    fun getNeverPresentedCountByCredentialId(credentialId: Long): Int
 
     @Query("UPDATE BundleItemEntity SET status = :status WHERE credentialId = :id")
     fun updateStatusByCredentialId(id: Long, status: CredentialStatus): Int

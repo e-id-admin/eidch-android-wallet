@@ -159,6 +159,7 @@ object MockCredentialDetail {
         credentialDisplay = credentialDisplay1,
         actorEnvironment = ActorEnvironment.PRODUCTION,
         progressionState = VerifiableProgressionState.ACCEPTED,
+        createdAt = 1,
     )
 
     val credentialDetail = CredentialDetail(
@@ -177,6 +178,7 @@ object MockCredentialDetail {
         credentialDisplay = credentialDisplay1,
         actorEnvironment = ActorEnvironment.PRODUCTION,
         progressionState = VerifiableProgressionState.ACCEPTED,
+        createdAt = 1,
     )
 
     val credentialDisplayData2 = CredentialDisplayData(
@@ -185,5 +187,6 @@ object MockCredentialDetail {
         credentialDisplay = credentialDisplay2,
         actorEnvironment = ActorEnvironment.BETA,
         progressionState = VerifiableProgressionState.ACCEPTED,
+        createdAt = 2,
     )
 }

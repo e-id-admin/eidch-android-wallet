@@ -40,6 +40,7 @@ class PairCurrentWalletImpl @Inject constructor(
             }
             is ProcessInvitationResult.CredentialOffer,
             is ProcessInvitationResult.PresentationRequest,
+            is ProcessInvitationResult.PresentationRequestReview,
             is ProcessInvitationResult.PresentationRequestCredentialList -> {
                 Err(EIdRequestError.InvalidDeferredCredentialOffer).bind()
             }

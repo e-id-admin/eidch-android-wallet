@@ -4,15 +4,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
-import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
 import ch.admin.foitt.wallet.platform.badges.presentation.BadgeBottomSheet
 import ch.admin.foitt.wallet.platform.credential.presentation.CredentialActionFeedbackCardError
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 import ch.admin.foitt.wallet.theme.WalletTheme
@@ -29,12 +29,12 @@ fun PresentationFailureScreen(viewModel: PresentationFailureViewModel) {
             onDismiss = viewModel::onDismissBottomSheet
         )
     }
-
     PresentationFailureContent(
         verifierUiState = viewModel.verifierUiState.collectAsStateWithLifecycle().value,
         onRetry = viewModel::onRetry,
         onClose = viewModel::onClose,
-        onBadge = viewModel::onBadge
+        onActorNameTap = viewModel::onActorNameTap,
+        onReportedActorInfo = viewModel::onReportedActorInfo
     )
 }
 
@@ -43,19 +43,21 @@ private fun PresentationFailureContent(
     verifierUiState: ActorUiState,
     onRetry: () -> Unit,
     onClose: () -> Unit,
-    onBadge: (BadgeType) -> Unit,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit,
 ) {
     CredentialActionFeedbackCardError(
         issuer = verifierUiState,
-        contentTextFirstParagraphText = R.string.tk_present_result_error_primary,
-        contentTextSecondParagraphText = R.string.tk_present_result_error_secondary,
+        contentTextFirstParagraphText = stringResource(R.string.tk_present_result_error_primary),
+        contentTextSecondParagraphText = stringResource(R.string.tk_present_result_error_secondary),
         iconAlwaysVisible = true,
         contentIcon = R.drawable.wallet_ic_error_general,
-        primaryButtonText = R.string.tk_present_result_error_button_retry,
+        primaryButtonText = stringResource(R.string.tk_present_result_error_button_retry),
         secondaryButtonText = R.string.tk_global_cancel,
         onPrimaryButton = onRetry,
         onSecondaryButton = onClose,
-        onBadge = onBadge,
+        onActorNameTap = onActorNameTap,
+        onReportedActorInfo = onReportedActorInfo
     )
 }
 
@@ -75,7 +77,8 @@ private fun PresentationFailurePreview() {
             ),
             onRetry = {},
             onClose = {},
-            onBadge = {},
+            onActorNameTap = {},
+            onReportedActorInfo = {}
         )
     }
 }

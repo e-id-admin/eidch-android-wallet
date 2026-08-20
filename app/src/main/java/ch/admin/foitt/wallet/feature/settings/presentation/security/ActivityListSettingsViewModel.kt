@@ -12,7 +12,7 @@ import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onOk
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,7 +81,7 @@ class ActivityListSettingsViewModel @Inject constructor(
     fun onDeleteAllActivitiesConfirmed() = viewModelScope.launch {
         onCloseBottomSheet()
         deleteAllActivities()
-            .onSuccess {
+            .onOk {
                 activityEventRepository.setEvent(ActivityEvent.DELETED_ALL)
             }
     }

@@ -15,7 +15,6 @@ import com.github.michaelbull.result.mapError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.time.Instant
 import javax.inject.Inject
 
 class VerifiableCredentialRepositoryImpl @Inject constructor(
@@ -34,18 +33,6 @@ class VerifiableCredentialRepositoryImpl @Inject constructor(
     override suspend fun getById(id: Long): Result<VerifiableCredentialEntity, VerifiableCredentialRepositoryError> = runSuspendCatching {
         withContext(ioDispatcher) {
             verifiableCredentialDao().getById(id)
-        }
-    }.mapError { throwable ->
-        Timber.e(throwable)
-        SsiError.Unexpected(throwable)
-    }
-
-    override suspend fun onBundleItemUpdate(id: Long): Result<Int, VerifiableCredentialRepositoryError> = runSuspendCatching {
-        withContext(ioDispatcher) {
-            verifiableCredentialDao().updatedAt(
-                id = id,
-                updatedAt = Instant.now().epochSecond,
-            )
         }
     }.mapError { throwable ->
         Timber.e(throwable)

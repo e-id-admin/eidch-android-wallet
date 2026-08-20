@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.feature.eIdRequestVerification.domain.model
 
+import ch.admin.foitt.wallet.feature.eIdRequestVerification.domain.model.EIdRequestVerificationError.Unexpected
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestCaseRepositoryError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestFileRepositoryError
@@ -47,7 +48,7 @@ internal fun EIdRequestFileRepositoryError.toGetDocumentScanDataError(): GetDocu
 }
 
 internal fun GetDocumentScanDataError.toAreEIdDocumentsEqualError(): AreEIdDocumentsEqualError = when (this) {
-    is EIdRequestVerificationError.Unexpected -> EIdRequestVerificationError.Unexpected(cause)
+    is EIdRequestVerificationError.Unexpected -> this
 }
 
 internal fun JsonParsingError.toGetDocumentScanDataError(): GetDocumentScanDataError = when (this) {

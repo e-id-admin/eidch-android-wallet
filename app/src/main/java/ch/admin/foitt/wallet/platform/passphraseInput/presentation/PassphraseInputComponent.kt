@@ -20,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -42,6 +44,7 @@ import kotlin.math.sin
 fun PassphraseInputComponent(
     modifier: Modifier = Modifier,
     passphraseInputFieldState: PassphraseInputFieldState = PassphraseInputFieldState.Typing,
+    errorMessage: String? = null,
     textFieldValue: TextFieldValue,
     enabled: Boolean = true,
     colors: TextFieldColors = WalletTextFieldColors.textFieldColors(),
@@ -64,6 +67,11 @@ fun PassphraseInputComponent(
         modifier = modifier
             .offset {
                 createShakingOffset(amplitude = 10.dp.roundToPx(), errorAnimatable = errorAnimatable)
+            }
+            .semantics {
+                if (passphraseInputFieldState is PassphraseInputFieldState.Error && errorMessage != null) {
+                    error(errorMessage)
+                }
             }
             .testTag(TestTags.PIN_FIELD.name),
         textFieldValue = textFieldValue,

@@ -121,7 +121,7 @@ private fun ActivityListSettingsScreenContent(
     ToastAnimated(
         isVisible = isSnackbarVisible,
         isSnackBarDesign = true,
-        messageToast = R.string.tk_settings_activityHistory_deletion_successMessage,
+        message = R.string.tk_settings_activityHistory_deletion_successMessage,
         iconEnd = R.drawable.wallet_ic_cross,
         onCloseToast = onCloseSnackbar,
     )

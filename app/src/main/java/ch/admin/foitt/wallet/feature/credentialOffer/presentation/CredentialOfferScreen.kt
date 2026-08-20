@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,11 +43,9 @@ import ch.admin.foitt.wallet.feature.credentialOffer.presentation.model.Credenti
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.InvitationHeader
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
-import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
 import ch.admin.foitt.wallet.platform.badges.presentation.BadgeBottomSheet
 import ch.admin.foitt.wallet.platform.composables.AdaptiveBottomButtonBar
 import ch.admin.foitt.wallet.platform.composables.Buttons
-import ch.admin.foitt.wallet.platform.composables.ConfirmationBottomSheet
 import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
 import ch.admin.foitt.wallet.platform.composables.presentation.HeightReportingLayout
 import ch.admin.foitt.wallet.platform.composables.presentation.WindowWidthClass
@@ -60,9 +58,9 @@ import ch.admin.foitt.wallet.platform.credential.presentation.MediumCredentialCa
 import ch.admin.foitt.wallet.platform.credential.presentation.credentialElements
 import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialMocks
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.preview.AllCompactScreensPreview
 import ch.admin.foitt.wallet.platform.preview.AllLargeScreensPreview
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 import ch.admin.foitt.wallet.platform.utils.TestTags
@@ -92,7 +90,7 @@ fun CredentialOfferScreen(
     LaunchedEffect(uiMode) {
         viewModel.credentialOfferUiState.refreshData()
     }
-
+    val credentialUiState = viewModel.credentialOfferUiState.stateFlow.collectAsStateWithLifecycle().value
     val badgeBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val badgeBottomSheet = viewModel.badgeBottomSheet.collectAsStateWithLifecycle().value
     if (badgeBottomSheet != null) {
@@ -103,29 +101,14 @@ fun CredentialOfferScreen(
         )
     }
 
-    val confirmationBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val showConfirmationBottomSheet = viewModel.showConfirmationBottomSheet.collectAsStateWithLifecycle().value
-    if (showConfirmationBottomSheet) {
-        ConfirmationBottomSheet(
-            sheetState = confirmationBottomSheetState,
-            title = R.string.tk_receive_credentialOffer_confirmIssuance_primary,
-            body = R.string.tk_receive_credentialOffer_confirmIssuance_secondary,
-            acceptButtonText = R.string.tk_receive_credentialOffer_confirmIssuance_button_primary,
-            declineButtonText = R.string.tk_receive_credentialOffer_confirmIssuance_button_secondary,
-            onAccept = viewModel::acceptCredential,
-            onDecline = viewModel::onDeclineBottomSheet,
-            onDismiss = viewModel::onDismissConfirmationBottomSheet,
-        )
-    }
-
     CredentialOfferScreenContent(
         isLoading = viewModel.isLoading.collectAsStateWithLifecycle().value,
-        credentialOfferUiState = viewModel.credentialOfferUiState.stateFlow.collectAsStateWithLifecycle().value,
+        credentialOfferUiState = credentialUiState,
         announcementAxMessage = announcementAxMessage,
-        onBadge = viewModel::onBadge,
+        onActorNameTap = viewModel::onActorNameTap,
+        onReportedActorInfo = viewModel::onReportedActorInfo,
         onAccept = viewModel::onAcceptClicked,
         onDecline = viewModel::onDeclineClicked,
-        onWrongData = viewModel::onReportWrongDataClicked,
     )
 }
 
@@ -134,10 +117,10 @@ private fun CredentialOfferScreenContent(
     isLoading: Boolean,
     credentialOfferUiState: CredentialOfferUiState,
     announcementAxMessage: String?,
-    onBadge: (BadgeType) -> Unit,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit,
     onAccept: () -> Unit,
     onDecline: () -> Unit,
-    onWrongData: () -> Unit,
 ) = Box(
     modifier = Modifier
         .fillMaxSize()
@@ -154,21 +137,21 @@ private fun CredentialOfferScreenContent(
             }
         )
 ) {
-    when (currentWindowAdaptiveInfo().windowWidthClass()) {
+    when (currentWindowAdaptiveInfoV2().windowWidthClass()) {
         WindowWidthClass.COMPACT -> CompactContent(
             credentialOffer = credentialOfferUiState,
-            onBadge = onBadge,
+            onActorNameTap = onActorNameTap,
+            onReportedActorInfo = onReportedActorInfo,
             onAccept = onAccept,
             onDecline = onDecline,
-            onWrongData = onWrongData,
         )
 
         else -> LargeContent(
             credentialOffer = credentialOfferUiState,
-            onBadge = onBadge,
+            onActorNameTap = onActorNameTap,
+            onReportedActorInfo = onReportedActorInfo,
             onAccept = onAccept,
             onDecline = onDecline,
-            onWrongData = onWrongData,
         )
     }
     LoadingOverlay(showOverlay = isLoading)
@@ -177,10 +160,10 @@ private fun CredentialOfferScreenContent(
 @Composable
 private fun CompactContent(
     credentialOffer: CredentialOfferUiState,
-    onBadge: (BadgeType) -> Unit,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit,
     onAccept: () -> Unit,
     onDecline: () -> Unit,
-    onWrongData: () -> Unit,
 ) {
     var buttonsHeight by remember {
         mutableStateOf(0.dp)
@@ -199,7 +182,8 @@ private fun CompactContent(
             item {
                 InvitationHeader(
                     actorUiState = credentialOffer.issuer,
-                    onBadge = onBadge,
+                    onActorNameTap = onActorNameTap,
+                    onReportedActorInfo = onReportedActorInfo
                 )
             }
             item {
@@ -219,10 +203,8 @@ private fun CompactContent(
 
             credentialElements(
                 elements = credentialOffer.claims,
-                onWrongData = onWrongData,
             )
         }
-
         StickyButtons(
             onAccept = onAccept,
             onDecline = onDecline,
@@ -260,10 +242,10 @@ private fun CredentialBoxCompact(
 @Composable
 private fun LargeContent(
     credentialOffer: CredentialOfferUiState,
-    onBadge: (BadgeType) -> Unit,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit,
     onAccept: () -> Unit,
     onDecline: () -> Unit,
-    onWrongData: () -> Unit,
 ) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         Row(modifier = Modifier.horizontalSafeDrawing()) {
@@ -275,10 +257,10 @@ private fun LargeContent(
             Spacer(modifier = Modifier.width(Sizes.s04))
             DetailsWithHeader(
                 credentialOffer = credentialOffer,
-                onBadge = onBadge,
+                onActorNameTap = onActorNameTap,
+                onReportedActorInfo = onReportedActorInfo,
                 onAccept = onAccept,
                 onDecline = onDecline,
-                onWrongData = onWrongData,
             )
         }
     }
@@ -313,10 +295,10 @@ private fun CredentialBoxLarge(
 @Composable
 private fun DetailsWithHeader(
     credentialOffer: CredentialOfferUiState,
-    onBadge: (BadgeType) -> Unit,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit,
     onAccept: () -> Unit,
     onDecline: () -> Unit,
-    onWrongData: () -> Unit,
 ) {
     var buttonsHeight by remember { mutableStateOf(0.dp) }
 
@@ -331,7 +313,8 @@ private fun DetailsWithHeader(
             item {
                 InvitationHeader(
                     actorUiState = credentialOffer.issuer,
-                    onBadge = onBadge,
+                    onActorNameTap = onActorNameTap,
+                    onReportedActorInfo = onReportedActorInfo
                 )
             }
 
@@ -345,7 +328,6 @@ private fun DetailsWithHeader(
 
             credentialElements(
                 elements = credentialOffer.claims,
-                onWrongData = onWrongData,
             )
         }
 
@@ -418,10 +400,10 @@ private fun CredentialOfferScreenPreview() {
                 claims = CredentialMocks.clusterList,
             ),
             announcementAxMessage = null,
-            onBadge = {},
+            onActorNameTap = {},
+            onReportedActorInfo = {},
             onAccept = {},
             onDecline = {},
-            onWrongData = {},
         )
     }
 }
@@ -444,10 +426,10 @@ private fun CredentialOfferLargeContentPreview() {
                 credential = CredentialMocks.cardState01,
                 claims = CredentialMocks.clusterList,
             ),
-            onBadge = {},
+            onActorNameTap = {},
+            onReportedActorInfo = {},
             onAccept = {},
             onDecline = {},
-            onWrongData = {},
         )
     }
 }

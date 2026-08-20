@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,7 +51,7 @@ fun OtpFormInputContent(
     onTextChange: (TextFieldValue) -> Unit,
     onContinue: (() -> Unit)? = null,
     onBypassOtp: (() -> Unit)? = null
-) = when (currentWindowAdaptiveInfo().windowWidthClass()) {
+) = when (currentWindowAdaptiveInfoV2().windowWidthClass()) {
     WindowWidthClass.COMPACT -> FormInputCompactContent(
         textFieldState = textFieldState,
         textFieldValue = textFieldValue,
@@ -163,7 +163,7 @@ private fun FormInputCompactContent(
                 modifier = Modifier,
                 isVisible = isToastVisible,
                 isSnackBarDesign = false,
-                messageToast = R.string.tk_eidRequest_otp_code_toast_expired,
+                message = R.string.tk_eidRequest_otp_code_toast_expired,
                 contentBottomPadding = Sizes.s02
             )
 
@@ -260,7 +260,7 @@ private fun FormInputLargeContent(
                 modifier = Modifier,
                 isVisible = isToastVisible,
                 isSnackBarDesign = false,
-                messageToast = R.string.tk_eidRequest_otp_code_toast_expired,
+                message = R.string.tk_eidRequest_otp_code_toast_expired,
                 contentBottomPadding = Sizes.s02
             )
         }

@@ -1,9 +1,11 @@
 package ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -13,6 +15,7 @@ import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.model.StartAutoVerificationUiState
 import ch.admin.foitt.wallet.platform.composables.AdaptiveBottomButtonBar
 import ch.admin.foitt.wallet.platform.composables.Buttons
+import ch.admin.foitt.wallet.platform.composables.StandardErrorScreen
 import ch.admin.foitt.wallet.platform.composables.presentation.LoadingIndicator
 import ch.admin.foitt.wallet.platform.composables.presentation.ScreenMainImage
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.ScrollableColumnWithPicture
@@ -27,8 +30,16 @@ import ch.admin.foitt.wallet.theme.WalletTheme
 internal fun EIdStartAutoVerificationScreen(
     viewModel: EIdStartAutoVerificationViewModel,
 ) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    BackHandler(enabled = state is StartAutoVerificationUiState.UnauthorizedPairing) {
+        if (state is StartAutoVerificationUiState.UnauthorizedPairing) {
+            (state as StartAutoVerificationUiState.UnauthorizedPairing).onClose()
+        }
+    }
+
     EIdStartAutoVerificationScreenContent(
-        applySubmissionState = viewModel.state.collectAsStateWithLifecycle().value,
+        applySubmissionState = state,
     )
 }
 
@@ -53,6 +64,22 @@ private fun EIdStartAutoVerificationScreenContent(
     is StartAutoVerificationUiState.NetworkError -> UnexpectedErrorContent(
         onClose = applySubmissionState.onClose,
         onRetry = applySubmissionState.onRetry,
+    )
+
+    is StartAutoVerificationUiState.UnauthorizedPairing -> UnauthorizedPairingContent(
+        onClose = applySubmissionState.onClose,
+    )
+}
+
+@Composable
+private fun UnauthorizedPairingContent(
+    onClose: () -> Unit,
+) {
+    WalletLayouts.StandardErrorScreen(
+        primaryText = R.string.tk_error_governance_error_primary,
+        secondaryText = R.string.tk_error_governance_error_secondary,
+        primaryActionText = R.string.tk_global_close,
+        primaryAction = onClose,
     )
 }
 

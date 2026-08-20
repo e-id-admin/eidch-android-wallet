@@ -14,6 +14,7 @@ import ch.admin.foitt.wallet.feature.eIdRequestVerification.domain.model.toTextR
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.domain.usecase.GetEIdRequestCase
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.domain.usecase.SaveEIdRequestFiles
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.composables.ScannerButtonState
+import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentRecording.DocumentRecordingScannerEvent
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentRecording.EIdDocumentRecordingStatus
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentRecording.EIdDocumentRecordingUiState
 import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.model.OnPermissionResult
@@ -31,6 +32,8 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.scanning.di.AvBeamSdkEntryPoint
+import ch.admin.foitt.wallet.platform.utils.combine
+import ch.admin.foitt.wallet.platform.utils.isUsbImageDeviceDetectedFlow
 import ch.admin.foitt.wallet.platform.utils.launchTimer
 import ch.admin.foitt.wallet.platform.utils.openLink
 import com.github.michaelbull.result.mapOrElse
@@ -42,25 +45,28 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+@Suppress("TooManyFunctions")
 @HiltViewModel(assistedFactory = EIdDocumentRecordingViewModel.Factory::class)
 class EIdDocumentRecordingViewModel @AssistedInject constructor(
     @param:ApplicationContext private val appContext: Context,
     private val navManager: NavigationManager,
     private val saveEIdRequestFiles: SaveEIdRequestFiles,
-    getEIdRequestCase: GetEIdRequestCase,
     private val permissionStateHandler: PermissionStateHandler,
     destinationScopedComponentManager: DestinationScopedComponentManager,
+    getEIdRequestCase: GetEIdRequestCase,
     @Assisted private val caseId: String,
     private val setTopBarState: SetTopBarState,
 ) : ScreenViewModel(setTopBarState) {
@@ -79,15 +85,22 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
 
     override val topBarState: TopBarState
         get() {
-            return when (val state = uiState.value) {
-                EIdDocumentRecordingUiState.Initializing -> TopBarState.Empty
-                is EIdDocumentRecordingUiState.Error ->
+            val state = uiState.value
+            val permissionState = permissionState.value
+            return when {
+                permissionState !is PermissionState.Granted -> TopBarState.DetailsWithCloseButton(
+                    titleId = null,
+                    onUp = ::onUp,
+                    onClose = ::onClose,
+                )
+                state is EIdDocumentRecordingUiState.Error ->
                     TopBarState.DetailsWithCloseButton(
                         titleId = R.string.tk_eidRequest_recordDocument_recto,
                         onUp = ::onUp,
                         onClose = ::onClose,
                     )
-                is EIdDocumentRecordingUiState.Recording -> {
+
+                state is EIdDocumentRecordingUiState.Recording -> {
                     val titleId = if (state.status is EIdDocumentRecordingStatus.BackSideScanning) {
                         R.string.tk_eidRequest_recordDocument_verso
                     } else {
@@ -99,10 +112,21 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
                         onClose = ::onClose,
                     )
                 }
+                else -> TopBarState.Empty
             }
         }
 
     private val logTitle = "Document Recording:"
+
+    private val errorState = MutableStateFlow<DocumentScannerErrorType>(DocumentScannerErrorType.None)
+
+    private val eIdDocumentRecordingStatus =
+        MutableStateFlow<EIdDocumentRecordingStatus>(EIdDocumentRecordingStatus.Initializing)
+
+    private val isViewReady = MutableStateFlow(false)
+    private var viewWidth = 0
+    private var viewHeight = 0
+    private var recordingProgressJob: Job? = null
 
     val permissionState get() = permissionStateHandler.permissionState
 
@@ -117,15 +141,12 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
             }
         }
 
-    private val errorState = MutableStateFlow<DocumentScannerErrorType>(DocumentScannerErrorType.None)
-
-    private val eIdDocumentRecordingStatus =
-        MutableStateFlow<EIdDocumentRecordingStatus>(EIdDocumentRecordingStatus.Initializing)
-
-    private var viewWidth = 0
-    private var viewHeight = 0
-    private var recordingProgressJob: Job? = null
-    private val isViewReady = MutableStateFlow(false)
+    private val isUsbDeviceDetected = appContext.isUsbImageDeviceDetectedFlow.onEach { isUsbDeviceDetected ->
+        if (isUsbDeviceDetected) {
+            resetRecordingState()
+            clearFlows()
+        }
+    }
 
     val uiState: StateFlow<EIdDocumentRecordingUiState> = combine(
         errorState,
@@ -133,14 +154,31 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
         avBeam.initializedFlow,
         eIdDocumentRecordingStatus,
         avBeam.statusFlow,
-    ) { errorState, permissionState, initialized, eIdDocumentRecordingStatus, avBeamStatus ->
+        isUsbDeviceDetected,
+    ) {
+            errorState,
+            permissionState,
+            initialized,
+            eIdDocumentRecordingStatus,
+            avBeamStatus,
+            isUsbDeviceDetected,
+        ->
         when {
             errorState != DocumentScannerErrorType.None -> EIdDocumentRecordingUiState.Error(
                 type = errorState,
-                onRetry = ::onRetry,
+                onButton = ::onRetry,
                 onHelp = ::onHelp,
             )
+
             permissionState !is PermissionState.Granted -> EIdDocumentRecordingUiState.Initializing
+            isUsbDeviceDetected -> EIdDocumentRecordingUiState.Error(
+                type = DocumentScannerErrorType.Generic,
+                onButton = ::onRetry,
+                onHelp = null,
+                title = R.string.tk_getEid_externalDeviceDetected_primary,
+                content = R.string.tk_getEid_externalDeviceDetected_secondary,
+                buttonText = R.string.tk_error_generic_button_primary,
+            )
             !initialized -> EIdDocumentRecordingUiState.Initializing
             else -> {
                 EIdDocumentRecordingUiState.Recording(
@@ -164,17 +202,25 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
             (state is EIdDocumentRecordingUiState.Recording && state.status.isRecording)
     }.toStateFlow(false)
 
-    init {
-        viewModelScope.launch {
+    private val _hapticEvent = MutableSharedFlow<DocumentRecordingScannerEvent>()
+    val hapticEvent = _hapticEvent.asSharedFlow()
+
+    fun updateTopBarState(coroutineScope: CoroutineScope): Unit = coroutineScope.run {
+        launch {
             uiState.collectLatest {
+                setTopBarState(topBarState)
+            }
+        }
+        launch {
+            permissionState.collectLatest {
                 setTopBarState(topBarState)
             }
         }
     }
 
     fun onResume() {
+        Timber.d("$logTitle view resumed")
         viewModelScope.launch {
-            Timber.d("$logTitle view resumed")
             prepareScanner()
         }
     }
@@ -182,17 +228,20 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
     fun onPause() {
         viewModelScope.launch {
             resetRecordingState()
+            clearFlows()
             Timber.d("$logTitle view paused")
         }
     }
 
     override fun onCleared() {
         resetRecordingState()
+        clearFlows()
         super.onCleared()
     }
 
     fun onUp() {
         resetRecordingState()
+        clearFlows()
         navManager.popBackStack()
     }
 
@@ -237,6 +286,7 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
             avBeam.errorFlow.collect { errorNotification ->
                 if (errorNotification != AVBeamError.None) {
                     Timber.e(message = "$logTitle Error - avBeam errorFlow: ${errorNotification.name}")
+                    _hapticEvent.emit(DocumentRecordingScannerEvent.ScanDone)
                     errorState.update { DocumentScannerErrorType.Generic }
                 }
             }
@@ -252,7 +302,8 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
                 is EIdDocumentRecordingStatus.BackSideScanning -> stopRecordingDocument()
 
                 EIdDocumentRecordingStatus.Initializing,
-                EIdDocumentRecordingStatus.Finished -> {}
+                EIdDocumentRecordingStatus.Finished -> {
+                }
             }
         }
     }
@@ -260,6 +311,8 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
     private fun onRecordingCompleted(packageResult: AVBeamPackageResult) = viewModelScope.launch {
         // The AvBeam sdk stops the recording and camera tasks automatically.
         eIdDocumentRecordingStatus.update { EIdDocumentRecordingStatus.Finished }
+
+        _hapticEvent.emit(DocumentRecordingScannerEvent.ScanDone)
 
         delay(NAVIGATION_DELAY)
 
@@ -281,6 +334,7 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
             popToInclusive = Destination.EIdStartAutoVerificationScreen::class,
             destination = Destination.EIdStartSelfieVideoScreen(caseId = caseId)
         )
+        resetRecordingState()
     }
 
     private suspend fun prepareScanner() {
@@ -319,6 +373,12 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
         }
     }
 
+    private fun clearFlows() {
+        errorState.update { DocumentScannerErrorType.None }
+        eIdDocumentRecordingStatus.update { EIdDocumentRecordingStatus.Initializing }
+        avBeam.clearNotificationsFlow()
+    }
+
     private fun stopRecordingDocument() {
         if (eIdDocumentRecordingStatus.value.isRecording) {
             avBeam.stopRecordingDocument()
@@ -334,7 +394,10 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
 
     private fun resetRecordingState() {
         stopRecordingDocument()
-        avBeam.stopCamera()
+        if (avBeam.initializedFlow.value) {
+            // only stop camera if SDK is ready
+            avBeam.stopCamera()
+        }
 
         isViewReady.update { false }
     }
@@ -343,7 +406,7 @@ class EIdDocumentRecordingViewModel @AssistedInject constructor(
         viewModelScope.launch {
             Timber.w("$logTitle - retry")
             resetRecordingState()
-            errorState.update { DocumentScannerErrorType.None }
+            clearFlows()
             prepareScanner()
         }
     }

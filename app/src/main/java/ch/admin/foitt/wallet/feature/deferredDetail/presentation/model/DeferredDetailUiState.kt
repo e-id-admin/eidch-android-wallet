@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 

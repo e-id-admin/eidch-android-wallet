@@ -19,7 +19,7 @@ import ch.admin.foitt.wallet.platform.userInteraction.domain.usecase.UserInterac
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.mapError
-import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onErr
 import timber.log.Timber
 import javax.crypto.Cipher
 import javax.inject.Inject
@@ -54,7 +54,7 @@ class LoginWithBiometricsImpl @Inject constructor(
 
             openAppDatabase(
                 passphrase = decryptedPassphrase
-            ).onFailure {
+            ).onErr {
                 Timber.d("AppDatabase login failed")
             }.mapError(
                 OpenDatabaseError::toLoginWithBiometricsError
@@ -68,7 +68,7 @@ class LoginWithBiometricsImpl @Inject constructor(
         userInteraction()
 
         return result
-            .onFailure { loginWithBiometricsError ->
+            .onErr { loginWithBiometricsError ->
                 onLoginFailure(loginWithBiometricsError)
             }
     }

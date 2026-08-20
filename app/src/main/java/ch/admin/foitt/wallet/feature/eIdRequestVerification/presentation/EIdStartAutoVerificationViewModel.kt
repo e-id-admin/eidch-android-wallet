@@ -5,17 +5,24 @@ import ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation.model.St
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.AutoVerificationResponse
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.StartAutoVerificationError
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.AbortSIdProcess
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.FetchSIdStatus
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.SetStartAutoVerificationResult
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.StartAutoVerification
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.VerifyWalletPairing
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.trackCompletion
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.annotation.UnsafeResultValueAccess
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.getError
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import com.github.michaelbull.result.unwrapError
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -29,6 +36,9 @@ import kotlinx.coroutines.launch
 @HiltViewModel(assistedFactory = EIdStartAutoVerificationViewModel.Factory::class)
 internal class EIdStartAutoVerificationViewModel @AssistedInject constructor(
     private val startAutoVerification: StartAutoVerification,
+    private val fetchSIdStatus: FetchSIdStatus,
+    private val verifyWalletPairing: VerifyWalletPairing,
+    private val abortSIdProcess: AbortSIdProcess,
     private val navManager: NavigationManager,
     private val setStartAutoVerificationResult: SetStartAutoVerificationResult,
     @Assisted private val caseId: String,
@@ -67,6 +77,11 @@ internal class EIdStartAutoVerificationViewModel @AssistedInject constructor(
                     onRetry = ::onRetry
                 )
 
+            startAutoVerificationResult.isErr && startAutoVerificationResult.getError() == EIdRequestError.UnauthorizedPairing ->
+                StartAutoVerificationUiState.UnauthorizedPairing(
+                    onClose = ::onSecurityErrorClose
+                )
+
             else -> StartAutoVerificationUiState.Unexpected(
                 onClose = ::onClose,
                 onRetry = ::onRetry,
@@ -76,13 +91,33 @@ internal class EIdStartAutoVerificationViewModel @AssistedInject constructor(
 
     private suspend fun onStartAv() {
         startAutoVerification(caseId = caseId)
-            .also { result ->
-                startAutoVerificationResult.value = result
+            .onOk { response ->
+                fetchSIdStatus(caseId).onOk { stateResponse ->
+                    verifyWalletPairing(caseId, stateResponse).onOk {
+                        setStartAutoVerificationResult(startAutoVerificationResult = response)
+                        startAutoVerificationResult.value = Ok(response)
+                        onContinue(autoVerificationResponse = response)
+                    }.onErr { error ->
+                        val mappedError: StartAutoVerificationError = when (error) {
+                            is EIdRequestError.UnauthorizedPairing -> error
+                            else -> EIdRequestError.Unexpected(null)
+                        }
+                        startAutoVerificationResult.value = Err(mappedError)
+                    }
+                }.onErr {
+                    startAutoVerificationResult.value = Err(EIdRequestError.NetworkError)
+                }
             }
-            .onSuccess {
-                setStartAutoVerificationResult(startAutoVerificationResult = it)
-                onContinue(autoVerificationResponse = it)
+            .onErr { error ->
+                startAutoVerificationResult.value = Err(error)
             }
+    }
+
+    private fun onSecurityErrorClose() {
+        viewModelScope.launch {
+            abortSIdProcess(caseId)
+            navManager.navigateBackToHomeScreen(popUntil = Destination.EIdIntroScreen::class)
+        }
     }
 
     private fun onStart() {

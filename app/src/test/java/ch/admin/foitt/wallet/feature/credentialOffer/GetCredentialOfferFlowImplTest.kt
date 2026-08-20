@@ -14,6 +14,7 @@ import ch.admin.foitt.wallet.platform.credential.domain.usecase.MapToCredentialD
 import ch.admin.foitt.wallet.platform.credentialCluster.domain.usercase.MapToCredentialClaimCluster
 import ch.admin.foitt.wallet.platform.database.domain.model.ClusterWithDisplaysAndClaims
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClusterWithDisplays
+import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialWithDisplaysAndClusters
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
@@ -131,7 +132,7 @@ class GetCredentialOfferFlowImplTest {
     fun `Getting the credential offer flow maps error from MapToCredentialDisplayData use case`() = runTest {
         val exception = IllegalStateException("map to credential claim display data error")
         coEvery {
-            mockMapToCredentialDisplayData(any(), any(), any(), any())
+            mockMapToCredentialDisplayData(any(), any(), any(), any(), any())
         } returns Err(CredentialError.Unexpected(exception))
 
         val result = useCase(CREDENTIAL_ID).firstOrNull()
@@ -148,6 +149,7 @@ class GetCredentialOfferFlowImplTest {
         } returns mockVerifiableCredential
         coEvery { mockCredentialWithDisplaysAndClusters.credentialDisplays } returns MockCredentialDetail.credentialDisplays
         coEvery { mockCredentialWithDisplaysAndClusters.credential } returns MockCredentialDetail.credential
+        coEvery { mockCredentialWithDisplaysAndClusters.nextPresentableStatus } returns CredentialStatus.VALID
         coEvery { mockCredentialWithDisplaysAndClusters.clusters } returns listOf(
             ClusterWithDisplaysAndClaims(
                 clusterWithDisplays = mockClusterWithDisplays,
@@ -164,7 +166,8 @@ class GetCredentialOfferFlowImplTest {
                 mockVerifiableCredential,
                 MockCredentialDetail.credentialDisplays,
                 claims,
-                CredentialFormat.VC_SD_JWT
+                CredentialFormat.VC_SD_JWT,
+                CredentialStatus.VALID,
             )
         } returns Ok(MockCredentialDetail.credentialDisplayData)
         coEvery {

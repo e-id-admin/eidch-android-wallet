@@ -8,12 +8,13 @@ import ch.admin.foitt.wallet.platform.appAttestation.domain.model.KeyAttestation
 import com.github.michaelbull.result.Result
 
 interface AppAttestationRepository {
-    suspend fun fetchChallenge(): Result<AttestationChallengeResponse, AppAttestationRepositoryError>
+    suspend fun fetchChallenge(url: String): Result<AttestationChallengeResponse, AppAttestationRepositoryError>
     suspend fun fetchClientAttestation(
         publicKey: Jwk,
     ): Result<ClientAttestationResponse, AppAttestationRepositoryError>
 
     suspend fun fetchKeyAttestation(
+        url: String,
         publicKey: Jwk,
     ): Result<KeyAttestationResponse, AppAttestationRepositoryError>
 }

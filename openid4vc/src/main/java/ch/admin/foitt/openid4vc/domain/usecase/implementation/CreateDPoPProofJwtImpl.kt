@@ -12,7 +12,8 @@ import ch.admin.foitt.openid4vc.domain.model.toJWSAlgorithm
 import ch.admin.foitt.openid4vc.domain.usecase.CreateDPoPProofJwt
 import ch.admin.foitt.openid4vc.domain.usecase.CreateJwk
 import ch.admin.foitt.openid4vc.utils.Constants
-import ch.admin.foitt.openid4vc.utils.toBase64StringUrlEncodedWithoutPadding
+import ch.admin.foitt.openid4vc.utils.createBase64UrlEncodedDigest
+import ch.admin.foitt.openid4vc.utils.createDigest
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.coroutines.runSuspendCatching
@@ -24,7 +25,6 @@ import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import java.net.URL
-import java.security.MessageDigest
 import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
@@ -38,6 +38,7 @@ internal class CreateDPoPProofJwtImpl @Inject constructor(
         keyPair: JWSKeyPair,
         nonce: String?,
         accessToken: String?,
+        requestBody: ByteArray?,
         keyAttestationJwt: Jwt?,
     ): Result<String, CreateDPoPProofJwtError> = coroutineBinding {
         val jwk = createJwk(keyPair = keyPair.keyPair, algorithm = keyPair.algorithm)
@@ -47,7 +48,11 @@ internal class CreateDPoPProofJwtImpl @Inject constructor(
         val header = JWSHeader.Builder(keyPair.algorithm.toJWSAlgorithm())
             .jwk(JWK.parse(jwk))
             .type(JOSEObjectType(Constants.DPOP_JWT_PROOF_HEADER_TYPE))
-            .customParam(Constants.DPOP_SWISS_PROFILE_HEADER, Constants.DPOP_SWISS_PROFILE_VERSION)
+            .apply {
+                if (requestBody == null) {
+                    customParam(Constants.DPOP_SWISS_PROFILE_HEADER, Constants.DPOP_SWISS_PROFILE_VERSION)
+                }
+            }
             .apply {
                 keyAttestationJwt?.let { customParam("key_attestation", it.rawJwt) }
             }
@@ -60,7 +65,8 @@ internal class CreateDPoPProofJwtImpl @Inject constructor(
             .issueTime(Date((System.currentTimeMillis() / 1000) * 1000))
             .apply {
                 nonce?.let { claim("nonce", it) }
-                accessToken?.let { claim("ath", createAccessTokenHash(it)) }
+                accessToken?.let { claim("ath", it.createAccessTokenHash()) }
+                requestBody?.let { claim("req", it.createBodyHash()) }
             }
             .build()
 
@@ -81,12 +87,11 @@ internal class CreateDPoPProofJwtImpl @Inject constructor(
         return "$protocol://$host$port$path"
     }
 
-    private fun createAccessTokenHash(accessToken: String): String {
-        val digest = MessageDigest.getInstance(DigestAlgorithm.SHA256.stdName)
-        val hash = digest.digest(accessToken.toByteArray(Charsets.US_ASCII))
+    private fun String.createAccessTokenHash(): String =
         // Workaround for a backend issue: RFC 9449 expects an unpadded base64url-encoded `ath`,
         // but the current issuer implementation only accepts the value with trailing `=` padding.
         // Once the backend is fixed, the `+ "="` should be removed.
-        return hash.toBase64StringUrlEncodedWithoutPadding() + "="
-    }
+        createDigest(DigestAlgorithm.SHA256) + "="
+
+    private fun ByteArray.createBodyHash(): String = createBase64UrlEncodedDigest(DigestAlgorithm.SHA256)
 }

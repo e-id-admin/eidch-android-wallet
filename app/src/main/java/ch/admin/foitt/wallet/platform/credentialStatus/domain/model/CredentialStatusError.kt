@@ -17,6 +17,12 @@ import ch.admin.foitt.wallet.platform.utils.JsonParsingError
 import timber.log.Timber
 
 interface CredentialStatusError {
+    data object UnknownRegistry :
+        UpdateCredentialStatusError,
+        FetchCredentialStatusError,
+        FetchStatusFromTokenStatusListError,
+        ValidateTokenStatusStatusListError
+
     data object NetworkError :
         UpdateCredentialStatusError,
         FetchCredentialStatusError,
@@ -39,6 +45,7 @@ sealed interface ValidateTokenStatusStatusListError
 sealed interface ParseTokenStatusStatusListError
 
 internal fun FetchCredentialStatusError.toUpdateCredentialStatusError(): UpdateCredentialStatusError = when (this) {
+    is CredentialStatusError.UnknownRegistry -> this
     is NetworkError -> this
     is Unexpected -> this
 }
@@ -56,6 +63,7 @@ internal fun GetAllAnyCredentialsByCredentialIdError.toUpdateCredentialStatusErr
 }
 
 internal fun FetchStatusFromTokenStatusListError.toFetchCredentialStatusError(): FetchCredentialStatusError = when (this) {
+    is CredentialStatusError.UnknownRegistry -> this
     is NetworkError -> this
     is Unexpected -> this
 }
@@ -65,7 +73,13 @@ internal fun ParseTokenStatusStatusListError.toFetchStatusFromParseTokenStatusLi
         is Unexpected -> this
     }
 
+internal fun Throwable.toFetchStatusFromTokenStatusListError(message: String): FetchStatusFromTokenStatusListError {
+    Timber.w(t = this, message = message)
+    return Unexpected(this)
+}
+
 internal fun ValidateTokenStatusStatusListError.toFetchStatusFromTokenStatusListError(): FetchStatusFromTokenStatusListError = when (this) {
+    is CredentialStatusError.UnknownRegistry -> this
     is NetworkError -> this
     is Unexpected -> this
     DidDocumentDeactivated -> Unexpected(null)

@@ -20,6 +20,7 @@ import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.MapToCredentialDisplayData
 import ch.admin.foitt.wallet.platform.credentialCluster.domain.usercase.MapToCredentialClaimCluster
+import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.VerifiableCredentialWithDisplaysAndClustersRepository
 import ch.admin.foitt.wallet.util.assertErrorType
@@ -143,7 +144,8 @@ class GetActivityDetailFlowImplTest {
                 verifiableCredential = mockVerifiableCredential,
                 credentialDisplays = mockCredentialDisplays,
                 claims = claimsWithDisplays,
-                credentialFormat = CredentialFormat.VC_SD_JWT
+                credentialFormat = CredentialFormat.VC_SD_JWT,
+                status = CredentialStatus.VALID,
             )
         } returns Err(CredentialError.Unexpected(IllegalStateException()))
 
@@ -171,7 +173,8 @@ class GetActivityDetailFlowImplTest {
                 verifiableCredential = mockVerifiableCredential,
                 credentialDisplays = mockCredentialDisplays,
                 claims = claimsWithDisplays,
-                credentialFormat = CredentialFormat.VC_SD_JWT
+                credentialFormat = CredentialFormat.VC_SD_JWT,
+                status = CredentialStatus.VALID,
             )
         } returns Ok(mockCredentialDisplayData)
 

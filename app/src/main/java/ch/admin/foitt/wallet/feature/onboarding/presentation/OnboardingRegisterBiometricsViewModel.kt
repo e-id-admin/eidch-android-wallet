@@ -23,8 +23,8 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.utils.openSecuritySettings
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.andThen
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -91,7 +91,7 @@ class OnboardingRegisterBiometricsViewModel @AssistedInject constructor(
 
         initializeCipherWithBiometrics(
             promptWrapper = biometricPromptWrapper,
-        ).onFailure { biometricsError: EnableBiometricsError ->
+        ).onErr { biometricsError: EnableBiometricsError ->
             when (biometricsError) {
                 BiometricsError.Locked -> {
                     Timber.w("Biometrics registration: biometrics Locked")
@@ -105,7 +105,7 @@ class OnboardingRegisterBiometricsViewModel @AssistedInject constructor(
 
                 BiometricsError.Cancelled -> {}
             }
-        }.onSuccess { initializedCipher: Cipher ->
+        }.onOk { initializedCipher: Cipher ->
             initializeWithLoading(pin, initializedCipher)
         }
     }
@@ -123,9 +123,9 @@ class OnboardingRegisterBiometricsViewModel @AssistedInject constructor(
                 saveUseBiometricLogin(true)
             }
             Ok(Unit)
-        }.onSuccess {
+        }.onOk {
             completeOnboarding()
-        }.onFailure { error: InitializePassphraseError ->
+        }.onErr { error: InitializePassphraseError ->
             Timber.e(t = error.throwable, message = "Biometrics registration: Initialization error")
             val destination = when (error) {
                 is InitializePassphraseError.DatabaseSetupFailed -> Destination.OnboardingFatalErrorScreen(

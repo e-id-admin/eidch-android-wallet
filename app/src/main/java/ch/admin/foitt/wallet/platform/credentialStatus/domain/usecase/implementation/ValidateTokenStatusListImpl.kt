@@ -4,6 +4,9 @@ import ch.admin.foitt.didResolver.domain.DidResolverHelper
 import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
 import ch.admin.foitt.openid4vc.domain.model.jwt.VerifyJwtSignatureFromDidError
 import ch.admin.foitt.openid4vc.domain.usecase.jwt.VerifyJwtSignatureFromDid
+import ch.admin.foitt.wallet.platform.actorEnvironment.domain.model.ActorEnvironment
+import ch.admin.foitt.wallet.platform.actorEnvironment.domain.usecase.GetActorEnvironment
+import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialStatusError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.TokenStatusListResponse
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.ValidateTokenStatusStatusListError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.toValidateTokenStatusListError
@@ -15,11 +18,13 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.mapError
+import timber.log.Timber
 import java.time.Instant
 import javax.inject.Inject
 
 class ValidateTokenStatusListImpl @Inject constructor(
     private val didResolverHelper: DidResolverHelper,
+    private val getActorEnvironment: GetActorEnvironment,
     private val verifyJwtSignatureFromDid: VerifyJwtSignatureFromDid,
     private val safeJson: SafeJson,
 ) : ValidateTokenStatusList {
@@ -54,6 +59,13 @@ class ValidateTokenStatusListImpl @Inject constructor(
                 throwable.toValidateTokenStatusStatusListError("ValidateTokenStatusList error")
             }.bind()
 
+        val actorEnvironment = getActorEnvironment(did)
+        runSuspendCatching {
+            check(actorEnvironment != ActorEnvironment.EXTERNAL) { "actor is not in registries" }
+        }.mapError { throwable ->
+            Timber.e(t = throwable, message = "status list not in swiyu registry")
+            CredentialStatusError.UnknownRegistry
+        }.bind()
         runSuspendCatching {
             check(credentialIssuer == did) { "Issuers do not match" }
         }.mapError { throwable ->

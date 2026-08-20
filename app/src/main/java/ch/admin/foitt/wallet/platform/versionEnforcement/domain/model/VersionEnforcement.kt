@@ -14,8 +14,8 @@ data class VersionEnforcement(
     val displays: List<Display>,
     @SerialName("default_support_lifetime_days")
     val lifetime: Int,
-    @SerialName("default_blacklist")
-    val defaultBlacklist: List<String> = emptyList(),
+    @SerialName("device_blacklist")
+    val deviceBlacklist: List<String> = emptyList(),
     @Serializable(with = AppVersionSerializer::class)
     @SerialName("minimum_os_version")
     val minOSVersion: AppVersion,
@@ -51,7 +51,7 @@ data class VersionEnforcement(
         val releaseDate: LocalDate,
         @Serializable(with = LocalDateSerializer::class)
         @SerialName("support_guaranteed_until")
-        val supportUntil: LocalDate,
+        val supportUntil: LocalDate?,
         @SerialName("update_type")
         val updateType: String,
         @Serializable(with = AppVersionSerializer::class)

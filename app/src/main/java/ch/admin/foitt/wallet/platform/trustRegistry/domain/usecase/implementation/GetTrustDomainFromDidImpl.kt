@@ -3,7 +3,7 @@ package ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.implementati
 import ch.admin.foitt.didResolver.domain.DidResolverHelper
 import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.GetTrustDomainFromDidError
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toGetTrustDomainFromDidError
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toUnexpected
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.GetTrustDomainFromDid
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Result
@@ -19,9 +19,7 @@ internal class GetTrustDomainFromDidImpl @Inject constructor(
         actorDid: String,
     ): Result<String, GetTrustDomainFromDidError> = binding {
         val didUrl = didResolverHelper.getHttpsUrl(actorDid)
-            .mapError { throwable ->
-                throwable.toGetTrustDomainFromDidError(message = "Failed to get trust domain for did")
-            }.bind()
+            .mapError(Throwable::toUnexpected).bind()
 
         val trustDomain = repo.trustRegistryMapping[didUrl.host]
         if (trustDomain.isNullOrBlank()) {

@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +38,7 @@ internal fun ErrorScreenContent(
     val modifier = Modifier
         .background(WalletTheme.colorScheme.surfaceContainerHigh)
         .centerHorizontallyOnFullscreen()
-    when (currentWindowAdaptiveInfo().windowWidthClass()) {
+    when (currentWindowAdaptiveInfoV2().windowWidthClass()) {
         WindowWidthClass.COMPACT -> WalletLayouts.CompactContainerFloatingBottom(
             modifier = modifier,
             content = {

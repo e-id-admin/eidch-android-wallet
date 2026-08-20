@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButtonColors
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -31,8 +31,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -68,6 +70,7 @@ fun QrScannerScreen(
     updateContentShown: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
 
     val currentActivity = LocalActivity.current
     val isInDarkTheme = LocalIsInDarkTheme.current
@@ -79,6 +82,16 @@ fun QrScannerScreen(
             isInDarkTheme
         )
         viewModel.initProximity()
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.hapticEvent.collect { event ->
+            when (event) {
+                is QrScannerEvent.ScanSuccess -> {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+            }
+        }
     }
 
     if (viewModel.isProximityEngagementEnabled) {
@@ -140,7 +153,7 @@ private fun QrScannerScreenContent(
     ) {
         val hintPadding = if (isProximityEngagementEnabled) 140.dp else 0.dp
         Box {
-            when (currentWindowAdaptiveInfo().windowWidthClass()) {
+            when (currentWindowAdaptiveInfoV2().windowWidthClass()) {
                 WindowWidthClass.COMPACT -> Box {
                     Box(modifier = Modifier.fillMaxSize()) {
                         ScanBox(

@@ -61,14 +61,14 @@ class SendNonComplianceReportImpl @Inject constructor(
             .mapError(VerifiableCredentialRepositoryError::toSendNonComplianceReportError)
             .bind()
 
-        val presentationRequest = getPresentationRequest(activity.nonComplianceData).bind()
+        val authorizationRequest = getAuthorizationRequest(activity.nonComplianceData).bind()
         val createdAt = Instant.ofEpochSecond(activity.createdAt)
         val formattedCreatedAt = DateTimeFormatter.ISO_INSTANT.format(createdAt)
-        val presentationRequestFields = getPresentationRequestFields(presentationRequest)
+        val presentationRequestFields = getPresentationRequestFields(authorizationRequest)
 
         val nonComplianceMetadata = NonComplianceMetadata(
-            verifierDid = presentationRequest.clientId,
-            verifierUrl = presentationRequest.responseUri,
+            verifierDid = authorizationRequest.clientIdentifier.clientId,
+            verifierUrl = authorizationRequest.responseUri,
             presentationActionCreatedAt = formattedCreatedAt,
             presentedCredentialIssuerDid = credential.issuer,
             presentationRequestJwt = activity.nonComplianceData,
@@ -110,7 +110,7 @@ class SendNonComplianceReportImpl @Inject constructor(
             .bind()
     }
 
-    private fun getPresentationRequest(nonComplianceData: String?): Result<AuthorizationRequest, SendNonComplianceReportError> = binding {
+    private fun getAuthorizationRequest(nonComplianceData: String?): Result<AuthorizationRequest, SendNonComplianceReportError> = binding {
         if (nonComplianceData == null) {
             return@binding Err(
                 NonComplianceError.Unexpected(IllegalStateException("nonComplianceData must not be null"))

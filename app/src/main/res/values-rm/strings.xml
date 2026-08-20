@@ -16,12 +16,12 @@
     <string name="tk_credential_status_demo_alt">Cumprova da demo</string>
     <string name="tk_credential_status_invalid">Spirà</string>
     <string name="tk_credential_status_invalid_alt">La cumprova è spirada</string>
-    <string name="tk_credential_status_notValidYet">Valaivel en %s dis</string>
-    <string name="tk_credential_status_notValidYet_alt">La cumprova è valaivla en %s dis</string>
+    <string name="tk_credential_status_notYetValid">valaivel dals %s</string>
+    <string name="tk_credential_status_notYetValid_alt">La cumprova vala partir dals %s</string>
     <string name="tk_credential_status_revoked">Revocà</string>
     <string name="tk_credential_status_revoked_alt">La cumprova è revocada.</string>
-    <string name="tk_credential_status_soon">Prest valaivel</string>
-    <string name="tk_credential_status_soon_alt">La cumprova è prest disponibla</string>
+    <string name="tk_credential_status_soon">valaivel fin %s</string>
+    <string name="tk_credential_status_soon_alt">Cumprova valaivla a partir da las %s</string>
     <string name="tk_credential_status_suspended">Actualmain bloccà</string>
     <string name="tk_credential_status_suspended_alt">La cumprova è bloccada temporarmain</string>
     <string name="tk_credential_status_unknown">Nunenconuschent</string>
@@ -32,8 +32,6 @@
     <string name="tk_displaydelete_credentialdelete_title">Stizzar la cumprova?</string>
     <string name="tk_displaydelete_credentialmenu_primarybutton">Stizzar la cumprova</string>
     <string name="tk_displaydelete_displaycredential1_title5">Emess da</string>
-    <string name="tk_displaydelete_wrongdata_body">Ina cumprova ch’è vegnida emessa ina giada na po betg vegnir midada.\n\nSche Vus constatais in sbagl en Vossas indicaziuns, As drizzai per plaschair a l’emittur.\nEl As po emetter ina nova cumprova ch’è vegnida curregida.</string>
-    <string name="tk_displaydelete_wrongdata_title">Rapportar infurmaziuns incorrectas</string>
     <string name="tk_eidRequest_nfcScan_intro_primary">Legia passaport via NFC</string>
     <string name="tk_eidRequest_nfcScan_intro_primaryButton">Cumenzar la scannada NFC</string>
     <string name="tk_eidRequest_nfcScan_intro_secondary">En il proxim pass legia Voss smartphone il chip NFC en il passaport. Metta il passaport plan sin il dies dal telefonin e tegnai quel dir fin che la scannada è terminada.\n\nSche il chip na vegn betg detegì, adattai plaunamain la posiziun dal passaport ed emprovi danovamain</string>
@@ -115,7 +113,6 @@
     <string name="tk_global_visible_alt">Il pled-clav vegn mussà. Zuppar il pled-clav.</string>
     <string name="tk_global_warning_alt">Avertiment</string>
     <string name="tk_global_welcomeback">Bainvegni enavos</string>
-    <string name="tk_global_wrongdata">Rapportar infurmaziuns incorrectas</string>
     <string name="tk_home_notification_credential_accepted">Attestaziun è vegnida agiuntada.</string>
     <string name="tk_home_notification_credential_declined">Cumprova refusada.</string>
     <string name="tk_issuer_notTrusted">Betg verifitgà</string>
@@ -133,7 +130,10 @@
     <string name="tk_login_locked_title">La swiyu Wallet n’è per il mument betg disponibla. Emprova pli tard anc ina giada, per plaschair.</string>
     <string name="tk_login_password_body">Endatai per plaschair Voss pled-clav</string>
     <string name="tk_login_password_note">Pled-clav</string>
-    <string name="tk_login_passwordfailed_android_subtitle">Vus avais anc %s emprova(s)</string>
+    <plurals name="tk_login_input_error_numberOfTriesLeft">
+        <item quantity="one">Vus avais anc %s emprova</item>
+        <item quantity="other">Vus avais anc %s emprovas</item>
+    </plurals>
     <string name="tk_login_passwordfailed_notification">Il pled-clav è sbaglià. Per plaschair empruvai da nov.</string>
     <string name="tk_login_variant_body">La swiyu Wallet è bloccada.</string>
     <string name="tk_menu_activatingBiometrics_android_body">Entrai per plaschair Voss pled-clav da Schwyu per activar il schluccament biometric.</string>
@@ -196,7 +196,7 @@
     <string name="tk_present_review_button_accept">Lubir</string>
     <string name="tk_present_review_button_decline">Refusar</string>
     <string name="tk_present_review_loading">Spetgar per plaschair</string>
-    <string name="tk_qrscanner_scanning_body">Scannescha il code QR per retschaiver u preschentar ina attestaziun.</string>
+    <string name="tk_qrscanner_scanning_body">Scannai il code QR per confermar Vossa identitad u per survegnir ina cumprova.</string>
     <string name="tk_qrscanner_scanning_title">Scannar il code QR</string>
     <string name="tk_receive_cameraaccessneeded1_body">La camera ha ina funcziun impurtanta. Senza la camera na pudais Vus registrar nagins permiss e documents d’identitad ni As identifitgar.</string>
     <string name="tk_receive_cameraaccessneeded1_title">Lubir l’access a la camera</string>
@@ -208,8 +208,6 @@
     <string name="tk_receive_credentialOffer_button_decline">Refusar</string>
     <string name="tk_receive_credentialOffer_headerSection_secondary">Vul emetter la suandonta cumprova:</string>
     <string name="tk_receive_credentialOffer_hiddenGoToDetails">Tar ils detagls</string>
-    <string name="tk_receive_credentialOffer_wrongData_primary">Chattà infurmaziuns incorrectas?</string>
-    <string name="tk_receive_credentialOffer_wrongData_secondary">In attestat emess na po betg pli vegnir modifitgà.\n\nSche Vus constatatis in sbagl en Voss datas, As drizzai per plaschair a l’emettenta u a l’emettent.\nQuella persuna po emetter in nov attestat curregì.</string>
     <string name="tk_receive_declineOffer_primary">Refusar la cumprova?</string>
     <string name="tk_receive_declineOffer_primaryButton">Refusar la cumprova</string>
     <string name="tk_receive_declineOffer_secondary">Refusar la cumprova?</string>
@@ -226,13 +224,13 @@
     <string name="tk_settings_general_sectionTitle">General</string>
     <string name="tk_settings_imprint_appInformation_appVersion">Versiun da l’app</string>
     <string name="tk_settings_imprint_appInformation_body">L’app swiyu è open source. Il code da funtauna po vegnir consultà sin GitHub.</string>
-    <string name="tk_settings_imprint_appInformation_github_link_value">https://github.com/e-id-admin</string>
+    <string name="tk_settings_imprint_appInformation_github_link_value">https://github.com/swiyu-admin-ch</string>
     <string name="tk_settings_imprint_legal_disclaimer_secondary">Las auturas ed ils auturs na surpiglian nagina responsabladad per la fidanza e la cumplettadad da las novitads. Per referenzas e links a websites da terzas partidas na surpiglian nus nagina responsabladad.</string>
     <string name="tk_settings_imprint_legal_sectionTitle">Indicaziuns giuridicas</string>
     <string name="tk_settings_imprint_legal_termsOfUse_link_text">Cundiziuns d’utilisaziun</string>
-    <string name="tk_settings_imprint_legal_termsOfUse_link_value">https://www.eid.admin.ch/en/swiyu-terms-e</string>
-    <string name="tk_settings_imprint_publisher_link_text">www.bit.admin.ch</string>
-    <string name="tk_settings_imprint_publisher_link_value">https://www.bit.admin.ch/en</string>
+    <string name="tk_settings_imprint_legal_termsOfUse_link_value">https://www.eid.admin.ch/de/swiyu-terms</string>
+    <string name="tk_settings_imprint_publisher_link_text">www.bj.admin.ch</string>
+    <string name="tk_settings_imprint_publisher_link_value">https://www.bj.admin.ch/de</string>
     <string name="tk_settings_imprint_publisher_sectionTitle">Emettur, realisaziun ed exploitaziun</string>
     <string name="tk_settings_imprint_title">Infurmaziuns legalas</string>
     <string name="tk_settings_licences_body">Qua chatta ti la survista dals licenzas da software utilisadas en la Swiyu Wallet. Las licenzas correspundan a las directivas da protecziun da datas da l’UFIT e als pli novs standards da segirezza. Cun questa glista vulain nus crear transparenza per tut las persunas che utiliseschan l’app.</string>
@@ -240,7 +238,7 @@
     <string name="tk_settings_securityPrivacy_biometrics_noHardware">L\' apparat na dispona betg d\' ina hardware biometrica cumpatibla</string>
     <string name="tk_settings_securityPrivacy_biometrics_pinChanged">E lur biometrics ein vegni deactivai, perquei che vus haveis midau il pled-clav.</string>
     <string name="tk_settings_securityPrivacy_dataProtection_privacyPolicy_link_text">Decleraziun davart la protecziun da datas</string>
-    <string name="tk_settings_securityPrivacy_dataProtection_privacyPolicy_link_value">https://www.eid.admin.ch/en/swiyu-privacy-e</string>
+    <string name="tk_settings_securityPrivacy_dataProtection_privacyPolicy_link_value">https://www.eid.admin.ch/de/swiyu-privacy</string>
     <string name="tk_settings_securityPrivacy_dataProtection_shareData_primary">Cundivider datas diagnostic</string>
     <string name="tk_settings_securityPrivacy_dataProtection_shareData_secondary">Per crear ina e-ID dovrain nus Vossa consentiment per la decleraziun da protecziun da datas.</string>
     <string name="tk_settings_wallet_language">Lingua</string>
@@ -407,7 +405,7 @@
     <string name="tk_settings_imprint_appInformation_github_link_text">https://github.com/swiyu-admin-ch</string>
     <string name="tk_settings_imprint_appInformation_sectionTitle">Versiun da l’app</string>
     <string name="tk_settings_imprint_legal_disclaimer_primary">Decleraziun da responsabladad</string>
-    <string name="tk_settings_imprint_publisher_name">Departament federal da finanzas (DFF)\nUffizi federal d’informatica e da telecommunicaziuns (UFIT)</string>
+    <string name="tk_settings_imprint_publisher_name">Eidgenössisches Justiz- und Polizeidepartement EJPD\nBundesamt für Justiz BJ</string>
     <string name="tk_settings_language_device">Lingua dal dispositiv</string>
     <string name="tk_settings_language_title">Lingua</string>
     <string name="tk_settings_securityPrivacy_dataProtection_diagnosticData">Datas da diagnostica</string>
@@ -655,7 +653,7 @@
     <string name="tk_eidRequest_otp_email_field_placeholder">firstname.lastname@uffizifederal.admin.ch</string>
     <string name="tk_eidRequest_otp_email_primaryButton">Cuntinuar</string>
     <string name="tk_eidRequest_otp_email_error_invalid_format">Format incorrect.</string>
-    <string name="tk_eidRequest_otp_email_error_forbidden">L’access a la fasa da test è actualmain limità a persunas cun in\'adressa dad e-mail @federaloffice.admin.ch.</string>
+    <string name="tk_eidRequest_otp_email_error_forbidden">L’access a la fasa da test è actualmain limità a persunas cun in\'adressa dad e-mail @uffizifederal.admin.ch</string>
     <string name="tk_eidRequest_otp_unavailable_title">Registraziun temporarmain betg disponibla</string>
     <string name="tk_eidRequest_otp_unavailable_body">La registraziun per la fasa da test n’è temporarmain betg disponibla. Empruvai anc ina giada pli tard.</string>
     <string name="tk_eidRequest_otp_unavailable_link_text">Visitar la pagina da status</string>
@@ -676,8 +674,8 @@
     <string name="tk_eidRequest_otp_email_error_generic">Igl è ì in sbagl. Per plaschair empruvai da nov.</string>
     <string name="tk_eidRequest_otp_email_skip_button">Saltar</string>
     <string name="tk_eidRequest_otp_unavailable_link_value">https://www.eid.admin.ch/en/swiyu-terms</string>
-    <string name="tk_eidRequest_otp_legal_terms_linkValue">https://www.eid.admin.ch/en/swiyu-terms-e</string>
-    <string name="tk_eidRequest_otp_legal_privacy_linkValue">https://www.eid.admin.ch/en/swiyu-privacy-e</string>
+    <string name="tk_eidRequest_otp_legal_terms_linkValue">https://www.eid.admin.ch/de/testphase-terms</string>
+    <string name="tk_eidRequest_otp_legal_privacy_linkValue">https://www.eid.admin.ch/de/testphase-privacy</string>
     <string name="tk_eidRequest_agentReview_button_close">Serrar</string>
     <string name="tk_eidRequest_agentReview_primary">Nus verifitgain Vossa identitad - grazia per Vossa pazienza.</string>
     <string name="tk_eidRequest_agentReview_secondary">Quest process po durar plirs dis da lavur. Vus vegnis infurmads uschespert ch’el è terminà.</string>
@@ -829,4 +827,25 @@
     <string name="tk_loader_initialization_secondary">Spetga, per plaschair, entant che nus preparain tut.</string>
     <string name="tk_global_sensitive_data_alt">Infurmaziuns sensiblas</string>
     <string name="tk_eidRequest_otp_legal_secondaryButton">Jau na sun betg d\'accord.</string>
+    <string name="tk_eidRequest_clientAttestation_securityCheck_error_title">La segirezza da Voss apparat na po betg vegnir verifitgada.</string>
+    <string name="qr_generator_qr_alt_text">Tes code QR</string>
+    <string name="tk_badgeInformation_trustedCheckApp_primary">Quest verifitgader utilisescha l\'app uffiziala swiyu Check per verifitgar Vossa identitad.</string>
+    <string name="tk_badgeInformation_trustedCheckApp_secondary">Cundividai Vossas datas mo sche Vus avais fidanza en quest verifitgader. Sche memia bleras datas vegnan dumandadas, pudais Vus far ina annunzia.</string>
+    <string name="tk_badgeInformation_trustedCheckApp_hint">L\'Uffizi federal da giustia iniziescha lura ina procedura da verificaziun e prenda, sch\'i è necessari, mesiras ulteriuras.</string>
+    <string name="tk_badgeInformation_notTrustedCheckApp_primary">Quest verifitgader utilisescha ina app da verificaziun betg approvada.</string>
+    <string name="tk_badgeInformation_notTrustedCheckApp_secondary">Cundividai Vossas datas mo sche Vus avais fidanza en quest verifitgader. Sche memia bleras datas vegnan dumandadas, pudais Vus far ina annunzia.</string>
+    <string name="tk_badgeInformation_notTrustedCheckApp_hint">L\'Uffizi federal da giustia iniziescha lura ina procedura da verificaziun e prenda, sch\'i è necessari, mesiras ulteriuras.</string>
+    <string name="tk_error_generic_helpLink_value">https://www.eid.admin.ch/de/hilfe</string>
+    <string name="tk_displaybatchPrivacyWarning_title">Vossa sfera privata è restrenschida</string>
+    <string name="tk_displaybatchPrivacyWarning_body">Tut las utilisaziuns èn vegnidas consumadas. Vossas activitads pon vegnir colliadas cun questa cumprova. Renovei ella per restabilir ina protecziun pli ferma da Vossa sfera privata.</string>
+    <string name="tk_displaybatchPrivacyWarning_button">Mussar detagls</string>
+    <string name="tk_credentialDetail_issuanceType_standard">Standard</string>
+    <string name="tk_credentialDetail_issuanceType_batch">Stapel</string>
+    <string name="tk_credentialDetail_issuanceType_label">Tip da l’emissiun</string>
+    <string name="tk_credentialDetail_issuanceInfo_title">Tip da l’emissiun</string>
+    <string name="tk_credentialDetail_issuanceInfo_moreInfo_button">Dapli novitads</string>
+    <string name="tk_credentialDetail_issuanceInfo_more_info_link">https://www.eid.admin.ch/de/so-wird-die-e-id-unverknuepfbar</string>
+    <string name="tk_credentialDetail_batchIssuanceInfo_title">Emissiun da stapel</string>
+    <string name="tk_credentialDetail_batchIssuanceInfo_body">Quest cumprova è vegnì emess sco “stapel”.\n\nTar mintga preschentaziun vegn utilisà adina in singul nov cumprova ord il stapel.\n\nLa separaziun tecnica da las singulas utilisaziuns porscha protecziun supplementara da la sfera privata.</string>
+    <string name="tk_credentialDetail_batchIssuanceInfo_usageDetails_title">Detagls d’utilisaziun</string>
 </resources>

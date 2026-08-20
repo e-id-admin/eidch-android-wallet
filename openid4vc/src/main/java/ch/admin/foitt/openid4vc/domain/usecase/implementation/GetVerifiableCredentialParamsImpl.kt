@@ -12,8 +12,8 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.IssuerCred
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.ProofType
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.supportsDpop
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.toGetVerifiableCredentialParamsError
-import ch.admin.foitt.openid4vc.domain.repository.CredentialOfferRepository
 import ch.admin.foitt.openid4vc.domain.usecase.FetchIssuerConfiguration
+import ch.admin.foitt.openid4vc.domain.usecase.FetchRawAndParsedIssuerCredentialInfo
 import ch.admin.foitt.openid4vc.domain.usecase.GetVerifiableCredentialParams
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Result
@@ -22,8 +22,8 @@ import com.github.michaelbull.result.mapError
 import javax.inject.Inject
 
 internal class GetVerifiableCredentialParamsImpl @Inject constructor(
-    private val credentialOfferRepository: CredentialOfferRepository,
     private val fetchIssuerConfiguration: FetchIssuerConfiguration,
+    private val fetchRawAndParsedIssuerCredentialInfo: FetchRawAndParsedIssuerCredentialInfo,
 ) : GetVerifiableCredentialParams {
     override suspend fun invoke(
         issuerCredentialInfo: IssuerCredentialInfo,
@@ -53,9 +53,10 @@ internal class GetVerifiableCredentialParamsImpl @Inject constructor(
             .mapError(FetchIssuerConfigurationError::toGetVerifiableCredentialParamsError)
             .bind()
 
-        val issuerInfo = credentialOfferRepository.getIssuerCredentialInfo(issuerEndpoint = issuerEndpoint)
+        val issuerInfo = fetchRawAndParsedIssuerCredentialInfo(issuerEndpoint)
             .mapError(FetchIssuerCredentialInfoError::toGetVerifiableCredentialParamsError)
             .bind()
+            .issuerCredentialInfo
 
         val proofTypeConfig = credentialConfiguration.proofTypesSupported.entries.firstOrNull {
             it.key == ProofType.JWT

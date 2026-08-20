@@ -41,7 +41,8 @@ class GetCredentialsWithDetailsFlowImpl @Inject constructor(
                 verifiableCredential = verifiableCredentialWithDetail.verifiableCredential,
                 credentialDisplays = verifiableCredentialWithDetail.credentialDisplays,
                 claims = verifiableCredentialWithDetail.clusters.flatMap { it.claimsWithDisplays },
-                credentialFormat = verifiableCredentialWithDetail.credential.format
+                credentialFormat = verifiableCredentialWithDetail.credential.format,
+                status = verifiableCredentialWithDetail.nextPresentableStatus,
             ).mapError(MapToCredentialDisplayDataError::toGetCredentialsWithDisplaysFlowError)
                 .bind()
         }

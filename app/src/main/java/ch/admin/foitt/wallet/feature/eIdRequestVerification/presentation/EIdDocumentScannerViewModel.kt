@@ -17,6 +17,7 @@ import ch.admin.foitt.wallet.feature.eIdRequestVerification.domain.model.toTextR
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.domain.usecase.AreEIdDocumentsEqual
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.domain.usecase.CreateSDKErrorTextKeys
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.domain.usecase.GetEIdRequestCase
+import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentScanner.DocumentScannerEvent
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentScanner.EIdDocumentScanStatus
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentScanner.EIdDocumentScannerUiState
 import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.model.OnPermissionResult
@@ -35,24 +36,31 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.scanning.di.AvBeamSdkEntryPoint
+import ch.admin.foitt.wallet.platform.utils.combine
+import ch.admin.foitt.wallet.platform.utils.isUsbImageDeviceDetectedFlow
 import ch.admin.foitt.wallet.platform.utils.openLink
 import com.github.michaelbull.result.mapOrElse
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -66,8 +74,8 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
     private val areEIdDocumentsEqual: AreEIdDocumentsEqual,
     private val permissionStateHandler: PermissionStateHandler,
     destinationScopedComponentManager: DestinationScopedComponentManager,
-    getDocumentType: GetDocumentType,
     getEIdRequestCase: GetEIdRequestCase,
+    getDocumentType: GetDocumentType,
     private val createSDKErrorTextKeys: CreateSDKErrorTextKeys,
     @Assisted private val caseId: String,
     private val setTopBarState: SetTopBarState,
@@ -152,19 +160,27 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
 
     private val isFirstDocScan: Boolean get() = caseId.isBlank()
 
+    private val isUsbDeviceDetected = appContext.isUsbImageDeviceDetectedFlow.onEach { isUsbDeviceDetected ->
+        if (isUsbDeviceDetected) {
+            resetScanningState()
+            clearFlows()
+        }
+    }
+
     val uiState: StateFlow<EIdDocumentScannerUiState> = combine(
         errorState,
         permissionState,
         avBeam.initializedFlow,
         eIdDocumentScanStatus,
         avBeam.statusFlow,
-
+        isUsbDeviceDetected,
     ) {
             errorState,
             permissionState,
             initialized,
             eIdDocumentScanStatus,
             avBeamStatus,
+            isUsbDeviceDetected,
         ->
         when {
             errorState is DocumentScannerErrorType.SdkError ->
@@ -196,10 +212,10 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
             errorState == DocumentScannerErrorType.Generic -> EIdDocumentScannerUiState.Error(
                 type = errorState,
                 onButton = ::onRetry,
-                onHelp = ::onHelp,
+                onHelp = null,
                 title = R.string.tk_error_generic_primary,
                 content = R.string.tk_error_generic_secondary,
-                buttonText = R.string.tk_error_generic_button_primary
+                buttonText = R.string.tk_error_generic_button_primary,
             )
 
             errorState == DocumentScannerErrorType.UnequalDocuments -> EIdDocumentScannerUiState.Error(
@@ -211,6 +227,14 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
             )
 
             permissionState !is PermissionState.Granted -> EIdDocumentScannerUiState.Initializing
+            isUsbDeviceDetected -> EIdDocumentScannerUiState.Error(
+                type = DocumentScannerErrorType.Generic,
+                onButton = ::onRetry,
+                onHelp = null,
+                title = R.string.tk_getEid_externalDeviceDetected_primary,
+                content = R.string.tk_getEid_externalDeviceDetected_secondary,
+                buttonText = R.string.tk_error_generic_button_primary,
+            )
             !initialized -> EIdDocumentScannerUiState.Initializing
             else -> {
                 EIdDocumentScannerUiState.Scan(
@@ -226,11 +250,16 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
             (state is EIdDocumentScannerUiState.Scan && state.status.isScanning)
     }.toStateFlow(false)
 
-    init {
-        viewModelScope.launch {
+    private val _hapticEvent = MutableSharedFlow<DocumentScannerEvent>()
+    val hapticEvent = _hapticEvent.asSharedFlow()
+
+    fun updateTopBarState(coroutineScope: CoroutineScope): Unit = coroutineScope.run {
+        launch {
             uiState.collectLatest {
                 setTopBarState(topBarState)
             }
+        }
+        launch {
             permissionState.collectLatest {
                 setTopBarState(topBarState)
             }
@@ -238,8 +267,8 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
     }
 
     fun onResumeScan() {
+        Timber.d("$logTitle view resumed")
         viewModelScope.launch {
-            Timber.d("$logTitle view resumed")
             prepareScanner()
         }
     }
@@ -247,6 +276,7 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
     fun onPauseScan() {
         viewModelScope.launch {
             resetScanningState()
+            clearFlows()
             Timber.d("$logTitle  view paused")
         }
     }
@@ -278,6 +308,7 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
         launch {
             avBeam.statusFlow.collect { status ->
                 if (status == AVBeamStatus.IdNeedSecondPageForMatching) {
+                    _hapticEvent.emit(DocumentScannerEvent.FirstPageDone)
                     eIdDocumentScanStatus.update { EIdDocumentScanStatus.BACKSIDE_INFO }
                 }
             }
@@ -337,7 +368,9 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
     }
 
     private suspend fun prepareScanner() {
+        Timber.d("$logTitle prepareScanner")
         isViewReady.awaitValue(true)
+        avBeam.initializedFlow.awaitValue(true)
         avBeam.stopCamera()
         avBeam.startCamera()
     }
@@ -367,13 +400,15 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
         eIdDocumentScanStatus.update { EIdDocumentScanStatus.FINISHED }
         Timber.d(message = "$logTitle Completed")
 
+        _hapticEvent.emit(DocumentScannerEvent.ScanDone)
+
         areEIdDocumentsEqual(caseId, packageResult.mrzValues.toTypedArray())
-            .onFailure { error ->
+            .onErr { error ->
                 Timber.e("$logTitle Error - areEIdDocumentsEqual: $error")
                 errorState.update { DocumentScannerErrorType.Generic }
                 return@launch
             }
-            .onSuccess { areDocumentsEqual ->
+            .onOk { areDocumentsEqual ->
                 if (!areDocumentsEqual) {
                     Timber.w("$logTitle Error - document are not equal")
                     errorState.update { DocumentScannerErrorType.UnequalDocuments }
@@ -390,8 +425,11 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
         resetScanningState()
     }
 
-    private fun onScanningError(avBeamError: AvBeamNotification.Error) {
+    private suspend fun onScanningError(avBeamError: AvBeamNotification.Error) {
         val baseError = StringBuilder("$logTitle Error - documentScan notification")
+
+        _hapticEvent.emit(DocumentScannerEvent.ScanFailed)
+
         avBeamError.packageData?.let { packageData ->
             baseError.append("\nerror: ${packageData.errorType}, ${packageData.errorCode}")
             baseError.append("\nerrorList: ${packageData.errorCodeList.joinToString()}")
@@ -405,7 +443,10 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
 
     private fun resetScanningState() {
         stopScanning()
-        avBeam.stopCamera()
+        if (avBeam.initializedFlow.value) {
+            // only stop camera if SDK is ready
+            avBeam.stopCamera()
+        }
         isViewReady.update { false }
     }
 
@@ -424,7 +465,6 @@ class EIdDocumentScannerViewModel @AssistedInject constructor(
 
     private fun onRetry() {
         viewModelScope.launch {
-            Timber.w("$logTitle - retry")
             resetScanningState()
             clearFlows()
             prepareScanner()

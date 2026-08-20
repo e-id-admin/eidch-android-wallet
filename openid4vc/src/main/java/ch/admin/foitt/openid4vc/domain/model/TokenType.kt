@@ -4,9 +4,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class TokenType {
-    BEARER,
+enum class TokenType(val value: String) {
+    BEARER("Bearer"),
 
     @SerialName("DPoP")
-    DPOP,
+    DPOP("DPoP"),
 }

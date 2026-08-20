@@ -1,5 +1,7 @@
 package ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentRecording
 
+import androidx.annotation.StringRes
+import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.composables.ScannerButtonState
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.DocumentScannerErrorType
 
@@ -14,7 +16,10 @@ sealed interface EIdDocumentRecordingUiState {
 
     data class Error(
         val type: DocumentScannerErrorType,
-        val onRetry: () -> Unit,
+        @param:StringRes val title: Int = R.string.tk_error_generic_primary,
+        @param:StringRes val content: Int = R.string.tk_error_generic_secondary,
+        @param:StringRes val buttonText: Int = R.string.tk_error_generic_button_primary,
+        val onButton: () -> Unit,
         val onHelp: (() -> Unit)? = null,
     ) : EIdDocumentRecordingUiState
 }

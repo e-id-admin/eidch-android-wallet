@@ -1,9 +1,13 @@
 package ch.admin.foitt.wallet.feature.deeplink
 
+import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationRequest
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.ClientIdentifier
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.VerifierInfo
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.CompatibleCredential
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.PresentationRequestWithRaw
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.VerificationProcessType
+import ch.admin.foitt.wallet.platform.credentialPresentation.mock.MockPresentationRequest.VALID_JWT
 import ch.admin.foitt.wallet.platform.deeplink.domain.repository.DeepLinkIntentRepository
 import ch.admin.foitt.wallet.platform.deeplink.domain.usecase.HandleDeeplink
 import ch.admin.foitt.wallet.platform.deeplink.domain.usecase.implementation.HandleDeeplinkImpl
@@ -13,7 +17,7 @@ import ch.admin.foitt.wallet.platform.invitation.domain.model.InvitationErrorScr
 import ch.admin.foitt.wallet.platform.invitation.domain.model.ProcessInvitationError
 import ch.admin.foitt.wallet.platform.invitation.domain.model.ProcessInvitationResult
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.ProcessInvitation
-import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialOfferEventRepository
+import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialEventRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination
 import com.github.michaelbull.result.Err
@@ -25,6 +29,7 @@ import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
+import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
@@ -35,6 +40,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import uniffi.heidi_dcql_rust.DcqlQuery
 import kotlin.reflect.KClass
 
 class HandleDeeplinkTest {
@@ -51,7 +57,7 @@ class HandleDeeplinkTest {
     private lateinit var mockProcessInvitation: ProcessInvitation
 
     @MockK
-    private lateinit var mockCredentialOfferEventRepository: CredentialOfferEventRepository
+    private lateinit var mockCredentialEventRepository: CredentialEventRepository
 
     private lateinit var handleDeeplinkUseCase: HandleDeeplink
 
@@ -68,14 +74,14 @@ class HandleDeeplinkTest {
         coEvery { mockNavigationManager.replaceCurrentWith(any()) } just runs
         coEvery { mockNavigationManager.popBackStackOrToRoot() } just runs
         coEvery { mockDeepLinkIntentRepository.reset() } just runs
-        coEvery { mockCredentialOfferEventRepository.setEvent(any()) } just runs
+        coEvery { mockCredentialEventRepository.setEvent(any()) } just runs
 
         handleDeeplinkUseCase = HandleDeeplinkImpl(
             navManager = mockNavigationManager,
             deepLinkIntentRepository = mockDeepLinkIntentRepository,
             environmentSetupRepository = mockEnvironmentSetupRepository,
             processInvitation = mockProcessInvitation,
-            credentialOfferEventRepository = mockCredentialOfferEventRepository,
+            credentialEventRepository = mockCredentialEventRepository,
         )
     }
 
@@ -240,7 +246,7 @@ class HandleDeeplinkTest {
         coVerifyOrder {
             mockDeepLinkIntentRepository.reset()
             mockProcessInvitation(invitationUri = any())
-            mockCredentialOfferEventRepository.setEvent(any())
+            mockCredentialEventRepository.setEvent(any())
         }
 
         coVerify(exactly = 0) {
@@ -286,25 +292,45 @@ class HandleDeeplinkTest {
     fun `On deeplink processing failure, navigate to the defined error screen`() = runTest {
         val definedErrorDestinations: Map<ProcessInvitationError, Destination> = mapOf(
             InvitationError.InvalidPresentationRequest to Destination.InvitationFailureScreen(
-                InvitationErrorScreenState.INVALID_PRESENTATION,
-                null
+                invitationError = InvitationErrorScreenState.INVALID_PRESENTATION,
+                responseUri = null,
+                state = null,
             ),
-            InvitationError.EmptyWallet("some uri") to Destination.InvitationFailureScreen(
-                InvitationErrorScreenState.EMPTY_WALLET,
-                null
+            InvitationError.EmptyWallet("some uri", "state") to Destination.InvitationFailureScreen(
+                invitationError = InvitationErrorScreenState.EMPTY_WALLET,
+                responseUri = null,
+                state = null,
             ),
             InvitationError.InvalidCredentialOffer to Destination.InvitationFailureScreen(
-                InvitationErrorScreenState.INVALID_CREDENTIAL,
-                null
+                invitationError = InvitationErrorScreenState.INVALID_CREDENTIAL,
+                responseUri = null,
+                state = null,
             ),
-            InvitationError.InvalidInput to Destination.InvitationFailureScreen(InvitationErrorScreenState.INVALID_CREDENTIAL, null),
-            InvitationError.NoCompatibleCredential("some uri") to Destination.InvitationFailureScreen(
-                InvitationErrorScreenState.NO_COMPATIBLE_CREDENTIAL,
-                null
+            InvitationError.InvalidInput to Destination.InvitationFailureScreen(
+                invitationError = InvitationErrorScreenState.INVALID_CREDENTIAL,
+                responseUri = null,
+                state = null,
             ),
-            InvitationError.Unexpected to Destination.InvitationFailureScreen(InvitationErrorScreenState.UNEXPECTED, null),
-            InvitationError.NetworkError to Destination.InvitationFailureScreen(InvitationErrorScreenState.NETWORK_ERROR, null),
-            InvitationError.UnknownIssuer to Destination.InvitationFailureScreen(InvitationErrorScreenState.UNKNOWN_ISSUER, null),
+            InvitationError.NoCompatibleCredential("some uri", "state") to Destination.InvitationFailureScreen(
+                invitationError = InvitationErrorScreenState.NO_COMPATIBLE_CREDENTIAL,
+                responseUri = null,
+                state = null,
+            ),
+            InvitationError.Unexpected to Destination.InvitationFailureScreen(
+                invitationError = InvitationErrorScreenState.UNEXPECTED,
+                responseUri = null,
+                state = null,
+            ),
+            InvitationError.NetworkError to Destination.InvitationFailureScreen(
+                invitationError = InvitationErrorScreenState.NETWORK_ERROR,
+                responseUri = null,
+                state = null,
+            ),
+            InvitationError.UnknownIssuer to Destination.InvitationFailureScreen(
+                invitationError = InvitationErrorScreenState.UNKNOWN_ISSUER,
+                responseUri = null,
+                state = null,
+            ),
         )
 
         definedErrorDestinations.forEach { (error, destination) ->
@@ -322,6 +348,7 @@ class HandleDeeplinkTest {
     }
 
     companion object {
+        private val mockDcqlQuery = mockk<DcqlQuery>(relaxed = true)
         private const val SOME_DEEP_LINK = "openid-credential-offer://credential_offer=..."
         private val mockCredentialOfferResult = ProcessInvitationResult.CredentialOffer(0L)
         private val mockDeferredCredentialResult = ProcessInvitationResult.DeferredCredential(0L)
@@ -330,18 +357,28 @@ class HandleDeeplinkTest {
             nonce = "iusto",
             responseUri = "tincidunt",
             responseMode = "suscipit",
-            clientId = "clientId",
+            clientIdentifier = mockk<ClientIdentifier>(),
             responseType = "responseType",
-            dcqlQuery = null,
+            dcqlQuery = mockDcqlQuery,
             clientMetaData = null,
             state = null,
-            expectedOrigins = emptyList()
+            expectedOrigins = emptyList(),
+            verifierInfo = listOf(
+                VerifierInfo(
+                    format = "jwt",
+                    data = Jwt(
+                        rawJwt = VALID_JWT
+                    )
+                )
+            ),
+            scope = null
         )
 
         private val mockPresentationRequestWithRaw = PresentationRequestWithRaw(
             authorizationRequest = mockAuthorizationRequest,
             rawPresentationRequest = "raw presentation request",
             verificationProcessType = VerificationProcessType.NETWORK,
+            dcqlQuery = mockDcqlQuery,
         )
 
         private val mockCompatibleCredential = CompatibleCredential(
@@ -373,11 +410,11 @@ class HandleDeeplinkTest {
         )
 
         private val mockFailures: List<ProcessInvitationError> = listOf(
-            InvitationError.EmptyWallet("some uri"),
+            InvitationError.EmptyWallet("some uri", "state"),
             InvitationError.InvalidCredentialOffer,
             InvitationError.InvalidInput,
             InvitationError.NetworkError,
-            InvitationError.NoCompatibleCredential("some uri"),
+            InvitationError.NoCompatibleCredential("some uri", "state"),
             InvitationError.MetadataMisconfiguration("Message"),
             InvitationError.Unexpected,
         )

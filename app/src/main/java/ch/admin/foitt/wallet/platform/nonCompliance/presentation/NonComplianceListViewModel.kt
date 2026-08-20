@@ -5,6 +5,7 @@ import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityType
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination
 import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.NonComplianceReportReason
+import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.NonComplianceReportingData
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarBackground
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
@@ -18,12 +19,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 class NonComplianceListViewModel @AssistedInject constructor(
     private val navManager: NavigationManager,
     setTopBarState: SetTopBarState,
-    @Assisted private val activityId: Long,
-    @Assisted private val activityType: ActivityType
+    @Assisted private val reportingData: NonComplianceReportingData
 ) : ScreenViewModel(setTopBarState) {
     @AssistedFactory
     interface Factory {
-        fun create(activityId: Long, activityType: ActivityType): NonComplianceListViewModel
+        fun create(reportingData: NonComplianceReportingData): NonComplianceListViewModel
     }
 
     override val topBarState = TopBarState.Details(
@@ -35,7 +35,7 @@ class NonComplianceListViewModel @AssistedInject constructor(
     private val issuanceReportingReasons = listOf<NonComplianceReportReason>()
     private val verificationReportingReasons = listOf(NonComplianceReportReason.EXCESSIVE_DATA_REQUEST)
 
-    val reasons = when (activityType) {
+    val reasons = when (reportingData.activityType) {
         ActivityType.ISSUANCE -> issuanceReportingReasons
         ActivityType.PRESENTATION_ACCEPTED,
         ActivityType.PRESENTATION_DECLINED -> verificationReportingReasons
@@ -48,7 +48,7 @@ class NonComplianceListViewModel @AssistedInject constructor(
     fun onReason(reportReason: NonComplianceReportReason) {
         navManager.navigateTo(
             Destination.NonComplianceInfoScreen(
-                activityId = activityId,
+                activityId = reportingData.actorDisplayData.activityId ?: 0,
                 reportReason = reportReason,
             )
         )

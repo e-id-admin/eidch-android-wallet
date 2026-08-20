@@ -7,12 +7,14 @@ import ch.admin.foitt.wallet.feature.presentationRequest.presentation.Presentati
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationDeclinedViewModel
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationFailureScreen
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationFailureViewModel
+import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationRequestBlockedScreen
+import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationRequestBlockedViewModel
+import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationRequestReviewScreen
+import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationRequestReviewViewModel
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationRequestScreen
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationRequestViewModel
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationSuccessScreen
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationSuccessViewModel
-import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationValidationErrorScreen
-import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationValidationErrorViewModel
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationVerificationErrorScreen
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.PresentationVerificationErrorViewModel
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination
@@ -46,8 +48,14 @@ object EntryProviderInstallerModule {
             }
         }
 
-        entry<Destination.PresentationDeclinedScreen> {
-            val viewModel = hiltViewModel<PresentationDeclinedViewModel>()
+        entry<Destination.PresentationDeclinedScreen> { navKey ->
+            val viewModel = hiltViewModel<PresentationDeclinedViewModel, PresentationDeclinedViewModel.Factory>(
+                creationCallback = { factory ->
+                    factory.create(
+                        redirectUri = navKey.redirectUri
+                    )
+                }
+            )
             SyncedScaffoldScreen(viewModel = viewModel) {
                 PresentationDeclinedScreen(viewModel = viewModel)
             }
@@ -68,6 +76,21 @@ object EntryProviderInstallerModule {
             }
         }
 
+        entry<Destination.PresentationRequestReviewScreen> { navKey ->
+            val viewModel =
+                hiltViewModel<PresentationRequestReviewViewModel, PresentationRequestReviewViewModel.Factory>(
+                    creationCallback = { factory ->
+                        factory.create(
+                            compatibleCredentials = navKey.compatibleCredentials,
+                            presentationRequestWithRaw = navKey.presentationRequestWithRaw,
+                        )
+                    }
+                )
+            SyncedScaffoldScreen(viewModel = viewModel) {
+                PresentationRequestReviewScreen(viewModel = viewModel)
+            }
+        }
+
         entry<Destination.PresentationRequestScreen> { navKey ->
             val viewModel =
                 hiltViewModel<PresentationRequestViewModel, PresentationRequestViewModel.Factory>(
@@ -83,24 +106,24 @@ object EntryProviderInstallerModule {
             }
         }
 
+        entry<Destination.PresentationRequestBlockedScreen> {
+            val viewModel = hiltViewModel<PresentationRequestBlockedViewModel>()
+            SyncedScaffoldScreen(viewModel = viewModel) {
+                PresentationRequestBlockedScreen(viewModel = viewModel)
+            }
+        }
+
         entry<Destination.PresentationSuccessScreen> { navKey ->
             val viewModel =
                 hiltViewModel<PresentationSuccessViewModel, PresentationSuccessViewModel.Factory>(
                     creationCallback = { factory ->
                         factory.create(
-                            sentFields = navKey.sentFields
+                            redirectUri = navKey.redirectUri
                         )
                     }
                 )
             SyncedScaffoldScreen(viewModel = viewModel) {
                 PresentationSuccessScreen(viewModel = viewModel)
-            }
-        }
-
-        entry<Destination.PresentationValidationErrorScreen> {
-            val viewModel = hiltViewModel<PresentationValidationErrorViewModel>()
-            SyncedScaffoldScreen(viewModel = viewModel) {
-                PresentationValidationErrorScreen(viewModel = viewModel)
             }
         }
 

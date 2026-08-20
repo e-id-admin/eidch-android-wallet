@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation
 
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.model.RefreshDeferredCredentialsError
 import ch.admin.foitt.wallet.platform.credential.domain.model.toRefreshDeferredCredentialsError
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchAndUpdateDeferredCredential
@@ -11,6 +12,7 @@ import ch.admin.foitt.wallet.platform.ssi.domain.repository.DeferredCredentialRe
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.mapError
+import com.github.michaelbull.result.onErr
 import timber.log.Timber
 import java.time.Instant
 import javax.inject.Inject
@@ -32,6 +34,15 @@ class RefreshDeferredCredentialsImpl @Inject constructor(
                 return@forEach
             }
             fetchAndUpdateDeferredCredential(deferredCredential)
+                .onErr { error ->
+                    when (error) {
+                        // update flow has silent errors -> no nav to gov error screen, just log
+                        is CredentialError.UnverifiedIssuer -> {
+                            Timber.e("Refresh Deferred credential: unverified issuer")
+                        }
+                        else -> {}
+                    }
+                }
         }
     }
 

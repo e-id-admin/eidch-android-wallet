@@ -1,7 +1,6 @@
 package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.ValidateIssuerMetadataJwtError
-import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.IssuerConfigurationResponse
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.toFetchIssuerConfigurationError
 import ch.admin.foitt.openid4vc.domain.repository.CredentialOfferRepository
 import ch.admin.foitt.openid4vc.domain.usecase.FetchIssuerConfiguration
@@ -16,17 +15,13 @@ internal class FetchIssuerConfigurationImpl @Inject constructor(
     private val validateIssuerMetadataJwt: ValidateIssuerMetadataJwt,
 ) : FetchIssuerConfiguration {
     override suspend fun invoke(issuerEndpoint: URL) = coroutineBinding {
-        when (val issuerConfig = credentialOfferRepository.fetchIssuerConfiguration(issuerEndpoint).bind()) {
-            is IssuerConfigurationResponse.Plain -> issuerConfig.config
-            is IssuerConfigurationResponse.Signed -> {
-                validateIssuerMetadataJwt(
-                    credentialIssuerIdentifier = issuerEndpoint.toString(),
-                    jwt = issuerConfig.jwt,
-                    type = null // currently undefined :(
-                ).mapError(ValidateIssuerMetadataJwtError::toFetchIssuerConfigurationError)
-                    .bind()
-                issuerConfig.config
-            }
-        }
+        val issuerConfig = credentialOfferRepository.fetchIssuerConfiguration(issuerEndpoint).bind()
+        validateIssuerMetadataJwt(
+            credentialIssuerIdentifier = issuerEndpoint.toString(),
+            jwt = issuerConfig.jwt,
+            type = null // currently undefined :(
+        ).mapError(ValidateIssuerMetadataJwtError::toFetchIssuerConfigurationError)
+            .bind()
+        issuerConfig.config
     }
 }

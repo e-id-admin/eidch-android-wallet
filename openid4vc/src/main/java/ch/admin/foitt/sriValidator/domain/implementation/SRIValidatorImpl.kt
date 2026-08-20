@@ -29,8 +29,6 @@ class SRIValidatorImpl @Inject constructor() : SRIValidator {
         if (dataHashBase64 != digest) {
             Err(SRIError.ValidationFailed).bind<SRIError>()
         }
-
-        Unit
     }
 
     companion object {

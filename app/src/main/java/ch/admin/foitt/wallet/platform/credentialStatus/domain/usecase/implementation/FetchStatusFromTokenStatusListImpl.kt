@@ -1,5 +1,7 @@
 package ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.implementation
 
+import ch.admin.foitt.didResolver.domain.DidResolverHelper
+import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialStatusError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.FetchStatusFromTokenStatusListError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.ParseTokenStatusStatusListError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.TokenStatusListProperties
@@ -11,12 +13,18 @@ import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.FetchStatu
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.ParseTokenStatusList
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.ValidateTokenStatusList
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
+import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
+import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.mapError
+import timber.log.Timber
+import java.net.URI
 import javax.inject.Inject
 
 class FetchStatusFromTokenStatusListImpl @Inject constructor(
+    private val didResolverHelper: DidResolverHelper,
+    private val environmentSetupRepository: EnvironmentSetupRepository,
     private val credentialStatusRepository: CredentialStatusRepository,
     private val validateTokenStatusList: ValidateTokenStatusList,
     private val parseTokenStatusList: ParseTokenStatusList,
@@ -27,6 +35,20 @@ class FetchStatusFromTokenStatusListImpl @Inject constructor(
         statusProperties: TokenStatusListProperties,
     ): Result<CredentialStatus, FetchStatusFromTokenStatusListError> = coroutineBinding {
         val statusList = statusProperties.statusList
+
+        val issuerDidUrl = didResolverHelper.getHttpsUrl(credentialIssuer)
+            .mapError { throwable ->
+                throwable.toFetchStatusFromTokenStatusListError("Fetch status from token status list error")
+            }.bind()
+        val trustedStatusListHost = environmentSetupRepository.statusListMapping[issuerDidUrl.host]
+
+        runSuspendCatching {
+            val statusListHost = URI(statusList.uri).host
+            check(trustedStatusListHost == statusListHost) { "status list host is not trusted" }
+        }.mapError { throwable ->
+            Timber.e(t = throwable, message = "status list not in swiyu registry")
+            CredentialStatusError.UnknownRegistry
+        }.bind()
 
         val jwt = credentialStatusRepository.fetchTokenStatusListJwt(statusList.uri).bind()
 

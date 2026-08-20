@@ -117,9 +117,27 @@ class ResolvePublicKeyImplTest {
     }
 
     @Test
-    fun `Resolving public key where the public key has missing y value returns an error`() = runTest {
+    fun `Resolving public key where the EC public key has missing y value returns an error`() = runTest {
+        every { mockDidJwk.kty } returns "EC"
         every { mockDidJwk.y } returns null
         useCase(KEY_ID).assertErrorType(VcSdJwtError.InvalidJwt::class)
+    }
+
+    @Test
+    fun `Resolving public key where the OKP public key has missing y value returns a success`() = runTest {
+        every { mockDidJwk.kty } returns "OKP"
+        every { mockDidJwk.y } returns null
+
+        val result = useCase(KEY_ID).assertOk()
+
+        val expected = ch.admin.foitt.openid4vc.domain.model.jwk.Jwk(
+            x = X_VALUE,
+            y = null,
+            crv = CRV,
+            kty = "OKP",
+        )
+
+        assertEquals(expected, result)
     }
 
     @Test

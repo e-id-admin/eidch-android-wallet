@@ -3,7 +3,7 @@ package ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementatio
 import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityListError
 import ch.admin.foitt.wallet.platform.activityList.domain.repository.ActivityActorDisplayWithImageRepository
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.GetActivityActorDisplaysFlow
-import ch.admin.foitt.wallet.platform.activityList.domain.usecase.MapToActivityActorDisplayData
+import ch.admin.foitt.wallet.platform.activityList.domain.usecase.MapToActorMetadataDisplayData
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.mock.ActivityListMocks.ACTIVITY_ID
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.mock.ActivityListMocks.CREDENTIAL_ID
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.mock.ActivityListMocks.activityActorDisplayData
@@ -32,7 +32,7 @@ class GetActivityActorDisplaysFlowImplTest {
     private lateinit var mockActivityActorDisplayWithImageRepository: ActivityActorDisplayWithImageRepository
 
     @MockK
-    private lateinit var mockMapToActivityActorDisplayData: MapToActivityActorDisplayData
+    private lateinit var mockMapToActorMetadataDisplayData: MapToActorMetadataDisplayData
 
     private lateinit var useCase: GetActivityActorDisplaysFlow
 
@@ -41,7 +41,7 @@ class GetActivityActorDisplaysFlowImplTest {
         MockKAnnotations.init(this)
         useCase = GetActivityActorDisplaysFlowImpl(
             activityActorDisplayWithImageRepository = mockActivityActorDisplayWithImageRepository,
-            mapToActivityActorDisplayData = mockMapToActivityActorDisplayData,
+            mapToActorMetadataDisplayData = this@GetActivityActorDisplaysFlowImplTest.mockMapToActorMetadataDisplayData,
         )
 
         setupDefaultMocks()
@@ -79,7 +79,7 @@ class GetActivityActorDisplaysFlowImplTest {
         } returns flowOf(Ok(listOf(actorDisplay1, actorDisplay2)))
 
         coEvery {
-            mockMapToActivityActorDisplayData(
+            mockMapToActorMetadataDisplayData(
                 activityId = ACTIVITY_ID,
                 actorDisplaysWithImages = listOf(actorDisplay1, actorDisplay2)
             )

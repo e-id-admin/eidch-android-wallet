@@ -39,9 +39,9 @@ internal class ResolvePublicKeyImpl @Inject constructor(
     private fun DidDoc.getPublicKey(kid: String): Result<Jwk, VcSdJwtError.InvalidJwt> = runSuspendCatching {
         val publicKey = getKeyByMethodId(kid)
         val x = checkNotNull(publicKey.x)
-        val y = checkNotNull(publicKey.y)
         val crv = checkNotNull(publicKey.crv)
         val kty = checkNotNull(publicKey.kty)
+        val y = if (kty == com.nimbusds.jose.jwk.KeyType.EC.value) checkNotNull(publicKey.y) else publicKey.y
 
         Jwk(x = x, y = y, crv = crv, kty = kty)
     }.mapError { _ -> VcSdJwtError.InvalidJwt }

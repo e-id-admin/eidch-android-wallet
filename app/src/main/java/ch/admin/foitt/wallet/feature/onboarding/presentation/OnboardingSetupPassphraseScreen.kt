@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -68,7 +68,7 @@ private fun OnboardingPassphraseScreenContent(
 ) {
     FullscreenGradient()
 
-    when (currentWindowAdaptiveInfo().windowWidthClass()) {
+    when (currentWindowAdaptiveInfoV2().windowWidthClass()) {
         WindowWidthClass.COMPACT -> WalletLayouts.CompactContainerFloatingBottom(
             verticalArrangement = Arrangement.Top,
             shouldScrollUnderTopBar = false,

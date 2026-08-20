@@ -26,7 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -49,15 +49,14 @@ import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.InvitationHeader
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
-import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
 import ch.admin.foitt.wallet.platform.composables.AdaptiveButtonContainer
 import ch.admin.foitt.wallet.platform.composables.Buttons
 import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
 import ch.admin.foitt.wallet.platform.composables.presentation.HeightReportingLayout
 import ch.admin.foitt.wallet.platform.composables.presentation.WindowWidthClass
 import ch.admin.foitt.wallet.platform.composables.presentation.windowWidthClass
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 import ch.admin.foitt.wallet.platform.utils.TestTags
@@ -70,8 +69,8 @@ import ch.admin.foitt.wallet.theme.WalletTheme
 fun CredentialActionFeedbackCardError(
     modifier: Modifier = Modifier,
     issuer: ActorUiState,
-    @StringRes contentTextFirstParagraphText: Int? = null,
-    @StringRes contentTextSecondParagraphText: Int? = null,
+    contentTextFirstParagraphText: String? = null,
+    contentTextSecondParagraphText: String? = null,
     iconAlwaysVisible: Boolean = false,
     @DrawableRes contentIcon: Int? = null,
     backgroundColor: Color = WalletTheme.colorScheme.surfaceContainerHighest,
@@ -79,11 +78,12 @@ fun CredentialActionFeedbackCardError(
     secondaryTextColor: Color = WalletTheme.colorScheme.onSurfaceVariant,
     primaryButtonColors: ButtonColors = WalletButtonColors.feedbackFailurePrimary(),
     secondaryButtonColors: ButtonColors = WalletButtonColors.feedbackFailureSecondary(),
-    @StringRes primaryButtonText: Int? = null,
+    primaryButtonText: String? = null,
     @StringRes secondaryButtonText: Int? = null,
     onPrimaryButton: (() -> Unit)? = null,
     onSecondaryButton: (() -> Unit)? = null,
-    onBadge: (BadgeType) -> Unit,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit
 ) {
     CredentialActionFeedbackCard(
         modifier = modifier,
@@ -101,7 +101,8 @@ fun CredentialActionFeedbackCardError(
         secondaryButtonText = secondaryButtonText,
         onPrimaryButton = onPrimaryButton,
         onSecondaryButton = onSecondaryButton,
-        onBadge = onBadge,
+        onActorNameTap = onActorNameTap,
+        onReportedActorInfo = onReportedActorInfo
     )
 }
 
@@ -110,18 +111,19 @@ fun CredentialActionFeedbackCardSuccess(
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     issuer: ActorUiState,
-    @StringRes contentTextFirstParagraphText: Int? = null,
-    @StringRes contentTextSecondParagraphText: Int? = null,
+    contentTextFirstParagraphText: String? = null,
+    contentTextSecondParagraphText: String? = null,
     @StringRes contentTextThirdParagraphText: Int? = null,
     iconAlwaysVisible: Boolean = false,
     @DrawableRes contentIcon: Int? = null,
     backgroundColor: Color = WalletTheme.colorScheme.tertiary,
     textColor: Color = WalletTheme.colorScheme.lightTertiary,
     primaryButtonColors: ButtonColors = WalletButtonColors.feedbackSuccessPrimary(),
-    @StringRes primaryButtonText: Int? = null,
+    primaryButtonText: String? = null,
     onPrimaryButton: (() -> Unit)? = null,
     onSecondaryButton: (() -> Unit)? = null,
-    onBadge: (BadgeType) -> Unit,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit
 ) {
     CredentialActionFeedbackCard(
         modifier = modifier,
@@ -138,7 +140,8 @@ fun CredentialActionFeedbackCardSuccess(
         primaryButtonText = primaryButtonText,
         onPrimaryButton = onPrimaryButton,
         onSecondaryButton = onSecondaryButton,
-        onBadge = onBadge,
+        onActorNameTap = onActorNameTap,
+        onReportedActorInfo = onReportedActorInfo
     )
 }
 
@@ -147,8 +150,8 @@ fun CredentialActionFeedbackCard(
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     issuer: ActorUiState,
-    @StringRes contentTextFirstParagraphText: Int? = null,
-    @StringRes contentTextSecondParagraphText: Int? = null,
+    contentTextFirstParagraphText: String? = null,
+    contentTextSecondParagraphText: String? = null,
     @StringRes contentTextThirdParagraphText: Int? = null,
     iconAlwaysVisible: Boolean = false,
     @DrawableRes contentIcon: Int? = null,
@@ -157,11 +160,15 @@ fun CredentialActionFeedbackCard(
     secondaryTextColor: Color = WalletTheme.colorScheme.lightPrimary,
     primaryButtonColors: ButtonColors = WalletButtonColors.feedbackDeclinePrimary(),
     secondaryButtonColors: ButtonColors = WalletButtonColors.feedbackDeclineSecondary(),
-    @StringRes primaryButtonText: Int? = null,
+    ternaryButtonColors: ButtonColors = WalletButtonColors.feedbackDeclineSecondary(),
+    primaryButtonText: String? = null,
     @StringRes secondaryButtonText: Int? = null,
+    @StringRes ternaryButtonText: Int? = null,
     onPrimaryButton: (() -> Unit)? = null,
     onSecondaryButton: (() -> Unit)? = null,
-    onBadge: (BadgeType) -> Unit,
+    onTernaryButton: (() -> Unit)? = null,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit
 ) {
     val headerHeight = remember { mutableStateOf(0.dp) }
     val stickyBottomHeight = remember { mutableStateOf(0.dp) }
@@ -180,7 +187,8 @@ fun CredentialActionFeedbackCard(
             Header(
                 issuer = issuer,
                 headerHeight = headerHeight,
-                onBadge = onBadge,
+                onActorNameTap = onActorNameTap,
+                onReportedActorInfo = onReportedActorInfo
             )
 
             val minHeight = this@BoxWithConstraints.maxHeight - headerHeight.value
@@ -202,10 +210,13 @@ fun CredentialActionFeedbackCard(
             stickyBottomHeight = stickyBottomHeight,
             onPrimaryButton = onPrimaryButton,
             onSecondaryButton = onSecondaryButton,
+            onTernaryButton = onTernaryButton,
             primaryButtonText = primaryButtonText,
             secondaryButtonText = secondaryButtonText,
             primaryButtonColors = primaryButtonColors,
             secondaryButtonColors = secondaryButtonColors,
+            ternaryButtonText = ternaryButtonText,
+            ternaryButtonColors = ternaryButtonColors,
         )
         LoadingOverlay(showOverlay = isLoading)
     }
@@ -213,9 +224,10 @@ fun CredentialActionFeedbackCard(
 
 @Composable
 private fun Header(
-    issuer: ActorUiState,
     headerHeight: MutableState<Dp>,
-    onBadge: (BadgeType) -> Unit,
+    issuer: ActorUiState,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit
 ) = HeightReportingLayout(
     onContentHeightMeasured = { height -> headerHeight.value = height }
 ) {
@@ -223,7 +235,8 @@ private fun Header(
         InvitationHeader(
             modifier = Modifier.padding(horizontal = Sizes.s04),
             actorUiState = issuer,
-            onBadge = onBadge,
+            onActorNameTap = onActorNameTap,
+            onReportedActorInfo = onReportedActorInfo
         )
         Spacer(modifier = Modifier.height(Sizes.s06))
     }
@@ -234,8 +247,8 @@ private fun Sheet(
     modifier: Modifier = Modifier,
     stickyBottomHeight: Dp,
     iconAlwaysVisible: Boolean,
-    @StringRes contentTextFirstParagraph: Int?,
-    @StringRes contentTextSecondParagraph: Int?,
+    contentTextFirstParagraph: String?,
+    contentTextSecondParagraph: String?,
     @StringRes contentTextThirdParagraph: Int?,
     @DrawableRes contentIcon: Int?,
     backgroundColor: Color,
@@ -256,7 +269,7 @@ private fun Sheet(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        val compact = currentWindowAdaptiveInfo().windowWidthClass() == WindowWidthClass.COMPACT
+        val compact = currentWindowAdaptiveInfoV2().windowWidthClass() == WindowWidthClass.COMPACT
         if ((iconAlwaysVisible || compact) && contentIcon != null) {
             Icon(
                 modifier = Modifier
@@ -270,7 +283,7 @@ private fun Sheet(
         }
         if (contentTextFirstParagraph != null) {
             WalletTexts.TitleMedium(
-                text = stringResource(id = contentTextFirstParagraph),
+                text = contentTextFirstParagraph,
                 color = textColor,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
@@ -286,7 +299,7 @@ private fun Sheet(
         if (contentTextSecondParagraph != null) {
             Spacer(modifier = Modifier.height(Sizes.s01))
             WalletTexts.BodyLarge(
-                text = stringResource(id = contentTextSecondParagraph),
+                text = contentTextSecondParagraph,
                 color = secondaryTextColor,
                 textAlign = TextAlign.Center,
             )
@@ -305,12 +318,15 @@ private fun Sheet(
 private fun StickyBottomButtons(
     modifier: Modifier,
     stickyBottomHeight: MutableState<Dp>,
-    @StringRes primaryButtonText: Int?,
+    primaryButtonText: String?,
     @StringRes secondaryButtonText: Int?,
+    @StringRes ternaryButtonText: Int?,
     primaryButtonColors: ButtonColors,
     secondaryButtonColors: ButtonColors,
+    ternaryButtonColors: ButtonColors,
     onPrimaryButton: (() -> Unit)?,
     onSecondaryButton: (() -> Unit)?,
+    onTernaryButton: (() -> Unit)?,
 ) = HeightReportingLayout(
     modifier = modifier,
     onContentHeightMeasured = { height -> stickyBottomHeight.value = height }
@@ -321,10 +337,21 @@ private fun StickyBottomButtons(
                 add(
                     {
                         Buttons.Text(
-                            text = stringResource(id = primaryButtonText),
+                            text = primaryButtonText,
                             onClick = onPrimaryButton,
                             colors = primaryButtonColors,
                             modifier = Modifier.testTag(TestTags.ACCEPT_BUTTON.name)
+                        )
+                    }
+                )
+            }
+            if (onTernaryButton != null && ternaryButtonText != null) {
+                add(
+                    {
+                        Buttons.Text(
+                            text = stringResource(id = ternaryButtonText),
+                            onClick = onTernaryButton,
+                            colors = ternaryButtonColors
                         )
                     }
                 )
@@ -363,16 +390,19 @@ private fun CredentialActionFeedbackCardPreview() {
                 actorComplianceState = ActorComplianceState.REPORTED,
                 nonComplianceReason = "report reason",
             ),
-            contentTextFirstParagraphText = R.string.tk_receive_declineOffer_primary,
-            contentTextSecondParagraphText = R.string.tk_receive_declineOffer_secondary,
+            contentTextFirstParagraphText = stringResource(R.string.tk_receive_declineOffer_primary),
+            contentTextSecondParagraphText = stringResource(R.string.tk_receive_declineOffer_secondary),
             contentTextThirdParagraphText = R.string.tk_getBetaId_error_smallbody,
             contentIcon = R.drawable.wallet_ic_circular_questionmark,
             iconAlwaysVisible = true,
             onSecondaryButton = {},
+            onTernaryButton = {},
             onPrimaryButton = {},
-            primaryButtonText = R.string.tk_receive_declineOffer_primaryButton,
+            primaryButtonText = stringResource(R.string.tk_receive_declineOffer_primaryButton),
             secondaryButtonText = R.string.tk_global_cancel,
-            onBadge = {},
+            ternaryButtonText = R.string.tk_receive_declineOffer_ternaryButton,
+            onActorNameTap = {},
+            onReportedActorInfo = {}
         )
     }
 }

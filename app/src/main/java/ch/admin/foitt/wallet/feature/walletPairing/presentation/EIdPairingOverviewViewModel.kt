@@ -16,6 +16,7 @@ import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.StateRe
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.WalletPairingState
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.WalletPairingStateError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.WalletPairingStateResponse
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.AddWalletPairingId
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.FetchSIdStatus
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.PairCurrentWallet
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.WalletPairingStatus
@@ -33,8 +34,8 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getError
 import com.github.michaelbull.result.mapOr
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -59,6 +60,7 @@ internal class EIdPairingOverviewViewModel @AssistedInject constructor(
     private val getLocalizedDateTime: GetLocalizedDateTime,
     private val getEIdRequestCase: GetEIdRequestCase,
     private val walletPairingStatus: WalletPairingStatus,
+    private val addWalletPairingId: AddWalletPairingId,
     setTopBarState: SetTopBarState,
     @Assisted private val caseId: String
 ) : ScreenViewModel(setTopBarState) {
@@ -168,13 +170,13 @@ internal class EIdPairingOverviewViewModel @AssistedInject constructor(
     fun onThisDeviceClick() {
         viewModelScope.launch {
             pairCurrentWallet(caseId = caseId)
-                .onSuccess { pairWalletResponse ->
+                .onOk { pairWalletResponse ->
                     stopPolling()
                     pollingJob = launch {
                         startPolling(pairWalletResponse)
                     }
                 }
-                .onFailure { error ->
+                .onErr { error ->
                     when (error) {
                         is EIdRequestError.InvalidClientAttestation,
                         is EIdRequestError.InvalidDeferredCredentialOffer,
@@ -182,6 +184,7 @@ internal class EIdPairingOverviewViewModel @AssistedInject constructor(
                         is EIdRequestError.NetworkError -> {
                             Timber.e("Pairing Overview: Cannot pair current wallet, $error")
                         }
+
                         is EIdRequestError.RequestInWrongState -> handlePairingWindowTimeout()
                     }
                 }
@@ -224,6 +227,7 @@ internal class EIdPairingOverviewViewModel @AssistedInject constructor(
 
             val state = result.get()?.state
             if (state == WalletPairingState.ACCEPTED) {
+                addWalletPairingId(caseId, walletResponse.walletPairingId)
                 refreshRequestStatus()
                 break
             }

@@ -37,7 +37,7 @@ import dagger.hilt.android.scopes.ActivityRetainedScoped
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
-interface EIdRequestVerificationModule {
+internal interface EIdRequestVerificationModule {
     @Binds
     fun bindSaveEIdRequestCase(
         useCase: SaveEIdRequestCaseImpl

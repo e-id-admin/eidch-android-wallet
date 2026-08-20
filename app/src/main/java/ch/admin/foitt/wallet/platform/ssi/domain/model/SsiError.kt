@@ -2,10 +2,8 @@
 
 package ch.admin.foitt.wallet.platform.ssi.domain.model
 
-import ch.admin.foitt.wallet.platform.batch.domain.error.RefreshBatchCredentialsError
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.model.MapToCredentialDisplayDataError
-import ch.admin.foitt.wallet.platform.keybindingMatching.domain.model.MatchKeyBindingToPayloadCnfError
 import timber.log.Timber
 
 interface SsiError {
@@ -51,25 +49,8 @@ sealed interface DeferredCredentialRepositoryError
 sealed interface DeleteDeferredCredentialError
 sealed interface RawCredentialDataRepositoryError
 
-internal fun BundleItemRepositoryError.toRefreshBatchCredentialsError(): RefreshBatchCredentialsError = when (this) {
-    is SsiError.Unexpected -> RefreshBatchCredentialsError.Unexpected(cause)
-}
-
-internal fun CredentialRepositoryError.toRefreshBatchCredentialsError(): RefreshBatchCredentialsError = when (this) {
-    is SsiError.Unexpected -> RefreshBatchCredentialsError.Unexpected(cause)
-}
-
 internal fun BundleItemRepositoryError.toDeleteBundleItemError() = when (this) {
     is SsiError.Unexpected -> SsiError.Unexpected(cause)
-}
-
-internal fun CredentialWithBatchDataAndAuthenticationRepositoryError.toRefreshBatchCredentialsError():
-    RefreshBatchCredentialsError = when (this) {
-    is SsiError.Unexpected -> RefreshBatchCredentialsError.Unexpected(cause)
-}
-
-internal fun CredentialWithKeyBindingRepositoryError.toMapToCredentialDisplayDataError() = when (this) {
-    is SsiError.Unexpected -> CredentialError.Unexpected(cause)
 }
 
 internal fun BundleItemWithKeyBindingRepositoryError.toDeleteBundleItemError() = when (this) {
@@ -87,10 +68,6 @@ internal fun CredentialWithKeyBindingRepositoryError.toDeleteCredentialError() =
 internal fun Throwable.toMapToCredentialClaimDataError(message: String): MapToCredentialClaimDataError {
     Timber.e(t = this, message = message)
     return SsiError.Unexpected(this)
-}
-
-internal fun MatchKeyBindingToPayloadCnfError.toCredentialOfferRepositoryError(): CredentialOfferRepositoryError = when (this) {
-    is MatchKeyBindingToPayloadCnfError.Unexpected -> SsiError.Unexpected(throwable)
 }
 
 internal fun Throwable.toCredentialOfferRepositoryError(message: String): CredentialOfferRepositoryError {
@@ -133,9 +110,5 @@ internal fun MapToCredentialDisplayDataError.toGetCredentialsWithDisplaysFlowErr
 }
 
 internal fun DeferredCredentialRepositoryError.toDeleteDeferredCredentialError() = when (this) {
-    is SsiError.Unexpected -> SsiError.Unexpected(cause)
-}
-
-internal fun CredentialRepositoryError.toDeleteDeferredCredentialError2() = when (this) {
     is SsiError.Unexpected -> SsiError.Unexpected(cause)
 }

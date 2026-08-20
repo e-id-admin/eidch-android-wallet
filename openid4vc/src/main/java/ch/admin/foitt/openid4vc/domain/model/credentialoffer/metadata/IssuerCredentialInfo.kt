@@ -4,10 +4,13 @@ import ch.admin.foitt.openid4vc.domain.model.AnyCredentialConfigurationListSeria
 import ch.admin.foitt.openid4vc.domain.model.BatchSize
 import ch.admin.foitt.openid4vc.domain.model.HttpsURLAsStringSerializer
 import ch.admin.foitt.openid4vc.domain.model.KeyStorageSecurityLevel
+import ch.admin.foitt.openid4vc.domain.model.SignatureAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.SigningAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.claimsPathPointer.ClaimsPathPointer
 import ch.admin.foitt.openid4vc.domain.model.claimsPathPointer.ClaimsPathPointerComponent
 import ch.admin.foitt.openid4vc.domain.model.jwk.Jwks
+import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
+import ch.admin.foitt.openid4vc.domain.model.jwt.JwtSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -28,14 +31,17 @@ data class IssuerCredentialInfo(
     val deferredCredentialEndpoint: URL? = null,
     @SerialName("nonce_endpoint")
     @Serializable(with = HttpsURLAsStringSerializer::class)
-    val nonceEndpoint: URL? = null,
+    val nonceEndpoint: URL,
     @Serializable(with = HttpsURLAsStringSerializer::class)
     @SerialName("credential_issuer")
     val credentialIssuer: URL,
+    @Serializable(with = JwtSerializer::class)
+    @SerialName("credential_issuer_identity_trust_statement")
+    val identityTrustStatement: Jwt?, // optional for now until trust protocol 1.0 is contracted
     @SerialName("credential_request_encryption")
-    val credentialRequestEncryption: CredentialRequestEncryption?,
+    val credentialRequestEncryption: CredentialRequestEncryption,
     @SerialName("credential_response_encryption")
-    val credentialResponseEncryption: CredentialResponseEncryption?,
+    val credentialResponseEncryption: CredentialResponseEncryption,
     @Serializable(with = AnyCredentialConfigurationListSerializer::class)
     @SerialName("credential_configurations_supported")
     val credentialConfigurations: List<AnyCredentialConfiguration>,
@@ -86,10 +92,10 @@ sealed class AnyCredentialConfiguration {
     @SerialName("scope")
     abstract val scope: String?
 
-    abstract val cryptographicBindingMethodsSupported: List<String>?
-    abstract val credentialSigningAlgValuesSupported: List<SigningAlgorithm>
+    abstract val protectedIssuanceAuthorizationTrustStatement: Jwt? // optional for now until trust protocol 1.0 is contracted
 
-    // fixme: this should be nullable for claim based credentials
+    abstract val cryptographicBindingMethodsSupported: List<String>?
+    abstract val credentialSigningAlgValuesSupported: List<SignatureAlgorithm>
     abstract val proofTypesSupported: Map<ProofType, ProofTypeConfig>
     abstract val credentialMetadata: CredentialMetadata?
 }

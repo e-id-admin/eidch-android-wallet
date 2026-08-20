@@ -1,11 +1,11 @@
 package ch.admin.foitt.wallet.platform.database.migrations
 
 import androidx.room.util.useCursor
+import ch.admin.foitt.openid4vc.domain.model.TokenType
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.wallet.platform.database.data.migrations.Migration26to27
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.database.domain.model.DeferredProgressionState
-import ch.admin.foitt.openid4vc.domain.model.TokenType
 import ch.admin.foitt.wallet.platform.database.util.getIntColumn
 import ch.admin.foitt.wallet.platform.database.util.getLongColumn
 import ch.admin.foitt.wallet.platform.database.util.getStringColumn

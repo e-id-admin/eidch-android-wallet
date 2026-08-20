@@ -1,10 +1,9 @@
 package ch.admin.foitt.wallet.platform.credentialPresentation.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.anycredential.Validity
-import ch.admin.foitt.openid4vc.domain.model.anycredential.getValidity
+import ch.admin.foitt.openid4vc.domain.model.anycredential.getCredentialValidity
 import ch.admin.foitt.openid4vc.domain.model.claimsPathPointer.ClaimsPathPointer
 import ch.admin.foitt.openid4vc.domain.model.claimsPathPointer.ClaimsPathPointerComponent
-import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationRequest
 import ch.admin.foitt.swiyu.shared.dcql.DcqlSupport
 import ch.admin.foitt.wallet.platform.credential.domain.model.AnyCredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.model.toAnyCredentials
@@ -32,35 +31,30 @@ class GetCompatibleCredentialsImpl @Inject constructor(
     private val verifiableCredentialWithBundleItemsWithKeyBindingRepository: VerifiableCredentialWithBundleItemsWithKeyBindingRepository,
 ) : GetCompatibleCredentials {
     override suspend fun invoke(
-        authorizationRequest: AuthorizationRequest
+        dcqlQuery: DcqlQuery
     ): Result<Set<CompatibleCredential>, GetCompatibleCredentialsError> =
         verifiableCredentialWithBundleItemsWithKeyBindingRepository.getAll()
             .mapError(CredentialWithKeyBindingRepositoryError::toGetCompatibleCredentialsError)
             .andThen { credentials ->
-                findCompatibleCredentials(credentials, authorizationRequest)
+                findCompatibleCredentials(credentials, dcqlQuery)
             }
 
     private suspend fun findCompatibleCredentials(
         credentialsWithBundleItems: List<VerifiableCredentialWithBundleItemsWithKeyBinding>,
-        authorizationRequest: AuthorizationRequest
+        dcqlQuery: DcqlQuery
     ): Result<Set<CompatibleCredential>, GetCompatibleCredentialsError> = coroutineBinding {
-        val dcqlQuery = authorizationRequest.dcqlQuery
-        if (dcqlQuery != null) {
-            Timber.d("findCompatibleCredentials: dcqlQuery = $dcqlQuery")
-            val validCredentials = filterOnValidityAndStatus(credentialsWithBundleItems)
-            findCompatibleCredentialsByDcqlQuery(dcqlQuery, validCredentials).bind()
-        } else {
-            emptySet()
-        }
+        Timber.d("findCompatibleCredentials: dcqlQuery = $dcqlQuery")
+        val validCredentials = filterOnValidityAndStatus(credentialsWithBundleItems)
+        findCompatibleCredentialsByDcqlQuery(dcqlQuery, validCredentials).bind()
     }
 
     private fun filterOnValidityAndStatus(
         credentialsWithBundleItems: List<VerifiableCredentialWithBundleItemsWithKeyBinding>
     ): List<VerifiableCredentialWithBundleItemsWithKeyBinding> {
         return credentialsWithBundleItems.filter { credentialWithBundleItem ->
-            val validity = getValidity(
-                credentialWithBundleItem.verifiableCredential.validFrom,
-                credentialWithBundleItem.verifiableCredential.validUntil
+            val validity = getCredentialValidity(
+                validFrom = credentialWithBundleItem.verifiableCredential.validFrom,
+                validUntil = credentialWithBundleItem.verifiableCredential.validUntil,
             )
             val valid = when (validity) {
                 is Validity.Expired,

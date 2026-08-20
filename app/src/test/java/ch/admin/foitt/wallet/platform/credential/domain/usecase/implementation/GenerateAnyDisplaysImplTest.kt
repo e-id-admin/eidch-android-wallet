@@ -19,7 +19,7 @@ import ch.admin.foitt.wallet.platform.oca.domain.model.MetaDisplays
 import ch.admin.foitt.wallet.platform.oca.domain.model.OcaBundle
 import ch.admin.foitt.wallet.platform.oca.domain.model.OcaError
 import ch.admin.foitt.wallet.platform.oca.domain.usecase.GenerateOcaDisplays
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.IdentityV1TrustStatement
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.IdentityV2TrustStatement
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
 import com.github.michaelbull.result.Err
@@ -58,7 +58,7 @@ class GenerateAnyDisplaysImplTest {
     private lateinit var mockIssuerInfo: IssuerCredentialInfo
 
     @MockK
-    private lateinit var mockTrustStatement: IdentityV1TrustStatement
+    private lateinit var mockTrustStatement: IdentityV2TrustStatement
 
     @MockK
     private lateinit var mockCredentialConfiguration: VcSdJwtCredentialConfiguration

@@ -6,13 +6,13 @@ import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.GetPresentationRequestCredentialListFlow
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.model.PresentationCredentialListUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorMetaDataError
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchAndCacheVerifierDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.GetActorForScope
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
-import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.toBadgeBottomSheetUiState
 import ch.admin.foitt.wallet.platform.badges.presentation.model.BadgeBottomSheetUiState
-import ch.admin.foitt.wallet.platform.badges.presentation.model.toBadgeBottomSheetUiState
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.CompatibleCredential
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.PresentationRequestWithRaw
@@ -26,6 +26,7 @@ import ch.admin.foitt.wallet.platform.scaffold.extension.refreshableStateFlow
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.openLink
 import com.github.michaelbull.result.mapBoth
+import com.github.michaelbull.result.onErr
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -95,7 +96,35 @@ class PresentationCredentialListViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            updateVerifierDisplayData()
+            fetchAndCacheVerifierDisplayData(
+                authorizationRequest = presentationRequestWithRaw.authorizationRequest,
+                verificationProcessType = presentationRequestWithRaw.verificationProcessType,
+                verifierAttestationTrusted = presentationRequestWithRaw.verifierAttestationTrusted,
+            ).onErr { error ->
+                when (error) {
+                    is ActorMetaDataError.UnverifiedVerifier -> {
+                        navManager.replaceCurrentWith(
+                            Destination.GenericErrorScreen(
+                                GenericErrorScreenState.Presentation.unverifiedVerifier(
+                                    responseUri = error.responseUri,
+                                    state = presentationRequestWithRaw.authorizationRequest.state,
+                                )
+                            )
+                        )
+                    }
+                    is ActorMetaDataError.UnknownRegistry -> {
+                        navManager.replaceCurrentWith(
+                            Destination.GenericErrorScreen(
+                                GenericErrorScreenState.General.unknownRegistry(
+                                    responseUri = error.responseUri,
+                                    state = presentationRequestWithRaw.authorizationRequest.state,
+                                )
+                            )
+                        )
+                    }
+                    else -> {}
+                }
+            }
         }
     }
 
@@ -113,30 +142,23 @@ class PresentationCredentialListViewModel @AssistedInject constructor(
 
     fun onBack() = navManager.popBackStackOrToRoot()
 
-    private suspend fun updateVerifierDisplayData() {
-        fetchAndCacheVerifierDisplayData(
-            authorizationRequest = presentationRequestWithRaw.authorizationRequest,
-            verificationProcessType = presentationRequestWithRaw.verificationProcessType,
-            verifierAttestationTrusted = presentationRequestWithRaw.verifierAttestationTrusted,
-        )
-    }
-
     private fun navigateToErrorScreen() {
         navManager.replaceCurrentWith(Destination.GenericErrorScreen(GenericErrorScreenState.Offer.generic()))
     }
 
-    fun onBadge(badgeType: BadgeType) {
-        _badgeBottomSheetUiState.value = when (badgeType) {
-            is BadgeType.ActorInfoBadge -> badgeType.toBadgeBottomSheetUiState(
-                actorName = verifierUiState.value.name ?: "",
-                reason = verifierUiState.value.nonComplianceReason,
-                onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
-            )
-
-            is BadgeType.ClaimInfoBadge -> badgeType.toBadgeBottomSheetUiState(
-                onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
-            )
+    fun onActorNameTap() {
+        _badgeBottomSheetUiState.value = verifierUiState.value.toBadgeBottomSheetUiState {
+            onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value)
         }
+    }
+
+    fun onReportedActorInfo() {
+        _badgeBottomSheetUiState.value = BadgeBottomSheetUiState.NonCompliantActor(
+            actorName = verifierUiState.value.name ?: "",
+            actorPainter = verifierUiState.value.painter,
+            reason = verifierUiState.value.nonComplianceReason,
+            onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
+        )
     }
 
     fun onDismissBottomSheet() {

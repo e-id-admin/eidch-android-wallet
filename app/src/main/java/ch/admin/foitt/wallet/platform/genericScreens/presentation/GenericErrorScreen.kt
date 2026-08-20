@@ -21,16 +21,18 @@ fun GenericErrorScreen(
     viewModel: GenericErrorViewModel,
 ) {
     GenericErrorScreenContent(
+        image = viewModel.image,
         title = viewModel.title,
         subtitle = viewModel.subtitle,
         errorText = viewModel.errorText,
         errorDescription = viewModel.errorDescription,
-        onBack = viewModel::onBack,
+        onBack = viewModel::onClick,
     )
 }
 
 @Composable
 private fun GenericErrorScreenContent(
+    image: Int,
     title: Int,
     subtitle: Int,
     errorText: String?,
@@ -40,7 +42,7 @@ private fun GenericErrorScreenContent(
     WalletLayouts.ScrollableColumnWithPicture(
         stickyStartContent = {
             ScreenMainImage(
-                iconRes = R.drawable.wallet_ic_cross_circle_colored,
+                iconRes = image,
                 backgroundColor = WalletTheme.colorScheme.surfaceContainerLow,
             )
         },
@@ -90,6 +92,7 @@ private fun GenericErrorScreenContent(
 private fun GenericErrorScreenPreview() {
     WalletTheme {
         GenericErrorScreenContent(
+            image = R.drawable.wallet_ic_cross_circle_colored,
             title = R.string.presentation_error_title,
             subtitle = R.string.presentation_error_message,
             errorText = "invalid_request",

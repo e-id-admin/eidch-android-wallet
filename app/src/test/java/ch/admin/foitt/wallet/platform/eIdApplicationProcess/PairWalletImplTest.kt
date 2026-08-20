@@ -8,6 +8,7 @@ import ch.admin.foitt.wallet.platform.appAttestation.domain.usecase.RequestClien
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.PairWalletResponse
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.SIdChallengeResponse
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.EIdRequestCaseRepository
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.SIdRepository
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.implementation.PairWalletImpl
 import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
@@ -30,6 +31,9 @@ class PairWalletImplTest {
 
     @MockK
     private lateinit var mockSIdRepository: SIdRepository
+
+    @MockK
+    private lateinit var mockEIdRequestCaseRepository: EIdRequestCaseRepository
 
     @MockK
     private lateinit var mockRequestClientAttestation: RequestClientAttestation
@@ -60,6 +64,7 @@ class PairWalletImplTest {
         MockKAnnotations.init(this)
         useCase = PairWalletImpl(
             sIdRepository = mockSIdRepository,
+            eIdRequestCaseRepository = mockEIdRequestCaseRepository,
             requestClientAttestation = mockRequestClientAttestation,
             generateProofOfPossession = mockGenerateProofOfPossession,
             environmentSetupRepository = mockEnvironmentSetupRepository,
@@ -83,6 +88,8 @@ class PairWalletImplTest {
                 clientAttestationPoP = any()
             )
         } returns Ok(mockPairWalletResponse)
+        coEvery { mockPairWalletResponse.walletPairingId } returns "pairingId"
+        coEvery { mockEIdRequestCaseRepository.addPairingId(any(), any()) } returns Ok(Unit)
     }
 
     @AfterEach

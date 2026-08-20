@@ -1,8 +1,11 @@
 package ch.admin.foitt.wallet.platform.eIdApplicationProcess.data.repository
 
 import ch.admin.foitt.openid4vc.di.OpenId4VcModule.Companion.NAMED_DEFAULT_HTTP_CLIENT
+import ch.admin.foitt.openid4vc.domain.model.TokenType
+import ch.admin.foitt.openid4vc.utils.authorizationHeader
+import ch.admin.foitt.openid4vc.utils.dpopHeader
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.AvRepositoryError
-import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.UploadFileRequest
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EidRequestSubmitFile
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.toAvRepositoryError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.EIdAvRepository
 import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
@@ -17,6 +20,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentLength
 import io.ktor.http.contentType
+import java.net.URL
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -25,14 +29,21 @@ class EIdAvRepositoryImpl @Inject constructor(
     private val environmentSetupRepository: EnvironmentSetupRepository
 ) : EIdAvRepository {
     override suspend fun uploadFileToCase(
-        file: UploadFileRequest
+        caseId: String,
+        fileName: String,
+        contentType: ContentType,
+        documentData: ByteArray,
+        accessToken: String,
+        dpop: String?,
+        tokenType: TokenType,
     ): Result<Unit, AvRepositoryError> = runSuspendCatching<Unit> {
-        httpClient.post(environmentSetupRepository.avBackendUrl + "cases/v1/${file.caseId}/files") {
-            header(HttpHeaders.Authorization, "Bearer ${file.accessToken}")
-            header(HttpHeaders.ContentDisposition, "attachment; filename=\"${file.fileName}\"")
+        httpClient.post(getUploadFileUrl(caseId)) {
+            authorizationHeader(tokenType, accessToken)
+            dpop?.let { dpopHeader(dpop) }
+            header(HttpHeaders.ContentDisposition, "attachment; filename=\"${fileName}\"")
             contentLength()
-            contentType(ContentType.Application.OctetStream)
-            setBody(file.document)
+            contentType(contentType)
+            setBody(documentData)
         }
     }.mapError { throwable ->
         throwable.toAvRepositoryError("uploadFileToCase error")
@@ -41,11 +52,21 @@ class EIdAvRepositoryImpl @Inject constructor(
     override suspend fun submitCase(
         caseId: String,
         accessToken: String,
+        dpop: String?,
+        files: List<EidRequestSubmitFile>,
+        tokenType: TokenType,
     ): Result<Unit, AvRepositoryError> = runSuspendCatching<Unit> {
-        httpClient.post(environmentSetupRepository.avBackendUrl + "cases/v1/$caseId/submit") {
-            header(HttpHeaders.Authorization, "Bearer $accessToken")
+        httpClient.post(getSubmitCaseUrl(caseId)) {
+            authorizationHeader(tokenType, accessToken)
+            dpop?.let { dpopHeader(dpop) }
+            contentType(ContentType.Application.Json)
+            setBody(files)
         }
     }.mapError { throwable ->
         throwable.toAvRepositoryError("submit case error")
     }
+
+    override fun getUploadFileUrl(caseId: String) = URL(environmentSetupRepository.avBackendUrl + "cases/v2/$caseId/files")
+
+    override fun getSubmitCaseUrl(caseId: String) = URL(environmentSetupRepository.avBackendUrl + "cases/v2/$caseId/submit")
 }

@@ -4,6 +4,7 @@ import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
 import ch.admin.foitt.openid4vc.domain.model.claimsPathPointer.ClaimsPathPointerComponent
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBinding
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationRequest
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationFlowContext
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestError
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtCredential
 import ch.admin.foitt.openid4vc.domain.usecase.CreateAnyVerifiablePresentation
@@ -59,8 +60,8 @@ class CreateAnyVerifiablePresentationImplTest {
     fun `Submitting presentation for vc+sd_jwt credential returns verifiable presentation`() = runTest {
         val result = useCase(
             anyCredential = mockVcSdJwtCredential,
-            presentationPaths = presentationPaths,
             authorizationRequest = mockAuthorizationRequest,
+            presentationContext = presentationContext,
         ).assertOk()
 
         assertEquals(VERIFIABLE_PRESENTATION, result)
@@ -70,8 +71,8 @@ class CreateAnyVerifiablePresentationImplTest {
     fun `Submitting presentation for unsupported credential format returns error`() = runTest {
         val result = useCase(
             anyCredential = mockAnyCredential,
-            presentationPaths = presentationPaths,
             authorizationRequest = mockAuthorizationRequest,
+            presentationContext = presentationContext,
         )
 
         result.assertErrorType(PresentationRequestError.Unexpected::class)
@@ -81,9 +82,9 @@ class CreateAnyVerifiablePresentationImplTest {
         coEvery {
             mockCreateVcSdJwtVerifiablePresentation(
                 credential = mockVcSdJwtCredential,
-                presentationPaths = presentationPaths,
-                authorizationRequest = mockAuthorizationRequest,
                 keyBinding = mockKeyBinding,
+                authorizationRequest = mockAuthorizationRequest,
+                presentationContext = presentationContext,
             )
         } returns Ok(VERIFIABLE_PRESENTATION)
 
@@ -93,6 +94,7 @@ class CreateAnyVerifiablePresentationImplTest {
     private companion object {
         val claimsPathPointer1 = listOf(ClaimsPathPointerComponent.String("field"))
         val presentationPaths = listOf(claimsPathPointer1)
+        val presentationContext = PresentationFlowContext(presentationPaths = presentationPaths)
 
         const val VERIFIABLE_PRESENTATION = "verifiablePresentation"
     }

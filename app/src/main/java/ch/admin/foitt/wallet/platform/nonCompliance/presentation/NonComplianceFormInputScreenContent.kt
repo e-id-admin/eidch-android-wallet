@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,7 +45,7 @@ fun NonComplianceFormInputScreenContent(
     onTextChange: (TextFieldValue) -> Unit,
     onClearInput: () -> Unit,
     onContinue: () -> Unit,
-) = when (currentWindowAdaptiveInfo().windowWidthClass()) {
+) = when (currentWindowAdaptiveInfoV2().windowWidthClass()) {
     WindowWidthClass.COMPACT -> FormInputCompactContent(
         textFieldState = textFieldState,
         textFieldValue = textFieldValue,

@@ -16,7 +16,7 @@ internal fun ProximityEngagementError.toProcessInvitationError(): ProcessInvitat
     is ProximityEngagementError.Disconnected -> NetworkError
     is ProximityEngagementError.Unexpected,
     ProximityEngagementError.UnexpectedTermination -> Unexpected
-    ProximityEngagementError.NoCompatibleCredential -> InvitationError.NoCompatibleCredential(null)
+    ProximityEngagementError.NoCompatibleCredential -> InvitationError.NoCompatibleCredential(null, null)
 }
 
 internal fun ProximitySubmissionError.toProximityEngagementError(): ProximityEngagementError = when (this) {

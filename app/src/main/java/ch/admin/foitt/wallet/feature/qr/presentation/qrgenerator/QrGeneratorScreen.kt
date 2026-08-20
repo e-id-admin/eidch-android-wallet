@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -68,7 +68,7 @@ private fun QrGeneratorScreenContent(pagerControlHeight: MutableState<Dp>, qrCod
     ) {
         val qrCodeModifier = if (maxHeight < maxWidth) Modifier.heightIn(max = maxHeight) else Modifier.widthIn(max = maxWidth)
 
-        when (currentWindowAdaptiveInfo().windowWidthClass()) {
+        when (currentWindowAdaptiveInfoV2().windowWidthClass()) {
             WindowWidthClass.COMPACT -> WalletLayouts.CompactContainer(
                 scaffoldPaddings = LocalScaffoldPaddings.current,
                 scrollState = rememberScrollState(),
@@ -89,7 +89,8 @@ private fun QrGeneratorScreenContent(pagerControlHeight: MutableState<Dp>, qrCod
                                 content = qrCode.value,
                                 modifier = Modifier
                                     .align(Alignment.Center)
-                                    .fillMaxSize(0.8f)
+                                    .fillMaxSize(0.8f),
+                                contentDescription = stringResource(R.string.qr_generator_qr_alt_text)
                             )
                         }
                     }
@@ -127,7 +128,8 @@ private fun QrGeneratorScreenContent(pagerControlHeight: MutableState<Dp>, qrCod
                                 content = qrCode.value,
                                 modifier = Modifier
                                     .align(Alignment.Center)
-                                    .fillMaxSize(0.8f)
+                                    .fillMaxSize(0.8f),
+                                contentDescription = stringResource(R.string.qr_generator_qr_alt_text)
                             )
                         }
                     }

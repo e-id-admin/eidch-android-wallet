@@ -6,6 +6,8 @@ import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.api.architecture.KoArchitectureCreator.assertArchitecture
 import com.lemonappdev.konsist.api.architecture.Layer
+import com.lemonappdev.konsist.api.declaration.KoInterfaceDeclaration
+import com.lemonappdev.konsist.api.declaration.KoPackageDeclaration
 import com.lemonappdev.konsist.api.ext.list.withAnnotationOf
 import com.lemonappdev.konsist.api.ext.list.withNameEndingWith
 import com.lemonappdev.konsist.api.ext.list.withPackage
@@ -167,7 +169,9 @@ class CleanArchitectureKonsistTest {
                     runTest {
                         useCase.assertTrue {
                             it.hasParentInterface { parentInterface ->
-                                parentInterface.packagee?.path == useCase.packagee?.path?.removeSuffix(".implementation")
+                                ((parentInterface.sourceDeclaration as KoInterfaceDeclaration).packagee as KoPackageDeclaration).name.startsWith(
+                                    (useCase.packagee as KoPackageDeclaration).name.removeSuffix(".implementation")
+                                )
                             }
                         }
                     }
@@ -214,7 +218,8 @@ class CleanArchitectureKonsistTest {
         )
 
     private val testClasses = Konsist.scopeFromTest().classes()
-    private val useCases = Konsist.scopeFromProduction().classes().withPackage("..domain.usecase..") - useCasesWithoutCompleteCoverage.toSet()
+    private val useCases =
+        Konsist.scopeFromProduction().classes().withPackage("..domain.usecase..") - useCasesWithoutCompleteCoverage.toSet()
 
     @TestFactory
     fun `use cases should have tests`(): Stream<DynamicTest> =

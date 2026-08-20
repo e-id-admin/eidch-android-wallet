@@ -63,6 +63,28 @@ class ValidateIssuerMetadataJwtImplTest {
     }
 
     @Test
+    fun `UseCase should just run for a valid EdDSA signed jwt`() = runTest {
+        every { jwt.algorithm } returns "EdDSA"
+
+        useCase(ISSUER, jwt, TYPE).assertOk()
+
+        coVerify(exactly = 1) {
+            mockVerifyJwtSignatureFromDid(KEY_ID, jwt)
+        }
+    }
+
+    @Test
+    fun `UseCase should just run for a valid jwt with the fully-specified Ed25519 algorithm`() = runTest {
+        every { jwt.algorithm } returns "Ed25519"
+
+        useCase(ISSUER, jwt, TYPE).assertOk()
+
+        coVerify(exactly = 1) {
+            mockVerifyJwtSignatureFromDid(KEY_ID, jwt)
+        }
+    }
+
+    @Test
     fun `UseCase should return an error when algorithm is unsupported`() = runTest {
         every { jwt.algorithm } returns "unsupported"
 

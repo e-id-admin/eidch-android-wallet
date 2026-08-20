@@ -12,7 +12,7 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetErrorDialogStat
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.mapError
-import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onErr
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -24,30 +24,31 @@ class AuthenticateWithPassphraseImpl @Inject constructor(
 ) : AuthenticateWithPassphrase {
 
     @CheckResult
-    override suspend fun invoke(passphrase: String): Result<Unit, AuthenticateWithPassphraseError> = coroutineBinding {
-        val pinHash = hashPassphrase(
-            pin = passphrase,
-            initializeSalt = false
-        ).mapError { error ->
-            error.toAuthenticateWithPassphraseError()
-        }.bind()
-
-        val pepperedPinHash = pepperPassphrase(
-            passphrase = pinHash.hash,
-            initializePepper = false,
-        ).mapError { error ->
-            error.toAuthenticateWithPassphraseError()
-        }.bind()
-
-        checkDatabasePassphrase(passphrase = pepperedPinHash.hash)
-            .onFailure {
-                Timber.d("DB encryption failed, wrong passphrase")
-            }.mapError { error ->
+    override suspend fun invoke(passphrase: String): Result<Unit, AuthenticateWithPassphraseError> =
+        coroutineBinding {
+            val pinHash = hashPassphrase(
+                pin = passphrase,
+                initializeSalt = false
+            ).mapError { error ->
                 error.toAuthenticateWithPassphraseError()
             }.bind()
-    }.onFailure { authError ->
-        onAuthFailure(authError)
-    }
+
+            val pepperedPinHash = pepperPassphrase(
+                passphrase = pinHash.hash,
+                initializePepper = false,
+            ).mapError { error ->
+                error.toAuthenticateWithPassphraseError()
+            }.bind()
+
+            checkDatabasePassphrase(passphrase = pepperedPinHash.hash)
+                .onErr {
+                    Timber.d("DB encryption failed, wrong passphrase")
+                }.mapError { error ->
+                    error.toAuthenticateWithPassphraseError()
+                }.bind()
+        }.onErr { authError ->
+            onAuthFailure(authError)
+        }
 
     private fun onAuthFailure(authError: AuthenticateWithPassphraseError) {
         when (authError) {

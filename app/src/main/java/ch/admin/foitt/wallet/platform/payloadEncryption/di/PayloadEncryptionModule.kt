@@ -1,9 +1,9 @@
 package ch.admin.foitt.wallet.platform.payloadEncryption.di
 
 import ch.admin.foitt.wallet.platform.payloadEncryption.domain.usecase.CreatePayloadEncryptionKeyPair
-import ch.admin.foitt.wallet.platform.payloadEncryption.domain.usecase.GetPayloadEncryptionType
+import ch.admin.foitt.wallet.platform.payloadEncryption.domain.usecase.GetPayloadEncryption
 import ch.admin.foitt.wallet.platform.payloadEncryption.domain.usecase.implementation.CreatePayloadEncryptionKeyPairImpl
-import ch.admin.foitt.wallet.platform.payloadEncryption.domain.usecase.implementation.GetPayloadEncryptionTypeImpl
+import ch.admin.foitt.wallet.platform.payloadEncryption.domain.usecase.implementation.GetPayloadEncryptionImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -18,7 +18,7 @@ internal interface PayloadEncryptionModule {
     ): CreatePayloadEncryptionKeyPair
 
     @Binds
-    fun bindGetPayloadEncryptionType(
-        useCase: GetPayloadEncryptionTypeImpl
-    ): GetPayloadEncryptionType
+    fun bindGetPayloadEncryption(
+        useCase: GetPayloadEncryptionImpl
+    ): GetPayloadEncryption
 }

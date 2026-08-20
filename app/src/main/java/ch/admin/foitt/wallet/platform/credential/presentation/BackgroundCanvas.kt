@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.nativePaint
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.graphics.drawable.toBitmap
 
@@ -29,7 +30,7 @@ fun BackgroundCanvas(
             modifier = modifier
                 .fillMaxSize()
         ) {
-            val paint = Paint().asFrameworkPaint().apply {
+            val paint = Paint().nativePaint.apply {
                 shader = ImageShader(bitmap, TileMode.Repeated, TileMode.Repeated)
             }
             drawIntoCanvas {

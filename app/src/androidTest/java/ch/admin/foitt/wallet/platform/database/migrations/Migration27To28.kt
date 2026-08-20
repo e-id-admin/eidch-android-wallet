@@ -43,7 +43,6 @@ class Migration27To28 : BaseDBMigrationTest() {
         val displayId2 = 2L
         val description2 = "Test"
         val displayId3 = 3L
-        val description3 = null
 
         db.execSQL(
             "INSERT INTO `CredentialDisplay` (`id`,`credentialId`,`locale`,`description`) VALUES " +
@@ -67,7 +66,6 @@ class Migration27To28 : BaseDBMigrationTest() {
 
             cursor.moveToNext()
             assertEquals(null, cursor.getStringOrNullColumn("description"))
-
         }
     }
 }

@@ -45,12 +45,11 @@ class OnboardingConfirmPassphraseViewModel @AssistedInject constructor(
         fun create(originalPassphrase: String): OnboardingConfirmPassphraseViewModel
     }
 
-    override val topBarState =
-        TopBarState.OnGradient(
-            navManager::popBackStack,
-            R.string.tk_onboarding_passwordConfirmation_title,
-            onAXDown = { tryEmitFocusEvents() }
-        )
+    override val topBarState = TopBarState.OnGradient(
+        navManager::popBackStack,
+        R.string.tk_onboarding_passwordConfirmation_title,
+        onAXDown = { tryEmitFocusEvents() }
+    )
 
     private val isBiometricAuthenticationAvailable: Boolean by lazy {
         biometricsStatus() != BiometricManagerResult.Unsupported
@@ -119,6 +118,7 @@ class OnboardingConfirmPassphraseViewModel @AssistedInject constructor(
                         primaryTextRes = R.string.tk_onboarding_failure_databaseInitialization_primary,
                         secondaryTextRes = R.string.tk_onboarding_failure_databaseInitialization_secondary,
                     )
+
                     is InitializePassphraseError.Unexpected -> Destination.OnboardingFatalErrorScreen(
                         primaryTextRes = R.string.tk_onboarding_failure_passphraseInitialization_primary,
                         secondaryTextRes = R.string.tk_onboarding_failure_passphraseInitialization_secondary,

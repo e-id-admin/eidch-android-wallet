@@ -4,6 +4,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.platform.deeplink.domain.usecase.HandleDeeplink
+import ch.admin.foitt.wallet.platform.login.domain.Constants.MAX_LOGIN_ATTEMPTS
 import ch.admin.foitt.wallet.platform.login.domain.model.CanUseBiometricsForLoginResult
 import ch.admin.foitt.wallet.platform.login.domain.model.LoginError
 import ch.admin.foitt.wallet.platform.login.domain.usecase.CanUseBiometricsForLogin
@@ -29,8 +30,10 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -74,6 +77,10 @@ class PassphraseLoginViewModel @AssistedInject constructor(
 
     private val _loginAttemptsLeft = MutableStateFlow(5)
     val loginAttemptsLeft = _loginAttemptsLeft.asStateFlow()
+
+    val showSupportText: StateFlow<Boolean> = loginAttemptsLeft
+        .map { it < MAX_LOGIN_ATTEMPTS }
+        .toStateFlow(false)
 
     private val _showPassphraseErrorToast = MutableStateFlow(false)
     val showPassphraseErrorToast = _showPassphraseErrorToast.asStateFlow()

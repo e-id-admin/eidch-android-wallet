@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.platform.login.domain.usecase.implementation
 
 import ch.admin.foitt.wallet.platform.batch.domain.usecase.RefreshBatchCredentials
+import ch.admin.foitt.wallet.platform.credential.domain.repository.CredentialRefreshRepository
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.RefreshDeferredCredentials
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateAllCredentialStatuses
 import ch.admin.foitt.wallet.platform.database.domain.model.DatabaseState
@@ -19,12 +20,15 @@ class AfterLoginWorkImpl @Inject constructor(
     private val updateAllSIdStatuses: UpdateAllSIdStatuses,
     private val refreshDeferredCredentials: RefreshDeferredCredentials,
     private val refreshBatchCredentials: RefreshBatchCredentials,
+    private val credentialRefreshRepository: CredentialRefreshRepository,
     private val updatePushToken: UpdatePushToken
 ) : AfterLoginWork {
     override suspend fun invoke() {
         databaseRepository.databaseState.collect { dbState ->
             when (dbState) {
                 DatabaseState.OPEN -> {
+                    // Claim the shared cooldown so a Home resume right after login does not refresh again.
+                    credentialRefreshRepository.markRefreshed()
                     Timber.d("After login work: updating the deferred credentials statuses")
                     refreshDeferredCredentials()
                     if (environmentSetupRepository.batchIssuanceEnabled) {

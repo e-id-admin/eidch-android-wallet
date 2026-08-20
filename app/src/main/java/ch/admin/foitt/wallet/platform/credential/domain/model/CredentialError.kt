@@ -12,6 +12,7 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchDeferredCreden
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchIssuerConfigurationError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchIssuerCredentialInfoError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchNonceError
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.GetSignedMetadataDidError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.GetVerifiableCredentialParamsError
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtError
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VerifyVcSdJwtSignatureError
@@ -35,6 +36,8 @@ import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.Un
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError.UnsupportedProofType
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.CredentialPresentationError
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.GetCompatibleCredentialsError
+import ch.admin.foitt.wallet.platform.credentialRefresh.domain.model.CredentialRefreshDataError
+import ch.admin.foitt.wallet.platform.credentialRefresh.domain.model.GetBindingKeyPairError
 import ch.admin.foitt.wallet.platform.holderBinding.domain.model.GenerateProofKeyPairError
 import ch.admin.foitt.wallet.platform.holderBinding.domain.model.HolderBindingError
 import ch.admin.foitt.wallet.platform.imageValidation.domain.model.ImageValidationError
@@ -46,11 +49,15 @@ import ch.admin.foitt.wallet.platform.payloadEncryption.domain.model.GetPayloadE
 import ch.admin.foitt.wallet.platform.payloadEncryption.domain.model.PayloadEncryptionError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.BundleItemRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialOfferRepositoryError
-import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialWithKeyBindingRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.DeferredCredentialRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.DeleteBundleItemError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
+import ch.admin.foitt.wallet.platform.ssi.domain.model.VerifiableCredentialRepositoryError
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ProcessIdentityTrustStatementError
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ProcessIdentityV1TrustStatementError
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ProcessProtectedIssuanceAuthorizationTrustStatementError
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustRegistryError
 import timber.log.Timber
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOfferError as OpenIdCredentialOfferError
 
@@ -140,12 +147,34 @@ sealed interface CredentialError {
     data object UnknownCredentialConfiguration : FetchCredentialError
     data object UnknownCredentialIdentifier : FetchCredentialError
 
+    data object UnverifiedIssuer :
+        FetchCredentialError,
+        FetchAndUpdateDeferredCredentialError,
+        SaveCredentialFromDeferredError,
+        FetchTrustForIssuanceError,
+        RefreshCredentialError
+
+    data object UnauthorizedIssuance :
+        FetchCredentialError,
+        FetchAndUpdateDeferredCredentialError,
+        SaveCredentialFromDeferredError,
+        FetchTrustForIssuanceError,
+        RefreshCredentialError
+
+    data object UnknownRegistry :
+        FetchCredentialError,
+        FetchAndUpdateDeferredCredentialError,
+        SaveCredentialFromDeferredError,
+        FetchTrustForIssuanceError,
+        RefreshCredentialError
+
     data object NetworkError :
         FetchCredentialError,
         UpdateDeferredCredentialError,
         FetchExistingIssuerCredentialInfoError,
         SaveCredentialFromDeferredError,
-        FetchAndUpdateDeferredCredentialError
+        FetchAndUpdateDeferredCredentialError,
+        RefreshCredentialError
 
     data class Unexpected(val cause: Throwable?) :
         FetchCredentialError,
@@ -160,7 +189,9 @@ sealed interface CredentialError {
         MapToCredentialDisplayDataError,
         GenerateCredentialDisplaysError,
         GenerateMetadataDisplaysError,
-        KeyBindingError
+        KeyBindingError,
+        RefreshCredentialError,
+        FetchTrustForIssuanceError
 }
 
 sealed interface FetchCredentialError
@@ -175,8 +206,10 @@ sealed interface RefreshDeferredCredentialsError
 sealed interface SaveCredentialFromDeferredError
 sealed interface UpdateDeferredCredentialError
 sealed interface FetchAndUpdateDeferredCredentialError
+sealed interface FetchTrustForIssuanceError
 
 sealed interface FetchExistingIssuerCredentialInfoError
+sealed interface RefreshCredentialError
 
 fun FetchNonceError.toUpdateDeferredCredentialError(): UpdateDeferredCredentialError = when (this) {
     CredentialOfferError.NetworkInfoError -> NetworkError
@@ -187,6 +220,11 @@ fun FetchIssuerCredentialInfoError.toFetchCredentialError(): FetchCredentialErro
     is OpenIdCredentialOfferError.InvalidSignedMetadata -> InvalidSignedMetadata(message)
     OpenIdCredentialOfferError.NetworkInfoError -> NetworkError
     is OpenIdCredentialOfferError.Unexpected -> Unexpected(cause)
+}
+
+fun ProcessIdentityTrustStatementError.toFetchCredentialError(): FetchCredentialError = when (this) {
+    is TrustRegistryError.UnknownRegistry -> CredentialError.UnknownRegistry
+    is TrustRegistryError.Unexpected -> CredentialError.UnverifiedIssuer
 }
 
 @Suppress("CyclomaticComplexMethod")
@@ -252,6 +290,10 @@ fun BundleItemRepositoryError.toFetchCredentialError(): FetchCredentialError = w
     is SsiError.Unexpected -> Unexpected(cause)
 }
 
+fun VerifiableCredentialRepositoryError.toFetchCredentialError(): FetchCredentialError = when (this) {
+    is SsiError.Unexpected -> Unexpected(cause)
+}
+
 fun CredentialOfferRepositoryError.toFetchCredentialError(): FetchCredentialError = when (this) {
     is SsiError.Unexpected -> Unexpected(cause)
 }
@@ -275,6 +317,13 @@ fun FetchVcMetadataByFormatError.toFetchCredentialError(): FetchCredentialError 
     is OcaError.Unexpected -> Unexpected(cause)
     OcaError.InvalidJsonScheme -> InvalidJsonScheme
     OcaError.UnsupportedCredentialFormat -> UnsupportedCredentialFormat
+}
+
+fun FetchTrustForIssuanceError.toFetchCredentialError(): FetchCredentialError = when (this) {
+    is CredentialError.UnknownRegistry -> this
+    is CredentialError.UnverifiedIssuer -> this
+    is CredentialError.UnauthorizedIssuance -> this
+    is Unexpected -> this
 }
 
 fun GenerateMetadataDisplaysError.toGenerateCredentialDisplaysError(): GenerateCredentialDisplaysError = when (this) {
@@ -330,16 +379,8 @@ fun CreateDPoPProofJwtError.toUpdateDeferredCredentialError(): UpdateDeferredCre
     OpenIdCredentialOfferError.UnsupportedCryptographicSuite -> UnsupportedCryptographicSuite
 }
 
-fun FetchExistingIssuerCredentialInfoError.toFetchAndUpdateDeferredCredentialError(): FetchAndUpdateDeferredCredentialError = when (this) {
-    is NetworkError -> this
-    is Unexpected -> this
-    is InvalidSignedMetadata -> this
-}
-
-fun FetchExistingIssuerCredentialInfoError.toUpdateDeferredCredentialError(): UpdateDeferredCredentialError = when (this) {
-    is NetworkError -> this
-    is Unexpected -> this
-    is InvalidSignedMetadata -> this
+fun GetSignedMetadataDidError.toSaveCredentialFromDeferredError(): SaveCredentialFromDeferredError = when (this) {
+    is OpenIdCredentialOfferError.Unexpected -> Unexpected(cause)
 }
 
 fun FetchVcMetadataByFormatError.toSaveCredentialFromDeferredError(): SaveCredentialFromDeferredError = when (this) {
@@ -348,6 +389,13 @@ fun FetchVcMetadataByFormatError.toSaveCredentialFromDeferredError(): SaveCreden
     OcaError.UnsupportedCredentialFormat -> UnsupportedCredentialFormat
     OcaError.NetworkError -> NetworkError
     is OcaError.Unexpected -> Unexpected(cause)
+}
+
+fun FetchTrustForIssuanceError.toSaveCredentialFromDeferredError(): SaveCredentialFromDeferredError = when (this) {
+    is CredentialError.UnknownRegistry -> this
+    is CredentialError.UnverifiedIssuer -> this
+    is CredentialError.UnauthorizedIssuance -> this
+    is Unexpected -> this
 }
 
 fun GenerateCredentialDisplaysError.toSaveCredentialFromDeferredError(): SaveCredentialFromDeferredError = when (this) {
@@ -384,12 +432,6 @@ fun CredentialOfferRepositoryError.toUpdateDeferredCredentialError(): UpdateDefe
     is SsiError.Unexpected -> Unexpected(cause)
 }
 
-fun FetchIssuerCredentialInfoError.toFetchExistingIssuerCredentialInfoError(): FetchExistingIssuerCredentialInfoError = when (this) {
-    OpenIdCredentialOfferError.NetworkInfoError -> NetworkError
-    is OpenIdCredentialOfferError.Unexpected -> Unexpected(cause)
-    is OpenIdCredentialOfferError.InvalidSignedMetadata -> InvalidSignedMetadata(message)
-}
-
 fun CreateCredentialRequestError.toFetchAndUpdateDeferredCredentialError(): FetchAndUpdateDeferredCredentialError = when (this) {
     is OpenIdCredentialOfferError.Unexpected -> Unexpected(cause)
 }
@@ -408,10 +450,21 @@ fun GenerateDPoPKeyPairError.toFetchCredentialError(): FetchCredentialError = wh
     is GenerateDPoPKeyPairError.Unexpected -> Unexpected(throwable)
 }
 
+fun Throwable.toUnverifiedIssuerError(): CredentialError.UnverifiedIssuer {
+    Timber.e(t = this, message = "Governance error: unverified issuer")
+    return CredentialError.UnverifiedIssuer
+}
+
 fun GetPayloadEncryptionTypeError.toFetchCredentialError(): FetchCredentialError = when (this) {
     is PayloadEncryptionError.IncompatibleDeviceProofKeyStorage -> IncompatibleDeviceKeyStorage
     is PayloadEncryptionError.UnsupportedProofKeyStorageSecurityLevel -> UnsupportedKeyStorageSecurityLevel
     is PayloadEncryptionError.Unexpected -> Unexpected(throwable)
+}
+
+fun FetchIssuerCredentialInfoError.toFetchAndUpdateDeferredCredentialError(): FetchAndUpdateDeferredCredentialError = when (this) {
+    is OpenIdCredentialOfferError.InvalidSignedMetadata -> CredentialError.InvalidIssuerCredentialInfo
+    is OpenIdCredentialOfferError.NetworkInfoError -> NetworkError
+    is OpenIdCredentialOfferError.Unexpected -> Unexpected(cause)
 }
 
 fun GetPayloadEncryptionTypeError.toFetchAndUpdateDeferredCredentialError(): FetchAndUpdateDeferredCredentialError = when (this) {
@@ -477,8 +530,52 @@ fun FetchDeferredCredentialError.toUpdateDeferredCredentialError(): UpdateDeferr
     is OpenIdCredentialOfferError.Unexpected -> Unexpected(cause)
 }
 
-fun CredentialRepositoryError.toFetchExistingIssuerCredentialInfoError(): FetchExistingIssuerCredentialInfoError = when (this) {
-    is SsiError.Unexpected -> Unexpected(cause)
+fun FetchCredentialError.toRefreshCredentialError(): RefreshCredentialError = when (this) {
+    is CredentialError.UnverifiedIssuer -> this
+    is CredentialError.UnauthorizedIssuance -> this
+    is CredentialError.UnknownRegistry -> this
+    is Unexpected -> this
+    CredentialError.CredentialParsingError,
+    CredentialError.CredentialRequestDenied,
+    CredentialError.DatabaseError,
+    IncompatibleDeviceKeyStorage,
+    CredentialError.InsufficientScope,
+    IntegrityCheckFailed,
+    CredentialError.InvalidClient,
+    InvalidCredentialOffer,
+    CredentialError.InvalidCredentialRequest,
+    CredentialError.InvalidEncryptionParameters,
+    InvalidGenerateMetadataClaims,
+    InvalidGrant,
+    CredentialError.InvalidIssuerCredentialInfo,
+    InvalidJsonScheme,
+    CredentialError.InvalidNonce,
+    CredentialError.InvalidProof,
+    CredentialError.InvalidRequest,
+    CredentialError.InvalidRequestBearerToken,
+    is InvalidSignedMetadata,
+    CredentialError.InvalidToken,
+    is MetadataMisconfiguration,
+    CredentialError.UnauthorizedClient,
+    CredentialError.UnauthorizedGrantType,
+    CredentialError.UnknownCredentialConfiguration,
+    CredentialError.UnknownCredentialIdentifier,
+    UnknownIssuer,
+    UnsupportedCredentialFormat,
+    CredentialError.UnsupportedCredentialIdentifier,
+    UnsupportedCryptographicSuite,
+    UnsupportedGrantType,
+    UnsupportedImageFormat,
+    UnsupportedKeyStorageSecurityLevel,
+    UnsupportedProofType ->
+        // No error handling is currently planned for these errors.
+        Unexpected(null)
+
+    is NetworkError -> this
+}
+
+fun CredentialRefreshDataError.toRefreshCredentialError(): RefreshCredentialError = when (this) {
+    is CredentialRefreshDataError.Unexpected -> Unexpected(cause)
 }
 
 fun DeleteBundleItemsByAmountError.toFetchCredentialError(): FetchCredentialError = when (this) {
@@ -487,4 +584,27 @@ fun DeleteBundleItemsByAmountError.toFetchCredentialError(): FetchCredentialErro
 
 fun ValidateImageError.toGenerateMetadataDisplaysError(): GenerateMetadataDisplaysError = when (this) {
     ImageValidationError.UnsupportedImageFormat -> UnsupportedImageFormat
+}
+
+fun GetSignedMetadataDidError.toFetchCredentialError(): FetchCredentialError = when (this) {
+    is OpenIdCredentialOfferError.Unexpected -> Unexpected(cause)
+}
+
+fun ProcessIdentityTrustStatementError.toFetchAndUpdateDeferredCredentialError(): FetchAndUpdateDeferredCredentialError = when (this) {
+    is TrustRegistryError.UnknownRegistry -> CredentialError.UnknownRegistry
+    is TrustRegistryError.Unexpected -> CredentialError.UnverifiedIssuer
+}
+
+fun GetSignedMetadataDidError.toFetchAndUpdateDeferredCredentialError(): FetchAndUpdateDeferredCredentialError = when (this) {
+    is OpenIdCredentialOfferError.Unexpected -> Unexpected(cause)
+}
+
+fun ProcessProtectedIssuanceAuthorizationTrustStatementError.toFetchTrustForIssuanceError(): FetchTrustForIssuanceError = when (this) {
+    is TrustRegistryError.UnknownRegistry -> CredentialError.UnknownRegistry
+    is TrustRegistryError.Unexpected -> CredentialError.UnauthorizedIssuance
+}
+
+fun ProcessIdentityV1TrustStatementError.toFetchTrustForIssuanceError(): FetchTrustForIssuanceError = when (this) {
+    is TrustRegistryError.InvalidTrustStatus,
+    is TrustRegistryError.Unexpected -> CredentialError.UnverifiedIssuer
 }

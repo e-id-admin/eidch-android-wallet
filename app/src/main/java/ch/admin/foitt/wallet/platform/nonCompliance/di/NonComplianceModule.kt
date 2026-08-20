@@ -4,16 +4,14 @@ import ch.admin.foitt.wallet.platform.navigation.DestinationScopedComponent
 import ch.admin.foitt.wallet.platform.navigation.DestinationsScoped
 import ch.admin.foitt.wallet.platform.nonCompliance.data.repository.NonComplianceFormRepositoryImpl
 import ch.admin.foitt.wallet.platform.nonCompliance.data.repository.NonComplianceRepositoryImpl
-import ch.admin.foitt.wallet.platform.nonCompliance.data.repository.NonComplianceTrustRepositoryImpl
 import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.NonComplianceTextInputConstraints
 import ch.admin.foitt.wallet.platform.nonCompliance.domain.repository.NonComplianceFormRepository
 import ch.admin.foitt.wallet.platform.nonCompliance.domain.repository.NonComplianceRepository
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.repository.NonComplianceTrustRepository
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.FetchNonComplianceData
+import ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.GetNonComplianceReportingData
 import ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.SendNonComplianceReport
 import ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.ValidateEmail
 import ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.ValidateTextLength
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.implementation.FetchNonComplianceDataImpl
+import ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.implementation.GetNonComplianceReportingDataImpl
 import ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.implementation.SendNonComplianceReportImpl
 import ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.implementation.ValidateEmailImpl
 import ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.implementation.ValidateTextLengthImpl
@@ -44,17 +42,6 @@ internal interface NonComplianceBindingsModule {
     ): NonComplianceRepository
 
     @Binds
-    @ActivityRetainedScoped
-    fun bindNonComplianceTrustRepository(
-        repo: NonComplianceTrustRepositoryImpl
-    ): NonComplianceTrustRepository
-
-    @Binds
-    fun bindFetchNonComplianceData(
-        useCase: FetchNonComplianceDataImpl
-    ): FetchNonComplianceData
-
-    @Binds
     fun bindValidateTextLength(
         useCase: ValidateTextLengthImpl
     ): ValidateTextLength
@@ -68,6 +55,11 @@ internal interface NonComplianceBindingsModule {
     fun bindSendNonComplianceReport(
         useCase: SendNonComplianceReportImpl
     ): SendNonComplianceReport
+
+    @Binds
+    fun bindGetNonComplianceReportingData(
+        useCase: GetNonComplianceReportingDataImpl
+    ): GetNonComplianceReportingData
 }
 
 @Module

@@ -6,6 +6,7 @@ import ch.admin.foitt.wallet.platform.credential.domain.usecase.MapToCredentialD
 import ch.admin.foitt.wallet.platform.database.domain.model.ClusterWithDisplaysAndClaims
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClusterWithDisplays
+import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialWithDisplaysAndClusters
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
@@ -115,7 +116,13 @@ class GetCredentialsWithDetailsFlowImplTest {
     fun `Getting the credentialsWithDisplays flow maps errors from the MapToCredentialDisplayData use case`() = runTest {
         val exception = IllegalStateException("map to credential display data error")
         coEvery {
-            mockMapToCredentialDisplayData(mockVerifiableCredential1, listOf(credentialDisplay1), claims, CredentialFormat.VC_SD_JWT)
+            mockMapToCredentialDisplayData(
+                mockVerifiableCredential1,
+                listOf(credentialDisplay1),
+                claims,
+                CredentialFormat.VC_SD_JWT,
+                CredentialStatus.VALID,
+            )
         } returns Err(CredentialError.Unexpected(exception))
 
         val result = getCredentialsWithDetailsFlow().firstOrNull()
@@ -136,6 +143,7 @@ class GetCredentialsWithDetailsFlowImplTest {
             )
         )
         coEvery { mockCredentialWithDisplaysAndClusters1.credential } returns MockCredentialDetail.credential
+        every { mockCredentialWithDisplaysAndClusters1.nextPresentableStatus } returns CredentialStatus.VALID
         every {
             mockCredentialWithDisplaysAndClusters2.verifiableCredential
         } returns mockVerifiableCredential2
@@ -147,16 +155,29 @@ class GetCredentialsWithDetailsFlowImplTest {
             )
         )
         coEvery { mockCredentialWithDisplaysAndClusters2.credential } returns MockCredentialDetail.credential
+        every { mockCredentialWithDisplaysAndClusters2.nextPresentableStatus } returns CredentialStatus.VALID
         coEvery {
             mockCredentialWithDisplaysAndClustersRepository.getVerifiableCredentialsWithDisplaysAndClustersFlow()
         } returns flowOf(Ok(listOf(mockCredentialWithDisplaysAndClusters1, mockCredentialWithDisplaysAndClusters2)))
 
         coEvery {
-            mockMapToCredentialDisplayData(mockVerifiableCredential1, listOf(credentialDisplay1), claims, CredentialFormat.VC_SD_JWT)
+            mockMapToCredentialDisplayData(
+                mockVerifiableCredential1,
+                listOf(credentialDisplay1),
+                claims,
+                CredentialFormat.VC_SD_JWT,
+                CredentialStatus.VALID,
+            )
         } returns Ok(credentialDisplayData1)
 
         coEvery {
-            mockMapToCredentialDisplayData(mockVerifiableCredential2, listOf(credentialDisplay2), claims, CredentialFormat.VC_SD_JWT)
+            mockMapToCredentialDisplayData(
+                mockVerifiableCredential2,
+                listOf(credentialDisplay2),
+                claims,
+                CredentialFormat.VC_SD_JWT,
+                CredentialStatus.VALID,
+            )
         } returns Ok(credentialDisplayData2)
     }
 }

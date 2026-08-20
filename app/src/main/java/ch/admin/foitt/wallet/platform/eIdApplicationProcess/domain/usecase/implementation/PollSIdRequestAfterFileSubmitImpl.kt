@@ -9,8 +9,8 @@ import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.EI
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.FetchSIdStatus
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.PollSIdRequestAfterFileSubmit
 import com.github.michaelbull.result.get
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -44,10 +44,10 @@ internal class PollSIdRequestAfterFileSubmitImpl @Inject constructor(
             for (request in polledRequests) {
                 val caseId = request.case.id
                 fetchSIdStatus(caseId)
-                    .onSuccess { stateResponse ->
+                    .onOk { stateResponse ->
                         Timber.d("$POLLING_MSG updating caseId $caseId state")
                         eIdRequestStateRepository.updateStatusByCaseId(caseId, stateResponse)
-                    }.onFailure { error ->
+                    }.onErr { error ->
                         Timber.d(message = "$POLLING_MSG Could not get case Ids for status update, caseId $caseId, error $error")
                     }
             }

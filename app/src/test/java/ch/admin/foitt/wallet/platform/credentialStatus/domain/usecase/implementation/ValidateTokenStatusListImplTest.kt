@@ -3,6 +3,8 @@ package ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.implement
 import ch.admin.foitt.didResolver.domain.DidResolverHelper
 import ch.admin.foitt.openid4vc.domain.model.jwt.JwtError
 import ch.admin.foitt.openid4vc.domain.usecase.jwt.VerifyJwtSignatureFromDid
+import ch.admin.foitt.wallet.platform.actorEnvironment.domain.model.ActorEnvironment
+import ch.admin.foitt.wallet.platform.actorEnvironment.domain.usecase.GetActorEnvironment
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialStatusError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.TokenStatusList
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.TokenStatusListResponse
@@ -32,6 +34,9 @@ class ValidateTokenStatusListImplTest {
     private lateinit var mockDidResolverHelper: DidResolverHelper
 
     @MockK
+    private lateinit var mockGetActorEnvironment: GetActorEnvironment
+
+    @MockK
     private lateinit var mockVerifyJwtSignatureFromDid: VerifyJwtSignatureFromDid
 
     private lateinit var useCase: ValidateTokenStatusList
@@ -42,11 +47,13 @@ class ValidateTokenStatusListImplTest {
 
         useCase = ValidateTokenStatusListImpl(
             didResolverHelper = mockDidResolverHelper,
+            getActorEnvironment = mockGetActorEnvironment,
             verifyJwtSignatureFromDid = mockVerifyJwtSignatureFromDid,
             safeJson = safeJson,
         )
 
         every { mockDidResolverHelper.getDidStringFromAbsoluteKeyId(KEY_ID) } returns Ok(ISSUER)
+        coEvery { mockGetActorEnvironment(ISSUER) } returns ActorEnvironment.PRODUCTION
         coEvery { mockVerifyJwtSignatureFromDid(kid = any(), jwt = any()) } returns Ok(Unit)
     }
 
@@ -104,7 +111,7 @@ class ValidateTokenStatusListImplTest {
 
     @Test
     fun `Validating token status list with wrong subject returns error`(): Unit = runTest {
-        val result = useCase(ISSUER, JWT, "otherSubject")
+        val result = useCase(ISSUER, JWT, "https://other.example.com/statuslist")
 
         val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
         assertInstanceOf<IllegalStateException>(error.cause)
@@ -127,6 +134,26 @@ class ValidateTokenStatusListImplTest {
     }
 
     @Test
+    fun `Validating token status list maps errors from did resolver`(): Unit = runTest {
+        val exception = IllegalStateException("did error")
+        every {
+            mockDidResolverHelper.getDidStringFromAbsoluteKeyId(KEY_ID)
+        } returns Err(exception)
+
+        val result = useCase(ISSUER, JWT, SUBJECT)
+
+        val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
+        assertInstanceOf<IllegalStateException>(error.cause)
+    }
+
+    @Test
+    fun `Validating token status list where actor is not in registries returns an error`() = runTest {
+        coEvery { mockGetActorEnvironment(ISSUER) } returns ActorEnvironment.EXTERNAL
+
+        useCase(ISSUER, JWT, SUBJECT).assertErrorType(CredentialStatusError.UnknownRegistry::class)
+    }
+
+    @Test
     fun `Validating token status list with wrong issuer returns error`(): Unit = runTest {
         val result = useCase("otherIssuer", JWT, SUBJECT)
 
@@ -139,19 +166,7 @@ class ValidateTokenStatusListImplTest {
         every {
             mockDidResolverHelper.getDidStringFromAbsoluteKeyId(KEY_ID)
         } returns Ok("otherIssuer")
-
-        val result = useCase(ISSUER, JWT, SUBJECT)
-
-        val error = result.assertErrorType(CredentialStatusError.Unexpected::class)
-        assertInstanceOf<IllegalStateException>(error.cause)
-    }
-
-    @Test
-    fun `Validating token status list maps errors from did resolver`(): Unit = runTest {
-        val exception = IllegalStateException("did error")
-        every {
-            mockDidResolverHelper.getDidStringFromAbsoluteKeyId(KEY_ID)
-        } returns Err(exception)
+        coEvery { mockGetActorEnvironment("otherIssuer") } returns ActorEnvironment.PRODUCTION
 
         val result = useCase(ISSUER, JWT, SUBJECT)
 
@@ -179,25 +194,25 @@ class ValidateTokenStatusListImplTest {
     private companion object {
         const val ISSUER = "issuerDid"
         const val KEY_ID = "$ISSUER#key-01"
-        const val SUBJECT = "subject"
+        const val SUBJECT = "https://trust-reg.trust-infra.swiyu.admin.ch/api/v1/statuslist/1"
         val statusList = TokenStatusList(bits = 2, lst = "lst")
         val tokenResponse = TokenStatusListResponse(timeToLive = 43200, statusList = statusList)
         const val JWT =
-            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJzdGF0dXNsaXN0K2p3dCJ9.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwic3RhdHVzX2xpc3QiOnsiYml0cyI6MiwibHN0IjoibHN0In0sInN1YiI6InN1YmplY3QiLCJ0dGwiOjQzMjAwfQ.VZ4ZsBUYWcXRCArg9Tcs-7F6kYLp-_1PeL-A9VQipuNG2qvhHyYoeQ6PIrcBI2Lt-XGRJJhVFZIQmo4_LsHeGw"
+            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJzdGF0dXNsaXN0K2p3dCJ9.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwic3RhdHVzX2xpc3QiOnsiYml0cyI6MiwibHN0IjoibHN0In0sInN1YiI6Imh0dHBzOi8vdHJ1c3QtcmVnLnRydXN0LWluZnJhLnN3aXl1LmFkbWluLmNoL2FwaS92MS9zdGF0dXNsaXN0LzEiLCJ0dGwiOjQzMjAwfQ.gXrlWbVZP9kVov0codVUcS1cfs5x47CMrmjd3iG491k4YLSFCBUL6q5StysHp7WKX27HHFtfxiX-uHxAbGvXug"
         const val JWT_WITHOUT_KEY_ID =
-            "eyJhbGciOiJFUzI1NiIsInR5cCI6InN0YXR1c2xpc3Qrand0In0.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwic3RhdHVzX2xpc3QiOnsiYml0cyI6MiwibHN0IjoibHN0In0sInN1YiI6InN1YmplY3QiLCJ0dGwiOjQzMjAwfQ.yCZPrK_bMtLJe3f0tvk2SpoqhrUV7O6poyTwn30xGIBMCnPL--yOaUbc8WPthGHXjexFFYWtkAuM_Z1bVwejww"
+            "eyJhbGciOiJFUzI1NiIsInR5cCI6InN0YXR1c2xpc3Qrand0In0.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwic3RhdHVzX2xpc3QiOnsiYml0cyI6MiwibHN0IjoibHN0In0sInN1YiI6Imh0dHBzOi8vdHJ1c3QtcmVnLnRydXN0LWluZnJhLnN3aXl1LmFkbWluLmNoL2FwaS92MS9zdGF0dXNsaXN0LzEiLCJ0dGwiOjQzMjAwfQ.m1fT8QSg23X4z-DQCSfXGfpogsb1eC4MymKdiBvSaZr6yFm49_niL2GON6qWOGDPKrOFMfQ4HMcW--eTY7iLNA"
         const val JWT_WITH_EXPIRATION_DATE_ZERO =
-            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJzdGF0dXNsaXN0K2p3dCJ9.eyJleHAiOjAsImlhdCI6MTY4NjkyMDE3MCwic3RhdHVzX2xpc3QiOnsiYml0cyI6MiwibHN0IjoibHN0In0sInN1YiI6InN1YmplY3QiLCJ0dGwiOjQzMjAwfQ.4vgRp_62qW6_wSsiRuW18SVk-f7CvexxH0DsiqrCxK6t6oOzMOfP1CF8awJfOXR8gNVOAtdG7pZQptWWH0zkqQ"
+            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJzdGF0dXNsaXN0K2p3dCJ9.eyJleHAiOjAsImlhdCI6MTY4NjkyMDE3MCwic3RhdHVzX2xpc3QiOnsiYml0cyI6MiwibHN0IjoibHN0In0sInN1YiI6Imh0dHBzOi8vdHJ1c3QtcmVnLnRydXN0LWluZnJhLnN3aXl1LmFkbWluLmNoL2FwaS92MS9zdGF0dXNsaXN0LzEiLCJ0dGwiOjQzMjAwfQ.Fzs0mtc95M8ZrbPrPBSeOJ4-RXs_d844r3NbyLwn9MTpRkvUlNGzbWloXADIRnLt7M4JWmM0Ec3whNL0yXfk6g"
         const val JWT_WITHOUT_BITS =
-            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJzdGF0dXNsaXN0K2p3dCJ9.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwic3RhdHVzX2xpc3QiOnsibHN0IjoibHN0In0sInN1YiI6InN1YmplY3QiLCJ0dGwiOjQzMjAwfQ.YNpEaukt1Dvp2R6v2f4EkFPygNYe6k5HM5TN-2qsWWUimptwWGbJD7mS6IM19a5w-ck1m2-GhRcAISrLwErm5w"
+            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJzdGF0dXNsaXN0K2p3dCJ9.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwic3RhdHVzX2xpc3QiOnsibHN0IjoibHN0In0sInN1YiI6Imh0dHBzOi8vdHJ1c3QtcmVnLnRydXN0LWluZnJhLnN3aXl1LmFkbWluLmNoL2FwaS92MS9zdGF0dXNsaXN0LzEiLCJ0dGwiOjQzMjAwfQ.gr4WYIWLjukT7yLoKOk4qIvWUNhzZAEZwV8ZmKpfMdZ98xOivqgYGT_Rlg1Lc57wQMtVyC7oHVoEpHwgrp6idA"
         const val JWT_WITHOUT_SUBJECT =
-            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJzdGF0dXNsaXN0K2p3dCJ9.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwic3RhdHVzX2xpc3QiOnsiYml0cyI6MiwibHN0IjoibHN0In0sInR0bCI6NDMyMDB9.KUvqdrJ8Q3kYyyrxawgyiEIUHCQ1vcIXOvKAGGXvoKd65VbX5-hRdKo3UcpnKkKgi9tZW51bwPU-Rdv_EJ3hpw"
+            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJzdGF0dXNsaXN0K2p3dCJ9.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwic3RhdHVzX2xpc3QiOnsiYml0cyI6MiwibHN0IjoibHN0In0sInR0bCI6NDMyMDB9.t9nMIvOEDYP51sXO4NOYGZB5v5oe9aAFRmMylk7VFjOl4xHqAwQyY2K3GLQkSv5yTmXYo8QCEDQHAfwJdVBk4Q"
         const val JWT_WITHOUT_IAT =
-            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJzdGF0dXNsaXN0K2p3dCJ9.eyJleHAiOjIyOTE3MjAxNzAsInN0YXR1c19saXN0Ijp7ImJpdHMiOjIsImxzdCI6ImxzdCJ9LCJzdWIiOiJzdWJqZWN0IiwidHRsIjo0MzIwMH0.pHSlJKviRPAHfKEiVkysYgGGshG_fliDRxeQYmqg22Z0li_W20LrXVWK3F1SHYxg6wYyVbL4yGr0MWyfq_QqUQ"
+            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJzdGF0dXNsaXN0K2p3dCJ9.eyJleHAiOjIyOTE3MjAxNzAsInN0YXR1c19saXN0Ijp7ImJpdHMiOjIsImxzdCI6ImxzdCJ9LCJzdWIiOiJodHRwczovL3RydXN0LXJlZy50cnVzdC1pbmZyYS5zd2l5dS5hZG1pbi5jaC9hcGkvdjEvc3RhdHVzbGlzdC8xIiwidHRsIjo0MzIwMH0.dqnyBP5dKorZfvqSHN8V-_u2Lg8TBVpaZI1713wi1mPgmpiyeiERddW-LGueuKuJidgpqHl4lNv6s7Bv6p4vkg"
         const val JWT_WITH_WRONG_TYPE =
-            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJ3cm9uZ1R5cGUifQ.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwic3RhdHVzX2xpc3QiOnsiYml0cyI6MiwibHN0IjoibHN0In0sInN1YiI6InN1YmplY3QiLCJ0dGwiOjQzMjAwfQ.qcscri_siWlaWSEDX735URorWhDAcyK0Q2rpjtAYVqhRM-2uxJCmwAh3UMhpblGFyap6qbBo56kOjl4L_DCRfg"
+            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJ3cm9uZ1R5cGUifQ.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwic3RhdHVzX2xpc3QiOnsiYml0cyI6MiwibHN0IjoibHN0In0sInN1YiI6Imh0dHBzOi8vdHJ1c3QtcmVnLnRydXN0LWluZnJhLnN3aXl1LmFkbWluLmNoL2FwaS92MS9zdGF0dXNsaXN0LzEiLCJ0dGwiOjQzMjAwfQ.vidOXtn8e8f74eumYGw5F5LQmsMdYUPufZkJhy4S_F5CPpnesSOOv-016YxOpKSE9_uWNEvsbx4yLNaIdE7N7Q"
         const val JWT_WITHOUT_STATUS_LIST =
-            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJzdGF0dXNsaXN0K2p3dCJ9.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwic3ViIjoic3ViamVjdCIsInR0bCI6NDMyMDB9.73XOBdRETiNH6ZgRXWZOfk1HOnVQMRt6sVCu__vhncaUtFc4MT_u_mQSRfvYsrStdxN9kTKNGA_8JgbBVfLi9g"
+            "eyJhbGciOiJFUzI1NiIsImtpZCI6Imlzc3VlckRpZCNrZXktMDEiLCJ0eXAiOiJzdGF0dXNsaXN0K2p3dCJ9.eyJleHAiOjIyOTE3MjAxNzAsImlhdCI6MTY4NjkyMDE3MCwic3ViIjoiaHR0cHM6Ly90cnVzdC1yZWcudHJ1c3QtaW5mcmEuc3dpeXUuYWRtaW4uY2gvYXBpL3YxL3N0YXR1c2xpc3QvMSIsInR0bCI6NDMyMDB9.vk6udoxiGpJsmRaDGYowY2EcRW3HdrKBGA2cVU3XGtZGCyzpWcwtBBpIxgoO_X4EKMqUCafIPZVj8rgU6P7Rtg"
 /*
 JWT Header is:
 {
@@ -212,7 +227,7 @@ JWT payload is: {
                     "bits": 2,
                     "lst": "lst"
                   },
-                  "sub": "uri",
+                  "sub": "https://trust-reg.trust-infra.swiyu.admin.ch/api/v1/statuslist/1",
                   "ttl": 43200
                 }
 -----BEGIN PUBLIC KEY-----

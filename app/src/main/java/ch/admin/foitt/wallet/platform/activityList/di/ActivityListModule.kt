@@ -24,9 +24,9 @@ import ch.admin.foitt.wallet.platform.activityList.domain.usecase.DeleteAllActiv
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.GetActivitiesWithDisplaysFlow
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.GetActivityActorDisplaysFlow
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.GetActivityDetailFlow
-import ch.admin.foitt.wallet.platform.activityList.domain.usecase.MapToActivityActorDisplayData
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.MapToActivityDetailDisplayData
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.MapToActivityWithActorDisplayData
+import ch.admin.foitt.wallet.platform.activityList.domain.usecase.MapToActorMetadataDisplayData
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.SaveAreActivitiesEnabled
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.SaveIssuanceActivity
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.SavePresentationAcceptedActivity
@@ -37,9 +37,9 @@ import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.GetActivitiesWithDisplaysFlowImpl
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.GetActivityActorDisplaysFlowImpl
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.GetActivityDetailFlowImpl
-import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.MapToActivityActorDisplayDataImpl
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.MapToActivityDetailDisplayDataImpl
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.MapToActivityWithActorDisplayDataImpl
+import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.MapToActorMetadataDisplayDataImpl
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.SaveAreActivitiesEnabledImpl
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.SaveIssuanceActivityImpl
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.SavePresentationAcceptedActivityImpl
@@ -124,8 +124,8 @@ internal interface ActivityListModule {
 
     @Binds
     fun bindMapToActivityActorDisplayData(
-        useCase: MapToActivityActorDisplayDataImpl
-    ): MapToActivityActorDisplayData
+        useCase: MapToActorMetadataDisplayDataImpl
+    ): MapToActorMetadataDisplayData
 
     @Binds
     fun bindMapToActivityWithActorDisplayData(

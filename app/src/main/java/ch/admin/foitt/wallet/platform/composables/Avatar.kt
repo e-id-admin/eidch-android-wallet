@@ -21,15 +21,17 @@ import ch.admin.foitt.wallet.theme.WalletTheme
 
 @Composable
 fun Avatar(
+    modifier: Modifier = Modifier,
     imagePainter: Painter?,
     size: AvatarSize,
+    background: Color = WalletTheme.colorScheme.surfaceContainerHighest,
     imageTint: Color? = null,
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(size.toDp())
             .clip(CircleShape)
-            .background(WalletTheme.colorScheme.surfaceContainerHighest)
+            .background(background)
             .padding(size.internalPadding),
         contentAlignment = Alignment.Center,
     ) {

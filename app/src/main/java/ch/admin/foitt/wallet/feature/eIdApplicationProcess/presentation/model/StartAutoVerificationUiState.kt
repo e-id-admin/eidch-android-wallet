@@ -16,4 +16,7 @@ internal sealed interface StartAutoVerificationUiState {
         val onClose: () -> Unit,
         val onRetry: () -> Unit,
     ) : StartAutoVerificationUiState
+    data class UnauthorizedPairing(
+        val onClose: () -> Unit,
+    ) : StartAutoVerificationUiState
 }

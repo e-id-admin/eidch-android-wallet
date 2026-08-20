@@ -29,7 +29,7 @@ object MockCredentialsWithBundleItems {
 
     private val verifiableCredential = VerifiableCredentialEntity(
         createdAt = 1700463600000,
-        updatedAt = null,
+        refreshedAt = null,
         issuer = "issuer",
         validFrom = 0,
         credentialId = 0,

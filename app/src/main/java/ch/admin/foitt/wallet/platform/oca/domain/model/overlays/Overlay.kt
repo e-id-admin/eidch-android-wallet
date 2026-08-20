@@ -24,7 +24,7 @@ sealed interface Overlay {
     val captureBaseDigest: String
 }
 
-private object OverlaySerializer : JsonContentPolymorphicSerializer<Overlay>(
+internal object OverlaySerializer : JsonContentPolymorphicSerializer<Overlay>(
     Overlay::class
 ) {
     @Suppress("CyclomaticComplexMethod")

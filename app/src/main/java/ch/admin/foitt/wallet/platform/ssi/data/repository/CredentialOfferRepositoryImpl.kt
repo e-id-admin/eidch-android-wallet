@@ -8,6 +8,7 @@ import ch.admin.foitt.wallet.platform.credential.domain.model.AnyClaimDisplay
 import ch.admin.foitt.wallet.platform.credential.domain.model.AnyCredentialDisplay
 import ch.admin.foitt.wallet.platform.credential.domain.model.AnyIssuerDisplay
 import ch.admin.foitt.wallet.platform.database.data.dao.BundleItemEntityDao
+import ch.admin.foitt.wallet.platform.database.data.dao.CredentialActivityEntityDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialAuthenticationDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialClaimClusterDisplayEntityDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialClaimClusterEntityDao
@@ -32,12 +33,14 @@ import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimDispl
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialIssuerDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialKeyBindingEntity
+import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.DeferredCredentialEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayConst
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayLanguage
 import ch.admin.foitt.wallet.platform.database.domain.model.DpopBindingEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.RawCredentialData
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialEntity
+import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableProgressionState
 import ch.admin.foitt.wallet.platform.database.domain.model.toCredentialClaimClusterDisplayEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.toCredentialClaimClusterEntity
 import ch.admin.foitt.wallet.platform.database.domain.usecase.RunInTransaction
@@ -54,7 +57,9 @@ import com.github.michaelbull.result.getOrThrow
 import com.github.michaelbull.result.mapError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.net.URL
+import java.time.Instant
 import javax.inject.Inject
 
 class CredentialOfferRepositoryImpl @Inject constructor(
@@ -79,6 +84,7 @@ class CredentialOfferRepositoryImpl @Inject constructor(
         rawCredentialData: RawCredentialData,
         issuerUrl: URL,
     ): Result<Long, CredentialOfferRepositoryError> = coroutineBinding {
+        Timber.d("Save credential offer: Starting for credential $credentialId")
         saveCredentialOfferTransaction(
             credentialId = credentialId,
             format = format,
@@ -88,17 +94,27 @@ class CredentialOfferRepositoryImpl @Inject constructor(
             credentialDisplays = credentialDisplays,
             rawCredentialData = rawCredentialData,
         ) { credentialId ->
+            val existing = verifiableCredentialDao().getByIdOrNull(credentialId)
 
-            val verifiableCredential = createVerifiableCredential(
+            val verifiableCredential = VerifiableCredentialEntity(
                 credentialId = credentialId,
                 validFrom = validFrom,
                 validUntil = validUntil,
                 issuer = issuer,
+                progressionState = existing?.progressionState ?: VerifiableProgressionState.UNACCEPTED,
+                createdAt = existing?.createdAt ?: Instant.now().epochSecond,
+                refreshedAt = if (existing != null) Instant.now().epochSecond else null,
+                nextPresentableBundleItemId = -1
             )
-            verifiableCredentialDao().insert(verifiableCredential)
+
+            verifiableCredentialDao().upsert(verifiableCredential)
+
+            Timber.d("Save credential offer: saved credential:\n$verifiableCredential")
+
+            val previousStatus = bundleItemEntityDao().getAllByCredentialId(credentialId).firstOrNull()?.status ?: CredentialStatus.UNKNOWN
 
             payloads.forEachIndexed { index, payload ->
-                val bundleItemId: Long = bundleItemEntityDao().insert(createBundleItem(credentialId, payload))
+                val bundleItemId: Long = bundleItemEntityDao().insert(createBundleItem(credentialId, payload, previousStatus))
 
                 if (index == 0) {
                     verifiableCredentialDao().updateNextBundleIdByCredentialId(
@@ -117,6 +133,10 @@ class CredentialOfferRepositoryImpl @Inject constructor(
                 }
             }
 
+            val deletedActivities = credentialActivityEntityDao().deleteByCredentialId(credentialId)
+            val deletedClusters = credentialClaimClusterEntityDao().deleteByCredentialId(credentialId)
+
+            Timber.d("Save credential offer: deleted $deletedClusters existing clusters and $deletedActivities existing activities")
             clusters.forEach { cluster ->
                 saveCluster(
                     cluster = cluster,
@@ -243,13 +263,15 @@ class CredentialOfferRepositoryImpl @Inject constructor(
                     it.toKeyBinding()
                 }
 
-                val verifiableCredential = createVerifiableCredential(
+                val verifiableCredential = VerifiableCredentialEntity(
                     credentialId = credentialId,
                     validFrom = validFrom,
                     validUntil = validUntil,
                     issuer = issuer,
+                    progressionState = VerifiableProgressionState.UNACCEPTED,
+                    nextPresentableBundleItemId = -1,
                 )
-                verifiableCredentialDao().insert(verifiableCredential)
+                verifiableCredentialDao().upsert(verifiableCredential)
 
                 payloads.forEachIndexed { index, payload ->
                     val bundleItemId: Long = bundleItemEntityDao().insert(createBundleItem(credentialId, payload))
@@ -294,21 +316,35 @@ class CredentialOfferRepositoryImpl @Inject constructor(
     ): Result<Long, Throwable> = withContext(ioDispatcher) {
         runSuspendCatching {
             runInTransaction {
-                val credentialId = credentialDao().insert(
-                    Credential(
-                        id = credentialId,
-                        format = format,
-                        issuerUrl = issuerUrl,
-                        selectedConfigurationId = selectedConfigurationId,
+                val credentialId = if (credentialId == 0L) {
+                    credentialDao().insert(
+                        Credential(
+                            format = format,
+                            issuerUrl = issuerUrl,
+                            selectedConfigurationId = selectedConfigurationId,
+                        )
                     )
-                )
+                } else {
+                    // Updating an existing credential must not reset its creation date
+                    credentialDao().update(
+                        credentialDao().getById(credentialId).copy(
+                            format = format,
+                            issuerUrl = issuerUrl,
+                            selectedConfigurationId = selectedConfigurationId,
+                        )
+                    )
+                    credentialId
+                }
 
+                credentialIssuerDisplayDao().deleteByCredentialId(credentialId)
                 val issuerDisplays = createCredentialIssuerDisplays(issuerDisplays, credentialId)
                 credentialIssuerDisplayDao().insertAll(issuerDisplays)
 
+                credentialDisplayDao().deleteByCredentialId(credentialId)
                 val credDisplays = createCredentialDisplays(credentialDisplays, credentialId)
                 credentialDisplayDao().insertAll(credDisplays)
 
+                rawCredentialDataDao().deleteByCredentialId(credentialId)
                 rawCredentialDataDao().insert(rawCredentialData = rawCredentialData.copy(credentialId = credentialId))
 
                 additionalTask(credentialId)
@@ -318,26 +354,14 @@ class CredentialOfferRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun createVerifiableCredential(
-        credentialId: Long,
-        validFrom: Long?,
-        validUntil: Long?,
-        issuer: String?,
-        nextPresentableBundleItemId: Long = -1,
-    ) = VerifiableCredentialEntity(
-        issuer = issuer,
-        validFrom = validFrom,
-        validUntil = validUntil,
-        credentialId = credentialId,
-        nextPresentableBundleItemId = nextPresentableBundleItemId,
-    )
-
     private fun createBundleItem(
         credentialId: Long,
         payload: String,
+        status: CredentialStatus = CredentialStatus.UNKNOWN,
     ) = BundleItemEntity(
         credentialId = credentialId,
         payload = payload,
+        status = status,
     )
 
     private fun createCredentialKeyBinding(
@@ -493,5 +517,10 @@ class CredentialOfferRepositoryImpl @Inject constructor(
     private val credentialClaimClusterDisplayEntityDaoFlow = daoProvider.credentialClaimClusterDisplayEntityDao
     private suspend fun credentialClaimClusterDisplayEntityDao(): CredentialClaimClusterDisplayEntityDao = suspendUntilNonNull {
         credentialClaimClusterDisplayEntityDaoFlow.value
+    }
+
+    private val credentialActivityEntitiyDaoFlow = daoProvider.credentialActivityEntityDao
+    private suspend fun credentialActivityEntityDao(): CredentialActivityEntityDao = suspendUntilNonNull {
+        credentialActivityEntitiyDaoFlow.value
     }
 }

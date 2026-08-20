@@ -169,6 +169,19 @@ fun Modifier.actOnKeyWhenFocused(key: Key, action: (() -> Unit)?): Modifier {
         }
 }
 
+@Composable
+fun Modifier.conditional(
+    condition: Boolean,
+    ifTrue: @Composable Modifier.() -> Modifier,
+    ifFalse: @Composable Modifier.() -> Modifier = @Composable { this }
+): Modifier {
+    return if (condition) {
+        ifTrue(this)
+    } else {
+        ifFalse(this)
+    }
+}
+
 /**
  * Modifier that detects when a [LazyListState] scroll is stuck (e.g. because the focused item
  * is pinned on screen by the LazyColumn) and scrolls to the first item to allow focus

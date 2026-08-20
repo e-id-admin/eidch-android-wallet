@@ -22,10 +22,14 @@ class OnboardingSetupPassphraseViewModel @Inject constructor(
     private val validatePassphrase: ValidatePassphrase,
     setTopBarState: SetTopBarState,
 ) : OnboardingViewModel(setTopBarState, systemBarsFixedLightColor = true) {
-    override val topBarState =
-        TopBarState.OnGradient(titleId = R.string.tk_onboarding_password_title, onUp = navManager::popBackStack, onAXDown = {
+
+    override val topBarState = TopBarState.OnGradient(
+        titleId = R.string.tk_onboarding_password_title,
+        onUp = navManager::popBackStack,
+        onAXDown = {
             tryEmitFocusEvents()
-        })
+        }
+    )
 
     private val _textFieldValue = MutableStateFlow(TextFieldValue(""))
     val textFieldValue = _textFieldValue.asStateFlow()

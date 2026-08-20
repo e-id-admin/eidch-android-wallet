@@ -10,8 +10,8 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.core.remaining
 import io.ktor.utils.io.exhausted
 import io.ktor.utils.io.readRemaining
-import kotlinx.io.IOException
 import kotlinx.io.readByteArray
+import timber.log.Timber
 
 class ContentLengthLimiter(
     config: ContentLengthLimiterConfig = ContentLengthLimiterConfig()
@@ -34,7 +34,7 @@ class ContentLengthLimiter(
                     // Check if Content-Length header is within the limit
                     // Ktor will throw later if Content-Length does not match actual content size
                     if (receivedContentLength > plugin.maxBytes) {
-                        throw IOException("Content-Length exceeds limit: $receivedContentLength > ${plugin.maxBytes}")
+                        failWithSizeLimitExceeded("Content-Length exceeds limit: $receivedContentLength > ${plugin.maxBytes}")
                     }
                 } else {
                     // Without Content-Length header we have to count the actual response size
@@ -47,7 +47,7 @@ class ContentLengthLimiter(
                         counted += chunk.remaining
 
                         if (counted > plugin.maxBytes) {
-                            throw IOException("Streamed content size exceeds limit: $counted > ${plugin.maxBytes}")
+                            failWithSizeLimitExceeded("Streamed content size exceeds limit: $counted > ${plugin.maxBytes}")
                         }
 
                         chunk.readByteArray()
@@ -59,9 +59,17 @@ class ContentLengthLimiter(
                 )
             }
         }
+
+        private fun failWithSizeLimitExceeded(message: String): Nothing {
+            val exception = ContentSizeLimitException(message)
+            Timber.e(t = exception, message = message)
+            throw exception
+        }
     }
 }
 
+class ContentSizeLimitException(message: String) : Exception(message)
+
 class ContentLengthLimiterConfig {
-    var limitInBytes: Long = 150 * 1024 * 1024
+    var limitInBytes: Long = 25 * 1024 * 1024
 }

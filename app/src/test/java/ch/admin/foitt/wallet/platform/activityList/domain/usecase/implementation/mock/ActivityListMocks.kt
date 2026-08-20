@@ -1,16 +1,17 @@
 package ch.admin.foitt.wallet.platform.activityList.domain.usecase.implementation.mock
 
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
-import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityActorDisplayData
 import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityDetailDisplayData
 import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityType
 import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityWithActorDisplayData
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorMetadataDisplayData
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialDisplayData
 import ch.admin.foitt.wallet.platform.database.domain.model.ActivityActorDisplayEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.ActivityActorDisplayWithImage
 import ch.admin.foitt.wallet.platform.database.domain.model.ActivityClaimEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.ActivityWithActorDisplays
 import ch.admin.foitt.wallet.platform.database.domain.model.ActivityWithDetails
+import ch.admin.foitt.wallet.platform.database.domain.model.BundleItemEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.ClusterWithDisplaysAndClaims
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialActivityEntity
@@ -19,21 +20,24 @@ import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimClust
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimWithDisplays
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClusterWithDisplays
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
+import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.ImageEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.NonComplianceReasonDisplayEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialWithDisplaysAndClusters
 import ch.admin.foitt.wallet.platform.locale.LocaleCompat
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimCluster
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimText
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
+import io.mockk.every
 import io.mockk.mockk
 import java.net.URL
 
 object ActivityListMocks {
     const val CREDENTIAL_ID = 1L
+    const val BUNDLE_ITEM_ID = 11L
     const val ACTIVITY_ID = 1L
     const val NON_COMPLIANCE_DATA = "nonComplianceData"
     val locale = LocaleCompat.of("de", "CH")
@@ -127,7 +131,7 @@ object ActivityListMocks {
         localizedActorName = actorDisplay1.actorDisplay.name
     )
 
-    val activityActorDisplayData = ActivityActorDisplayData(
+    val activityActorDisplayData = ActorMetadataDisplayData(
         activityId = activity.id,
         localizedActorName = actorDisplay1.actorDisplay.name,
         actorImageData = actorDisplay1.image?.image,
@@ -145,7 +149,9 @@ object ActivityListMocks {
         actorImageData = imageData1,
     )
 
-    val mockVerifiableCredential = mockk<VerifiableCredentialEntity>()
+    val mockVerifiableCredential = mockk<VerifiableCredentialEntity> {
+        every { nextPresentableBundleItemId } returns BUNDLE_ITEM_ID
+    }
     val mockCredentialDisplays = listOf(mockk<CredentialDisplay>())
     val claimWithDisplays1 = CredentialClaimWithDisplays(
         claim = CredentialClaim(
@@ -207,6 +213,14 @@ object ActivityListMocks {
         ),
         credentialDisplays = mockCredentialDisplays,
         clusters = clusters,
+        bundleItems = listOf(
+            BundleItemEntity(
+                id = BUNDLE_ITEM_ID,
+                status = CredentialStatus.VALID,
+                credentialId = CREDENTIAL_ID,
+                payload = "payload",
+            )
+        ),
     )
 
     val mockCredentialDisplayData = mockk<CredentialDisplayData>()

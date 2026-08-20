@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -49,7 +49,7 @@ private fun EnterNewPassphraseScreenContent(
     onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
-    when (currentWindowAdaptiveInfo().windowWidthClass()) {
+    when (currentWindowAdaptiveInfoV2().windowWidthClass()) {
         WindowWidthClass.COMPACT -> WalletLayouts.CompactContainerFloatingBottom(
             modifier = Modifier.background(WalletTheme.colorScheme.surfaceContainerLow),
             shouldScrollUnderTopBar = false,

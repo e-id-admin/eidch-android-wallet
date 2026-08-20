@@ -9,7 +9,7 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.UnknownCre
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.VcSdJwtCredentialConfiguration
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.toFetchCredentialByConfigError
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.BindingKeyPair
-import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryptionType
+import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryption
 import ch.admin.foitt.openid4vc.domain.usecase.FetchCredentialByConfig
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.FetchVcSdJwtCredential
 import com.github.michaelbull.result.Err
@@ -21,19 +21,17 @@ internal class FetchCredentialByConfigImpl @Inject constructor(
     private val fetchVcSdJwtCredential: FetchVcSdJwtCredential,
 ) : FetchCredentialByConfig {
     override suspend fun invoke(
-        isDPopEnabled: Boolean,
         verifiableCredentialParams: VerifiableCredentialParams,
         bindingKeyPairs: List<BindingKeyPair>?,
-        payloadEncryptionType: PayloadEncryptionType,
+        payloadEncryption: PayloadEncryption,
         dpopKeyPair: BindingKeyPair?,
     ): Result<AnyCredentialResult, FetchCredentialByConfigError> =
         when (verifiableCredentialParams.credentialConfiguration) {
             is VcSdJwtCredentialConfiguration -> {
                 fetchVcSdJwtCredential(
-                    isDPopEnabled = isDPopEnabled,
                     verifiableCredentialParams = verifiableCredentialParams,
                     bindingKeyPairs = bindingKeyPairs,
-                    payloadEncryptionType = payloadEncryptionType,
+                    payloadEncryption = payloadEncryption,
                     dpopKeyPair = dpopKeyPair,
                 ).mapError(FetchVcSdJwtCredentialError::toFetchCredentialByConfigError)
             }

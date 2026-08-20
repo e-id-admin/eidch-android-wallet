@@ -13,6 +13,7 @@ fun interface CreateDPoPProofJwt {
         keyPair: JWSKeyPair,
         nonce: String?,
         accessToken: String?,
+        requestBody: ByteArray?,
         keyAttestationJwt: Jwt?,
     ): Result<String, CreateDPoPProofJwtError>
 }

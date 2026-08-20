@@ -1,12 +1,12 @@
 package ch.admin.foitt.wallet.platform.messageEvents.di
 
 import ch.admin.foitt.wallet.platform.messageEvents.data.repository.ActivityEventRepositoryImpl
-import ch.admin.foitt.wallet.platform.messageEvents.data.repository.CredentialOfferEventRepositoryImpl
+import ch.admin.foitt.wallet.platform.messageEvents.data.repository.CredentialEventRepositoryImpl
 import ch.admin.foitt.wallet.platform.messageEvents.data.repository.NonComplianceEventRepositoryImpl
 import ch.admin.foitt.wallet.platform.messageEvents.data.repository.PassphraseChangeEventRepositoryImpl
 import ch.admin.foitt.wallet.platform.messageEvents.data.repository.WalletPairingEventRepositoryImpl
 import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.ActivityEventRepository
-import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialOfferEventRepository
+import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialEventRepository
 import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.NonComplianceEventRepository
 import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.PassphraseChangeEventRepository
 import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.WalletPairingEventRepository
@@ -31,9 +31,9 @@ interface MessageEventsBindingModule {
 
     @Binds
     @ActivityRetainedScoped
-    fun bindCredentialReceivedEventRepo(
-        repo: CredentialOfferEventRepositoryImpl
-    ): CredentialOfferEventRepository
+    fun bindCredentialEventRepo(
+        repo: CredentialEventRepositoryImpl
+    ): CredentialEventRepository
 
     @Binds
     @ActivityRetainedScoped

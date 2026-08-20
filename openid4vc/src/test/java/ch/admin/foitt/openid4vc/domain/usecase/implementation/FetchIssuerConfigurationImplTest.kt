@@ -32,10 +32,7 @@ class FetchIssuerConfigurationImplTest {
     private lateinit var mockValidateIssuerMetadataJwt: ValidateIssuerMetadataJwt
 
     @MockK
-    private lateinit var mockPlainIssuerConfigurationResponse: IssuerConfigurationResponse.Plain
-
-    @MockK
-    private lateinit var mockSignedIssuerConfigurationResponse: IssuerConfigurationResponse.Signed
+    private lateinit var mockSignedIssuerConfigurationResponse: IssuerConfigurationResponse
 
     @MockK
     private lateinit var mockIssuerConfiguration: IssuerConfiguration
@@ -58,28 +55,7 @@ class FetchIssuerConfigurationImplTest {
     }
 
     @Test
-    fun `UseCase should return the issuer configuration when unsigned`() = runTest {
-        val result = useCase(CREDENTIAL_ISSUER).assertOk()
-
-        assertEquals(result, mockIssuerConfiguration)
-    }
-
-    @Test
-    fun `UseCase should call the CredentialOffer repository only`() = runTest {
-        useCase(CREDENTIAL_ISSUER)
-
-        coVerify(exactly = 1) {
-            mockCredentialOfferRepository.fetchIssuerConfiguration(CREDENTIAL_ISSUER)
-        }
-        coVerify(exactly = 0) {
-            mockValidateIssuerMetadataJwt(any(), any(), any())
-        }
-    }
-
-    @Test
-    fun `UseCase should return the issuer configuration when signed`() = runTest {
-        success(mockSignedIssuerConfigurationResponse)
-
+    fun `UseCase should return the issuer configuration`() = runTest {
         val result = useCase(CREDENTIAL_ISSUER).assertOk()
 
         assertEquals(result, mockIssuerConfiguration)
@@ -111,8 +87,7 @@ class FetchIssuerConfigurationImplTest {
         result.assertErrorType(CredentialOfferError.InvalidSignedMetadata::class)
     }
 
-    private fun success(response: IssuerConfigurationResponse = mockPlainIssuerConfigurationResponse) {
-        every { mockPlainIssuerConfigurationResponse.config } returns mockIssuerConfiguration
+    private fun success(response: IssuerConfigurationResponse = mockSignedIssuerConfigurationResponse) {
         every { mockSignedIssuerConfigurationResponse.config } returns mockIssuerConfiguration
         every { mockSignedIssuerConfigurationResponse.jwt } returns TEST_JWT
         coEvery {

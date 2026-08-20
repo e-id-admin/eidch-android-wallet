@@ -90,18 +90,9 @@ class GetCompatibleCredentialsImplTest {
     fun `Getting compatible credentials with no credential returns empty set`() = runTest {
         setupDefaultMocks(credentials = emptyList())
 
-        val result = useCase(mockAuthorizationRequest).assertOk()
+        val result = useCase(mockDcqlQuery).assertOk()
 
         assertEquals(0, result.size)
-    }
-
-    @Test
-    fun `Getting compatible credentials with null dcql query returns empty set`() = runTest {
-        every { mockAuthorizationRequest.dcqlQuery } returns null
-
-        val result = useCase(mockAuthorizationRequest).assertOk()
-
-        assertTrue(result.isEmpty()) { "Result should be empty when dcqlQuery is null" }
     }
 
     @Test
@@ -109,7 +100,7 @@ class GetCompatibleCredentialsImplTest {
         setupDefaultMocks()
         every { mockDbCredential.verifiableCredential.validUntil } returns Instant.now().minusSeconds(60).epochSecond
 
-        val result = useCase(mockAuthorizationRequest).assertOk()
+        val result = useCase(mockDcqlQuery).assertOk()
 
         assertTrue(result.isEmpty()) { "Result should be empty" }
     }
@@ -120,7 +111,7 @@ class GetCompatibleCredentialsImplTest {
         every { mockDbCredential.verifiableCredential.validUntil } returns Instant.now().plusSeconds(600).epochSecond
         every { mockDbCredential.verifiableCredential.validFrom } returns Instant.now().plusSeconds(60).epochSecond
 
-        val result = useCase(mockAuthorizationRequest).assertOk()
+        val result = useCase(mockDcqlQuery).assertOk()
 
         assertTrue(result.isEmpty()) { "Result should be empty" }
     }
@@ -134,7 +125,7 @@ class GetCompatibleCredentialsImplTest {
             status = CredentialStatus.REVOKED,
         )
 
-        val result = useCase(mockAuthorizationRequest).assertOk()
+        val result = useCase(mockDcqlQuery).assertOk()
 
         assertTrue(result.isEmpty()) { "Result should be empty" }
     }
@@ -157,7 +148,7 @@ class GetCompatibleCredentialsImplTest {
                         status = status,
                     )
 
-                    val result = useCase(mockAuthorizationRequest).assertOk()
+                    val result = useCase(mockDcqlQuery).assertOk()
 
                     assertNotNull(result.find { it.credentialId == CREDENTIAL_ID })
                 }
@@ -169,7 +160,7 @@ class GetCompatibleCredentialsImplTest {
     fun `Getting compatible credentials with two matching credentials returns both`() = runTest {
         setupDefaultMocks(credentials = listOf(mockDbCredential, mockDbCredential2))
 
-        val result = useCase(mockAuthorizationRequest).assertOk()
+        val result = useCase(mockDcqlQuery).assertOk()
 
         assertEquals(2, result.size)
         assertNotNull(result.find { it.credentialId == CREDENTIAL_ID })
@@ -183,7 +174,7 @@ class GetCompatibleCredentialsImplTest {
             DcqlCredentialMatch(DCQL_QUERY_ID_2, CREDENTIAL_PAYLOAD_2, emptyList()),
         )
 
-        val result = useCase(mockAuthorizationRequest).assertOk()
+        val result = useCase(mockDcqlQuery).assertOk()
 
         assertEquals(1, result.size)
         assertNotNull(result.find { it.credentialId == CREDENTIAL_ID_2 })
@@ -194,7 +185,7 @@ class GetCompatibleCredentialsImplTest {
         setupDefaultMocks(credentials = listOf(mockDbCredential, mockDbCredential2))
         every { DcqlSupport.matchDcqlCredentials(mockDcqlQuery, any()) } returns emptyList()
 
-        val result = useCase(mockAuthorizationRequest).assertOk()
+        val result = useCase(mockDcqlQuery).assertOk()
 
         assertEquals(0, result.size)
     }
@@ -206,7 +197,7 @@ class GetCompatibleCredentialsImplTest {
             DcqlCredentialMatch(DCQL_QUERY_ID_1, CREDENTIAL_PAYLOAD_1, emptyList()),
         )
 
-        val result = useCase(mockAuthorizationRequest).assertOk()
+        val result = useCase(mockDcqlQuery).assertOk()
 
         assertEquals(DCQL_QUERY_ID_1, result.first().dcqlQueryId)
     }
@@ -218,7 +209,7 @@ class GetCompatibleCredentialsImplTest {
             verifiableCredentialWithBundleItemsWithKeyBindingRepository.getAll()
         } returns Err(SsiError.Unexpected(exception))
 
-        val error = useCase(mockAuthorizationRequest).assertErrorType(CredentialPresentationError.Unexpected::class)
+        val error = useCase(mockDcqlQuery).assertErrorType(CredentialPresentationError.Unexpected::class)
 
         assertEquals(exception, error.cause)
     }
@@ -229,7 +220,7 @@ class GetCompatibleCredentialsImplTest {
         val exception = IllegalStateException()
         every { mockDbCredential.toAnyCredentials() } returns Err(CredentialError.Unexpected(exception))
 
-        val error = useCase(mockAuthorizationRequest).assertErrorType(CredentialPresentationError.Unexpected::class)
+        val error = useCase(mockDcqlQuery).assertErrorType(CredentialPresentationError.Unexpected::class)
 
         assertEquals(exception, error.cause)
     }
@@ -243,7 +234,7 @@ class GetCompatibleCredentialsImplTest {
         every { mockDbCredential.verifiableCredential.progressionState } returns states.credentialState1
         every { mockDbCredential2.verifiableCredential.progressionState } returns states.credentialState2
 
-        val result = useCase(mockAuthorizationRequest).assertOk()
+        val result = useCase(mockDcqlQuery).assertOk()
 
         assertEquals(states.expectedIds.toSet(), result.map { it.credentialId }.toSet())
     }

@@ -22,8 +22,8 @@ import ch.admin.foitt.wallet.platform.utils.trackCompletion
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getOrElse
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -104,7 +104,7 @@ internal class EIdGuardianConsentViewModel @AssistedInject constructor(
 
     fun onContinue() = viewModelScope.launch {
         fetchSIdStatus(caseId)
-            .onSuccess { stateResponse ->
+            .onOk { stateResponse ->
                 updateSIdStatusByCaseId(caseId, stateResponse)
 
                 when (stateResponse.toSIdRequestDisplayStatus()) {
@@ -146,10 +146,12 @@ internal class EIdGuardianConsentViewModel @AssistedInject constructor(
                     SIdRequestDisplayStatus.REFUSED,
                     SIdRequestDisplayStatus.CANCELLED,
                     SIdRequestDisplayStatus.CLOSED,
-                    SIdRequestDisplayStatus.UNKNOWN -> navManager.navigateBackToHomeScreen(Destination.EIdIntroScreen::class)
+                    SIdRequestDisplayStatus.UNKNOWN -> navManager.navigateBackToHomeScreen(
+                        Destination.EIdIntroScreen::class
+                    )
                 }
             }
-            .onFailure {
+            .onErr {
                 navManager.navigateBackToHomeScreen(Destination.EIdIntroScreen::class)
             }
     }.trackCompletion(_isRequestStatusLoading)

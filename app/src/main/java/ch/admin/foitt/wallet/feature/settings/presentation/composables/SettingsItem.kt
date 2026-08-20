@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -35,11 +36,13 @@ import ch.admin.foitt.wallet.theme.WalletTheme
 @Composable
 fun WalletListItems.SectionHeadlineSettingsItem(
     title: String
-) = SettingsItem(
-    title = title,
-    titleTextColor = WalletTheme.colorScheme.onSurface,
-    titleIsHeadline = true,
-    backgroundColor = WalletTheme.colorScheme.surfaceContainerLow,
+) = WalletTexts.TitleMediumEmphasized(
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(start = Sizes.s08)
+        .semantics { heading() },
+    text = title,
+    color = WalletTheme.colorScheme.secondary,
 )
 
 @Composable
@@ -258,7 +261,6 @@ fun WalletListItems.LanguageSettingsItem(
 private fun SettingsItem(
     title: String,
     titleTextColor: Color = WalletTheme.colorScheme.onSurface,
-    titleIsHeadline: Boolean = false,
     titleAltText: String = title,
     subtitle: String? = null,
     backgroundColor: Color = WalletTheme.colorScheme.listItemBackground,
@@ -274,15 +276,6 @@ private fun SettingsItem(
                 Modifier
                     .clickable(onClick = onClick)
                     .spaceBarKeyClickable(onClick)
-            }
-        )
-        .then(
-            if (titleIsHeadline) {
-                Modifier.semantics {
-                    heading()
-                }
-            } else {
-                Modifier
             }
         ),
     colors = ListItemDefaults.colors(containerColor = backgroundColor),

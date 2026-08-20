@@ -21,7 +21,7 @@ sealed interface CaptureBase {
     val attributes: Map<String, AttributeType>
 }
 
-private object CaptureBaseSerializer : JsonContentPolymorphicSerializer<CaptureBase>(
+internal object CaptureBaseSerializer : JsonContentPolymorphicSerializer<CaptureBase>(
     CaptureBase::class
 ) {
     override fun selectDeserializer(element: JsonElement): DeserializationStrategy<CaptureBase> {

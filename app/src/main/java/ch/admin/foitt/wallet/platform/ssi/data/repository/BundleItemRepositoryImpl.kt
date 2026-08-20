@@ -4,7 +4,6 @@ import ch.admin.foitt.wallet.platform.database.data.dao.BundleItemEntityDao
 import ch.admin.foitt.wallet.platform.database.data.dao.DaoProvider
 import ch.admin.foitt.wallet.platform.database.domain.model.BundleItemEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
-import ch.admin.foitt.wallet.platform.database.domain.model.PresentableBatchItemCount
 import ch.admin.foitt.wallet.platform.di.IoDispatcher
 import ch.admin.foitt.wallet.platform.ssi.domain.model.BundleItemRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
@@ -28,7 +27,7 @@ class BundleItemRepositoryImpl @Inject constructor(
                 bundleItemDao().deleteByIds(bundleItemIds)
             }
         }.mapError { throwable ->
-            Timber.e(t = throwable, message = "Failed to get all verifiable credentials")
+            Timber.e(t = throwable, message = "Failed to deleted bundle items")
             SsiError.Unexpected(throwable)
         }
 
@@ -42,13 +41,13 @@ class BundleItemRepositoryImpl @Inject constructor(
             SsiError.Unexpected(throwable)
         }
 
-    override suspend fun getCountOfNeverPresented(): Result<List<PresentableBatchItemCount>, BundleItemRepositoryError> =
+    override suspend fun getNeverPresentedCount(credentialId: Long): Result<Int, BundleItemRepositoryError> =
         runSuspendCatching {
             withContext(ioDispatcher) {
-                bundleItemDao().getCountOfNeverPresented()
+                bundleItemDao().getNeverPresentedCountByCredentialId(credentialId)
             }
         }.mapError { throwable ->
-            Timber.e(t = throwable, message = "Failed to get all verifiable credentials")
+            Timber.e(t = throwable, message = "Failed to get never presented bundle item count")
             SsiError.Unexpected(throwable)
         }
 

@@ -30,13 +30,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.platform.composables.AdaptiveBottomButtonBar
+import ch.admin.foitt.wallet.platform.composables.Buttons
+import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
+import ch.admin.foitt.wallet.platform.composables.presentation.HeightReportingLayout
 import ch.admin.foitt.wallet.platform.composables.presentation.clusterLazyListItem
 import ch.admin.foitt.wallet.platform.composables.presentation.horizontalSafeDrawing
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.LazyColumn
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
-import ch.admin.foitt.wallet.platform.credential.presentation.CredentialIssuer
+import ch.admin.foitt.wallet.platform.credential.presentation.IssuerInfo
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.scaffold.presentation.LocalScaffoldPaddings
+import ch.admin.foitt.wallet.theme.FadingVisibility
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTexts
 import ch.admin.foitt.wallet.theme.WalletTheme
@@ -48,6 +53,9 @@ fun UpdateCredentialScreen(viewModel: UpdateCredentialViewModel) {
     UpdateCredentialScreenContent(
         issuerName = uiState.issuerName,
         issuerPainter = uiState.issuerPainter,
+        isRefreshable = uiState.isRefreshable,
+        isLoading = uiState.isLoading,
+        onUpdate = viewModel::onUpdate,
     )
 }
 
@@ -55,47 +63,81 @@ fun UpdateCredentialScreen(viewModel: UpdateCredentialViewModel) {
 private fun UpdateCredentialScreenContent(
     issuerName: String?,
     issuerPainter: Painter?,
+    isRefreshable: Boolean?,
+    isLoading: Boolean,
+    onUpdate: () -> Unit,
 ) = Box(
     modifier = Modifier
         .fillMaxSize()
         .background(color = WalletTheme.colorScheme.surfaceContainerLow)
 ) {
-    val buttonHeight = remember { mutableStateOf(0.dp) }
-
-    WalletLayouts.LazyColumn(
-        modifier = Modifier
-            .widthIn(max = Sizes.contentMaxWidth)
-            .horizontalSafeDrawing()
-            .align(Alignment.TopCenter),
-        state = rememberLazyListState(),
-        contentPadding = PaddingValues(top = Sizes.s02, bottom = Sizes.s04),
-        useTopInsets = false,
+    val reportedBlockHeight = remember { mutableStateOf(0.dp) }
+    FadingVisibility(
+        visible = isRefreshable != null,
     ) {
-        item {
-            WalletLayouts.TopInsetSpacer(
-                shouldScrollUnderTopBar = true,
-                scaffoldPaddings = LocalScaffoldPaddings.current,
-            )
+        Box(
+            Modifier.fillMaxSize()
+        ) {
+            WalletLayouts.LazyColumn(
+                modifier = Modifier
+                    .widthIn(max = Sizes.contentMaxWidth)
+                    .horizontalSafeDrawing()
+                    .align(Alignment.TopCenter),
+                state = rememberLazyListState(),
+                contentPadding = PaddingValues(top = Sizes.s02, bottom = Sizes.s04),
+                useTopInsets = false,
+            ) {
+                item {
+                    WalletLayouts.TopInsetSpacer(
+                        shouldScrollUnderTopBar = true,
+                        scaffoldPaddings = LocalScaffoldPaddings.current,
+                    )
+                }
+
+                item { Spacer(modifier = Modifier.height(Sizes.s02)) }
+
+                updateCredentialInfoListItem(isRefreshable)
+
+                item { Spacer(modifier = Modifier.height(Sizes.s02)) }
+
+                item {
+                    IssuerInfo(
+                        issuer = issuerName,
+                        issuerIcon = issuerPainter,
+                    )
+                }
+
+                item { Spacer(modifier = Modifier.height(reportedBlockHeight.value)) }
+            }
         }
-
-        item { Spacer(modifier = Modifier.height(Sizes.s02)) }
-
-        updateCredentialInfoListItem()
-
-        item { Spacer(modifier = Modifier.height(Sizes.s02)) }
-
-        item {
-            CredentialIssuer(
-                issuer = issuerName,
-                issuerIcon = issuerPainter,
-            )
-        }
-
-        item { Spacer(modifier = Modifier.height(buttonHeight.value)) }
     }
+
+    if (isRefreshable == true) {
+        HeightReportingLayout(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onContentHeightMeasured = { height ->
+                reportedBlockHeight.value = height
+            },
+        ) {
+            AdaptiveBottomButtonBar(
+                buttons = listOf(
+                    {
+                        Buttons.FilledPrimary(
+                            text = stringResource(R.string.tk_displayrefresh_button_primarybutton),
+                            onClick = onUpdate,
+                        )
+                    }
+                )
+            )
+        }
+    }
+    LoadingOverlay(
+        showOverlay = isLoading,
+        color = WalletTheme.colorScheme.onPrimaryFixed
+    )
 }
 
-private fun LazyListScope.updateCredentialInfoListItem() {
+private fun LazyListScope.updateCredentialInfoListItem(isRefreshable: Boolean?) {
     clusterLazyListItem(
         isFirstItem = true,
         isLastItem = true,
@@ -123,12 +165,19 @@ private fun LazyListScope.updateCredentialInfoListItem() {
                 text = stringResource(R.string.tk_displayrefresh_title),
                 textAlign = TextAlign.Start,
             )
+            when (isRefreshable) {
+                true -> WalletTexts.BodyMedium(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = stringResource(R.string.tk_displayrefresh_refreshable_body),
+                    textAlign = TextAlign.Start,
+                )
 
-            WalletTexts.BodyMedium(
-                modifier = Modifier.fillMaxWidth(),
-                text = stringResource(R.string.tk_displayrefresh_body),
-                textAlign = TextAlign.Start,
-            )
+                else -> WalletTexts.BodyMedium(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = stringResource(R.string.tk_displayrefresh_body),
+                    textAlign = TextAlign.Start,
+                )
+            }
         }
     }
 }
@@ -139,7 +188,10 @@ private fun UpdateCredentialScreenPreview() {
     WalletTheme {
         UpdateCredentialScreenContent(
             issuerName = "Issuer01",
-            issuerPainter = painterResource(id = R.drawable.wallet_ic_actor_default)
+            issuerPainter = painterResource(id = R.drawable.wallet_ic_actor_default),
+            isRefreshable = true,
+            isLoading = false,
+            onUpdate = {},
         )
     }
 }

@@ -1,19 +1,18 @@
 package ch.admin.foitt.openid4vc.data.repository
 
+import android.annotation.SuppressLint
 import android.webkit.URLUtil
 import ch.admin.foitt.openid4vc.data.CredentialOfferRepositoryImpl
 import ch.admin.foitt.openid4vc.data.repository.mock.CredentialOfferRepoMocks.mockSoftwareKeyPair
-import ch.admin.foitt.openid4vc.domain.model.CredentialRequestType
 import ch.admin.foitt.openid4vc.domain.model.SigningAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.TokenType
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOfferError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialResponse
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.JWSKeyPair
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.TokenResponse
-import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.IssuerConfigurationResponse
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBindingType
+import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryption
 import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryptionKeyPair
-import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryptionType
 import ch.admin.foitt.openid4vc.domain.repository.CredentialOfferRepository
 import ch.admin.foitt.openid4vc.domain.usecase.jwe.DecryptJWE
 import ch.admin.foitt.openid4vc.util.SafeJsonTestInstance
@@ -36,7 +35,6 @@ import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
-import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
@@ -54,6 +52,9 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import java.net.URI
 import java.net.URL
 import java.security.KeyPair
@@ -106,9 +107,10 @@ class CredentialOfferRepositoryImplTest {
             when {
                 request.isAcceptLanguageIssuerResponse() -> respond(
                     status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.content),
-                    content = createIssuerMetadataJson(ISSUER_ACCEPT_LANGUAGE)
+                    headers = headersOf(HttpHeaders.ContentType, applicationJwt.content),
+                    content = ISSUER_METADATA_JWT_ACCEPT_LANGUAGE
                 )
+
                 else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
             }
         }
@@ -119,7 +121,7 @@ class CredentialOfferRepositoryImplTest {
             issuerEndpoint = url,
         ).assertOk()
 
-        val expected = "$BASE_URL$CREDENTIAL_PATH$ISSUER_ACCEPT_LANGUAGE"
+        val expected = "$BASE_URL$ISSUER_PATH$ISSUER_ACCEPT_LANGUAGE"
 
         assertEquals(expected, result.issuerCredentialInfo.credentialIssuer.toString())
     }
@@ -131,7 +133,7 @@ class CredentialOfferRepositoryImplTest {
                 request.isSignedMetadataIssuerResponse() -> respond(
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, "application/jwt"),
-                    content = ISSUER_METADATA_JWT
+                    content = ISSUER_METADATA_JWT_OID4VCI
                 )
 
                 else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
@@ -142,8 +144,8 @@ class CredentialOfferRepositoryImplTest {
 
         val result = repo.fetchRawAndParsedIssuerCredentialInformation(issuerEndpoint = url).assertOk()
 
-        assertEquals("$BASE_URL$ISSUER_METADATA_PATH", result.issuerCredentialInfo.credentialIssuer.toString())
-        assertEquals(ISSUER_METADATA_JWT, result.rawIssuerCredentialInfo)
+        assertEquals("$BASE_URL$ISSUER_PATH$ISSUER_OID4VCI", result.issuerCredentialInfo.credentialIssuer.toString())
+        assertEquals(ISSUER_METADATA_JWT_OID4VCI, result.rawIssuerCredentialInfo.rawJwt)
     }
 
     @Test
@@ -152,9 +154,10 @@ class CredentialOfferRepositoryImplTest {
             when {
                 request.isMetadataOID4VCIIssuerResponse() -> respond(
                     status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.content),
-                    content = credentialIssuerMetadataOID4VCIResponse
+                    headers = headersOf(HttpHeaders.ContentType, applicationJwt.content),
+                    content = ISSUER_METADATA_JWT_OID4VCI
                 )
+
                 else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
             }
         }
@@ -163,7 +166,7 @@ class CredentialOfferRepositoryImplTest {
 
         val result = repo.fetchRawAndParsedIssuerCredentialInformation(url).assertOk()
 
-        val expected = "$BASE_URL$CREDENTIAL_PATH$ISSUER_OID4VCI"
+        val expected = "$BASE_URL$ISSUER_PATH$ISSUER_OID4VCI"
 
         assertEquals(expected, result.issuerCredentialInfo.credentialIssuer.toString())
     }
@@ -176,9 +179,10 @@ class CredentialOfferRepositoryImplTest {
 
                 request.isMetadataOIDCIssuerResponse() -> respond(
                     status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.content),
-                    content = credentialIssuerMetadataOIDCResponse
+                    headers = headersOf(HttpHeaders.ContentType, applicationJwt.content),
+                    content = ISSUER_METADATA_JWT_OIDC
                 )
+
                 else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
             }
         }
@@ -187,7 +191,7 @@ class CredentialOfferRepositoryImplTest {
 
         val result = repo.fetchRawAndParsedIssuerCredentialInformation(url).assertOk()
 
-        val expected = "$BASE_URL$CREDENTIAL_PATH$ISSUER_OIDC"
+        val expected = "$BASE_URL$ISSUER_PATH$ISSUER_OIDC"
 
         assertEquals(expected, result.issuerCredentialInfo.credentialIssuer.toString())
     }
@@ -213,16 +217,17 @@ class CredentialOfferRepositoryImplTest {
             when {
                 request.isConfigOID4VCIIssuerResponse() -> respond(
                     status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.content),
-                    content = credentialIssuerConfigOID4VCIResponse
+                    headers = headersOf(HttpHeaders.ContentType, applicationJwt.content),
+                    content = CREDENTIAL_ISSUER_CONFIG_OID4VCI_RESPONSE_JWT
                 )
+
                 else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
             }
         }
 
         val url = URI.create("$BASE_URL$ISSUER_OID4VCI").toURL()
 
-        val result = repo.fetchIssuerConfiguration(url).assertOk() as IssuerConfigurationResponse.Plain
+        val result = repo.fetchIssuerConfiguration(url).assertOk()
 
         val expected = "$BASE_URL$ISSUER_PATH$ISSUER_OID4VCI"
 
@@ -237,16 +242,17 @@ class CredentialOfferRepositoryImplTest {
 
                 request.isConfigOIDCIssuerResponse() -> respond(
                     status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.content),
-                    content = credentialIssuerConfigOIDCResponse
+                    headers = headersOf(HttpHeaders.ContentType, applicationJwt.content),
+                    content = CREDENTIAL_ISSUER_CONFIG_OIDC_RESPONSE_JWT
                 )
+
                 else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
             }
         }
 
         val url = URI.create("$BASE_URL$ISSUER_OIDC").toURL()
 
-        val result = repo.fetchIssuerConfiguration(url).assertOk() as IssuerConfigurationResponse.Plain
+        val result = repo.fetchIssuerConfiguration(url).assertOk()
 
         val expected = "$BASE_URL$ISSUER_PATH$ISSUER_OIDC"
 
@@ -270,22 +276,13 @@ class CredentialOfferRepositoryImplTest {
 
     @Test
     fun `Fetching verifiable credential returns verifiable credential result`() = runTest {
-        handler = { request ->
-            when {
-                request.isVerifiableCredentialRequestWithJsonResponse() -> respond(
-                    status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.content),
-                    content = verifiableCredentialResponseJson,
-                )
-                else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
-            }
-        }
+        val payloadEncryption = mockPayloadEncryption(verifiableCredentialResponseJson)
 
         val result = repo.fetchCredential(
             issuerEndpoint = verifiableCredentialUrl,
             tokenResponse = tokenResponse,
-            credentialRequestType = CredentialRequestType.Json("credentialRequest"),
-            payloadEncryptionType = PayloadEncryptionType.None,
+            request = "credentialRequest",
+            payloadEncryption = payloadEncryption,
         ).assertOk()
 
         assertTrue(result is CredentialResponse.VerifiableCredential) { "response is not a verifiable credential" }
@@ -295,151 +292,41 @@ class CredentialOfferRepositoryImplTest {
 
     @Test
     fun `Fetching deferred credential returns deferred credential result`() = runTest {
-        handler = { request ->
-            when {
-                request.isDeferredCredentialRequestWithJsonResponse() -> respond(
-                    status = HttpStatusCode.Accepted,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.content),
-                    content = deferredCredentialResponseJson,
-                )
-                else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
-            }
-        }
+        val payloadEncryption = mockPayloadEncryption(deferredCredentialResponseJson, true)
 
         val result = repo.fetchCredential(
             issuerEndpoint = deferredCredentialUrl,
             tokenResponse = tokenResponse,
-            credentialRequestType = CredentialRequestType.Json("credentialRequest"),
-            payloadEncryptionType = PayloadEncryptionType.None,
+            request = "credentialRequest",
+            payloadEncryption = payloadEncryption,
         ).assertOk()
 
         assertTrue(result is CredentialResponse.DeferredCredential) { "response is not a deferred credential" }
         val transactionId = (result as CredentialResponse.DeferredCredential).transactionId
         assertEquals("trxId", transactionId)
-    }
-
-    @Test
-    fun `Fetching encrypted verifiable credential returns verifiable credential result`() = runTest {
-        val keyPair = mockSoftwareKeyPair
-        val httpResponseString = createCredentialJwe(keyPair)
-
-        handler = { request ->
-            when {
-                request.isVerifiableCredentialRequestWithResponseEncryption() -> respond(
-                    status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, applicationJwt.content),
-                    content = httpResponseString,
-                )
-                else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
-            }
-        }
-
-        coEvery { mockDecryptJWE(httpResponseString, keyPair.private) } returns Ok(verifiableCredentialResponseJson)
-
-        val result = repo.fetchCredential(
-            issuerEndpoint = verifiableCredentialUrl,
-            tokenResponse = tokenResponse,
-            credentialRequestType = CredentialRequestType.Jwt("credentialRequest"),
-            payloadEncryptionType = createResponseEncryption(keyPair)
-        ).assertOk()
-
-        assertTrue(result is CredentialResponse.VerifiableCredential) { "response is not a verifiable credential" }
-        val credential = (result as CredentialResponse.VerifiableCredential).credentials.first().credential
-        assertEquals("credentialJwt", credential)
-    }
-
-    @Test
-    fun `Fetching encrypted deferred credential returns deferred credential result`() = runTest {
-        val keyPair = mockSoftwareKeyPair
-        val httpResponseString = createCredentialJwe(keyPair)
-
-        handler = { request ->
-            when {
-                request.isDeferredCredentialRequestWithResponseEncryption() -> respond(
-                    status = HttpStatusCode.Accepted,
-                    headers = headersOf(HttpHeaders.ContentType, applicationJwt.content),
-                    content = httpResponseString,
-                )
-                else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
-            }
-        }
-
-        coEvery { mockDecryptJWE(httpResponseString, keyPair.private) } returns Ok(deferredCredentialResponseJson)
-
-        val result = repo.fetchCredential(
-            issuerEndpoint = deferredCredentialUrl,
-            tokenResponse = tokenResponse,
-            credentialRequestType = CredentialRequestType.Jwt("credentialRequest"),
-            payloadEncryptionType = createResponseEncryption(keyPair)
-        ).assertOk()
-
-        assertTrue(result is CredentialResponse.DeferredCredential) { "response is not a deferred credential" }
-        val transactionId = (result as CredentialResponse.DeferredCredential).transactionId
-        assertEquals("trxId", transactionId)
-    }
-
-    @Test
-    fun `Receiving an encrypted response without requesting it returns an error`() = runTest {
-        handler = { request ->
-            when {
-                request.isVerifiableCredentialRequestWithJsonResponse() -> respond(
-                    status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, applicationJwt.content),
-                    content = createCredentialJwe(mockSoftwareKeyPair),
-                )
-                else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
-            }
-        }
-
-        val result = repo.fetchCredential(
-            issuerEndpoint = verifiableCredentialUrl,
-            tokenResponse = tokenResponse,
-            credentialRequestType = CredentialRequestType.Json("credentialRequest"),
-            payloadEncryptionType = PayloadEncryptionType.None
-        ).assertErrorType(CredentialOfferError.Unexpected::class)
-
-        assertEquals("Received encrypted response without asking for it", result.cause?.message)
     }
 
     @Test
     fun `Receiving a verifiable credential response with empty credential array returns an error`() = runTest {
-        handler = { request ->
-            when {
-                request.isVerifiableCredentialRequestWithJsonResponse() -> respond(
-                    status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.content),
-                    content = emptyCredentialResponseJson,
-                )
-                else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
-            }
-        }
+        val payloadEncryption = mockPayloadEncryption(emptyCredentialResponseJson)
 
         repo.fetchCredential(
             issuerEndpoint = verifiableCredentialUrl,
             tokenResponse = tokenResponse,
-            credentialRequestType = CredentialRequestType.Json("credentialRequest"),
-            payloadEncryptionType = PayloadEncryptionType.None,
+            request = "credentialRequest",
+            payloadEncryption = payloadEncryption,
         ).assertErrorType(CredentialOfferError.Unexpected::class)
     }
 
     @Test
     fun `Receiving a credential with an invalid json structure returns an error`() = runTest {
-        handler = { request ->
-            when {
-                request.isVerifiableCredentialRequestWithJsonResponse() -> respond(
-                    status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.content),
-                    content = invalidCredentialResponseJson,
-                )
-                else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
-            }
-        }
+        val payloadEncryption = mockPayloadEncryption(invalidCredentialResponseJson)
 
         repo.fetchCredential(
             issuerEndpoint = verifiableCredentialUrl,
             tokenResponse = tokenResponse,
-            credentialRequestType = CredentialRequestType.Json("credentialRequest"),
-            payloadEncryptionType = PayloadEncryptionType.None,
+            request = "credentialRequest",
+            payloadEncryption = payloadEncryption,
         ).assertErrorType(CredentialOfferError.Unexpected::class)
     }
 
@@ -455,22 +342,92 @@ class CredentialOfferRepositoryImplTest {
         repo.fetchCredential(
             issuerEndpoint = errorUrl,
             tokenResponse = tokenResponse,
-            credentialRequestType = CredentialRequestType.Json("credentialRequest"),
-            payloadEncryptionType = PayloadEncryptionType.None,
+            request = "credentialRequest",
+            payloadEncryption = mockk(),
         ).assertErrorType(CredentialOfferError.NetworkInfoError::class)
     }
 
-    private fun createCredentialJwe(keyPair: KeyPair): String {
+    @SuppressLint("CheckResult")
+    @ParameterizedTest(name = "issuerEndpoint={0} -> IETF path={1}")
+    @MethodSource("issuerMetadataIetfPaths")
+    fun `Issuer metadata IETF request path is sanitized for trailing slashes and empty segments`(
+        issuerEndpoint: String,
+        expectedPath: String,
+    ) = runTest {
+        lateinit var requestedPath: String
+        handler = { request ->
+            requestedPath = request.url.encodedPath
+            respond(
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, applicationJwt.content),
+                content = ISSUER_METADATA_JWT_OID4VCI,
+            )
+        }
+
+        repo.fetchRawAndParsedIssuerCredentialInformation(URI.create(issuerEndpoint).toURL())
+
+        assertEquals(expectedPath, requestedPath)
+    }
+
+    @SuppressLint("CheckResult")
+    @ParameterizedTest(name = "issuerEndpoint={0} -> OIDC fallback path={1}")
+    @MethodSource("issuerMetadataOidcFallbackPaths")
+    fun `Issuer metadata OIDC fallback request path is sanitized for trailing slashes and empty segments`(
+        issuerEndpoint: String,
+        expectedPath: String,
+    ) = runTest {
+        lateinit var requestedPath: String
+        var firstCall = true
+        handler = { request ->
+            if (firstCall) {
+                firstCall = false
+                throw IOException("force OIDC fallback")
+            }
+            requestedPath = request.url.encodedPath
+            respond(
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, applicationJwt.content),
+                content = ISSUER_METADATA_JWT_OID4VCI,
+            )
+        }
+
+        repo.fetchRawAndParsedIssuerCredentialInformation(URI.create(issuerEndpoint).toURL())
+
+        assertEquals(expectedPath, requestedPath)
+    }
+
+    private fun mockPayloadEncryption(payload: String, isDeferred: Boolean = false): PayloadEncryption {
+        val keyPair = mockSoftwareKeyPair
+        val httpResponseString = createCredentialJwe(keyPair, payload)
+
+        handler = { request ->
+            val status = when {
+                isDeferred && request.isDeferredCredentialRequestWithResponseEncryption() -> HttpStatusCode.Accepted
+                !isDeferred && request.isVerifiableCredentialRequestWithResponseEncryption() -> HttpStatusCode.OK
+                else -> error("Unhandled request: ${request.url} -> add in mockHttpClient")
+            }
+            respond(
+                status = status,
+                headers = headersOf(HttpHeaders.ContentType, applicationJwt.content),
+                content = httpResponseString,
+            )
+        }
+
+        coEvery { mockDecryptJWE(httpResponseString, keyPair.private) } returns Ok(payload)
+        return createResponseEncryption(keyPair)
+    }
+
+    private fun createCredentialJwe(keyPair: KeyPair, credentialResponse: String): String {
         val jweHeader = JWEHeader.Builder(JWEAlgorithm.ECDH_ES, EncryptionMethod.A256GCM)
             .compressionAlgorithm(CompressionAlgorithm.DEF)
             .build()
-        val jwePayload = Payload(verifiableCredentialResponseJson)
+        val jwePayload = Payload(credentialResponse)
         val jwe = JWEObject(jweHeader, jwePayload)
         jwe.encrypt(ECDHEncrypter(keyPair.public as ECPublicKey))
         return jwe.serialize()
     }
 
-    private fun createResponseEncryption(keyPair: KeyPair): PayloadEncryptionType.Response = PayloadEncryptionType.Response(
+    private fun createResponseEncryption(keyPair: KeyPair): PayloadEncryption = PayloadEncryption(
         requestEncryption = mockk(),
         responseEncryption = mockk(),
         responseEncryptionKeyPair = PayloadEncryptionKeyPair(
@@ -490,9 +447,7 @@ class CredentialOfferRepositoryImplTest {
         this.method == HttpMethod.Get && this.url.encodedPath == "$ISSUER_METADATA_PATH$ISSUER_ACCEPT_LANGUAGE" &&
             this.headers[HttpHeaders.AcceptLanguage] == "de-CH, en, fr-CH, it-CH, rm"
 
-    private fun HttpRequestData.isSignedMetadataIssuerResponse() = mockResponse(
-        expectedPath = ISSUER_METADATA_PATH,
-    )
+    private fun HttpRequestData.isSignedMetadataIssuerResponse() = mockResponse(expectedPath = ISSUER_METADATA_PATH)
 
     private fun HttpRequestData.isMetadataOID4VCIIssuerResponse() = mockResponse(expectedPath = "$ISSUER_METADATA_PATH$ISSUER_OID4VCI")
 
@@ -515,18 +470,6 @@ class CredentialOfferRepositoryImplTest {
     private fun HttpRequestData.isConfigOID4VCIOtherIssuerErrorResponse() = mockResponse(expectedPath = "$ISSUER_CONFIG_PATH/otherIssuer")
 
     private fun HttpRequestData.isConfigOIDCOtherIssuerErrorResponse() = mockResponse(expectedPath = "/otherIssuer$ISSUER_CONFIG_PATH")
-
-    private fun HttpRequestData.isVerifiableCredentialRequestWithJsonResponse() = mockResponse(
-        method = HttpMethod.Post,
-        expectedPath = "$CREDENTIAL_PATH$VERIFIABLE_PATH",
-        contentType = ContentType.Application.Json.content
-    )
-
-    private fun HttpRequestData.isDeferredCredentialRequestWithJsonResponse() = mockResponse(
-        method = HttpMethod.Post,
-        expectedPath = "$CREDENTIAL_PATH$DEFERRED_PATH",
-        contentType = ContentType.Application.Json.content
-    )
 
     private fun HttpRequestData.isVerifiableCredentialRequestWithResponseEncryption() = mockResponse(
         method = HttpMethod.Post,
@@ -563,48 +506,74 @@ class CredentialOfferRepositoryImplTest {
         const val ISSUER_OID4VCI = "/issuerOID4VCI"
         const val ISSUER_OIDC = "/issuerOIDC"
 
-        const val ISSUER_METADATA_JWT =
-            "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJjcmVkZW50aWFsX2VuZHBvaW50IjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9jcmVkZW50aWFsL2VuZHBvaW50IiwiY3JlZGVudGlhbF9pc3N1ZXIiOiJodHRwczovL2V4YW1wbGUuY29tLy53ZWxsLWtub3duL29wZW5pZC1jcmVkZW50aWFsLWlzc3VlciIsImNyZWRlbnRpYWxfY29uZmlndXJhdGlvbnNfc3VwcG9ydGVkIjp7ImlkZW50aWZpZXIiOnsiZm9ybWF0IjoidmMrc2Qtand0IiwidmN0IjoidmN0IiwiY3JlZGVudGlhbF9zaWduaW5nX2FsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVTMjU2Il0sInByb29mX3R5cGVzX3N1cHBvcnRlZCI6eyJqd3QiOnsicHJvb2Zfc2lnbmluZ19hbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFUzI1NiJdfX19fX0.-XLwVl7iiucbJKEMxV7h2yH6CLaTN2eOQn6NF7ZKUSC4_qacAxGqk35SCfovwp1uPUJuwSJ0c1p1Ny-nYBSM2g"
+        @JvmStatic
+        fun issuerMetadataIetfPaths() = listOf(
+            Arguments.of("$BASE_URL$ISSUER_OID4VCI", "$ISSUER_METADATA_PATH$ISSUER_OID4VCI"),
+            Arguments.of("$BASE_URL$ISSUER_OID4VCI/", "$ISSUER_METADATA_PATH$ISSUER_OID4VCI"),
+            Arguments.of("$BASE_URL/", ISSUER_METADATA_PATH),
+            Arguments.of(BASE_URL, ISSUER_METADATA_PATH),
+            // empty path segments are collapsed
+            Arguments.of("$BASE_URL/$ISSUER_OID4VCI", "$ISSUER_METADATA_PATH$ISSUER_OID4VCI"),
+            Arguments.of("$BASE_URL$ISSUER_OID4VCI//", "$ISSUER_METADATA_PATH$ISSUER_OID4VCI"),
+            Arguments.of("$BASE_URL///", ISSUER_METADATA_PATH),
+        )
 
-        fun createIssuerMetadataJson(issuer: String) = """
-            {
-                "credential_endpoint": "https://example.com/credential/endpoint",
-                "credential_issuer": "https://example.com/credential$issuer",
-                "credential_configurations_supported": {
-                    "identifier": {
-                        "format": "vc+sd-jwt",
-                        "vct": "vct",
-                        "credential_signing_alg_values_supported": [
-                            "ES256"
-                        ],
-                        "proof_types_supported": {
-                            "jwt": {
-                                "proof_signing_alg_values_supported": [
-                                    "ES256"
-                                ]
-                            }
-                        }
-                    }
-                }
-            }
-        """.trimIndent()
-        val credentialIssuerMetadataOID4VCIResponse = createIssuerMetadataJson(ISSUER_OID4VCI)
+        @JvmStatic
+        fun issuerMetadataOidcFallbackPaths() = listOf(
+            Arguments.of("$BASE_URL$ISSUER_OID4VCI", "$ISSUER_OID4VCI$ISSUER_METADATA_PATH"),
+            Arguments.of("$BASE_URL$ISSUER_OID4VCI/", "$ISSUER_OID4VCI$ISSUER_METADATA_PATH"),
+            Arguments.of("$BASE_URL/", ISSUER_METADATA_PATH),
+            Arguments.of(BASE_URL, ISSUER_METADATA_PATH),
+            // empty path segments are collapsed
+            Arguments.of("$BASE_URL/$ISSUER_OID4VCI", "$ISSUER_OID4VCI$ISSUER_METADATA_PATH"),
+            Arguments.of("$BASE_URL$ISSUER_OID4VCI//", "$ISSUER_OID4VCI$ISSUER_METADATA_PATH"),
+            Arguments.of("$BASE_URL///", ISSUER_METADATA_PATH),
+        )
 
-        val credentialIssuerMetadataOIDCResponse = createIssuerMetadataJson(ISSUER_OIDC)
+        /*
+        {
+          "credential_issuer": "https://example.com/issuer/issuerAcceptLanguage",
+          [...]
+        }
+         */
+        const val ISSUER_METADATA_JWT_ACCEPT_LANGUAGE =
+            "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJjcmVkZW50aWFsX2VuZHBvaW50IjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9jcmVkZW50aWFsL2VuZHBvaW50IiwiY3JlZGVudGlhbF9pc3N1ZXIiOiJodHRwczovL2V4YW1wbGUuY29tL2lzc3Vlci9pc3N1ZXJBY2NlcHRMYW5ndWFnZSIsIm5vbmNlX2VuZHBvaW50IjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9jcmVkZW50aWFsL25vbmNlIiwiY3JlZGVudGlhbF9yZXF1ZXN0X2VuY3J5cHRpb24iOnsiZW5jX3ZhbHVlc19zdXBwb3J0ZWQiOlsiQTEyOEdDTSIsIkEyNTZHQ00iXSwiemlwX3ZhbHVlc19zdXBwb3J0ZWQiOlsiREVGIl0sImVuY3J5cHRpb25fcmVxdWlyZWQiOmZhbHNlLCJqd2tzIjp7ImtleXMiOlt7Imt0eSI6IkVDIiwiY3J2IjoiUC0yNTYiLCJraWQiOiI3ZmY1YWRmZC04MTFjLTRjY2MtYWI4Yy1hYWYwYmJmZDMzZDIiLCJ4IjoiUS0yMWYxbm41WXNUU0d2aDB3clpGaWxVY0RNTkgxTkhDc3JETnJuZXA1SSIsInkiOiJGU1VfWFVScnFJZDBQVldja3FUSGVGUzlpdlNkcEU1WmduNzF1ajVjYjJ3IiwiYWxnIjoiRUNESC1FUyJ9XX19LCJjcmVkZW50aWFsX3Jlc3BvbnNlX2VuY3J5cHRpb24iOnsiZW5jX3ZhbHVlc19zdXBwb3J0ZWQiOlsiQTEyOEdDTSIsIkEyNTZHQ00iXSwiemlwX3ZhbHVlc19zdXBwb3J0ZWQiOlsiREVGIl0sImVuY3J5cHRpb25fcmVxdWlyZWQiOmZhbHNlLCJhbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFQ0RILUVTIl19LCJjcmVkZW50aWFsX2NvbmZpZ3VyYXRpb25zX3N1cHBvcnRlZCI6eyJpZGVudGlmaWVyIjp7ImZvcm1hdCI6InZjK3NkLWp3dCIsInZjdCI6InZjdCIsImNyZWRlbnRpYWxfc2lnbmluZ19hbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFUzI1NiJdLCJwcm9vZl90eXBlc19zdXBwb3J0ZWQiOnsiand0Ijp7InByb29mX3NpZ25pbmdfYWxnX3ZhbHVlc19zdXBwb3J0ZWQiOlsiRVMyNTYiXX19fX19.TfX4OvJBIlDJCIuQnEO0imx62QEwQ_McetarCl8J-eesbMk9ogtSWPZ3yWbB_2Pp6DGnSVtZU4valDch0yxYKg"
 
-        val credentialIssuerConfigOID4VCIResponse = """
-            {
-                "issuer": "https://example.com/issuer$ISSUER_OID4VCI",
-                "token_endpoint": "https://example.com/token/endpoint"
-            }
-        """.trimIndent()
+        /*
+        {
+          "credential_issuer": "https://example.com/issuer/issuerOID4VCI",
+          [...]
+        }
+         */
+        const val ISSUER_METADATA_JWT_OID4VCI =
+            "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJjcmVkZW50aWFsX2VuZHBvaW50IjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9jcmVkZW50aWFsL2VuZHBvaW50IiwiY3JlZGVudGlhbF9pc3N1ZXIiOiJodHRwczovL2V4YW1wbGUuY29tL2lzc3Vlci9pc3N1ZXJPSUQ0VkNJIiwibm9uY2VfZW5kcG9pbnQiOiJodHRwczovL2V4YW1wbGUuY29tL2NyZWRlbnRpYWwvbm9uY2UiLCJjcmVkZW50aWFsX3JlcXVlc3RfZW5jcnlwdGlvbiI6eyJlbmNfdmFsdWVzX3N1cHBvcnRlZCI6WyJBMTI4R0NNIiwiQTI1NkdDTSJdLCJ6aXBfdmFsdWVzX3N1cHBvcnRlZCI6WyJERUYiXSwiZW5jcnlwdGlvbl9yZXF1aXJlZCI6ZmFsc2UsImp3a3MiOnsia2V5cyI6W3sia3R5IjoiRUMiLCJjcnYiOiJQLTI1NiIsImtpZCI6IjdmZjVhZGZkLTgxMWMtNGNjYy1hYjhjLWFhZjBiYmZkMzNkMiIsIngiOiJRLTIxZjFubjVZc1RTR3ZoMHdyWkZpbFVjRE1OSDFOSENzckROcm5lcDVJIiwieSI6IkZTVV9YVVJycUlkMFBWV2NrcVRIZUZTOWl2U2RwRTVaZ243MXVqNWNiMnciLCJhbGciOiJFQ0RILUVTIn1dfX0sImNyZWRlbnRpYWxfcmVzcG9uc2VfZW5jcnlwdGlvbiI6eyJlbmNfdmFsdWVzX3N1cHBvcnRlZCI6WyJBMTI4R0NNIiwiQTI1NkdDTSJdLCJ6aXBfdmFsdWVzX3N1cHBvcnRlZCI6WyJERUYiXSwiZW5jcnlwdGlvbl9yZXF1aXJlZCI6ZmFsc2UsImFsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVDREgtRVMiXX0sImNyZWRlbnRpYWxfY29uZmlndXJhdGlvbnNfc3VwcG9ydGVkIjp7ImlkZW50aWZpZXIiOnsiZm9ybWF0IjoidmMrc2Qtand0IiwidmN0IjoidmN0IiwiY3JlZGVudGlhbF9zaWduaW5nX2FsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVTMjU2Il0sInByb29mX3R5cGVzX3N1cHBvcnRlZCI6eyJqd3QiOnsicHJvb2Zfc2lnbmluZ19hbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFUzI1NiJdfX19fX0.6Pexm3Om1zMzDx76ejHbcNSP1ZDrLnjwM0X0TfP1OL8wjb-rydleWBVXXYisiYL7VesKQvuc8r8-ZPZXyGNnZw"
 
-        val credentialIssuerConfigOIDCResponse = """
-            {
-                "issuer": "https://example.com/issuer$ISSUER_OIDC",
-                "token_endpoint": "https://example.com/token/endpoint"
-            }
-        """.trimIndent()
+        /*
+        {
+          "credential_issuer": "https://example.com/issuer/issuerOIDC",
+          [...]
+        }
+         */
+        const val ISSUER_METADATA_JWT_OIDC =
+            "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJjcmVkZW50aWFsX2VuZHBvaW50IjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9jcmVkZW50aWFsL2VuZHBvaW50IiwiY3JlZGVudGlhbF9pc3N1ZXIiOiJodHRwczovL2V4YW1wbGUuY29tL2lzc3Vlci9pc3N1ZXJPSURDIiwibm9uY2VfZW5kcG9pbnQiOiJodHRwczovL2V4YW1wbGUuY29tL2NyZWRlbnRpYWwvbm9uY2UiLCJjcmVkZW50aWFsX3JlcXVlc3RfZW5jcnlwdGlvbiI6eyJlbmNfdmFsdWVzX3N1cHBvcnRlZCI6WyJBMTI4R0NNIiwiQTI1NkdDTSJdLCJ6aXBfdmFsdWVzX3N1cHBvcnRlZCI6WyJERUYiXSwiZW5jcnlwdGlvbl9yZXF1aXJlZCI6ZmFsc2UsImp3a3MiOnsia2V5cyI6W3sia3R5IjoiRUMiLCJjcnYiOiJQLTI1NiIsImtpZCI6IjdmZjVhZGZkLTgxMWMtNGNjYy1hYjhjLWFhZjBiYmZkMzNkMiIsIngiOiJRLTIxZjFubjVZc1RTR3ZoMHdyWkZpbFVjRE1OSDFOSENzckROcm5lcDVJIiwieSI6IkZTVV9YVVJycUlkMFBWV2NrcVRIZUZTOWl2U2RwRTVaZ243MXVqNWNiMnciLCJhbGciOiJFQ0RILUVTIn1dfX0sImNyZWRlbnRpYWxfcmVzcG9uc2VfZW5jcnlwdGlvbiI6eyJlbmNfdmFsdWVzX3N1cHBvcnRlZCI6WyJBMTI4R0NNIiwiQTI1NkdDTSJdLCJ6aXBfdmFsdWVzX3N1cHBvcnRlZCI6WyJERUYiXSwiZW5jcnlwdGlvbl9yZXF1aXJlZCI6ZmFsc2UsImFsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVDREgtRVMiXX0sImNyZWRlbnRpYWxfY29uZmlndXJhdGlvbnNfc3VwcG9ydGVkIjp7ImlkZW50aWZpZXIiOnsiZm9ybWF0IjoidmMrc2Qtand0IiwidmN0IjoidmN0IiwiY3JlZGVudGlhbF9zaWduaW5nX2FsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkVTMjU2Il0sInByb29mX3R5cGVzX3N1cHBvcnRlZCI6eyJqd3QiOnsicHJvb2Zfc2lnbmluZ19hbGdfdmFsdWVzX3N1cHBvcnRlZCI6WyJFUzI1NiJdfX19fX0.1uuuUmbHscsyr538BJ0n8p79JyRPWbH3r_dzjWCIHsRd9hvUXg7IHYQ1O_hxT5wE3udcNAkKyiO5z7u8iK7mDg"
+
+        /*
+        {
+            "issuer": "https://example.com/issuer$ISSUER_OID4VCI",
+            "token_endpoint": "https://example.com/token/endpoint"
+        }
+         */
+        const val CREDENTIAL_ISSUER_CONFIG_OID4VCI_RESPONSE_JWT =
+            "eyJhbGciOiJFUzI1NiJ9.eyJpc3N1ZXIiOiJodHRwczovL2V4YW1wbGUuY29tL2lzc3Vlci9pc3N1ZXJPSUQ0VkNJIiwidG9rZW5fZW5kcG9pbnQiOiJodHRwczovL2V4YW1wbGUuY29tL3Rva2VuL2VuZHBvaW50In0.EKeBKSVuiTlTRbLU-cd2ZJw6GMHxoTDEhVuxPCz4Aikj4dMjh0Kl7FHINpnNN10kS5LFqjCjB8HEJ-HYvPD3vA"
+
+        /*
+        {
+            "issuer": "https://example.com/issuer$ISSUER_OIDC",
+            "token_endpoint": "https://example.com/token/endpoint"
+        }
+         */
+        const val CREDENTIAL_ISSUER_CONFIG_OIDC_RESPONSE_JWT =
+            "eyJhbGciOiJFUzI1NiJ9.eyJpc3N1ZXIiOiJodHRwczovL2V4YW1wbGUuY29tL2lzc3Vlci9pc3N1ZXJPSURDIiwidG9rZW5fZW5kcG9pbnQiOiJodHRwczovL2V4YW1wbGUuY29tL3Rva2VuL2VuZHBvaW50In0.nc0THTowIYSYBKYZJPScPO4_pJp1RNQ4luhnd8lyTNUI-6eNYI1dsuLYd_H_t6LsfkaFWf2vlxzexBlbzyTWBA"
 
         const val BASE_URL = "https://example.com"
         const val ISSUER_PATH = "/issuer"

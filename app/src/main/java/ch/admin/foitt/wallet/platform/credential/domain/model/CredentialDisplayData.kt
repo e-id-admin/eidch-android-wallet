@@ -14,6 +14,7 @@ data class CredentialDisplayData(
     val backgroundColor: String?,
     val progressionState: VerifiableProgressionState,
     val actorEnvironment: ActorEnvironment,
+    val createdAt: Long,
 ) {
     constructor(
         credentialId: Long,
@@ -21,6 +22,7 @@ data class CredentialDisplayData(
         credentialDisplay: CredentialDisplay,
         progressionState: VerifiableProgressionState,
         actorEnvironment: ActorEnvironment,
+        createdAt: Long,
     ) : this(
         credentialId = credentialId,
         status = status,
@@ -30,5 +32,6 @@ data class CredentialDisplayData(
         backgroundColor = credentialDisplay.backgroundColor,
         progressionState = progressionState,
         actorEnvironment = actorEnvironment,
+        createdAt = createdAt,
     )
 }

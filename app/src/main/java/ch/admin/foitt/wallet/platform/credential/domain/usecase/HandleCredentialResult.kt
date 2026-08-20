@@ -5,13 +5,16 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.AnyCredent
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.RawAndParsedIssuerCredentialInfo
 import ch.admin.foitt.wallet.platform.credential.domain.model.FetchCredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.model.FetchCredentialResult
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.IdentityV2TrustStatement
 import com.github.michaelbull.result.Result
 import java.net.URL
 
 interface HandleCredentialResult {
     suspend operator fun invoke(
+        credentialId: Long = 0L,
         issuerUrl: URL,
         anyVerifiedCredential: AnyVerifiedCredential,
+        identityTrustStatement: IdentityV2TrustStatement?,
         rawAndParsedCredentialInfo: RawAndParsedIssuerCredentialInfo,
         credentialConfig: AnyCredentialConfiguration,
     ): Result<FetchCredentialResult, FetchCredentialError>

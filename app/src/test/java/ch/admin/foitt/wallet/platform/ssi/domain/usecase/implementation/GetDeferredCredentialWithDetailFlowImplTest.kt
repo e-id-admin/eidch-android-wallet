@@ -94,6 +94,7 @@ class GetDeferredCredentialWithDetailFlowImplTest {
     }
 
     private fun setupDefaultMocks() {
+        coEvery { mockAppContext.resources.configuration.isNightModeActive } returns false
         coEvery { mockDeferredCredentialWithDisplaysRepository.getByIdFlow(any()) } returns mockCredentialFlow
         coEvery { mockGetLocalizedAndThemedDisplay(any(), any()) } returns credentialDisplay
     }

@@ -1,6 +1,6 @@
 package ch.admin.foitt.wallet.platform.holderBinding.di
 
-import ch.admin.foitt.openid4vc.domain.usecase.GenerateDPoPKeyPair
+import ch.admin.foitt.wallet.platform.holderBinding.domain.usecase.GenerateDPoPKeyPair
 import ch.admin.foitt.wallet.platform.holderBinding.domain.usecase.GenerateProofKeyPairs
 import ch.admin.foitt.wallet.platform.holderBinding.domain.usecase.implementation.GenerateDPoPKeyPairImpl
 import ch.admin.foitt.wallet.platform.holderBinding.domain.usecase.implementation.GenerateProofKeyPairsImpl

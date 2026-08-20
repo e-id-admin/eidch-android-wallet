@@ -1,20 +1,26 @@
 package ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation
 
+import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
 import ch.admin.foitt.wallet.platform.actorEnvironment.domain.model.ActorEnvironment
 import ch.admin.foitt.wallet.platform.actorEnvironment.domain.usecase.GetActorEnvironment
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchTrustForIssuance
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.mock.MockNonComplianceData.nonComplianceData
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.IdentityV1TrustStatement
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustCheckResult
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.IdentityV2TrustStatement
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustRegistryError
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatementActor
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.FetchVcSchemaTrustStatus
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.CheckActorCompliance
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.ProcessIdentityV1TrustStatement
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.ProcessProtectedIssuanceAuthorizationTrustStatement
+import ch.admin.foitt.wallet.util.assertErrorType
+import ch.admin.foitt.wallet.util.assertOk
+import ch.admin.foitt.wallet.util.assertOkNullable
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.coVerifyOrder
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
@@ -22,12 +28,13 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
-import java.util.stream.Stream
+import org.junit.jupiter.api.assertNull
 
 class FetchTrustForIssuanceImplTest {
+    @MockK
+    private lateinit var mockProcessProtectedIssuanceAuthorizationTrustStatement:
+        ProcessProtectedIssuanceAuthorizationTrustStatement
+
     @MockK
     private lateinit var mockGetActorEnvironment: GetActorEnvironment
 
@@ -35,21 +42,28 @@ class FetchTrustForIssuanceImplTest {
     private lateinit var mockProcessIdentityV1TrustStatement: ProcessIdentityV1TrustStatement
 
     @MockK
-    private lateinit var mockFetchVcSchemaTrustStatus: FetchVcSchemaTrustStatus
+    private lateinit var mockCheckActorCompliance: CheckActorCompliance
 
     @MockK
-    private lateinit var mockIdentityTrustStatement: IdentityV1TrustStatement
+    private lateinit var mockIdentityV1TrustStatement: IdentityV1TrustStatement
 
-    private lateinit var useCase: FetchTrustForIssuanceImpl
+    @MockK
+    private lateinit var mockIdentityV2TrustStatement: IdentityV2TrustStatement
+
+    @MockK
+    private lateinit var mockProtectedIssuanceAuthorizationTrustStatementJwt: Jwt
+
+    private lateinit var useCase: FetchTrustForIssuance
 
     @BeforeEach
     fun setUp() {
         MockKAnnotations.init(this)
 
         useCase = FetchTrustForIssuanceImpl(
+            processProtectedIssuanceAuthorizationTrustStatement = mockProcessProtectedIssuanceAuthorizationTrustStatement,
             getActorEnvironment = mockGetActorEnvironment,
             processIdentityV1TrustStatement = mockProcessIdentityV1TrustStatement,
-            fetchVcSchemaTrustStatus = mockFetchVcSchemaTrustStatus,
+            checkActorCompliance = mockCheckActorCompliance,
         )
 
         setupDefaultMocks()
@@ -61,145 +75,142 @@ class FetchTrustForIssuanceImplTest {
     }
 
     @Test
-    fun `FetchTrustForIssuance runs specific things`() = runTest {
+    fun `FetchTrustForIssuance for a V2 trust statement runs specific things`() = runTest {
         val result = useCase(
+            identityTrustStatement = mockIdentityV2TrustStatement,
+            protectedIssuanceAuthorizationTrustStatement = mockProtectedIssuanceAuthorizationTrustStatementJwt,
             issuerDid = ISSUER_DID,
             vcSchemaId = VC_SCHEMA_ID,
-        )
+        ).assertOk()
 
-        assertEquals(mockIdentityTrustStatement, result.actorTrustStatement)
-
-        coVerifyOrder {
-            mockGetActorEnvironment(
-                credentialIssuer = ISSUER_DID,
-            )
-            mockProcessIdentityV1TrustStatement(ISSUER_DID)
-            mockFetchVcSchemaTrustStatus(
-                trustStatementActor = TrustStatementActor.ISSUER,
-                actorDid = ISSUER_DID,
-                vcSchemaId = VC_SCHEMA_ID,
-            )
-        }
-    }
-
-    @Test
-    fun `FetchTrustForIssuance uses identityV1 trust statement if feature flag is set`() = runTest {
-        useCase(
-            issuerDid = ISSUER_DID,
-            vcSchemaId = VC_SCHEMA_ID,
-        )
+        assertEquals(mockIdentityV2TrustStatement, result?.identityTrustStatement)
+        assertEquals(VcSchemaTrustStatus.TRUSTED, result?.vcSchemaTrustStatus)
+        assertEquals(nonComplianceData, result?.nonComplianceData)
 
         coVerify(exactly = 1) {
-            mockProcessIdentityV1TrustStatement(ISSUER_DID)
-            mockFetchVcSchemaTrustStatus(
-                trustStatementActor = TrustStatementActor.ISSUER,
+            mockProcessProtectedIssuanceAuthorizationTrustStatement(
+                protectedIssuanceAuthorizationTrustStatement = mockProtectedIssuanceAuthorizationTrustStatementJwt,
                 actorDid = ISSUER_DID,
-                vcSchemaId = VC_SCHEMA_ID,
+                vct = VC_SCHEMA_ID,
             )
         }
-    }
-
-    @ParameterizedTest
-    @MethodSource("fetchTrustInputs")
-    fun `FetchTrustForIssuance fetches identityV1 trust statement only for swiyu ecosystem issuers`(
-        actorEnvironment: ActorEnvironment,
-    ) = runTest {
-        coEvery { mockGetActorEnvironment(ISSUER_DID) } returns actorEnvironment
-
-        useCase(
-            issuerDid = ISSUER_DID,
-            vcSchemaId = VC_SCHEMA_ID,
-        )
-
-        coVerify(exactly = 1) {
-            mockProcessIdentityV1TrustStatement(ISSUER_DID)
-            mockFetchVcSchemaTrustStatus(
-                trustStatementActor = TrustStatementActor.ISSUER,
-                actorDid = ISSUER_DID,
-                vcSchemaId = VC_SCHEMA_ID,
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @MethodSource("dontFetchTrustInputs")
-    fun `FetchTrustForIssuance does not fetch identityV1 trust statement for not swiyu ecosystem issuers`(
-        actorEnvironment: ActorEnvironment,
-    ) = runTest {
-        coEvery { mockGetActorEnvironment(ISSUER_DID) } returns actorEnvironment
-
-        useCase(
-            issuerDid = ISSUER_DID,
-            vcSchemaId = VC_SCHEMA_ID,
-        )
-
         coVerify(exactly = 0) {
-            mockProcessIdentityV1TrustStatement(ISSUER_DID)
+            mockProcessIdentityV1TrustStatement(any())
+        }
+        coVerify(exactly = 1) {
+            mockCheckActorCompliance(actorDid = ISSUER_DID)
         }
     }
 
     @Test
-    fun `FetchTrustForIssuance fetches identity and issuance trust independently`() = runTest {
-        setupDefaultMocks()
-
-        val exception = IllegalStateException("fetching trust failed")
+    fun `FetchTrustForIssuance maps errors from processing piaTS`() = runTest {
+        val exception = IllegalStateException("trust error")
         coEvery {
-            mockProcessIdentityV1TrustStatement(ISSUER_DID)
+            mockProcessProtectedIssuanceAuthorizationTrustStatement(any(), any(), any())
         } returns Err(TrustRegistryError.Unexpected(exception))
 
-        coEvery {
-            mockFetchVcSchemaTrustStatus(TrustStatementActor.ISSUER, ISSUER_DID, VC_SCHEMA_ID)
-        } returns Ok(VcSchemaTrustStatus.TRUSTED)
-
-        val trustResult = useCase(
+        useCase(
+            identityTrustStatement = mockIdentityV2TrustStatement,
+            protectedIssuanceAuthorizationTrustStatement = mockProtectedIssuanceAuthorizationTrustStatementJwt,
             issuerDid = ISSUER_DID,
             vcSchemaId = VC_SCHEMA_ID,
-        )
+        ).assertErrorType(CredentialError.UnauthorizedIssuance::class)
+    }
 
-        val expectedTrustCheckResult = TrustCheckResult(
-            actorEnvironment = ActorEnvironment.PRODUCTION,
-            actorTrustStatement = null,
-            vcSchemaTrustStatus = VcSchemaTrustStatus.TRUSTED,
-        )
+    @Test
+    fun `FetchTrustForIssuance for a V1 trust statement runs specific things`() = runTest {
+        val result = useCase(
+            identityTrustStatement = null,
+            protectedIssuanceAuthorizationTrustStatement = null,
+            issuerDid = ISSUER_DID,
+            vcSchemaId = VC_SCHEMA_ID,
+        ).assertOk()
 
-        assertEquals(expectedTrustCheckResult, trustResult)
+        assertEquals(mockIdentityV1TrustStatement, result?.identityTrustStatement)
+        assertEquals(VcSchemaTrustStatus.TRUSTED, result?.vcSchemaTrustStatus)
+        assertEquals(nonComplianceData, result?.nonComplianceData)
 
-        coVerifyOrder {
+        coVerify(exactly = 1) {
             mockProcessIdentityV1TrustStatement(ISSUER_DID)
-            mockFetchVcSchemaTrustStatus(any(), any(), any())
+            mockProcessProtectedIssuanceAuthorizationTrustStatement(null, ISSUER_DID, VC_SCHEMA_ID)
+            mockCheckActorCompliance(actorDid = ISSUER_DID)
+        }
+    }
+
+    @Test
+    fun `FetchTrustForIssuance passes along the null result`() = runTest {
+        coEvery { mockProcessIdentityV1TrustStatement(any()) } returns Ok(null)
+
+        val result = useCase(
+            identityTrustStatement = null,
+            protectedIssuanceAuthorizationTrustStatement = mockProtectedIssuanceAuthorizationTrustStatementJwt,
+            issuerDid = ISSUER_DID,
+            vcSchemaId = VC_SCHEMA_ID,
+        ).assertOk()
+
+        assertNull(result?.identityTrustStatement)
+    }
+
+    @Test
+    fun `FetchTrustForIssuance maps errors from identity v1 processing and returns unverified issuer`() = runTest {
+        val exception = IllegalStateException("trust error")
+        coEvery {
+            mockProcessIdentityV1TrustStatement(any())
+        } returns Err(TrustRegistryError.Unexpected(exception))
+
+        useCase(
+            identityTrustStatement = null,
+            protectedIssuanceAuthorizationTrustStatement = mockProtectedIssuanceAuthorizationTrustStatementJwt,
+            issuerDid = ISSUER_DID,
+            vcSchemaId = VC_SCHEMA_ID,
+        ).assertErrorType(CredentialError.UnverifiedIssuer::class)
+    }
+
+    @Test
+    fun `FetchTrustForIssuance where the actor is external returns null`() = runTest {
+        coEvery { mockGetActorEnvironment(any()) } returns ActorEnvironment.EXTERNAL
+
+        val result = useCase(
+            identityTrustStatement = null,
+            protectedIssuanceAuthorizationTrustStatement = null,
+            issuerDid = ISSUER_DID,
+            vcSchemaId = VC_SCHEMA_ID,
+        ).assertOkNullable()
+
+        assertNull(result)
+        coVerify(exactly = 0) {
+            mockCheckActorCompliance(any())
         }
     }
 
     private fun setupDefaultMocks() {
-        coEvery { mockGetActorEnvironment(ISSUER_DID) } returns ActorEnvironment.PRODUCTION
-
+        coEvery {
+            mockProcessProtectedIssuanceAuthorizationTrustStatement(
+                protectedIssuanceAuthorizationTrustStatement = mockProtectedIssuanceAuthorizationTrustStatementJwt,
+                actorDid = ISSUER_DID,
+                vct = VC_SCHEMA_ID,
+            )
+        } returns Ok(VcSchemaTrustStatus.TRUSTED)
+        coEvery {
+            mockProcessProtectedIssuanceAuthorizationTrustStatement(
+                protectedIssuanceAuthorizationTrustStatement = null,
+                actorDid = ISSUER_DID,
+                vct = VC_SCHEMA_ID,
+            )
+        } returns Ok(VcSchemaTrustStatus.TRUSTED)
+        coEvery {
+            mockGetActorEnvironment(ISSUER_DID)
+        } returns ActorEnvironment.PRODUCTION
         coEvery {
             mockProcessIdentityV1TrustStatement(ISSUER_DID)
-        } returns Ok(mockIdentityTrustStatement)
-
+        } returns Ok(mockIdentityV1TrustStatement)
         coEvery {
-            mockFetchVcSchemaTrustStatus(TrustStatementActor.ISSUER, ISSUER_DID, VC_SCHEMA_ID)
-        } returns Ok(VcSchemaTrustStatus.TRUSTED)
+            mockCheckActorCompliance(ISSUER_DID)
+        } returns nonComplianceData
     }
 
     private companion object {
-        @JvmStatic
-        fun fetchTrustInputs(): Stream<Arguments> = Stream.of(
-            Arguments.of(ActorEnvironment.PRODUCTION),
-            Arguments.of(ActorEnvironment.BETA),
-        )
-
-        @JvmStatic
-        fun dontFetchTrustInputs(): Stream<Arguments> = Stream.of(
-            Arguments.of(ActorEnvironment.EXTERNAL),
-        )
-
         const val ISSUER_DID = "issuer did"
         const val VC_SCHEMA_ID = "vcSchemaId"
-
-        val orgNames = mapOf(
-            "en" to "issuer name en",
-            "de" to "issuer name de",
-        )
     }
 }

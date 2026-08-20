@@ -16,7 +16,6 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
-import kotlin.system.exitProcess
 
 @HiltViewModel(assistedFactory = AppVersionBlockedViewModel.Factory::class)
 class AppVersionBlockedViewModel @AssistedInject constructor(
@@ -60,8 +59,8 @@ class AppVersionBlockedViewModel @AssistedInject constructor(
         }
     }
 
-    fun onClose() {
-        exitProcess(0)
+    fun onSupport() {
+        appContext.openLink(R.string.tk_error_generic_helpLink_value)
     }
 
     fun onSettings() {

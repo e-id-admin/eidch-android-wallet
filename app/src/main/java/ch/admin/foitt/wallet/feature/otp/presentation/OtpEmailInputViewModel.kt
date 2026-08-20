@@ -22,8 +22,8 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.openLink
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
@@ -137,19 +137,22 @@ class OtpEmailInputViewModel @Inject constructor(
 
     private suspend fun requestOtp() {
         requestOtp(otpRequest = OtpRequest(textFieldValue.value.text))
-            .onFailure { error ->
+            .onErr { error ->
                 when (error) {
                     OtpError.InvalidField -> _uiState.value = OtpEmailInputUiState.ForbiddenEmail
                     OtpError.NetworkError -> _uiState.value = OtpEmailInputUiState.NetworkError
                     OtpError.ServiceDeactivated -> _uiState.value = OtpEmailInputUiState.Unavailable
-                    OtpError.InvalidClientAttestation -> _uiState.value = OtpEmailInputUiState.NotSupported
+                    OtpError.InvalidClientAttestation ->
+                        _uiState.value =
+                            OtpEmailInputUiState.NotSupported
+
                     OtpError.InvalidFormat,
                     OtpError.OtpExpired,
                     OtpError.TooManyRequests,
                     is OtpError.Unexpected -> _uiState.value = OtpEmailInputUiState.Unexpected
                 }
             }
-            .onSuccess {
+            .onOk {
                 _uiState.value = OtpEmailInputUiState.Initial
                 otpEmailRepository.setEmail(textFieldValue.value.text)
                 navManager.navigateTo(Destination.OtpCodeInputScreen)

@@ -4,6 +4,7 @@ import ch.admin.foitt.openid4vc.domain.model.claimsPathPointer.ClaimsPathPointer
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationRequest
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseConfig
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseResponse
 import ch.admin.foitt.openid4vc.domain.usecase.GetAuthorizationResponseConfig
 import ch.admin.foitt.openid4vc.domain.usecase.SubmitAnyCredentialNetworkPresentation
 import ch.admin.foitt.wallet.feature.presentationRequest.domain.model.PresentationRequestError
@@ -18,7 +19,6 @@ import ch.admin.foitt.wallet.platform.database.domain.model.BundleItemWithKeyBin
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialWithBundleItemsWithKeyBinding
-import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import ch.admin.foitt.wallet.platform.proximity.domain.model.domain.repository.ProximityRepository
 import ch.admin.foitt.wallet.platform.proximity.domain.usecase.GetProximityRepositoryForScope
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
@@ -27,6 +27,7 @@ import ch.admin.foitt.wallet.platform.ssi.domain.repository.VerifiableCredential
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.VerifiableCredentialWithBundleItemsWithKeyBindingRepository
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
+import ch.admin.foitt.wallet.util.assertOkNullable
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
@@ -40,6 +41,8 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
+import uniffi.heidi_dcql_rust.DcqlQuery
 import java.net.URL
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestError as OpenIdPresentationRequestError
 
@@ -50,9 +53,6 @@ class SubmitPresentationImplTest {
 
     @MockK
     private lateinit var mockGetAuthorizationResponseConfig: GetAuthorizationResponseConfig
-
-    @MockK
-    private lateinit var mockEnvironmentSetupRepository: EnvironmentSetupRepository
 
     @MockK
     private lateinit var mockVerifiableCredentialWithBundleItemsWithKeyBindingRepository:
@@ -74,7 +74,13 @@ class SubmitPresentationImplTest {
     private lateinit var mockAuthorizationRequest: AuthorizationRequest
 
     @MockK
+    private lateinit var mockDcqlQuery: DcqlQuery
+
+    @MockK
     private lateinit var mockAuthorizationResponseConfig: AuthorizationResponseConfig
+
+    @MockK
+    private lateinit var mockAuthorizationResponseResponse: AuthorizationResponseResponse
 
     private lateinit var presentationRequestWithRawNetwork: PresentationRequestWithRaw
     private lateinit var presentationRequestWithRawProximity: PresentationRequestWithRaw
@@ -89,22 +95,24 @@ class SubmitPresentationImplTest {
             mockGetProximityRepositoryForScope()
         } returns mockProximityRepository
 
+        every { mockAuthorizationRequest.dcqlQuery } returns mockDcqlQuery
+
         presentationRequestWithRawNetwork = PresentationRequestWithRaw(
             authorizationRequest = mockAuthorizationRequest,
             rawPresentationRequest = RAW_PRESENTATION_REQUEST,
             verificationProcessType = VerificationProcessType.NETWORK,
+            dcqlQuery = mockDcqlQuery,
         )
 
         presentationRequestWithRawProximity = PresentationRequestWithRaw(
             authorizationRequest = mockAuthorizationRequest,
             rawPresentationRequest = RAW_PRESENTATION_REQUEST,
             verificationProcessType = VerificationProcessType.PROXIMITY,
+            dcqlQuery = mockDcqlQuery,
         )
 
         submitPresentationUseCase = SubmitPresentationImpl(
-            environmentSetupRepository = mockEnvironmentSetupRepository,
-            verifiableCredentialWithBundleItemsWithKeyBindingRepository =
-            mockVerifiableCredentialWithBundleItemsWithKeyBindingRepository,
+            verifiableCredentialWithBundleItemsWithKeyBindingRepository = mockVerifiableCredentialWithBundleItemsWithKeyBindingRepository,
             verifiableCredentialRepository = mockVerifiableCredentialRepository,
             bundleItemRepository = mockBundleItemRepository,
             submitAnyCredentialNetworkPresentation = mockSubmitAnyCredentialNetworkPresentation,
@@ -112,7 +120,6 @@ class SubmitPresentationImplTest {
             getProximityRepositoryForScope = mockGetProximityRepositoryForScope,
         )
 
-        every { mockEnvironmentSetupRepository.payloadEncryptionEnabled } returns true
         coEvery {
             mockVerifiableCredentialWithBundleItemsWithKeyBindingRepository.getByCredentialId(CREDENTIAL_ID)
         } returns Ok(createCredentialWithBundleItems())
@@ -120,10 +127,8 @@ class SubmitPresentationImplTest {
         coEvery {
             mockGetAuthorizationResponseConfig(
                 anyCredential = any(),
-                presentationPaths = presentationPaths,
                 authorizationRequest = mockAuthorizationRequest,
-                usePayloadEncryption = true,
-                dcqlQueryId = any(),
+                presentationContext = any(),
             )
         } returns Ok(mockAuthorizationResponseConfig)
 
@@ -132,7 +137,7 @@ class SubmitPresentationImplTest {
                 authorizationRequest = mockAuthorizationRequest,
                 authorizationResponseConfig = mockAuthorizationResponseConfig,
             )
-        } returns Ok(Unit)
+        } returns Ok(mockAuthorizationResponseResponse)
 
         coEvery { mockProximityRepository.submit(mockAuthorizationResponseConfig) } returns Ok(Unit)
 
@@ -154,15 +159,17 @@ class SubmitPresentationImplTest {
 
     @Test
     fun `Submitting network presentation updates bundle id after successful submission`() = runTest {
-        submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredentialWithDcql).assertOk()
+        val result = submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredentialWithDcql).assertOk()
+
+        assertEquals(mockAuthorizationResponseResponse, result)
 
         coVerify(exactly = 1) {
             mockGetAuthorizationResponseConfig(
                 anyCredential = any(),
-                presentationPaths = presentationPaths,
                 authorizationRequest = mockAuthorizationRequest,
-                usePayloadEncryption = true,
-                dcqlQueryId = DCQL_QUERY_ID,
+                presentationContext = match { ctx ->
+                    ctx.presentationPaths == presentationPaths && ctx.dcqlQueryId == DCQL_QUERY_ID
+                },
             )
         }
         coVerify(exactly = 1) {
@@ -179,7 +186,9 @@ class SubmitPresentationImplTest {
 
     @Test
     fun `Submitting proximity presentation updates bundle id after successful submission`() = runTest {
-        submitPresentationUseCase(presentationRequestWithRawProximity, compatibleCredential).assertOk()
+        val result = submitPresentationUseCase(presentationRequestWithRawProximity, compatibleCredential).assertOkNullable()
+
+        assertNull(result)
 
         coVerify(exactly = 1) { mockProximityRepository.submit(mockAuthorizationResponseConfig) }
         coVerify(exactly = 1) { mockBundleItemRepository.onPresented(CREDENTIAL_ID, BUNDLE_ITEM_ID) }
@@ -207,9 +216,9 @@ class SubmitPresentationImplTest {
         coEvery { mockVerifiableCredentialWithBundleItemsWithKeyBindingRepository.getByCredentialId(any()) } returns
             Ok(createCredentialWithBundleItems(format = CredentialFormat.UNKNOWN))
 
-        val result = submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
+        submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
+            .assertErrorType(PresentationRequestError.Unexpected::class)
 
-        result.assertErrorType(PresentationRequestError.Unexpected::class)
         coVerify(exactly = 0) { mockSubmitAnyCredentialNetworkPresentation(any(), any()) }
         coVerify(exactly = 0) { mockBundleItemRepository.onPresented(any(), any()) }
     }
@@ -220,16 +229,14 @@ class SubmitPresentationImplTest {
         coEvery {
             mockGetAuthorizationResponseConfig(
                 anyCredential = any(),
-                presentationPaths = any(),
                 authorizationRequest = any(),
-                usePayloadEncryption = any(),
-                dcqlQueryId = any(),
+                presentationContext = any(),
             )
         } returns Err(OpenIdPresentationRequestError.Unexpected(exception))
 
-        val result = submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
+        val error = submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
+            .assertErrorType(PresentationRequestError.Unexpected::class)
 
-        val error = result.assertErrorType(PresentationRequestError.Unexpected::class)
         assertEquals(exception, error.throwable)
         coVerify(exactly = 0) { mockSubmitAnyCredentialNetworkPresentation(any(), any()) }
     }
@@ -240,9 +247,9 @@ class SubmitPresentationImplTest {
             mockSubmitAnyCredentialNetworkPresentation(any(), any())
         } returns Err(OpenIdPresentationRequestError.NetworkError)
 
-        val result = submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
+        submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
+            .assertErrorType(PresentationRequestError.NetworkError::class)
 
-        result.assertErrorType(PresentationRequestError.NetworkError::class)
         coVerify(exactly = 1) { mockBundleItemRepository.onPresented(CREDENTIAL_ID, BUNDLE_ITEM_ID) }
         coVerify(exactly = 1) {
             mockVerifiableCredentialRepository.updateNextBundleIdByCredentialId(CREDENTIAL_ID, NEXT_BUNDLE_ITEM_ID)
@@ -253,9 +260,9 @@ class SubmitPresentationImplTest {
     fun `Submitting proximity presentation maps submit errors and still updates bundle id`() = runTest {
         coEvery { mockProximityRepository.submit(any()) } returns Err(ProximitySubmissionError.Failed())
 
-        val result = submitPresentationUseCase(presentationRequestWithRawProximity, compatibleCredential)
+        submitPresentationUseCase(presentationRequestWithRawProximity, compatibleCredential)
+            .assertErrorType(PresentationRequestError.Unexpected::class)
 
-        result.assertErrorType(PresentationRequestError.Unexpected::class)
         coVerify(exactly = 1) { mockBundleItemRepository.onPresented(CREDENTIAL_ID, BUNDLE_ITEM_ID) }
         coVerify(exactly = 1) {
             mockVerifiableCredentialRepository.updateNextBundleIdByCredentialId(CREDENTIAL_ID, NEXT_BUNDLE_ITEM_ID)
@@ -269,8 +276,8 @@ class SubmitPresentationImplTest {
             Err(OpenIdPresentationRequestError.VerificationError)
         coEvery { mockBundleItemRepository.onPresented(any(), any()) } returns Err(SsiError.Unexpected(exception))
 
-        val result = submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
-        result.assertErrorType(PresentationRequestError.VerificationError::class)
+        submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
+            .assertErrorType(PresentationRequestError.VerificationError::class)
     }
 
     @Test
@@ -282,8 +289,8 @@ class SubmitPresentationImplTest {
             mockVerifiableCredentialRepository.updateNextBundleIdByCredentialId(any(), any())
         } returns Err(SsiError.Unexpected(exception))
 
-        val result = submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
-        result.assertErrorType(PresentationRequestError.VerificationError::class)
+        submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
+            .assertErrorType(PresentationRequestError.VerificationError::class)
     }
 
     @Test
@@ -291,9 +298,9 @@ class SubmitPresentationImplTest {
         val exception = IllegalStateException("bundle update failure")
         coEvery { mockBundleItemRepository.onPresented(any(), any()) } returns Err(SsiError.Unexpected(exception))
 
-        val result = submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
+        val error = submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
+            .assertErrorType(PresentationRequestError.Unexpected::class)
 
-        val error = result.assertErrorType(PresentationRequestError.Unexpected::class)
         assertEquals(exception, error.throwable)
         coVerify(exactly = 0) { mockVerifiableCredentialRepository.updateNextBundleIdByCredentialId(any(), any()) }
     }
@@ -305,9 +312,8 @@ class SubmitPresentationImplTest {
             mockVerifiableCredentialRepository.updateNextBundleIdByCredentialId(any(), any())
         } returns Err(SsiError.Unexpected(exception))
 
-        val result = submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
-
-        val error = result.assertErrorType(PresentationRequestError.Unexpected::class)
+        val error = submitPresentationUseCase(presentationRequestWithRawNetwork, compatibleCredential)
+            .assertErrorType(PresentationRequestError.Unexpected::class)
         assertEquals(exception, error.throwable)
     }
 

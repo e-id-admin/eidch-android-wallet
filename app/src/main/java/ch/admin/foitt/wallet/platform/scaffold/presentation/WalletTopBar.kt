@@ -144,7 +144,6 @@ private fun TopBarWithClose(
                 color = colors.titleContentColor,
                 modifier = Modifier
                     .semantics {
-                        heading()
                         traversalIndex = TraversalIndex.HIGH2.value
                         if (altText != null) {
                             contentDescription = altText
@@ -194,7 +193,6 @@ internal fun TopBarBackArrow(
                     color = colors.titleContentColor,
                     modifier = Modifier
                         .semantics {
-                            heading()
                             traversalIndex = TraversalIndex.HIGH2.value
                             if (altText != null) {
                                 contentDescription = altText
@@ -241,8 +239,12 @@ private fun TopAppBarOnGradient(
         title = {
             WalletTexts.TitleTopBar(
                 modifier = Modifier
-                    .testTag(TestTags.TOP_BAR_TITLE.name)
+                    .semantics {
+                        heading()
+                        traversalIndex = TraversalIndex.HIGH2.value
+                    }
                     .actOnKeyWhenFocused(key = Key.DirectionDown, action = onAxDown)
+                    .testTag(TestTags.TOP_BAR_TITLE.name)
                     .focusable(),
                 text = stringResource(id = titleId),
                 color = WalletTheme.colorScheme.onGradientFixed,
@@ -272,7 +274,6 @@ internal fun TopBarTitleOnly(
             text = stringResource(id = titleId),
             color = colors.titleContentColor,
             modifier = Modifier.semantics {
-                heading()
                 traversalIndex = -1f
             }
         )
@@ -303,12 +304,12 @@ internal fun CustomTopBar(
                     color = colors.titleContentColor,
                     modifier = Modifier
                         .semantics {
-                            heading()
                             traversalIndex = TraversalIndex.HIGH2.value
                             if (titleAltText != null) {
                                 contentDescription = titleAltText
                             }
-                        },
+                        }
+                        .actOnKeyWhenFocused(key = Key.DirectionDown, action = onAxDown),
                     maxLines = titleMaxLines,
                 )
             }
@@ -457,7 +458,6 @@ internal fun TopBarRoundButtons(
                     color = WalletTheme.colorScheme.secondaryFixed,
                     modifier = Modifier
                         .semantics {
-                            heading()
                             traversalIndex = TraversalIndex.HIGH2.value
                             if (altText != null) {
                                 contentDescription = altText

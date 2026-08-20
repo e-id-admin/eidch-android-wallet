@@ -7,6 +7,7 @@ import ch.admin.foitt.wallet.platform.credential.domain.usecase.MapToCredentialD
 import ch.admin.foitt.wallet.platform.credentialCluster.domain.usercase.MapToCredentialClaimCluster
 import ch.admin.foitt.wallet.platform.database.domain.model.ClusterWithDisplaysAndClaims
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClusterWithDisplays
+import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialWithDisplaysAndClusters
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
@@ -123,7 +124,7 @@ class GetCredentialDetailFlowImplTest {
     fun `Getting the credential detail flow maps errors from the MapToCredentialDisplayData use case`() = runTest {
         val exception = IllegalStateException("map to credential display data error")
         coEvery {
-            mockMapToCredentialDisplayData(any(), any(), any(), any())
+            mockMapToCredentialDisplayData(any(), any(), any(), any(), any())
         } returns Err(CredentialError.Unexpected(exception))
 
         val result = useCase(CREDENTIAL_ID).firstOrNull()
@@ -145,6 +146,7 @@ class GetCredentialDetailFlowImplTest {
             )
         )
         coEvery { mockCredentialWithDisplaysAndClusters.credential } returns MockCredentialDetail.credential
+        coEvery { mockCredentialWithDisplaysAndClusters.nextPresentableStatus } returns CredentialStatus.VALID
         coEvery {
             mockCredentialWithDisplaysAndClustersRepository.getNullableVerifiableCredentialWithDisplaysAndClustersFlowById(
                 MockCredentialDetail.CREDENTIAL_ID
@@ -155,7 +157,8 @@ class GetCredentialDetailFlowImplTest {
                 mockVerifiableCredential,
                 MockCredentialDetail.credentialDisplays,
                 claims,
-                CredentialFormat.VC_SD_JWT
+                CredentialFormat.VC_SD_JWT,
+                CredentialStatus.VALID,
             )
         } returns Ok(MockCredentialDetail.credentialDisplayData)
         coEvery {

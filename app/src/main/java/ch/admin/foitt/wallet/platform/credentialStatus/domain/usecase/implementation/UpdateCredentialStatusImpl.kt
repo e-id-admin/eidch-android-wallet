@@ -14,9 +14,7 @@ import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateCred
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.di.IoDispatcher
 import ch.admin.foitt.wallet.platform.ssi.domain.model.BundleItemRepositoryError
-import ch.admin.foitt.wallet.platform.ssi.domain.model.VerifiableCredentialRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.BundleItemRepository
-import ch.admin.foitt.wallet.platform.ssi.domain.repository.VerifiableCredentialRepository
 import ch.admin.foitt.wallet.platform.utils.SafeJson
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
@@ -30,7 +28,6 @@ import javax.inject.Inject
 
 class UpdateCredentialStatusImpl @Inject constructor(
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-    private val verifiableCredentialRepository: VerifiableCredentialRepository,
     private val bundleItemRepository: BundleItemRepository,
     private val getAllAnyCredentialsByCredentialId: GetAllAnyCredentialsByCredentialId,
     private val fetchCredentialStatus: FetchCredentialStatus,
@@ -76,9 +73,6 @@ class UpdateCredentialStatusImpl @Inject constructor(
         credentialId: Long,
         newStatus: CredentialStatus
     ): Result<Int, UpdateCredentialStatusError> = coroutineBinding {
-        verifiableCredentialRepository.onBundleItemUpdate(credentialId)
-            .mapError(VerifiableCredentialRepositoryError::toUpdateCredentialStatusError)
-            .bind()
         bundleItemRepository.updateStatusByCredentialId(credentialId, newStatus)
             .mapError(BundleItemRepositoryError::toUpdateCredentialStatusError)
             .bind()

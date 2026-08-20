@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.platform.proximity.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationFlowContext
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.RequestObject
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.ProcessPresentationRequestError
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.ProximityEngagementError
@@ -54,7 +55,10 @@ class ProximityEngagementImpl @Inject constructor(
                     requestObject = RequestObject(Jwt(update.request), null, null)
                 ).mapError(ValidatePresentationRequestError::toProximityEngagementError)
                     .bind()
-                val presentationRequest = processPresentationRequest(requestObject)
+                val withFlowContext = update.origin
+                    ?.let { requestObject.copy(presentationContext = PresentationFlowContext(proximityOrigin = it)) }
+                    ?: requestObject
+                val presentationRequest = processPresentationRequest(withFlowContext)
                     .mapError(ProcessPresentationRequestError::toProximityEngagementError)
                     .bind()
                 ProximityEngagementEvent.Request(presentationRequest)

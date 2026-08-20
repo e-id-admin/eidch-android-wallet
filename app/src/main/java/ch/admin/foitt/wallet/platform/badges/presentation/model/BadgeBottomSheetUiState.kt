@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.platform.badges.presentation.model
 
+import androidx.compose.ui.graphics.painter.Painter
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
 
@@ -7,11 +8,13 @@ sealed interface BadgeBottomSheetUiState {
 
     data class TrustVerified(
         val actorName: String,
+        val actorPainter: Painter?,
         val onMoreInformation: () -> Unit,
     ) : BadgeBottomSheetUiState
 
-    data class TrustNotVerified(
+    data class BadgeNotVerified(
         val actorName: String,
+        val actorPainter: Painter?,
         val onMoreInformation: () -> Unit,
     ) : BadgeBottomSheetUiState
 
@@ -52,6 +55,7 @@ sealed interface BadgeBottomSheetUiState {
 
     data class NonCompliantActor(
         val actorName: String,
+        val actorPainter: Painter?,
         val reason: String?,
         val onMoreInformation: () -> Unit,
     ) : BadgeBottomSheetUiState
@@ -71,6 +75,7 @@ sealed interface BadgeBottomSheetUiState {
 
 fun BadgeType.ActorInfoBadge.toBadgeBottomSheetUiState(
     actorName: String,
+    actorPainter: Painter? = null,
     reason: String? = null,
     onMoreInformation: (Int) -> Unit,
 ): BadgeBottomSheetUiState = when (this) {
@@ -86,6 +91,7 @@ fun BadgeType.ActorInfoBadge.toBadgeBottomSheetUiState(
 
     BadgeType.ActorInfoBadge.NonCompliantActor -> BadgeBottomSheetUiState.NonCompliantActor(
         actorName = actorName,
+        actorPainter = actorPainter,
         reason = reason,
         onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
     )
@@ -102,6 +108,7 @@ fun BadgeType.ActorInfoBadge.toBadgeBottomSheetUiState(
 
     BadgeType.ActorInfoBadge.VerifiedTrust -> BadgeBottomSheetUiState.TrustVerified(
         actorName = actorName,
+        actorPainter = actorPainter,
         onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
     )
 
@@ -115,8 +122,9 @@ fun BadgeType.ActorInfoBadge.toBadgeBottomSheetUiState(
         onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
     )
 
-    BadgeType.ActorInfoBadge.NotVerifiedTrust -> BadgeBottomSheetUiState.TrustNotVerified(
+    BadgeType.ActorInfoBadge.NotVerifiedTrust -> BadgeBottomSheetUiState.BadgeNotVerified(
         actorName = actorName,
+        actorPainter = null,
         onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
     )
 

@@ -13,4 +13,7 @@ interface CredentialClaimClusterEntityDao {
 
     @Query("SELECT * FROM credentialclaimclusterentity WHERE id = :id")
     fun getById(id: Long): CredentialClaimClusterEntity?
+
+    @Query("DELETE FROM credentialclaimclusterentity WHERE verifiableCredentialId = :credentialId")
+    fun deleteByCredentialId(credentialId: Long): Int
 }

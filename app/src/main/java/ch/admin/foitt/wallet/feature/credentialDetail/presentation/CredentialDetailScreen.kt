@@ -2,6 +2,7 @@ package ch.admin.foitt.wallet.feature.credentialDetail.presentation
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,11 +12,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.SheetState
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,12 +37,14 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
+import ch.admin.foitt.wallet.feature.credentialDetail.domain.model.IssuanceType
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.composables.CredentialDeleteBottomSheet
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.composables.MenuBottomSheet
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.composables.VisibleBottomSheet
 import ch.admin.foitt.wallet.feature.credentialDetail.presentation.model.CredentialDetailUiState
 import ch.admin.foitt.wallet.feature.onboarding.presentation.composables.CollectFocusEvents
 import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityType
+import ch.admin.foitt.wallet.platform.activityList.presentation.composables.DestructiveActionButton
 import ch.admin.foitt.wallet.platform.activityList.presentation.composables.activityListItem
 import ch.admin.foitt.wallet.platform.activityList.presentation.composables.disabledHistoryActivityListItem
 import ch.admin.foitt.wallet.platform.activityList.presentation.composables.emptyHistoryActivityListItem
@@ -45,8 +53,10 @@ import ch.admin.foitt.wallet.platform.activityList.presentation.composables.goTo
 import ch.admin.foitt.wallet.platform.activityList.presentation.model.ActivityUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
+import ch.admin.foitt.wallet.platform.composables.Buttons
 import ch.admin.foitt.wallet.platform.composables.LoadingOverlay
 import ch.admin.foitt.wallet.platform.composables.presentation.WindowWidthClass
+import ch.admin.foitt.wallet.platform.composables.presentation.clusterLazyListItem
 import ch.admin.foitt.wallet.platform.composables.presentation.horizontalSafeDrawing
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.LazyColumn
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
@@ -55,10 +65,10 @@ import ch.admin.foitt.wallet.platform.composables.presentation.windowWidthClass
 import ch.admin.foitt.wallet.platform.credential.presentation.CredentialCardCreditFormat
 import ch.admin.foitt.wallet.platform.credential.presentation.credentialElements
 import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialMocks
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.preview.AllCompactScreensPreview
 import ch.admin.foitt.wallet.platform.preview.AllLargeScreensPreview
 import ch.admin.foitt.wallet.platform.scaffold.presentation.LocalScaffoldPaddings
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 import ch.admin.foitt.wallet.theme.Sizes
@@ -115,11 +125,14 @@ fun CredentialDetailScreen(
     }
 
     CredentialDetailScreenContent(
+        nonComplianceEnabled = viewModel.nonComplianceEnabled,
         isLoading = viewModel.isLoading.collectAsStateWithLifecycle().value,
         credentialDetail = viewModel.credentialDetailUiState.stateFlow.collectAsStateWithLifecycle().value,
         credentialHistoryFocusRequester = credentialHistoryFocusRequester,
         onEntireHistory = viewModel::onEntireHistory,
         onActivitySettings = viewModel::onActivitySettings,
+        onIssuanceInfo = viewModel::onIssuanceInfo,
+        onReportIssuer = viewModel::onReportIssuer,
     )
 }
 
@@ -137,12 +150,15 @@ private fun CoroutineScope.hideModalSheet(
 
 @Composable
 private fun CredentialDetailScreenContent(
+    nonComplianceEnabled: Boolean,
     isLoading: Boolean,
     credentialDetail: CredentialDetailUiState,
     credentialHistoryFocusRequester: FocusRequester,
-    windowWidthClass: WindowWidthClass = currentWindowAdaptiveInfo().windowWidthClass(),
+    windowWidthClass: WindowWidthClass = currentWindowAdaptiveInfoV2().windowWidthClass(),
     onEntireHistory: () -> Unit,
     onActivitySettings: () -> Unit,
+    onIssuanceInfo: () -> Unit,
+    onReportIssuer: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -155,13 +171,18 @@ private fun CredentialDetailScreenContent(
                 credentialHistoryFocusRequester = credentialHistoryFocusRequester,
                 onEntireHistory = onEntireHistory,
                 onActivitySettings = onActivitySettings,
+                onIssuanceInfo = onIssuanceInfo,
+                onReportIssuer = onReportIssuer,
             )
 
             else -> CredentialDetailLarge(
+                nonComplianceEnabled = nonComplianceEnabled,
                 credentialDetail = credentialDetail,
                 credentialHistoryFocusRequester = credentialHistoryFocusRequester,
                 onEntireHistory = onEntireHistory,
                 onActivitySettings = onActivitySettings,
+                onIssuanceInfo = onIssuanceInfo,
+                onReportIssuer = onReportIssuer,
             )
         }
         LoadingOverlay(showOverlay = isLoading)
@@ -174,9 +195,12 @@ private fun CredentialDetailCompact(
     credentialHistoryFocusRequester: FocusRequester,
     onEntireHistory: () -> Unit,
     onActivitySettings: () -> Unit,
+    onIssuanceInfo: () -> Unit,
+    onReportIssuer: () -> Unit,
 ) {
     val scrollState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+    val issuanceTypeLabel = credentialDetail.issuanceType.labelRes()?.let { stringResource(it) }
 
     WalletLayouts.LazyColumn(
         modifier = Modifier
@@ -191,6 +215,17 @@ private fun CredentialDetailCompact(
                 shouldScrollUnderTopBar = true,
                 scaffoldPaddings = LocalScaffoldPaddings.current,
             )
+        }
+
+        if (credentialDetail.showBatchWarning) {
+            item {
+                BatchWarningCard(
+                    onViewDetails = onIssuanceInfo,
+                    modifier = Modifier.padding(horizontal = Sizes.s04)
+                )
+
+                Spacer(Modifier.height(Sizes.s04))
+            }
         }
 
         item {
@@ -223,17 +258,39 @@ private fun CredentialDetailCompact(
             showIssuer = true,
             issuer = credentialDetail.issuer.name,
             issuerIcon = credentialDetail.issuer.painter,
+            issuanceTypeLabel = issuanceTypeLabel,
+            onIssuanceInfoClick = onIssuanceInfo,
         )
+
+        item {
+            Spacer(modifier = Modifier.height(Sizes.s06))
+        }
+
+        clusterLazyListItem(
+            isFirstItem = true,
+            isLastItem = true,
+            paddingValues = PaddingValues(horizontal = Sizes.s04),
+        ) {
+            DestructiveActionButton(
+                title = R.string.tk_activity_activityDetail_reportIssuer_button,
+                leadingIcon = R.drawable.wallet_ic_flag,
+                onClick = onReportIssuer,
+            )
+        }
     }
 }
 
 @Composable
 private fun CredentialDetailLarge(
+    nonComplianceEnabled: Boolean,
     credentialDetail: CredentialDetailUiState,
     credentialHistoryFocusRequester: FocusRequester,
     onEntireHistory: () -> Unit,
     onActivitySettings: () -> Unit,
+    onIssuanceInfo: () -> Unit,
+    onReportIssuer: () -> Unit,
 ) {
+    val issuanceTypeLabel = credentialDetail.issuanceType.labelRes()?.let { stringResource(it) }
     Column {
         WalletLayouts.TopInsetSpacer(
             shouldScrollUnderTopBar = true,
@@ -243,13 +300,21 @@ private fun CredentialDetailLarge(
         Row(
             modifier = Modifier.horizontalSafeDrawing()
         ) {
-            CredentialCardCreditFormat(
-                credentialCardState = credentialDetail.credential,
+            Column(
                 modifier = Modifier
                     .semantics { isTraversalGroup = true }
                     .weight(1f)
                     .padding(Sizes.s04),
-            )
+            ) {
+                if (credentialDetail.showBatchWarning) {
+                    BatchWarningCard(onViewDetails = onIssuanceInfo)
+                    Spacer(Modifier.height(Sizes.s04))
+                }
+
+                CredentialCardCreditFormat(
+                    credentialCardState = credentialDetail.credential,
+                )
+            }
 
             val lazyListState = rememberLazyListState()
             val coroutineScope = rememberCoroutineScope()
@@ -279,10 +344,86 @@ private fun CredentialDetailLarge(
                     showIssuer = true,
                     issuer = credentialDetail.issuer.name,
                     issuerIcon = credentialDetail.issuer.painter,
+                    issuanceTypeLabel = issuanceTypeLabel,
+                    onIssuanceInfoClick = onIssuanceInfo,
                 )
+
+                if (nonComplianceEnabled) {
+                    item {
+                        Spacer(modifier = Modifier.height(Sizes.s06))
+                    }
+
+                    clusterLazyListItem(
+                        isFirstItem = true,
+                        isLastItem = true,
+                        paddingValues = PaddingValues(horizontal = Sizes.s04),
+                    ) {
+                        DestructiveActionButton(
+                            title = R.string.tk_activity_activityDetail_reportIssuer_button,
+                            leadingIcon = R.drawable.wallet_ic_flag,
+                            onClick = onReportIssuer,
+                        )
+                    }
+                }
             }
         }
     }
+}
+
+@Composable
+private fun BatchWarningCard(
+    onViewDetails: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors().copy(containerColor = WalletTheme.colorScheme.surfaceContainerLowest),
+        shape = RoundedCornerShape(Sizes.s05),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Sizes.s04, vertical = Sizes.s03),
+            verticalArrangement = Arrangement.spacedBy(Sizes.s03)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Sizes.s02)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.wallet_ic_warning),
+                    contentDescription = null,
+                    modifier = Modifier.size(Sizes.buttonIcon),
+                    tint = WalletTheme.colorScheme.onLightOrange
+                )
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    WalletTexts.BodyLargeEmphasized(
+                        text = stringResource(R.string.tk_displaybatchPrivacyWarning_title)
+                    )
+
+                    WalletTexts.BodyLarge(
+                        text = stringResource(R.string.tk_displaybatchPrivacyWarning_body)
+                    )
+                }
+            }
+
+            Buttons.FilledPrimary(
+                text = stringResource(R.string.tk_displaybatchPrivacyWarning_button),
+                onClick = onViewDetails,
+                modifier = Modifier.fillMaxWidth(),
+                isSmall = true
+            )
+        }
+    }
+}
+
+private fun IssuanceType?.labelRes() = when (this) {
+    IssuanceType.BATCH -> R.string.tk_credentialDetail_issuanceType_batch
+    IssuanceType.STANDARD -> R.string.tk_credentialDetail_issuanceType_standard
+    null -> null
 }
 
 private fun LazyListScope.latestActivities(
@@ -376,6 +517,7 @@ private fun CredentialDetailScreenLargePreview() {
 @Composable
 private fun CredentialDetailScreenPreview(windowWidthClass: WindowWidthClass) {
     CredentialDetailScreenContent(
+        nonComplianceEnabled = true,
         isLoading = false,
         credentialDetail = CredentialDetailUiState(
             credential = CredentialMocks.cardState01,
@@ -389,7 +531,9 @@ private fun CredentialDetailScreenPreview(windowWidthClass: WindowWidthClass) {
                 actorComplianceState = ActorComplianceState.REPORTED,
                 nonComplianceReason = "report reason",
             ),
+            issuanceType = IssuanceType.BATCH,
             areActivitiesEnabled = true,
+            showBatchWarning = true,
             activities = listOf(
                 ActivityUiState(
                     id = 1,
@@ -402,6 +546,8 @@ private fun CredentialDetailScreenPreview(windowWidthClass: WindowWidthClass) {
         credentialHistoryFocusRequester = FocusRequester(),
         windowWidthClass = windowWidthClass,
         onEntireHistory = {},
-        onActivitySettings = {}
+        onActivitySettings = {},
+        onIssuanceInfo = {},
+        onReportIssuer = {},
     )
 }

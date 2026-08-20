@@ -4,7 +4,9 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,7 +53,9 @@ fun AdaptiveBottomButtonBar(
 ) {
     if (buttons.isNotEmpty()) {
         Surface(
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(windowInsets.only(WindowInsetsSides.Horizontal)),
             shape = RoundedCornerShape(topStart = Sizes.s06, topEnd = Sizes.s06),
             color = backgroundColor,
         ) {
@@ -59,7 +63,7 @@ fun AdaptiveBottomButtonBar(
                 buttons = buttons,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .windowInsetsPadding(windowInsets)
+                    .windowInsetsPadding(windowInsets.only(WindowInsetsSides.Bottom))
                     .padding(contentPadding),
                 stacked = stacked,
                 horizontalGapSize = horizontalGapSize,

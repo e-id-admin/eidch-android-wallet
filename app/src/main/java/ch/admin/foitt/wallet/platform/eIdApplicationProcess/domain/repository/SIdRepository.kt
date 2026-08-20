@@ -18,6 +18,7 @@ import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.Validat
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.WalletPairingStateResponse
 import com.github.michaelbull.result.Result
 
+@Suppress("TooManyFunctions")
 interface SIdRepository {
     suspend fun requestSIdCase(
         clientAttestation: ClientAttestation,
@@ -64,5 +65,11 @@ interface SIdRepository {
         clientAttestation: ClientAttestation,
         clientAttestationPoP: ClientAttestationPoP,
         request: EIdPeerPushIdRequest
+    ): Result<Unit, SIdRepositoryError>
+
+    suspend fun abortSIdProcess(
+        caseId: String,
+        clientAttestation: ClientAttestation,
+        clientAttestationPoP: ClientAttestationPoP,
     ): Result<Unit, SIdRepositoryError>
 }

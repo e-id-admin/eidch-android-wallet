@@ -17,12 +17,12 @@
     <string name="tk_credential_status_demo_alt">Document démo</string>
     <string name="tk_credential_status_invalid">Expiré</string>
     <string name="tk_credential_status_invalid_alt">Le document est expiré</string>
-    <string name="tk_credential_status_notValidYet">Valable dans %s jours</string>
-    <string name="tk_credential_status_notValidYet_alt">Le document sera valable dans %s jours.</string>
+    <string name="tk_credential_status_notYetValid">valable dès le %s</string>
+    <string name="tk_credential_status_notYetValid_alt">Document valable dès le %s</string>
     <string name="tk_credential_status_revoked">Révoqué</string>
     <string name="tk_credential_status_revoked_alt">Le document a été révoqué.</string>
-    <string name="tk_credential_status_soon">Bientôt valable</string>
-    <string name="tk_credential_status_soon_alt">Le moyen de preuve sera bientôt valable.</string>
+    <string name="tk_credential_status_soon">valide dès %s</string>
+    <string name="tk_credential_status_soon_alt">Document valide dès %s</string>
     <string name="tk_credential_status_suspended">Bloqué temporairement</string>
     <string name="tk_credential_status_suspended_alt">Le moyen de preuve est provisoirement inaccessible.</string>
     <string name="tk_credential_status_unknown">Inconnu</string>
@@ -33,8 +33,6 @@
     <string name="tk_displaydelete_credentialdelete_title">Voulez-vous vraiment supprimer ce moyen de preuve ?</string>
     <string name="tk_displaydelete_credentialmenu_primarybutton">Supprimer le moyen de preuve</string>
     <string name="tk_displaydelete_displaycredential1_title5">Délivré par</string>
-    <string name="tk_displaydelete_wrongdata_body">Une fois délivré, un document ne peut plus être modifié.\n\nSi vous constatez une erreur dans vos données, veuillez contacter l\'autorité émettrice.\nElle pourra vous délivrer un nouveau document corrigé.</string>
-    <string name="tk_displaydelete_wrongdata_title">Signaler des données incorrectes</string>
     <string name="tk_error_connectionproblem_body">Veuillez réessayer.</string>
     <string name="tk_error_connectionproblem_title">Connexion interrompue</string>
     <string name="tk_error_invalidqrcode_body">Impossible d’utiliser ce code QR.</string>
@@ -46,7 +44,7 @@
     <string name="tk_error_issuer_notregistered_body">L’émetteur n’est pas répertorié.</string>
     <string name="tk_error_issuer_notregistered_title">Émetteur inconnu</string>
     <string name="tk_error_keyStorageUnsupported_title">Niveau de sécurité non pris en charge.</string>
-    <string name="tk_present_credentialNotFound_body">Votre swiyu app ne contient aucun moyen de preuve pour cette demande.</string>
+    <string name="tk_present_credentialNotFound_body">Ihre swiyu App enthält keine Nachweise.</string>
     <string name="tk_present_credentialNotFound_title">Aucun moyen de preuve disponible pour cette demande</string>
     <string name="tk_error_notusable_body">Ce code QR n\'est plus valide, veuillez le recréer.</string>
     <string name="tk_error_notusable_title">Le code QR n’est plus valable</string>
@@ -112,7 +110,6 @@
     <string name="tk_global_visible_alt">Le mot de passe est visible. Masquer le mot de passe.</string>
     <string name="tk_global_warning_alt">Avertissement</string>
     <string name="tk_global_welcomeback">Bienvenue !</string>
-    <string name="tk_global_wrongdata">Signaler des données incorrectes</string>
     <string name="tk_home_notification_credential_accepted">Le document a été ajouté</string>
     <string name="tk_home_notification_credential_declined">Le document a été rejeté.</string>
     <string name="tk_issuer_notTrusted">Non vérifié</string>
@@ -132,7 +129,11 @@
     <string name="tk_login_locked_title">Actuellement, la swiyu app n’est pas disponible. Veuillez réessayer plus tard.</string>
     <string name="tk_login_password_body">Saisissez votre mot de passe :</string>
     <string name="tk_login_password_note">Mot de passe</string>
-    <string name="tk_login_passwordfailed_android_subtitle">Il vous reste %s tentative(s)</string>
+    <plurals name="tk_login_input_error_numberOfTriesLeft">
+        <item quantity="one">Il vous reste %s tentative</item>
+        <item quantity="many">Il vous reste %s tentatives</item>
+        <item quantity="other">Il vous reste %s tentatives</item>
+    </plurals>
     <string name="tk_login_passwordfailed_notification">Le mot de passe est incorrect. Veuillez réessayer.</string>
     <string name="tk_login_variant_body">La swiyu app est verrouillée</string>
     <string name="tk_menu_activatingBiometrics_android_body">Veuillez saisir votre mot de passe swiyu pour activer le déverrouillage biométrique.</string>
@@ -196,7 +197,7 @@
     <string name="tk_present_review_button_accept">Autoriser</string>
     <string name="tk_present_review_button_decline">Rejeter</string>
     <string name="tk_present_review_loading">Veuillez patienter</string>
-    <string name="tk_qrscanner_scanning_body">Pour prouver votre identité ou pour ajouter des justificatifs et des documents.</string>
+    <string name="tk_qrscanner_scanning_body">Scannez le code QR pour confirmer votre identité ou recevoir un document ou un justificatif.</string>
     <string name="tk_qrscanner_scanning_title">Scanner le code QR</string>
     <string name="tk_receive_cameraaccessneeded1_body">La caméra est une fonctionnalité importante. Sans caméra, vous ne pouvez pas ajouter de justificatifs ou de documents sur votre application, et vous ne pouvez pas les utiliser pour prouver votre identité.</string>
     <string name="tk_receive_cameraaccessneeded1_title">Autorisez l’accès à votre caméra</string>
@@ -208,8 +209,6 @@
     <string name="tk_receive_credentialOffer_button_decline">Rejeter</string>
     <string name="tk_receive_credentialOffer_headerSection_secondary">Souhaite délivrer le document suivant:</string>
     <string name="tk_receive_credentialOffer_hiddenGoToDetails">Vue détaillée</string>
-    <string name="tk_receive_credentialOffer_wrongData_primary">Les données sont incorrectes ?</string>
-    <string name="tk_receive_credentialOffer_wrongData_secondary">Une fois délivré, un document ne peut plus être modifié.\n\nSi vous constatez une erreur dans vos données, veuillez contacter l\'autorité émettrice.\nElle pourra vous délivrer un nouveau document corrigé.</string>
     <string name="tk_receive_declineOffer_primary">Voulez-vous vraiment rejeter le document ?</string>
     <string name="tk_receive_declineOffer_primaryButton">Rejeter le document</string>
     <string name="tk_receive_declineOffer_secondary">Un document refusé perd immédiatement sa validité.\n\nPour obtenir un nouveau document, vous devez le commander à nouveau.</string>
@@ -227,14 +226,14 @@
     <string name="tk_settings_general_sectionTitle">Généralités</string>
     <string name="tk_settings_imprint_appInformation_appVersion">Version de l’application</string>
     <string name="tk_settings_imprint_appInformation_body">La swiyu app est open source. Vous pouvez consulter son code source sur GitHub.</string>
-    <string name="tk_settings_imprint_appInformation_github_link_value">https://github.com/e-id-admin</string>
+    <string name="tk_settings_imprint_appInformation_github_link_value">https://github.com/swiyu-admin-ch</string>
     <string name="tk_settings_imprint_legal_disclaimer_primary">Clause de non-responsabilité</string>
     <string name="tk_settings_imprint_legal_disclaimer_secondary">Les auteurs ne peuvent endosser aucune responsabilité quant à la fiabilité et à l’exhaustivité des informations. Les renvois et les liens permettant d’accéder aux sites de tiers ne relèvent pas de notre responsabilité.</string>
     <string name="tk_settings_imprint_legal_sectionTitle">Bases juridiques</string>
     <string name="tk_settings_imprint_legal_termsOfUse_link_text">Conditions d’utilisation</string>
     <string name="tk_settings_imprint_legal_termsOfUse_link_value">https://www.eid.admin.ch/fr/swiyu-terms-f</string>
-    <string name="tk_settings_imprint_publisher_link_text">www.bit.admin.ch</string>
-    <string name="tk_settings_imprint_publisher_link_value">https://www.bit.admin.ch/fr</string>
+    <string name="tk_settings_imprint_publisher_link_text">www.bj.admin.ch</string>
+    <string name="tk_settings_imprint_publisher_link_value">https://www.bj.admin.ch/fr</string>
     <string name="tk_settings_imprint_publisher_sectionTitle">Création, mise en service et exploitation</string>
     <string name="tk_settings_imprint_title">Mentions légales</string>
     <string name="tk_settings_licences_body">La swiyu app utilise les licences logicielles suivantes :\nLes licences sont conformes aux directives de l’OFIT en matière de protection de la sphère privée et aux normes de sécurité les plus récentes. Cette liste améliore la transparence vis-à-vis des utilisateurs.</string>
@@ -242,7 +241,7 @@
     <string name="tk_settings_securityPrivacy_biometrics_noHardware">L\'appareil ne dispose pas de matériel biométrique compatible</string>
     <string name="tk_settings_securityPrivacy_biometrics_pinChanged">Vos données biométriques ont été désactivées car vous avez changé de mot de passe.</string>
     <string name="tk_settings_securityPrivacy_dataProtection_privacyPolicy_link_text">Déclaration de protection des données</string>
-    <string name="tk_settings_securityPrivacy_dataProtection_privacyPolicy_link_value">https://www.eid.admin.ch/en/swiyu-privacy-e</string>
+    <string name="tk_settings_securityPrivacy_dataProtection_privacyPolicy_link_value">https://www.eid.admin.ch/fr/swiyu-privacy-f</string>
     <string name="tk_settings_securityPrivacy_dataProtection_sectionTitle">Protection des données et de la sphère privée</string>
     <string name="tk_settings_securityPrivacy_dataProtection_shareData_primary">Partage des données de diagnostic</string>
     <string name="tk_settings_securityPrivacy_dataProtection_shareData_secondary">Pour créer une e-ID, nous avons besoin de votre consentement à la déclaration de protection des données.</string>
@@ -527,7 +526,7 @@
     <string name="tk_settings_imprint_appInformation_buildNumber">Numéro de build</string>
     <string name="tk_settings_imprint_appInformation_github_link_text">https://github.com/swiyu-admin-ch</string>
     <string name="tk_settings_imprint_appInformation_sectionTitle">Version de l’app</string>
-    <string name="tk_settings_imprint_publisher_name">Département fédéral des finances DFF\nOffice fédéral de l’informatique et de la télécommunication OFIT</string>
+    <string name="tk_settings_imprint_publisher_name">Département fédéral de justice et police DFJP\nOffice fédéral de la justice OFJ</string>
     <string name="tk_settings_language_device">Langue de l’appareil</string>
     <string name="tk_settings_language_title">Langue</string>
     <string name="tk_settings_securityPrivacy_dataProtection_diagnosticData">Données de diagnostic</string>
@@ -579,8 +578,8 @@
     <string name="tk_eidRequest_otp_tooManyAttempts_body_primary">Nous n’avons pas pu vérifier le code après plusieurs tentatives.</string>
     <string name="tk_eidRequest_otp_tooManyAttempts_title">Trop de tentatives</string>
     <string name="tk_eidRequest_otp_tooManyAttempts_button">Fermer</string>
-    <string name="tk_eidRequest_otp_legal_terms_linkValue">https://www.eid.admin.ch/fr/swiyu-terms-f</string>
-    <string name="tk_eidRequest_otp_legal_privacy_linkValue">https://www.eid.admin.ch/fr/swiyu-privacy-f</string>
+    <string name="tk_eidRequest_otp_legal_terms_linkValue">https://www.eid.admin.ch/fr/tetphase-terms-f</string>
+    <string name="tk_eidRequest_otp_legal_privacy_linkValue">https://www.eid.admin.ch/fr/testphase-privacy-f</string>
     <string name="tk_eidRequest_otp_unavailable_link_value">https://www.eid.admin.ch/fr/swiyu-terms-f</string>
     <string name="tk_eidRequest_otp_email_error_generic">Une problème est survenu. Veuillez réessayer.</string>
     <string name="tk_eidRequest_otp_email_skip_button">Ignorer</string>
@@ -831,4 +830,25 @@
     <string name="tk_loader_initialization_secondary">Veuillez patienter pendant que nous configurons tout.</string>
     <string name="tk_global_sensitive_data_alt">Informations sensibles</string>
     <string name="tk_eidRequest_otp_legal_secondaryButton">Je ne suis pas d’accord.</string>
+    <string name="tk_eidRequest_clientAttestation_securityCheck_error_title">La sécurité de votre appareil ne peut pas être vérifiée.</string>
+    <string name="qr_generator_qr_alt_text">Votre code QR swiyu</string>
+    <string name="tk_badgeInformation_trustedCheckApp_primary">Ce vérificateur utilise l\'application officielle swiyu Check pour vérifier votre identité.</string>
+    <string name="tk_badgeInformation_trustedCheckApp_secondary">Ne partagez vos données que si vous faites confiance à ce vérificateur. Si vous estimez que trop de données sont demandées, vous pouvez faire un signalement.</string>
+    <string name="tk_badgeInformation_trustedCheckApp_hint">L\'Office fédéral de la justice engagera alors une procédure de contrôle et prendra, le cas échéant, des mesures supplémentaires.</string>
+    <string name="tk_badgeInformation_notTrustedCheckApp_primary">Ce vérificateur utilise une application de vérification non approuvée.</string>
+    <string name="tk_badgeInformation_notTrustedCheckApp_secondary">Ne partagez vos données que si vous faites confiance à ce vérificateur. Si vous estimez que trop de données sont demandées, vous pouvez faire un signalement.</string>
+    <string name="tk_badgeInformation_notTrustedCheckApp_hint">L\'Office fédéral de la justice engagera alors une procédure de contrôle et prendra, le cas échéant, des mesures supplémentaires.</string>
+    <string name="tk_error_generic_helpLink_value">https://www.eid.admin.ch/fr/hilfe-f</string>
+    <string name="tk_displaybatchPrivacyWarning_title">Votre vie privée est restreinte</string>
+    <string name="tk_displaybatchPrivacyWarning_body">Toutes les utilisations ont été épuisées. Vos activités pourraient être associées à ce document. Renouvelez-le afin de rétablir une meilleure protection de votre vie privée.</string>
+    <string name="tk_displaybatchPrivacyWarning_button">Voir les détails</string>
+    <string name="tk_credentialDetail_issuanceType_standard">Standard</string>
+    <string name="tk_credentialDetail_issuanceType_batch">Lot</string>
+    <string name="tk_credentialDetail_issuanceType_label">Type d’émission</string>
+    <string name="tk_credentialDetail_issuanceInfo_title">Type d’émission</string>
+    <string name="tk_credentialDetail_issuanceInfo_moreInfo_button">En savoir plus</string>
+    <string name="tk_credentialDetail_issuanceInfo_more_info_link">https://www.eid.admin.ch/fr/so-wird-die-e-id-unverknuepfbar-f</string>
+    <string name="tk_credentialDetail_batchIssuanceInfo_title">Émission en lot</string>
+    <string name="tk_credentialDetail_batchIssuanceInfo_body">Cette preuve a été émise en lot.\n\nÀ chaque présentation, une nouvelle document individuelle issue du lot est utilisée.\n\nLa séparation technique des utilisations individuelles offre une protection supplémentaire des données.</string>
+    <string name="tk_credentialDetail_batchIssuanceInfo_usageDetails_title">Détails d’utilisation</string>
 </resources>

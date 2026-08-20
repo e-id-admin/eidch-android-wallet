@@ -24,6 +24,7 @@ object CredentialCardMocks {
         borderColor = WalletTheme.colorScheme.primaryContainer,
         isCredentialFromBetaIssuer = true,
         progressionState = VerifiableProgressionState.ACCEPTED,
+        showBatchWarning = true
     )
 
     private val state2 @Composable get() = CredentialCardState(

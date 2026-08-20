@@ -11,7 +11,6 @@ class ValidateIssuerCredentialInfoImpl @Inject constructor() : ValidateIssuerCre
     override fun invoke(issuerCredentialInfo: IssuerCredentialInfo): Boolean {
         val isResponseEncryptionValid = validateResponseEncryption(
             responseEncryption = issuerCredentialInfo.credentialResponseEncryption,
-            requestEncryption = issuerCredentialInfo.credentialRequestEncryption,
         )
         val isRequestEncryptionValid = validateRequestEncryption(
             requestEncryption = issuerCredentialInfo.credentialRequestEncryption,
@@ -20,22 +19,14 @@ class ValidateIssuerCredentialInfoImpl @Inject constructor() : ValidateIssuerCre
         return isRequestEncryptionValid && isResponseEncryptionValid
     }
 
-    private fun validateResponseEncryption(
-        responseEncryption: CredentialResponseEncryption?,
-        requestEncryption: CredentialRequestEncryption?,
-    ) = when {
-        responseEncryption == null -> true
-        requestEncryption == null -> false
+    private fun validateResponseEncryption(responseEncryption: CredentialResponseEncryption) = when {
         responseEncryption.algValuesSupported.any { it !in supportedAlgorithms } -> false
         responseEncryption.encValuesSupported.none { it in supportedEncryptions } -> false
         responseEncryption.zipValuesSupported?.any { it !in supportedZipValues } == true -> false
         else -> true
     }
 
-    private fun validateRequestEncryption(
-        requestEncryption: CredentialRequestEncryption?,
-    ) = when {
-        requestEncryption == null -> true
+    private fun validateRequestEncryption(requestEncryption: CredentialRequestEncryption) = when {
         requestEncryption.jwks.keys.any { it.crv !in supportedCurves || it.alg !in supportedAlgorithms } -> false
         requestEncryption.encValuesSupported.none { it in supportedEncryptions } -> false
         requestEncryption.zipValuesSupported?.any { it !in supportedZipValues } == true -> false

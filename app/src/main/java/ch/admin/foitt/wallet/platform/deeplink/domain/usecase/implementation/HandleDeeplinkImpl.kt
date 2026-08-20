@@ -8,12 +8,13 @@ import ch.admin.foitt.wallet.platform.invitation.domain.model.ProcessInvitationE
 import ch.admin.foitt.wallet.platform.invitation.domain.model.ProcessInvitationResult
 import ch.admin.foitt.wallet.platform.invitation.domain.model.toErrorDestination
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.ProcessInvitation
-import ch.admin.foitt.wallet.platform.messageEvents.domain.model.CredentialOfferEvent
-import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialOfferEventRepository
+import ch.admin.foitt.wallet.platform.messageEvents.domain.model.CredentialEvent
+import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialEventRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination.CredentialOfferScreen
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination.PresentationCredentialListScreen
+import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination.PresentationRequestReviewScreen
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination.PresentationRequestScreen
 import ch.admin.foitt.wallet.platform.navigation.domain.model.NavigationAction
 import com.github.michaelbull.result.mapBoth
@@ -25,7 +26,7 @@ class HandleDeeplinkImpl @Inject constructor(
     private val deepLinkIntentRepository: DeepLinkIntentRepository,
     private val environmentSetupRepository: EnvironmentSetupRepository,
     private val processInvitation: ProcessInvitation,
-    private val credentialOfferEventRepository: CredentialOfferEventRepository,
+    private val credentialEventRepository: CredentialEventRepository,
 ) : HandleDeeplink {
 
     @CheckResult
@@ -92,7 +93,7 @@ class HandleDeeplinkImpl @Inject constructor(
         is ProcessInvitationResult.CredentialOffer -> CredentialOfferScreen(credentialId = invitation.credentialId)
         is ProcessInvitationResult.DeferredCredential -> {
             // Currently, receiving a deferred credential has a silent success
-            credentialOfferEventRepository.setEvent(CredentialOfferEvent.ACCEPTED)
+            credentialEventRepository.setEvent(CredentialEvent.ACCEPTED)
             null
         }
 
@@ -105,9 +106,14 @@ class HandleDeeplinkImpl @Inject constructor(
             compatibleCredentials = invitation.credentials,
             presentationRequestWithRaw = invitation.request,
         )
+
+        is ProcessInvitationResult.PresentationRequestReview -> PresentationRequestReviewScreen(
+            compatibleCredentials = invitation.credentials,
+            presentationRequestWithRaw = invitation.request,
+        )
     }
 
-    private fun handleFailure(invitationError: ProcessInvitationError): Destination = invitationError.toErrorDestination(null)
+    private fun handleFailure(invitationError: ProcessInvitationError): Destination = invitationError.toErrorDestination(null, null)
 
     private fun navigateTo(direction: Destination, fromOnboarding: Boolean) = NavigationAction {
         if (fromOnboarding) {

@@ -17,10 +17,10 @@ class EvaluateBatchSizeImpl @Inject constructor() : EvaluateBatchSize {
         val batchSize = issuerCredentialInfo.batchCredentialIssuance?.batchSize
             ?: return Err(CredentialError.InvalidIssuerCredentialInfo)
 
-        return if (batchSize in MIN_BATCH_SIZE..MAX_BATCH_SIZE) {
-            Ok(batchSize)
+        return if (batchSize >= MIN_BATCH_SIZE) {
+            Ok(batchSize.coerceAtMost(MAX_BATCH_SIZE))
         } else {
-            Timber.e("Batch size not in bounds: $batchSize, min: $MIN_BATCH_SIZE, max: $MAX_BATCH_SIZE")
+            Timber.e("Batch size below minimum: $batchSize, min: $MIN_BATCH_SIZE")
             Err(CredentialError.InvalidIssuerCredentialInfo)
         }
     }

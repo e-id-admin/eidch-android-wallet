@@ -7,8 +7,8 @@ import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.EI
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.FetchSIdStatus
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.UpdateAllSIdStatuses
 import com.github.michaelbull.result.mapError
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -18,22 +18,22 @@ class UpdateAllSIdStatusesImpl @Inject constructor(
 ) : UpdateAllSIdStatuses {
     override suspend fun invoke() {
         eIdRequestStateRepository.getAllCaseIds()
-            .onSuccess { eIdRequestCaseIds ->
+            .onOk { eIdRequestCaseIds ->
                 for (caseId in eIdRequestCaseIds) {
                     fetchSIdState(caseId)
                 }
             }
-            .onFailure { error ->
+            .onErr { error ->
                 Timber.d("Could not get Case Ids for status update")
             } // silently fail
     }
 
     private suspend fun fetchSIdState(caseId: String) {
         fetchSIdStatus(caseId)
-            .onSuccess { stateResponse ->
+            .onOk { stateResponse ->
                 updateState(caseId, stateResponse)
             }
-            .onFailure { error ->
+            .onErr { error ->
                 Timber.d(message = "Could not get case Id &s for status update, caseId $caseId")
             } // silently fail
     }

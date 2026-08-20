@@ -1,16 +1,18 @@
 package ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.implementation
 
 import ch.admin.foitt.didResolver.domain.DidResolverHelper
-import ch.admin.foitt.openid4vc.domain.model.SigningAlgorithm
+import ch.admin.foitt.openid4vc.domain.model.SignatureAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.anycredential.Validity
 import ch.admin.foitt.openid4vc.domain.model.jwt.VerifyJwtSignatureFromDidError
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwt
 import ch.admin.foitt.openid4vc.domain.usecase.jwt.VerifyJwtSignatureFromDid
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialStatusProperties
+import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.FetchCredentialStatusError
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.FetchCredentialStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ValidateTrustStatementError
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toUnexpected
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toValidateTrustStatementError
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.GetTrustDomainFromDid
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.ValidateTrustStatement
@@ -35,9 +37,7 @@ internal class ValidateTrustStatementImpl @Inject constructor(
         actorDid: String,
     ): Result<VcSdJwt, ValidateTrustStatementError> = coroutineBinding {
         val trustStatementDid = didResolverHelper.getDidStringFromAbsoluteKeyId(trustStatement.kid)
-            .mapError { throwable ->
-                throwable.toValidateTrustStatementError("ValidateTrustStatement error")
-            }.bind()
+            .mapError(Throwable::toUnexpected).bind()
 
         runSuspendCatching {
             check(hasTrustedDid(actorDid, trustStatementDid)) {
@@ -48,7 +48,7 @@ internal class ValidateTrustStatementImpl @Inject constructor(
             check(trustStatement.type == VCSDJWT_TYPE_VALUE) {
                 errorMessageStart + "type is unsupported"
             }
-            check(trustStatement.algorithm == SigningAlgorithm.ES256.stdName) {
+            check(SignatureAlgorithm.fromStdName(trustStatement.algorithm) in supportedAlgorithms) {
                 errorMessageStart + "algorithm is unsupported"
             }
 
@@ -74,13 +74,13 @@ internal class ValidateTrustStatementImpl @Inject constructor(
                     "$errorMessageStart has no status"
                 }
 
-            val trustStatementStatus = fetchCredentialStatus(trustStatementDid, statusProperties).get()
+            val trustStatementStatus = fetchCredentialStatus(trustStatementDid, statusProperties)
+                .mapError(FetchCredentialStatusError::toValidateTrustStatementError)
+                .bind()
             check(trustStatementStatus == CredentialStatus.VALID) {
                 "$errorMessageStart status is not valid"
             }
-        }.mapError { throwable ->
-            throwable.toValidateTrustStatementError("ValidateTrustStatement error")
-        }.bind()
+        }.mapError(Throwable::toUnexpected).bind()
 
         trustStatement
     }
@@ -94,5 +94,6 @@ internal class ValidateTrustStatementImpl @Inject constructor(
 
     companion object {
         const val VCSDJWT_TYPE_VALUE = "vc+sd-jwt"
+        private val supportedAlgorithms = setOf(SignatureAlgorithm.ES256, SignatureAlgorithm.EdDSA)
     }
 }

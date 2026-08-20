@@ -6,16 +6,19 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
 import ch.admin.foitt.wallet.platform.badges.presentation.NonSensitiveClaimInfoBadge
 import ch.admin.foitt.wallet.platform.badges.presentation.SensitiveClaimInfoBadge
 import ch.admin.foitt.wallet.platform.badges.presentation.model.ClaimBadgeUiState
+import ch.admin.foitt.wallet.platform.composables.Callouts
 import ch.admin.foitt.wallet.platform.composables.presentation.clusterLazyListItem
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.LazyColumn
 import ch.admin.foitt.wallet.platform.composables.presentation.layout.WalletLayouts
@@ -26,16 +29,34 @@ import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTheme
 
 fun LazyListScope.credentialInfoWithClaimBadgesWidget(
+    showsUnregisteredRequestCallout: Boolean,
     credentialCardState: CredentialCardState,
     claimBadgesUiStates: List<ClaimBadgeUiState> = emptyList(),
     onBadge: (BadgeType) -> Unit = {},
+    onUnregisteredRequestInfo: (() -> Unit)? = null,
     paddingValues: PaddingValues = PaddingValues(
         horizontal = Sizes.s04
     )
 ) {
+    if (showsUnregisteredRequestCallout) {
+        clusterLazyListItem(
+            isFirstItem = true,
+            isLastItem = false,
+            divider = null,
+            paddingValues = paddingValues
+        ) {
+            Callouts.UnregisteredRequest(
+                modifier = Modifier.padding(all = Sizes.s04),
+                label = R.string.tk_present_unregisteredRequest_warning,
+                onClick = onUnregisteredRequestInfo
+            )
+        }
+    }
+
     credentialCardListItem(
         credentialCardState = credentialCardState,
         paddingValues = paddingValues,
+        isFirstItem = !showsUnregisteredRequestCallout,
         isLastItem = claimBadgesUiStates.isEmpty(),
         divider = null,
     )
@@ -84,6 +105,7 @@ private fun CredentialInfoWithClaimBadgesWidgetPreview() {
     WalletTheme {
         WalletLayouts.LazyColumn {
             credentialInfoWithClaimBadgesWidget(
+                showsUnregisteredRequestCallout = true,
                 credentialCardState = cardState,
                 onBadge = {}
             )
@@ -91,7 +113,42 @@ private fun CredentialInfoWithClaimBadgesWidgetPreview() {
                 Spacer(modifier = Modifier.height(8.dp))
             }
             credentialInfoWithClaimBadgesWidget(
+                showsUnregisteredRequestCallout = true,
                 credentialCardState = cardState,
+                claimBadgesUiStates = listOf(
+                    ClaimBadgeUiState(
+                        localizedLabel = "Sensitive Claim",
+                        isSensitive = true
+                    ),
+                    ClaimBadgeUiState(
+                        localizedLabel = "Claim 2",
+                        isSensitive = false
+                    ),
+                    ClaimBadgeUiState(
+                        localizedLabel = "Non-sensitive Claim",
+                        isSensitive = false
+                    ),
+                    ClaimBadgeUiState(
+                        localizedLabel = "Some Claim",
+                        isSensitive = false
+                    ),
+                ),
+                onBadge = {}
+            )
+
+            credentialInfoWithClaimBadgesWidget(
+                showsUnregisteredRequestCallout = true,
+                credentialCardState = cardState,
+                onBadge = {},
+                onUnregisteredRequestInfo = {}
+            )
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            credentialInfoWithClaimBadgesWidget(
+                showsUnregisteredRequestCallout = true,
+                credentialCardState = cardState,
+                onUnregisteredRequestInfo = {},
                 claimBadgesUiStates = listOf(
                     ClaimBadgeUiState(
                         localizedLabel = "Sensitive Claim",

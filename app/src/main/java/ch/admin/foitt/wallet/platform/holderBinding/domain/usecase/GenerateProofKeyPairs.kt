@@ -11,5 +11,6 @@ fun interface GenerateProofKeyPairs {
     suspend operator fun invoke(
         amount: Int,
         proofTypeConfig: ProofTypeConfig,
+        actorDid: String,
     ): Result<List<BindingKeyPair>, GenerateProofKeyPairError>
 }

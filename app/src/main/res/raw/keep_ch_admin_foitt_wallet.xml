@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    AboutLibraries loads `raw/aboutlibraries.json` reflectively via `getIdentifier`, so the
+    optimized resource shrinker (default since AGP 9.0) strips it from release builds.
+    See the "Optimized Resource Shrinking / AGP 9.0" section of the AboutLibraries readme.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/aboutlibraries" />

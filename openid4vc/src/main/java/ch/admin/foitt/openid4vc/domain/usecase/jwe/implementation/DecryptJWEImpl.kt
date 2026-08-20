@@ -2,6 +2,7 @@ package ch.admin.foitt.openid4vc.domain.usecase.jwe.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.jwe.DecryptJWEError
 import ch.admin.foitt.openid4vc.domain.model.jwe.JWEError
+import ch.admin.foitt.openid4vc.domain.model.jwe.PayloadSizeExceededException
 import ch.admin.foitt.openid4vc.domain.usecase.jwe.DecryptJWE
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.runSuspendCatching
@@ -20,6 +21,7 @@ internal class DecryptJWEImpl @Inject constructor() : DecryptJWE {
         jweString: String,
         privateKey: PrivateKey,
         jweMaxCompressedCipherTextLength: Int,
+        jweMaxDecompressedPayloadSize: Int,
     ): Result<String, DecryptJWEError> = runSuspendCatching {
         val jwe = JWEObject.parse(jweString)
         val providedPublicKey = jwe.header.ephemeralPublicKey.toECKey()
@@ -33,9 +35,19 @@ internal class DecryptJWEImpl @Inject constructor() : DecryptJWE {
             setOf<JWEDecrypterOption>(MaxCompressedCipherTextLength(jweMaxCompressedCipherTextLength))
         )
 
+        val payloadBytes = jwe.payload.toBytes()
+        if (payloadBytes.size > jweMaxDecompressedPayloadSize) {
+            throw PayloadSizeExceededException(
+                "Decompressed JWE payload exceeds limit: ${payloadBytes.size} > $jweMaxDecompressedPayloadSize"
+            )
+        }
+
         jwe.payload.toString()
     }.mapError { throwable ->
         Timber.e(t = throwable, message = "Error during JWE decryption")
-        JWEError.Unexpected(throwable)
+        when (throwable) {
+            is PayloadSizeExceededException -> JWEError.PayloadSizeExceeded
+            else -> JWEError.Unexpected(throwable)
+        }
     }
 }

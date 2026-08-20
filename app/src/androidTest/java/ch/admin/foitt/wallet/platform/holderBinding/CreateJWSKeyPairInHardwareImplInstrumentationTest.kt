@@ -10,8 +10,8 @@ import ch.admin.foitt.wallet.platform.keyPairGenerator.domain.model.KeyPairError
 import ch.admin.foitt.wallet.platform.keyPairGenerator.domain.usecase.CreateJWSKeyPairInHardware
 import ch.admin.foitt.wallet.platform.keyPairGenerator.domain.usecase.implementation.CreateJWSKeyPairInHardwareImpl
 import ch.admin.foitt.wallet.platform.keyPairGenerator.domain.usecase.implementation.CreateKeyGenSpecImpl
-import ch.admin.foitt.wallet.util.SkipTestOnEmulator
 import ch.admin.foitt.wallet.util.RealDeviceTest
+import ch.admin.foitt.wallet.util.SkipTestOnEmulator
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
 import com.github.michaelbull.result.Err

@@ -27,6 +27,7 @@ class GenerateProofKeyPairsImpl @Inject constructor(
     override suspend fun invoke(
         amount: Int,
         proofTypeConfig: ProofTypeConfig,
+        actorDid: String,
     ): Result<List<BindingKeyPair>, GenerateProofKeyPairError> = coroutineBinding {
         val cryptographicSuite = getCryptographicSuite(proofTypeConfig).bind()
 
@@ -36,6 +37,7 @@ class GenerateProofKeyPairsImpl @Inject constructor(
                     when (val keyAttestationConfig = proofTypeConfig.keyAttestationsRequired) {
                         null -> createSoftwareKeyPair(cryptographicSuite).bind()
                         else -> createHardwareKeyPairWithKeyAttestation(
+                            actorDid = actorDid,
                             signingAlgorithm = cryptographicSuite,
                             keyStorageSecurityLevels = keyAttestationConfig.keyStorage
                         ).bind()
@@ -76,10 +78,12 @@ class GenerateProofKeyPairsImpl @Inject constructor(
     }
 
     private suspend fun createHardwareKeyPairWithKeyAttestation(
+        actorDid: String,
         signingAlgorithm: SigningAlgorithm,
         keyStorageSecurityLevels: List<KeyStorageSecurityLevel>?,
     ): Result<BindingKeyPair, GenerateProofKeyPairError> = coroutineBinding {
         val keyPairWithAttestation = requestKeyAttestation(
+            actorDid = actorDid,
             keyAlias = null,
             signingAlgorithm = signingAlgorithm,
             keyStorageSecurityLevels = keyStorageSecurityLevels,

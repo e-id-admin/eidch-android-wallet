@@ -30,10 +30,14 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialDisplayStatus
 import ch.admin.foitt.wallet.platform.preview.WalletComponentPreview
+import ch.admin.foitt.wallet.platform.utils.asDayMonthYear
+import ch.admin.foitt.wallet.platform.utils.asHourMinutes
+import ch.admin.foitt.wallet.platform.utils.toZonedDateTime
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTheme
 import java.time.Instant
-import java.time.temporal.ChronoUnit
+import java.time.LocalDate
+import java.time.ZoneId
 
 @Composable
 internal fun CredentialStatusBadge(
@@ -149,14 +153,13 @@ internal fun CredentialDisplayStatus.getText(): String = when (this) {
 
 @Composable
 private fun getNotYetValidText(validFrom: Instant, isAltText: Boolean): String {
-    val numberOfDays = ChronoUnit.DAYS.between(Instant.now(), validFrom)
-    val isValidInLessThan24h = numberOfDays < 1
+    val isSameDay = validFrom.toZonedDateTime().toLocalDate() == LocalDate.now(ZoneId.systemDefault())
 
     return when {
-        isValidInLessThan24h && isAltText -> stringResource(R.string.tk_credential_status_soon_alt)
-        isValidInLessThan24h -> stringResource(R.string.tk_credential_status_soon)
-        isAltText -> stringResource(R.string.tk_credential_status_notValidYet_alt, numberOfDays)
-        else -> stringResource(R.string.tk_credential_status_notValidYet, numberOfDays)
+        isSameDay && isAltText -> stringResource(R.string.tk_credential_status_soon_alt, validFrom.asHourMinutes())
+        isSameDay -> stringResource(R.string.tk_credential_status_soon, validFrom.asHourMinutes())
+        isAltText -> stringResource(R.string.tk_credential_status_notYetValid_alt, validFrom.asDayMonthYear())
+        else -> stringResource(R.string.tk_credential_status_notYetValid, validFrom.asDayMonthYear())
     }
 }
 

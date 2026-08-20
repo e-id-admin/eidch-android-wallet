@@ -2,6 +2,10 @@
 
 package ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model
 
+import ch.admin.foitt.openid4vc.domain.model.GetKeyPairError
+import ch.admin.foitt.openid4vc.domain.model.KeyPairError
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CreateDPoPProofJwtError
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOfferError
 import ch.admin.foitt.wallet.platform.appAttestation.domain.model.AttestationError
 import ch.admin.foitt.wallet.platform.appAttestation.domain.model.GenerateProofOfPossessionError
 import ch.admin.foitt.wallet.platform.appAttestation.domain.model.RequestClientAttestationError
@@ -40,6 +44,8 @@ interface EIdRequestError {
         AvSubmitCaseError,
         WalletPairingStateError,
         SetEIdPeerPushIdError,
+        AbortSIdProcessError,
+        VerifyWalletPairingError,
         SIdAPIError
 
     data object InvalidClientAttestation :
@@ -66,6 +72,8 @@ interface EIdRequestError {
 
     data object RequestInWrongState : SIdAPIError, PairWalletError, PairCurrentWalletError
 
+    data object UnauthorizedPairing : VerifyWalletPairingError, StartAutoVerificationError
+
     data class Unexpected(val cause: Throwable?) :
         EIdRequestCaseRepositoryError,
         EIdRequestStateRepositoryError,
@@ -85,7 +93,10 @@ interface EIdRequestError {
         AvSubmitCaseError,
         WalletPairingStateError,
         SetEIdPeerPushIdError,
-        SIdAPIError
+        AbortSIdProcessError,
+        VerifyWalletPairingError,
+        SIdAPIError,
+        CreateAutoVerificationDPoPError
 }
 
 sealed interface EIdRequestCaseRepositoryError
@@ -106,8 +117,30 @@ sealed interface AvUploadFilesError
 sealed interface AvSubmitCaseError
 sealed interface WalletPairingStateError
 sealed interface SetEIdPeerPushIdError
-
 sealed interface SIdAPIError
+sealed interface CreateAutoVerificationDPoPError
+sealed interface AbortSIdProcessError
+sealed interface VerifyWalletPairingError : StartAutoVerificationError
+
+internal fun SIdRepositoryError.toAbortSIdProcessError(): AbortSIdProcessError = when (this) {
+    is NetworkError -> this
+    is Unexpected -> this
+}
+
+internal fun RequestClientAttestationError.toAbortSIdProcessError(): AbortSIdProcessError = when (this) {
+    is AttestationError.NetworkError -> NetworkError
+    is AttestationError.SocketTimeoutError -> NetworkError
+    is AttestationError.Unexpected -> Unexpected(throwable)
+    is AttestationError.ValidationError -> Unexpected(Exception(message))
+}
+
+internal fun GenerateProofOfPossessionError.toAbortSIdProcessError(): AbortSIdProcessError = when (this) {
+    is AttestationError.Unexpected -> Unexpected(throwable)
+}
+
+internal fun EIdRequestCaseRepositoryError.toVerifyWalletPairingError(): VerifyWalletPairingError = when (this) {
+    is Unexpected -> this
+}
 
 internal fun SIdRepositoryError.toStartOnlineSessionError(): StartOnlineSessionError = when (this) {
     is Unexpected -> this
@@ -225,6 +258,10 @@ internal fun ProcessInvitationError.toPairCurrentWalletError(): PairCurrentWalle
     InvitationError.UnknownCredentialConfiguration,
     InvitationError.UnknownCredentialIdentifier,
     InvitationError.UnsupportedKeyStorageSecurityLevel -> InvalidDeferredCredentialOffer
+    InvitationError.UnverifiedIssuer,
+    is InvitationError.UnverifiedVerifier,
+    InvitationError.UnauthorizedIssuance,
+    is InvitationError.UnknownRegistry -> InvalidDeferredCredentialOffer
 }
 
 internal fun AvRepositoryError.toAvUploadFilesError(): AvUploadFilesError = when (this) {
@@ -241,6 +278,14 @@ internal fun AvRepositoryError.toAvSubmitCaseError(): AvSubmitCaseError = when (
 
 internal fun EIdRequestCaseRepositoryError.toAvSubmitCaseError(): AvSubmitCaseError = when (this) {
     is Unexpected -> this
+}
+
+internal fun EIdRequestFileRepositoryError.toAvSubmitCaseError(): AvSubmitCaseError = when (this) {
+    is Unexpected -> this
+}
+
+internal fun JsonParsingError.toAvSubmitCaseError(): AvSubmitCaseError = when (this) {
+    is JsonError.Unexpected -> Unexpected(throwable)
 }
 
 internal fun RequestClientAttestationError.toApplyRequestError(): ApplyRequestError = when (this) {
@@ -396,6 +441,32 @@ suspend fun Throwable.toPairWalletError(): PairWalletError = when (
     is RequestInWrongState -> apiError
     is NetworkError -> apiError
     is Unexpected -> apiError
+}
+
+internal fun CreateAutoVerificationDPoPError.toAvRepositoryError(): AvRepositoryError = when (this) {
+    is Unexpected -> this
+}
+
+internal fun CreateAutoVerificationDPoPError.toAvSubmitCaseError(): AvSubmitCaseError = when (this) {
+    is Unexpected -> this
+}
+
+internal fun GetKeyPairError.toCreateAutoVerificationDPoPError(): CreateAutoVerificationDPoPError = when (this) {
+    is KeyPairError.NotFound -> {
+        val throwable = IllegalStateException("DPoP: get key pair failed with not found")
+        Timber.e(t = throwable)
+        Unexpected(throwable)
+    }
+    is KeyPairError.Unexpected -> Unexpected(cause = throwable)
+}
+
+internal fun CreateDPoPProofJwtError.toCreateAutoVerificationDPoPError(): CreateAutoVerificationDPoPError = when (this) {
+    is CredentialOfferError.Unexpected -> Unexpected(cause)
+    is CredentialOfferError.UnsupportedCryptographicSuite -> {
+        val throwable = Exception("DPoP: unsupported cryptographic suite")
+        Timber.e(t = throwable)
+        Unexpected(throwable)
+    }
 }
 
 private fun SIdErrorResponse.contains(errorCode: String) = errors.any { error -> error.code == errorCode }

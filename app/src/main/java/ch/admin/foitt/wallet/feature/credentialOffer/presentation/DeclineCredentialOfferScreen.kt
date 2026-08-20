@@ -4,15 +4,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
-import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
 import ch.admin.foitt.wallet.platform.badges.presentation.BadgeBottomSheet
 import ch.admin.foitt.wallet.platform.credential.presentation.CredentialActionFeedbackCard
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 import ch.admin.foitt.wallet.theme.WalletTheme
@@ -31,13 +31,14 @@ fun DeclineCredentialOfferScreen(
             onDismiss = viewModel::onDismissBottomSheet
         )
     }
-
     DeclineCredentialOfferScreenContent(
         isLoading = viewModel.isLoading.collectAsStateWithLifecycle().value,
         issuer = viewModel.uiState.collectAsStateWithLifecycle().value.issuer,
-        onBadge = viewModel::onBadge,
+        onActorNameTap = viewModel::onActorNameTap,
+        onReportedActorInfo = viewModel::onReportedActorInfo,
         onCancel = viewModel::onCancel,
         onDecline = viewModel::onDecline,
+        onDeclineAndReport = viewModel::onDeclineAndReport
     )
 }
 
@@ -45,22 +46,27 @@ fun DeclineCredentialOfferScreen(
 private fun DeclineCredentialOfferScreenContent(
     isLoading: Boolean,
     issuer: ActorUiState,
-    onBadge: (BadgeType) -> Unit,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit,
     onCancel: () -> Unit,
     onDecline: () -> Unit,
+    onDeclineAndReport: () -> Unit,
 ) {
     CredentialActionFeedbackCard(
         isLoading = isLoading,
         issuer = issuer,
-        contentTextFirstParagraphText = R.string.tk_receive_declineOffer_primary,
-        contentTextSecondParagraphText = R.string.tk_receive_declineOffer_secondary,
+        contentTextFirstParagraphText = stringResource(R.string.tk_receive_declineOffer_primary),
+        contentTextSecondParagraphText = stringResource(R.string.tk_receive_declineOffer_secondary),
         iconAlwaysVisible = false,
         contentIcon = R.drawable.wallet_ic_circular_questionmark,
-        primaryButtonText = R.string.tk_receive_declineOffer_primaryButton,
+        primaryButtonText = stringResource(R.string.tk_receive_declineOffer_primaryButton),
         secondaryButtonText = R.string.tk_global_cancel,
+        ternaryButtonText = R.string.tk_receive_declineOffer_ternaryButton,
+        onActorNameTap = onActorNameTap,
+        onReportedActorInfo = onReportedActorInfo,
         onPrimaryButton = onDecline,
         onSecondaryButton = onCancel,
-        onBadge = onBadge,
+        onTernaryButton = onDeclineAndReport
     )
 }
 
@@ -79,9 +85,11 @@ private fun DeclineCredentialOfferScreenContentPreview() {
                 actorComplianceState = ActorComplianceState.REPORTED,
                 nonComplianceReason = "report reason",
             ),
-            onBadge = {},
+            onActorNameTap = {},
+            onReportedActorInfo = {},
             onCancel = {},
             onDecline = {},
+            onDeclineAndReport = {},
         )
     }
 }

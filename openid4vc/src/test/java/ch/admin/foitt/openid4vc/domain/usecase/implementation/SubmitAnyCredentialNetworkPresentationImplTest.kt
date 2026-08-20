@@ -3,10 +3,10 @@ package ch.admin.foitt.openid4vc.domain.usecase.implementation
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationRequest
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseConfig
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseParam
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseResponse
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseType
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestError
 import ch.admin.foitt.openid4vc.domain.repository.PresentationRequestRepository
-import ch.admin.foitt.openid4vc.util.assertErr
 import ch.admin.foitt.openid4vc.util.assertErrorType
 import ch.admin.foitt.openid4vc.util.assertOk
 import com.github.michaelbull.result.Err
@@ -32,6 +32,9 @@ class SubmitAnyCredentialNetworkPresentationImplTest {
     @MockK
     private lateinit var mockAuthorizationRequest: AuthorizationRequest
 
+    @MockK
+    private lateinit var mockAuthorizationResponseResponse: AuthorizationResponseResponse
+
     private lateinit var useCase: SubmitAnyCredentialNetworkPresentationImpl
 
     @BeforeEach
@@ -56,12 +59,14 @@ class SubmitAnyCredentialNetworkPresentationImplTest {
                 url = URL(RESPONSE_URI),
                 authorizationResponseConfig = authorizationResponseConfigDCQL,
             )
-        } returns Ok(Unit)
+        } returns Ok(mockAuthorizationResponseResponse)
 
-        useCase(
+        val result = useCase(
             authorizationRequest = mockAuthorizationRequest,
             authorizationResponseConfig = authorizationResponseConfigDCQL,
         ).assertOk()
+
+        assertEquals(mockAuthorizationResponseResponse, result)
 
         coVerify(exactly = 1) {
             mockPresentationRequestRepository.submitPresentation(URL(RESPONSE_URI), authorizationResponseConfigDCQL)
@@ -87,12 +92,10 @@ class SubmitAnyCredentialNetworkPresentationImplTest {
             mockPresentationRequestRepository.submitPresentation(any(), any())
         } returns Err(PresentationRequestError.Unexpected(exception))
 
-        val result = useCase(
+        val error = useCase(
             authorizationRequest = mockAuthorizationRequest,
             authorizationResponseConfig = authorizationResponseConfigDCQL,
-        )
-
-        val error = result.assertErrorType(PresentationRequestError.Unexpected::class)
+        ).assertErrorType(PresentationRequestError.Unexpected::class)
         assertEquals(exception, error.throwable)
     }
 
@@ -103,12 +106,10 @@ class SubmitAnyCredentialNetworkPresentationImplTest {
             mockPresentationRequestRepository.submitPresentation(any(), any())
         } returns Err(PresentationRequestError.NetworkError)
 
-        val result = useCase(
+        useCase(
             authorizationRequest = mockAuthorizationRequest,
             authorizationResponseConfig = authorizationResponseConfigDCQL,
-        )
-
-        assertEquals(PresentationRequestError.NetworkError, result.assertErr())
+        ).assertErrorType(PresentationRequestError.NetworkError::class)
     }
 
     private val authorizationResponseConfigDCQL = AuthorizationResponseConfig(

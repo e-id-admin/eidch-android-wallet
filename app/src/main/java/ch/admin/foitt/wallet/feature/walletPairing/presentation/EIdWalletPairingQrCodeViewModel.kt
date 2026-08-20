@@ -9,6 +9,7 @@ import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.PairWal
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.WalletPairingState
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.WalletPairingStateError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.WalletPairingStateResponse
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.AddWalletPairingId
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.PairWallet
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.WalletPairingStatus
 import ch.admin.foitt.wallet.platform.messageEvents.domain.model.WalletPairingEvent
@@ -24,7 +25,7 @@ import ch.admin.foitt.wallet.platform.utils.trackCompletion
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getError
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -43,6 +44,7 @@ import timber.log.Timber
 internal class EIdWalletPairingQrCodeViewModel @AssistedInject constructor(
     private val pairWallet: PairWallet,
     private val walletPairingStatus: WalletPairingStatus,
+    private val addWalletPairingId: AddWalletPairingId,
     private val navManager: NavigationManager,
     private val walletPairingEventRepository: WalletPairingEventRepository,
     setTopBarState: SetTopBarState,
@@ -139,6 +141,9 @@ internal class EIdWalletPairingQrCodeViewModel @AssistedInject constructor(
                 walletPairingStatusResponse.update {
                     statusResponse
                 }
+                if (statusResponse.get()?.state == WalletPairingState.ACCEPTED) {
+                    addWalletPairingId(caseId, walletResponse.walletPairingId)
+                }
                 delay(POLLING_DELAY)
             }
         }
@@ -200,7 +205,7 @@ internal class EIdWalletPairingQrCodeViewModel @AssistedInject constructor(
         pairWalletResponse.update {
             pairWallet(caseId)
         }
-        pairWalletResponse.value?.onSuccess {
+        pairWalletResponse.value?.onOk {
             startPolling(it)
         }
     }

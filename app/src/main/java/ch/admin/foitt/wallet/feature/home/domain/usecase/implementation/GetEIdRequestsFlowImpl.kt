@@ -16,7 +16,7 @@ import ch.admin.foitt.wallet.platform.utils.mapOk
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.get
-import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onErr
 import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 import java.util.Locale
@@ -45,15 +45,17 @@ class GetEIdRequestsFlowImpl @Inject constructor(
         lastName = case.lastName,
         onlineSessionStartOpenAt = state?.let {
             runSuspendCatching {
-                it.onlineSessionStartOpenAt?.epochSecondsToZonedDateTime()?.asDayFullMonthYear(currentLocale)
-            }.onFailure { throwable ->
+                it.onlineSessionStartOpenAt?.epochSecondsToZonedDateTime()
+                    ?.asDayFullMonthYear(currentLocale)
+            }.onErr { throwable ->
                 Timber.w(throwable, "Could not parse onlineSessionStartOpenAt date")
             }.get()
         },
         onlineSessionStartTimeoutAt = state?.let {
             runSuspendCatching {
-                it.onlineSessionStartTimeoutAt?.epochSecondsToZonedDateTime()?.asDayFullMonthYear(currentLocale)
-            }.onFailure { throwable ->
+                it.onlineSessionStartTimeoutAt?.epochSecondsToZonedDateTime()
+                    ?.asDayFullMonthYear(currentLocale)
+            }.onErr { throwable ->
                 Timber.w(throwable, "Could not parse onlineSessionStartTimeoutAt date")
             }.get()
         },

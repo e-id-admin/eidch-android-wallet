@@ -11,6 +11,7 @@ data class PresentationRequestUiState(
     val requestedClaims: List<CredentialClaimCluster>,
     val claimBadgesUiStates: List<ClaimBadgeUiState>,
     val numberOfClaims: Int,
+    val showsUnregisteredRequestCallout: Boolean,
 ) {
     companion object {
         val EMPTY by lazy {
@@ -29,6 +30,7 @@ data class PresentationRequestUiState(
                 requestedClaims = emptyList(),
                 claimBadgesUiStates = emptyList(),
                 numberOfClaims = 0,
+                showsUnregisteredRequestCallout = true
             )
         }
     }

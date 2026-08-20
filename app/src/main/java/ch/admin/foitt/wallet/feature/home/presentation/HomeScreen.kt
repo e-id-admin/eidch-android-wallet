@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -31,7 +30,7 @@ import androidx.compose.material.pullrefresh.PullRefreshDefaults
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -109,7 +108,7 @@ private fun HomeScreenContent(
     onCloseToast: () -> Unit,
     onRefresh: () -> Unit,
     @StringRes eventMessage: Int?,
-    windowWidthClass: WindowWidthClass = currentWindowAdaptiveInfo().windowWidthClass()
+    windowWidthClass: WindowWidthClass = currentWindowAdaptiveInfoV2().windowWidthClass()
 ) = WalletLayouts.HomeContainer(
     windowWidthClass = windowWidthClass,
     containerState = containerState,
@@ -139,8 +138,6 @@ private fun HomeScreenContent(
             paddingValues = paddingValues,
             onCredentialClick = screenState.onCredentialClick,
             onRefresh = onRefresh,
-            messageToast = eventMessage,
-            onCloseToast = onCloseToast,
         )
 
         is HomeScreenState.NoCredential -> WalletEmptyWithEIdRequestsContent(
@@ -167,6 +164,15 @@ private fun HomeScreenContent(
         HomeScreenState.UnexpectedError -> {
         }
     }
+
+    ToastAnimated(
+        isVisible = eventMessage != null,
+        isSnackBarDesign = true,
+        message = eventMessage,
+        onCloseToast = onCloseToast,
+        iconEnd = R.drawable.wallet_ic_cross,
+        contentBottomPadding = paddingValues.calculateBottomPadding() + Sizes.s06
+    )
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -301,14 +307,16 @@ fun WalletEmptyContent(
                 Buttons.FilledTertiary(
                     text = stringResource(R.string.tk_global_getEid_greenButton),
                     onClick = onRequestEId,
-                    startIcon = painterResource(id = R.drawable.wallet_ic_next_button)
+                    startIcon = painterResource(id = R.drawable.wallet_ic_next_button),
+                    isSmall = true
                 )
             }
             if (showBetaIdRequestButton) {
                 Buttons.FilledTertiary(
                     text = stringResource(R.string.tk_global_getbetaid_primarybutton),
                     onClick = onRequestBetaId,
-                    startIcon = painterResource(id = R.drawable.wallet_ic_next_button)
+                    startIcon = painterResource(id = R.drawable.wallet_ic_next_button),
+                    isSmall = true
                 )
             }
         }
@@ -320,8 +328,6 @@ fun WalletEmptyContent(
 private fun Credentials(
     credentialsState: List<CredentialCardState>,
     isRefreshing: Boolean,
-    @StringRes messageToast: Int?,
-    onCloseToast: () -> Unit,
     paddingValues: PaddingValues,
     ongoingEIdRequests: List<SIdRequestDisplayData>,
     onEidNotificationAction: (caseId: String, status: SIdRequestDisplayStatus) -> Unit,
@@ -375,15 +381,6 @@ private fun Credentials(
             state = pullRefreshState,
         )
     }
-
-    ToastAnimated(
-        isVisible = messageToast != null,
-        isSnackBarDesign = true,
-        messageToast = messageToast,
-        onCloseToast = onCloseToast,
-        iconEnd = R.drawable.wallet_ic_cross,
-        contentBottomPadding = paddingValues.calculateBottomPadding() + Sizes.s06
-    )
 }
 
 @Composable

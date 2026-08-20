@@ -2,12 +2,14 @@ package ch.admin.foitt.wallet.feature.eIdApplicationProcess.presentation
 
 import android.content.Context
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
+import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination.EIdNotSupportedDeviceScreen
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination.EIdPrivacyPolicyScreen
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.hasGyroscope
+import ch.admin.foitt.wallet.platform.utils.isUsbImageDeviceDetected
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -26,7 +28,9 @@ class EIdIntroViewModel @Inject constructor(
     val hasGyroscope = appContext.hasGyroscope()
 
     fun onRequestEId() {
-        if (hasGyroscope) {
+        if (appContext.isUsbImageDeviceDetected) {
+            navManager.navigateTo(Destination.EIdExternalDeviceDetectedScreen)
+        } else if (hasGyroscope) {
             navManager.navigateTo(EIdPrivacyPolicyScreen)
         } else {
             navManager.navigateTo(EIdNotSupportedDeviceScreen)

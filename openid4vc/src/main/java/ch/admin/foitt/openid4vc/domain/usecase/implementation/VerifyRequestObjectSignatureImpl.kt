@@ -111,24 +111,20 @@ internal class VerifyRequestObjectSignatureImpl @Inject constructor(
             VcSdJwtError.Unexpected(throwable)
         }.bind()
 
-        val (attestationSignatureDid, kid) = runSuspendCatching {
-            val keyId = checkNotNull(attestationJwt.signedJwt.header.keyID) {
-                "kid is missing"
-            }
+        val kid = attestationJwt.keyId
+        val attestationSignatureDid = kid?.let { keyId ->
             val did = didResolverHelper.getDidStringFromAbsoluteKeyId(keyId)
                 .mapError { throwable -> VcSdJwtError.Unexpected(throwable) }
                 .bind()
 
-            did to keyId
-        }.mapError { throwable -> VcSdJwtError.Unexpected(throwable) }
-            .bind()
+            verifyJwtSignatureFromDid(
+                kid = keyId,
+                jwt = attestationJwt,
+            ).mapError(VerifyJwtSignatureFromDidError::toVerifyRequestObjectSignatureError)
+                .bind()
 
-        // validate signature of attestation jwt
-        verifyJwtSignatureFromDid(
-            kid = kid,
-            jwt = attestationJwt,
-        ).mapError(VerifyJwtSignatureFromDidError::toVerifyRequestObjectSignatureError)
-            .bind()
+            did
+        }
 
         val requestObjectPublicKey = resolvePublicKeyFromAttestation(attestationJwt = attestationJwt).bind()
 

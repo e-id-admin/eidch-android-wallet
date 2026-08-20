@@ -12,8 +12,8 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarAction
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -87,8 +87,8 @@ class EIdPushNotificationViewModel @AssistedInject constructor(
         _uiState.update { EIdPushNotificationUiState.Loading }
         viewModelScope.launch {
             registerEIdPushNotification(caseId)
-                .onFailure { error() }
-                .onSuccess {
+                .onErr { error() }
+                .onOk {
                     finish()
                 }
         }
@@ -97,8 +97,8 @@ class EIdPushNotificationViewModel @AssistedInject constructor(
     private fun finish() {
         viewModelScope.launch {
             fetchSIdStatus(caseId)
-                .onFailure { error() }
-                .onSuccess { stateResponse ->
+                .onErr { error() }
+                .onOk { stateResponse ->
                     if (isLegalCaseNeeded(stateResponse.legalRepresentant)) {
                         navigateToNextScreen(Destination.EIdGuardianSelectionScreen(caseId = caseId))
                     } else if (stateResponse.state == EIdRequestQueueState.READY_FOR_ONLINE_SESSION) {

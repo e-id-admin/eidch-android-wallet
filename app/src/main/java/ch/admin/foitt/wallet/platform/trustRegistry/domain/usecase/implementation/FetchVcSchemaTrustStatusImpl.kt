@@ -12,6 +12,7 @@ import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatementT
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VerificationV1TrustStatement
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toFetchVcSchemaTrustStatusError
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toUnexpected
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.repository.TrustStatementRepository
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.FetchVcSchemaTrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.GetTrustDomainFromDid
@@ -59,9 +60,7 @@ class FetchVcSchemaTrustStatusImpl @Inject constructor(
 
         val trustStatements = runSuspendCatching {
             trustStatementsRaw.map { VcSdJwt(it) }
-        }.mapError { throwable ->
-            throwable.toFetchVcSchemaTrustStatusError(message = "trust statement vc sd jwt creation failed")
-        }.bind()
+        }.mapError(Throwable::toUnexpected).bind()
 
         val filteredStatements = trustStatements
             .filter {

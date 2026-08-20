@@ -53,10 +53,6 @@
 -dontwarn com.google.android.gms.tasks.Tasks
 -dontwarn com.google.android.play.core.integrity.**
 
-#TODO: Those rules can be removed, when added to the consumer proguard rules of the kmp sdk, Please test release build, when removing.
--keep class com.sun.jna.** { *; }
--keep class * implements com.sun.jna.** { *; }
-
 -dontwarn java.awt.**
 -dontwarn javax.swing.**
 

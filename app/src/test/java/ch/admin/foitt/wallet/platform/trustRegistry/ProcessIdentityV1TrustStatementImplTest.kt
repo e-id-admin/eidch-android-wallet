@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.platform.trustRegistry
 
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwt
+import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.IdentityV1TrustStatement
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustRegistryError
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatementType
@@ -12,6 +13,7 @@ import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.implementatio
 import ch.admin.foitt.wallet.util.SafeJsonTestInstance
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
+import ch.admin.foitt.wallet.util.assertOkNullable
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.annotation.UnsafeResultValueAccess
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import java.net.URL
 
 class ProcessIdentityV1TrustStatementImplTest {
@@ -35,6 +38,9 @@ class ProcessIdentityV1TrustStatementImplTest {
 
     @MockK
     private lateinit var mockValidateTrustStatement: ValidateTrustStatement
+
+    @MockK
+    private lateinit var mockEnvironmentSetupRepository: EnvironmentSetupRepository
 
     private val safeJson = SafeJsonTestInstance.safeJson
 
@@ -48,6 +54,7 @@ class ProcessIdentityV1TrustStatementImplTest {
             trustStatementRepository = mockTrustStatementRepository,
             validateTrustStatement = mockValidateTrustStatement,
             safeJson = safeJson,
+            environmentSetupRepository = mockEnvironmentSetupRepository,
         )
 
         setupDefaultMocks()
@@ -126,6 +133,17 @@ class ProcessIdentityV1TrustStatementImplTest {
         useCase(issuerDid).assertErrorType(TrustRegistryError.Unexpected::class)
     }
 
+    @Test
+    fun `Processing IdentityV1 with termination feature flag disabled returns null on any error`() = runTest {
+        coEvery { mockEnvironmentSetupRepository.terminateOnInvalidIdTSEnabled } returns false
+        coEvery {
+            mockGetTrustUrlFromDid(trustStatementType = TrustStatementType.IDENTITY, actorDid = issuerDid, vcSchemaId = null)
+        } returns Err(TrustRegistryError.Unexpected(IllegalStateException("get trust url error")))
+
+        val result = useCase(issuerDid).assertOkNullable()
+        assertNull(result)
+    }
+
     private fun setupDefaultMocks() {
         coEvery {
             mockGetTrustUrlFromDid(trustStatementType = TrustStatementType.IDENTITY, actorDid = issuerDid, vcSchemaId = null)
@@ -134,6 +152,8 @@ class ProcessIdentityV1TrustStatementImplTest {
         coEvery { mockTrustStatementRepository.fetchTrustStatements(any()) } returns Ok(listOf(trustStatementRaw))
 
         coEvery { mockValidateTrustStatement(any(), issuerDid) } returns Ok(validTrustStatement)
+
+        coEvery { mockEnvironmentSetupRepository.terminateOnInvalidIdTSEnabled } returns true
     }
 
     private val issuerDid = "issuer did"

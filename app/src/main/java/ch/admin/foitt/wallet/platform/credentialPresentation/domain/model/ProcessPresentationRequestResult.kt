@@ -13,6 +13,11 @@ sealed interface ProcessPresentationRequestResult {
         val presentationRequest: PresentationRequestWithRaw,
     ) : ProcessPresentationRequestResult
 
+    data class UntrustedQuery(
+        val credentials: Set<CompatibleCredential>,
+        val presentationRequest: PresentationRequestWithRaw,
+    ) : ProcessPresentationRequestResult
+
     fun toProcessInvitationResult(): ProcessInvitationResult =
         when (this) {
             is Credential -> ProcessInvitationResult.PresentationRequest(
@@ -25,5 +30,10 @@ sealed interface ProcessPresentationRequestResult {
                     credentials = credentials,
                     request = presentationRequest,
                 )
+
+            is UntrustedQuery -> ProcessInvitationResult.PresentationRequestReview(
+                credentials = credentials,
+                request = presentationRequest,
+            )
         }
 }

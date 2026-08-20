@@ -77,28 +77,13 @@ class CreateCredentialRequestProofsJwtImplTest {
     }
 
     @Test
-    fun `a created proof jwt without nonce should have a valid signature`() = runTest(testDispatcher) {
-        val keyPair = VALID_KEY_PAIR_HARDWARE
-        val proofJwt = createCredentialRequestProofsJwtUseCase(
-            keyPairs = listOf(BindingKeyPair(keyPair, null)),
-            issuer = CREDENTIAL_ISSUER.toString(),
-            cNonce = C_NONCE,
-        )
-        proofJwt.assertOk()
-        val jwt = proofJwt.get()?.jwt?.first()
-        val publicKey = keyPair.keyPair.public as ECPublicKey
-        val verifier = ECDSAVerifier(publicKey)
-        assertTrue(SignedJWT.parse(jwt).verify(verifier), "")
-    }
-
-    @Test
     fun `a created proof jwt with a key attestation jwt should have a valid signature and contain the attestation jwt as header`() =
         runTest(testDispatcher) {
             val keyPair = VALID_KEY_PAIR_HARDWARE
             val proofJwt = createCredentialRequestProofsJwtUseCase(
                 keyPairs = listOf(BindingKeyPair(keyPair, mockKeyAttestationJwt)),
                 issuer = CREDENTIAL_ISSUER.toString(),
-                cNonce = null,
+                cNonce = C_NONCE,
             ).assertOk()
 
             val jwt = proofJwt.jwt.first()

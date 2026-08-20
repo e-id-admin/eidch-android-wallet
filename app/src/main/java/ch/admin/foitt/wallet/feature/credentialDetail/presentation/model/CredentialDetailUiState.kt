@@ -1,13 +1,14 @@
 package ch.admin.foitt.wallet.feature.credentialDetail.presentation.model
 
 import androidx.compose.ui.graphics.Color
+import ch.admin.foitt.wallet.feature.credentialDetail.domain.model.IssuanceType
 import ch.admin.foitt.wallet.platform.activityList.presentation.model.ActivityUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialDisplayStatus
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimCluster
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 
@@ -15,8 +16,10 @@ data class CredentialDetailUiState(
     val credential: CredentialCardState,
     val clusterItems: List<CredentialClaimCluster>,
     val issuer: ActorUiState,
+    val issuanceType: IssuanceType?,
     val areActivitiesEnabled: Boolean,
     val activities: List<ActivityUiState>,
+    val showBatchWarning: Boolean,
 ) {
     companion object {
         val EMPTY = CredentialDetailUiState(
@@ -41,8 +44,10 @@ data class CredentialDetailUiState(
                 actorComplianceState = ActorComplianceState.UNKNOWN,
                 nonComplianceReason = null,
             ),
+            issuanceType = null,
             areActivitiesEnabled = true,
             activities = emptyList(),
+            showBatchWarning = false,
         )
     }
 }

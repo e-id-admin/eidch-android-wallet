@@ -30,7 +30,7 @@ internal class CreateCredentialRequestProofsJwtImpl @Inject constructor(
     override suspend operator fun invoke(
         keyPairs: List<BindingKeyPair>,
         issuer: String,
-        cNonce: String?,
+        cNonce: String,
     ) = coroutineBinding {
         val attestationJwts = keyPairs.map { bindingKeyPair ->
             val keyPair = bindingKeyPair.keyPair
@@ -66,12 +66,12 @@ internal class CreateCredentialRequestProofsJwtImpl @Inject constructor(
 
     private fun createPayload(
         issuer: String,
-        cNonce: String?,
+        cNonce: String,
     ) = JWTClaimsSet
         .Builder()
         .audience(issuer)
         .apply {
-            cNonce?.let { claim("nonce", cNonce) }
+            claim("nonce", cNonce)
         }
         .issueTime(Date())
         .build()

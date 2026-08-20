@@ -22,8 +22,8 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getError
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -110,13 +110,16 @@ internal class EIdProcessDataViewModel @AssistedInject constructor(
             uploadProgress.value = 0f
             uploadFilesResult.value = null
 
-            uploadAllFiles(caseId = caseId, accessToken = jwt).collect { result ->
+            uploadAllFiles(
+                caseId = caseId,
+                accessToken = jwt
+            ).collect { result ->
                 result
-                    .onSuccess { progress ->
+                    .onOk { progress ->
                         // Add 1 to total to account for submitCaseId
                         uploadProgress.value = progress.completed.toFloat() / (progress.total + 1)
                     }
-                    .onFailure { error ->
+                    .onErr { error ->
                         uploadFilesResult.value = Err(error)
                     }
             }
@@ -125,7 +128,7 @@ internal class EIdProcessDataViewModel @AssistedInject constructor(
                 uploadFilesResult.value = Ok(Unit)
                 submitCaseId(caseId = caseId, accessToken = jwt)
                     .also { submitCaseIdResult.value = it }
-                    .onSuccess {
+                    .onOk {
                         // Needs to be called cause track completion is done after navigation
                         isLoading.value = false
                         // Small delay to let animations finish before navigating

@@ -19,7 +19,7 @@ object MockBatchRefreshData {
     const val ACCESS_TOKEN = "access-token"
     val tokenType = TokenType.BEARER
     const val SELECTED_CONFIG_ID = "config-id"
-    const val CREDENTIAL_ISSUER = "https://issuer.example"
+    val ISSUER_URL = URL("https://issuer.example")
     const val KEY_ID = "dpop-key-id"
 
     fun createBatchRefreshData(
@@ -38,7 +38,7 @@ object MockBatchRefreshData {
         credential = Credential(
             id = CREDENTIAL_ID,
             format = CredentialFormat.VC_SD_JWT,
-            issuerUrl = URL(CREDENTIAL_ISSUER),
+            issuerUrl = ISSUER_URL,
             selectedConfigurationId = SELECTED_CONFIG_ID,
         ),
         batchData = BatchRefreshDataEntity(

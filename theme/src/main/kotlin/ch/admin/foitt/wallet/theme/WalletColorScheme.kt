@@ -82,6 +82,8 @@ data class WalletColorScheme(
     val inactiveOverlay: Color,
 
     val progressTrackColor: Color,
+    val calloutSurface: Color,
+    val calloutBorder: Color
 ) {
     @Stable
     internal val materialColorScheme: ColorScheme by lazy {
@@ -212,6 +214,8 @@ data class WalletColorScheme(
                 onSensitiveBadge = WalletColors.purple27,
                 inactiveOverlay = WalletColors.transparentWhite03,
                 progressTrackColor = WalletColors.accentPurple,
+                calloutSurface = WalletColors.callOutSurfaceOrange,
+                calloutBorder = WalletColors.callOutBorderOrange,
             )
         }
 
@@ -290,6 +294,8 @@ data class WalletColorScheme(
                 inactiveOverlay = WalletColors.tansparentBlack03,
 
                 progressTrackColor = WalletColors.accentBlueDark,
+                calloutSurface = WalletColors.callOutSurfaceOrangeDark,
+                calloutBorder = WalletColors.callOutBorderOrangeDark,
             )
         }
     }

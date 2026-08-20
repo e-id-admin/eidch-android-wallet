@@ -35,8 +35,6 @@ object OcaMocks {
     const val ATTRIBUTE_LABEL_AGE_EN = "Age"
     const val ATTRIBUTE_LABEL_AGE_DE = "Alter"
     const val CREDENTIAL_FORMAT = "vc+sd-jwt"
-    const val JSON_PATH_FIRSTNAME = "$.firstname"
-    const val JSON_PATH_AGE = "$.age"
     val CLAIMS_PATH_POINTER_FIRSTNAME = createClaimsPathPointer("firstname")
     val CLAIMS_PATH_POINTER_STRING_FIRSTNAME = CLAIMS_PATH_POINTER_FIRSTNAME.toPointerString()
     val CLAIMS_PATH_POINTER_AGE = createClaimsPathPointer("age")

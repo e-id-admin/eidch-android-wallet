@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.platform.login.domain.usecase.implementation
 
 import ch.admin.foitt.wallet.platform.batch.domain.usecase.RefreshBatchCredentials
+import ch.admin.foitt.wallet.platform.credential.domain.repository.CredentialRefreshRepository
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.RefreshDeferredCredentials
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateAllCredentialStatuses
 import ch.admin.foitt.wallet.platform.database.domain.model.DatabaseState
@@ -50,6 +51,9 @@ class AfterLoginWorkImplTest {
     @MockK
     private lateinit var mockUpdatePushToken: UpdatePushToken
 
+    @MockK(relaxed = true)
+    private lateinit var mockCredentialRefreshRepository: CredentialRefreshRepository
+
     private lateinit var stateFlow: MutableStateFlow<DatabaseState>
 
     private lateinit var useCase: AfterLoginWork
@@ -71,6 +75,7 @@ class AfterLoginWorkImplTest {
             updateAllSIdStatuses = mockUpdateAllSIdStatuses,
             refreshDeferredCredentials = mockRefreshDeferredCredentials,
             refreshBatchCredentials = mockRefreshBatchCredentials,
+            credentialRefreshRepository = mockCredentialRefreshRepository,
             environmentSetupRepository = mockEnvironmentSetupRepository,
             updatePushToken = mockUpdatePushToken,
         )
@@ -100,6 +105,7 @@ class AfterLoginWorkImplTest {
         job.cancel()
 
         coVerifyOrder {
+            mockCredentialRefreshRepository.markRefreshed()
             mockRefreshDeferredCredentials()
             mockRefreshBatchCredentials()
             mockUpdateAllSIdStatuses()
@@ -127,6 +133,7 @@ class AfterLoginWorkImplTest {
         job.cancel()
 
         coVerify(exactly = 0) {
+            mockCredentialRefreshRepository.markRefreshed()
             mockRefreshBatchCredentials()
             mockRefreshDeferredCredentials()
             mockUpdateAllSIdStatuses()

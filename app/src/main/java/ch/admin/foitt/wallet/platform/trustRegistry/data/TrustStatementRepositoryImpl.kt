@@ -1,8 +1,9 @@
 package ch.admin.foitt.wallet.platform.trustRegistry.data
 
 import ch.admin.foitt.openid4vc.di.OpenId4VcModule.Companion.NAMED_DEFAULT_HTTP_CLIENT
+import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatementRepositoryError
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toTrustStatementRepositoryError
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toUnexpected
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.repository.TrustStatementRepository
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.runSuspendCatching
@@ -20,7 +21,21 @@ class TrustStatementRepositoryImpl @Inject constructor(
     override suspend fun fetchTrustStatements(url: URL): Result<List<String>, TrustStatementRepositoryError> =
         runSuspendCatching<List<String>> {
             httpClient.get(url).body()
-        }.mapError { throwable ->
-            throwable.toTrustStatementRepositoryError("TrustStatementRepository error")
-        }
+        }.mapError(Throwable::toUnexpected)
+
+    override suspend fun fetchProtectedIssuanceTrustListStatement(
+        trustRegistryDomain: String,
+    ): Result<Jwt, TrustStatementRepositoryError> = runSuspendCatching {
+        val url = URL("https://$trustRegistryDomain/api/v2/protected-issuance-trust-list")
+        val response = httpClient.get(url)
+        Jwt(response.body())
+    }.mapError(Throwable::toUnexpected)
+
+    override suspend fun fetchNonComplianceTrustListStatement(
+        trustRegistryDomain: String,
+    ): Result<Jwt, TrustStatementRepositoryError> = runSuspendCatching {
+        val url = URL("https://$trustRegistryDomain/api/v2/non-compliance-trust-list")
+        val response = httpClient.get(url)
+        Jwt(response.body())
+    }.mapError(Throwable::toUnexpected)
 }

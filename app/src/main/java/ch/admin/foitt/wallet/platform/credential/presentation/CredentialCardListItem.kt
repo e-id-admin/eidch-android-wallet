@@ -2,6 +2,7 @@ package ch.admin.foitt.wallet.platform.credential.presentation
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -105,13 +106,29 @@ fun CredentialCardListItem(
         leadingContent = {
             CredentialCardVerySmall(credentialCardState)
         },
-        trailingContent = onClick?.let {
+        trailingContent = if (credentialCardState.showBatchWarning || onClick != null) {
             {
-                Icon(
-                    painter = painterResource(id = R.drawable.wallet_ic_chevron_right),
-                    contentDescription = null,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Sizes.s02)
+                ) {
+                    if (credentialCardState.showBatchWarning) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.wallet_ic_warning),
+                            contentDescription = null,
+                            tint = WalletTheme.colorScheme.onLightOrange,
+                        )
+                    }
+                    if (onClick != null) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.wallet_ic_chevron_right),
+                            contentDescription = null,
+                        )
+                    }
+                }
             }
+        } else {
+            null
         },
         headlineContent = {
             Column {

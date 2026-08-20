@@ -16,7 +16,7 @@ sealed interface EIdFaceScannerUiState {
         @param:StringRes val content: Int,
         @param:StringRes val buttonText: Int,
         val onButton: () -> Unit,
-        val onHelp: () -> Unit,
+        val onHelp: (() -> Unit)?,
     ) : EIdFaceScannerUiState
 }
 

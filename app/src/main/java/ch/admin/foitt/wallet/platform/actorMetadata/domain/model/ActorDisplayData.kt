@@ -1,7 +1,7 @@
 package ch.admin.foitt.wallet.platform.actorMetadata.domain.model
 
 import ch.admin.foitt.wallet.platform.database.domain.model.LocalizedDisplay
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 import kotlinx.serialization.Serializable

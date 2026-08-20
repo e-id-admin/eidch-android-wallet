@@ -7,7 +7,6 @@ import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActo
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
 import ch.admin.foitt.wallet.platform.composables.presentation.adapter.GetDrawableFromUri
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayConst
-import ch.admin.foitt.wallet.platform.database.domain.model.DisplayLanguage
 import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedDisplay
 import ch.admin.foitt.wallet.platform.utils.toPainter
 import javax.inject.Inject
@@ -40,9 +39,7 @@ internal class GetActorUiStateImpl @Inject constructor(
             preferredLocaleString = preferredLanguage,
         )
     }?.let { actorField: ActorField<String> ->
-        return if (actorField.locale == DisplayLanguage.FALLBACK) {
-            null
-        } else if (actorField.value == DisplayConst.ISSUER_FALLBACK_NAME) {
+        if (actorField.value == DisplayConst.ISSUER_FALLBACK_NAME) {
             null
         } else {
             actorField.value

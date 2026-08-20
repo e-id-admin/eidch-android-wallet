@@ -1,17 +1,23 @@
 package ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.TokenType
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOfferError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialResponse
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.AnyCredentialConfiguration
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.IssuerCredentialInfo
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.RawAndParsedIssuerCredentialInfo
+import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtCredential
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtError
+import ch.admin.foitt.openid4vc.domain.usecase.GetSignedMetadataDid
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.VerifyVcSdJwtSignature
+import ch.admin.foitt.wallet.platform.actorEnvironment.domain.model.ActorEnvironment
+import ch.admin.foitt.wallet.platform.actorEnvironment.domain.usecase.GetActorEnvironment
 import ch.admin.foitt.wallet.platform.credential.domain.model.AnyCredentialDisplay
 import ch.admin.foitt.wallet.platform.credential.domain.model.AnyDisplays
 import ch.admin.foitt.wallet.platform.credential.domain.model.AnyIssuerDisplay
+import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchTrustForIssuance
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GenerateAnyDisplays
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.SaveCredentialFromDeferred
@@ -30,13 +36,16 @@ import ch.admin.foitt.wallet.platform.oca.domain.usecase.FetchVcMetadataByFormat
 import ch.admin.foitt.wallet.platform.oca.domain.usecase.OcaBundler
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialOfferRepository
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.IdentityV2TrustStatement
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustCheckResult
+import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
@@ -49,6 +58,9 @@ class SaveCredentialFromDeferredImplTest {
 
     @MockK
     private lateinit var mockVerifyVcSdJwtSignature: VerifyVcSdJwtSignature
+
+    @MockK
+    private lateinit var mockGetSignedMetadataDid: GetSignedMetadataDid
 
     @MockK
     private lateinit var mockFetchVcMetadataByFormat: FetchVcMetadataByFormat
@@ -66,6 +78,9 @@ class SaveCredentialFromDeferredImplTest {
     private lateinit var mockCredentialOfferRepository: CredentialOfferRepository
 
     @MockK
+    private lateinit var mockGetActorEnvironment: GetActorEnvironment
+
+    @MockK
     private lateinit var mockRawAndParsedIssuerCredentialInfo: RawAndParsedIssuerCredentialInfo
 
     @MockK
@@ -79,6 +94,12 @@ class SaveCredentialFromDeferredImplTest {
 
     @MockK
     private lateinit var mockVcMetadata: VcMetadata
+
+    @MockK
+    private lateinit var mockIssuerCredentialInfoJwt: Jwt
+
+    @MockK
+    private lateinit var mockTrustStatement: IdentityV2TrustStatement
 
     @MockK
     private lateinit var mockOcaBundle: OcaBundle
@@ -105,6 +126,8 @@ class SaveCredentialFromDeferredImplTest {
         MockKAnnotations.init(this)
         useCase = SaveCredentialFromDeferredImpl(
             verifyVcSdJwtSignature = mockVerifyVcSdJwtSignature,
+            getSignedMetadataDid = mockGetSignedMetadataDid,
+            getActorEnvironment = mockGetActorEnvironment,
             fetchVcMetadataByFormat = mockFetchVcMetadataByFormat,
             fetchTrustForIssuance = mockFetchTrustForIssuance,
             ocaBundler = mockOcaBundler,
@@ -125,13 +148,17 @@ class SaveCredentialFromDeferredImplTest {
             mockVerifyVcSdJwtSignature(any(), any(), any())
         } returns Ok(mockVcSdJwtCredential)
 
+        coEvery { mockGetSignedMetadataDid(mockIssuerCredentialInfoJwt) } returns Ok(vcIssuer01)
+
+        coEvery { mockGetActorEnvironment(any()) } returns ActorEnvironment.PRODUCTION
+
         coEvery {
             mockFetchVcMetadataByFormat(any())
         } returns Ok(mockVcMetadata)
 
         coEvery {
-            mockFetchTrustForIssuance(any(), any())
-        } returns mockTrustCheckResult
+            mockFetchTrustForIssuance(any(), any(), any(), any())
+        } returns Ok(mockTrustCheckResult)
 
         coEvery {
             mockOcaBundler(any())
@@ -148,20 +175,22 @@ class SaveCredentialFromDeferredImplTest {
         } returns Ok(1L)
 
         // Result mocks
-        coEvery { mockVcSdJwtCredential.issuer } returns vcIssuer01
-        coEvery { mockVcSdJwtCredential.vcSchemaId } returns vcSchemaId01
-        coEvery { mockVcSdJwtCredential.payload } returns vcPayload01
-        coEvery { mockVcSdJwtCredential.validFromInstant } returns null
-        coEvery { mockVcSdJwtCredential.validUntilInstant } returns null
-        coEvery { mockVcMetadata.rawOcaBundle } returns vcRawOcaBundle01
-        coEvery { mockRawAndParsedIssuerCredentialInfo.issuerCredentialInfo } returns mockIssuerCredentialInfo
-        coEvery { mockRawAndParsedIssuerCredentialInfo.rawIssuerCredentialInfo } returns RAW_ISSUER_CREDENTIAL_INFO
-        coEvery { mockIssuerCredentialInfo.credentialConfigurations } returns listOf(mockAnyCredentialConfiguration)
-        coEvery { mockAnyCredentialConfiguration.identifier } returns selectedConfigurationId01
-        coEvery { mockTrustCheckResult.actorTrustStatement } returns null
-        coEvery { mockAnyDisplays.issuerDisplays } returns listOf(mockAnyIssuerDisplay)
-        coEvery { mockAnyDisplays.credentialDisplays } returns listOf(mockAnyCredentialDisplay)
-        coEvery { mockAnyDisplays.clusters } returns listOf(mockCluster)
+        every { mockVcSdJwtCredential.issuer } returns vcIssuer01
+        every { mockVcSdJwtCredential.vcSchemaId } returns vcSchemaId01
+        every { mockVcSdJwtCredential.payload } returns vcPayload01
+        every { mockVcSdJwtCredential.validFromInstant } returns null
+        every { mockVcSdJwtCredential.validUntilInstant } returns null
+        every { mockVcSdJwtCredential.businessExpiryDate } returns null
+        every { mockVcMetadata.rawOcaBundle } returns vcRawOcaBundle01
+        every { mockIssuerCredentialInfoJwt.payloadString } returns RAW_ISSUER_CREDENTIAL_INFO
+        every { mockRawAndParsedIssuerCredentialInfo.issuerCredentialInfo } returns mockIssuerCredentialInfo
+        every { mockRawAndParsedIssuerCredentialInfo.rawIssuerCredentialInfo } returns mockIssuerCredentialInfoJwt
+        every { mockIssuerCredentialInfo.credentialConfigurations } returns listOf(mockAnyCredentialConfiguration)
+        every { mockAnyCredentialConfiguration.identifier } returns selectedConfigurationId01
+        every { mockTrustCheckResult.identityTrustStatement } returns null
+        every { mockAnyDisplays.issuerDisplays } returns listOf(mockAnyIssuerDisplay)
+        every { mockAnyDisplays.credentialDisplays } returns listOf(mockAnyCredentialDisplay)
+        every { mockAnyDisplays.clusters } returns listOf(mockCluster)
     }
 
     @Test
@@ -170,6 +199,7 @@ class SaveCredentialFromDeferredImplTest {
             deferredCredentialEntity = deferredCredentialWithBinding01,
             credentialResponse = credentialResponse01,
             rawAndParsedIssuerCredentialInfo = mockRawAndParsedIssuerCredentialInfo,
+            identityV2TrustStatement = mockTrustStatement,
         ).assertOk()
 
         coVerify {
@@ -178,8 +208,15 @@ class SaveCredentialFromDeferredImplTest {
                 payload = vcPayload01,
                 format = deferredCredentialWithBinding01.credential.format,
             )
+            mockGetSignedMetadataDid(mockIssuerCredentialInfoJwt)
+            mockGetActorEnvironment(vcIssuer01)
             mockFetchVcMetadataByFormat(mockVcSdJwtCredential)
-            mockFetchTrustForIssuance(issuerDid = vcIssuer01, vcSchemaId = vcSchemaId01)
+            mockFetchTrustForIssuance(
+                identityTrustStatement = mockTrustStatement,
+                protectedIssuanceAuthorizationTrustStatement = null,
+                issuerDid = vcIssuer01,
+                vcSchemaId = vcSchemaId01
+            )
             mockOcaBundler(vcRawOcaBundle01.rawOcaBundle)
             mockGenerateAnyDisplays(
                 anyCredential = mockVcSdJwtCredential,
@@ -210,7 +247,75 @@ class SaveCredentialFromDeferredImplTest {
             deferredCredentialEntity = deferredCredentialWithBinding01,
             credentialResponse = credentialResponse01,
             rawAndParsedIssuerCredentialInfo = mockRawAndParsedIssuerCredentialInfo,
-        )
+            identityV2TrustStatement = mockTrustStatement,
+        ).assertErrorType(CredentialError.IntegrityCheckFailed::class)
+
+        coVerify(exactly = 0) {
+            mockCredentialOfferRepository.saveCredentialFromDeferred(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `Getting the metadata did error is mapped`() = runTest {
+        val exception = IllegalStateException("metadata error")
+        coEvery {
+            mockGetSignedMetadataDid(mockIssuerCredentialInfoJwt)
+        } returns Err(CredentialOfferError.Unexpected(exception))
+
+        useCase(
+            deferredCredentialEntity = deferredCredentialWithBinding01,
+            credentialResponse = credentialResponse01,
+            rawAndParsedIssuerCredentialInfo = mockRawAndParsedIssuerCredentialInfo,
+            identityV2TrustStatement = mockTrustStatement,
+        ).assertErrorType(CredentialError.Unexpected::class)
+
+        coVerify(exactly = 0) {
+            mockCredentialOfferRepository.saveCredentialFromDeferred(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `A credential where its issuer and the metadata issuer differ returns an unverified issuer error`() = runTest {
+        coEvery { mockGetSignedMetadataDid(mockIssuerCredentialInfoJwt) } returns Ok("other issuer")
+
+        useCase(
+            deferredCredentialEntity = deferredCredentialWithBinding01,
+            credentialResponse = credentialResponse01,
+            rawAndParsedIssuerCredentialInfo = mockRawAndParsedIssuerCredentialInfo,
+            identityV2TrustStatement = mockTrustStatement,
+        ).assertErrorType(CredentialError.UnverifiedIssuer::class)
+
+        coVerify(exactly = 0) {
+            mockCredentialOfferRepository.saveCredentialFromDeferred(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `A credential where the metadata issuer and credential issuer differ returns an unverified issuer error`() = runTest {
+        every { mockVcSdJwtCredential.issuer } returns "other issuer"
+
+        useCase(
+            deferredCredentialEntity = deferredCredentialWithBinding01,
+            credentialResponse = credentialResponse01,
+            rawAndParsedIssuerCredentialInfo = mockRawAndParsedIssuerCredentialInfo,
+            identityV2TrustStatement = mockTrustStatement,
+        ).assertErrorType(CredentialError.UnverifiedIssuer::class)
+
+        coVerify(exactly = 0) {
+            mockCredentialOfferRepository.saveCredentialFromDeferred(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `A deferred credential from an EXTERNAL issuer is rejected with UnknownRegistry`() = runTest {
+        coEvery { mockGetActorEnvironment(any()) } returns ActorEnvironment.EXTERNAL
+
+        useCase(
+            deferredCredentialEntity = deferredCredentialWithBinding01,
+            credentialResponse = credentialResponse01,
+            rawAndParsedIssuerCredentialInfo = mockRawAndParsedIssuerCredentialInfo,
+            identityV2TrustStatement = mockTrustStatement,
+        ).assertErrorType(CredentialError.UnknownRegistry::class)
 
         coVerify(exactly = 0) {
             mockCredentialOfferRepository.saveCredentialFromDeferred(any(), any(), any(), any(), any(), any(), any(), any(), any())
@@ -225,11 +330,27 @@ class SaveCredentialFromDeferredImplTest {
             deferredCredentialEntity = deferredCredentialWithBinding01,
             credentialResponse = credentialResponse01,
             rawAndParsedIssuerCredentialInfo = mockRawAndParsedIssuerCredentialInfo,
-        )
+            identityV2TrustStatement = mockTrustStatement,
+        ).assertErrorType(CredentialError.NetworkError::class)
 
         coVerify(exactly = 0) {
             mockCredentialOfferRepository.saveCredentialFromDeferred(any(), any(), any(), any(), any(), any(), any(), any(), any())
         }
+    }
+
+    @Test
+    fun `A fetchTrustForIssuance error is handled`() = runTest {
+        val exception = IllegalStateException("trust error")
+        coEvery {
+            mockFetchTrustForIssuance(any(), any(), any(), any())
+        } returns Err(CredentialError.Unexpected(exception))
+
+        useCase(
+            deferredCredentialEntity = deferredCredentialWithBinding01,
+            credentialResponse = credentialResponse01,
+            rawAndParsedIssuerCredentialInfo = mockRawAndParsedIssuerCredentialInfo,
+            identityV2TrustStatement = mockTrustStatement,
+        ).assertErrorType(CredentialError.Unexpected::class)
     }
 
     @Test
@@ -242,7 +363,8 @@ class SaveCredentialFromDeferredImplTest {
             deferredCredentialEntity = deferredCredentialWithBinding01,
             credentialResponse = credentialResponse01,
             rawAndParsedIssuerCredentialInfo = mockRawAndParsedIssuerCredentialInfo,
-        )
+            identityV2TrustStatement = mockTrustStatement,
+        ).assertErrorType(CredentialError.Unexpected::class)
     }
 
     @Suppress("MayBeConstant")

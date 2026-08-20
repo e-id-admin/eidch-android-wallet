@@ -11,6 +11,6 @@ internal interface CreateCredentialRequestProofsJwt {
     suspend operator fun invoke(
         keyPairs: List<BindingKeyPair>,
         issuer: String,
-        cNonce: String?,
+        cNonce: String,
     ): Result<CredentialRequestProofsJwt, FetchVerifiableCredentialError>
 }

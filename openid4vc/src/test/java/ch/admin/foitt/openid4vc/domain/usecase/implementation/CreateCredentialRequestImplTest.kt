@@ -2,7 +2,6 @@
 
 package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
-import ch.admin.foitt.openid4vc.domain.model.CredentialRequestType
 import ch.admin.foitt.openid4vc.domain.model.CredentialType
 import ch.admin.foitt.openid4vc.domain.model.VerifiableCredentialParams
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOfferError
@@ -17,8 +16,8 @@ import ch.admin.foitt.openid4vc.domain.model.jwe.JWEError
 import ch.admin.foitt.openid4vc.domain.model.jwk.Jwk
 import ch.admin.foitt.openid4vc.domain.model.jwk.Jwks
 import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.EncryptionAlgorithm
+import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryption
 import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryptionKeyPair
-import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryptionType
 import ch.admin.foitt.openid4vc.domain.usecase.CreateCredentialRequest
 import ch.admin.foitt.openid4vc.domain.usecase.jwe.CreateJWE
 import ch.admin.foitt.openid4vc.util.SafeJsonTestInstance
@@ -78,75 +77,23 @@ class CreateCredentialRequestImplTest {
     }
 
     @Test
-    fun `For no payload encryption and verifiable credential return a json credential request`() = runTest {
-        val result = useCase(
-            payloadEncryptionType = noPayloadEncryption,
-            credentialType = verifiableCredentialType,
-        ).assertOk()
-
-        val expected = CredentialRequestType.Json(verifiableCredentialRequestJson)
-
-        assertEquals(expected, result)
-    }
-
-    @Test
-    fun `For no payload encryption and deferred credential return a json credential request`() = runTest {
-        val result = useCase(
-            payloadEncryptionType = noPayloadEncryption,
-            credentialType = deferredCredentialType,
-        ).assertOk()
-
-        val expected = CredentialRequestType.Json(deferredCredentialRequestJson)
-
-        assertEquals(expected, result)
-    }
-
-    @Test
     fun `For request encryption and verifiable credential return a jwt credential request`() = runTest {
         val result = useCase(
-            payloadEncryptionType = requestEncryption,
+            payloadEncryption = requestEncryption,
             credentialType = verifiableCredentialType,
         ).assertOk()
 
-        val expected = CredentialRequestType.Jwt("verifiable credential request jwe")
-
-        assertEquals(expected, result)
+        assertEquals("verifiable credential request jwe", result)
     }
 
     @Test
     fun `For request encryption and deferred credential return a jwt credential request`() = runTest {
         val result = useCase(
-            payloadEncryptionType = requestEncryption,
+            payloadEncryption = requestEncryption,
             credentialType = deferredCredentialType,
         ).assertOk()
 
-        val expected = CredentialRequestType.Jwt("deferred credential request jwe")
-
-        assertEquals(expected, result)
-    }
-
-    @Test
-    fun `For response encryption and verifiable credential return a jwt credential request`() = runTest {
-        val result = useCase(
-            payloadEncryptionType = responseEncryption,
-            credentialType = verifiableCredentialType,
-        ).assertOk()
-
-        val expected = CredentialRequestType.Jwt("verifiable credential request with response encryption jwe")
-
-        assertEquals(expected, result)
-    }
-
-    @Test
-    fun `For response encryption and deferred credential return a jwt credential request`() = runTest {
-        val result = useCase(
-            payloadEncryptionType = responseEncryption,
-            credentialType = deferredCredentialType,
-        ).assertOk()
-
-        val expected = CredentialRequestType.Jwt("deferred credential request with response encryption jwe")
-
-        assertEquals(expected, result)
+        assertEquals("deferred credential request jwe", result)
     }
 
     @Test
@@ -162,7 +109,7 @@ class CreateCredentialRequestImplTest {
         } returns Err(JWEError.Unexpected(IllegalStateException("jwe error")))
 
         useCase(
-            payloadEncryptionType = responseEncryption,
+            payloadEncryption = requestEncryption,
             credentialType = verifiableCredentialType,
         ).assertErrorType(CredentialOfferError.Unexpected::class)
     }
@@ -176,7 +123,7 @@ class CreateCredentialRequestImplTest {
                 algorithm = ALG_VALUE,
                 encryptionMethod = ENCRYPTION_VALUE,
                 compressionAlgorithm = ZIP_VALUE,
-                payload = verifiableCredentialRequestJson,
+                payload = verifiableCredentialRequestWithResponseEncryptionJson,
                 encryptionKey = issuerPublicKeyJwk,
             )
         } returns Ok("verifiable credential request jwe")
@@ -186,30 +133,10 @@ class CreateCredentialRequestImplTest {
                 algorithm = ALG_VALUE,
                 encryptionMethod = ENCRYPTION_VALUE,
                 compressionAlgorithm = ZIP_VALUE,
-                payload = deferredCredentialRequestJson,
-                encryptionKey = issuerPublicKeyJwk,
-            )
-        } returns Ok("deferred credential request jwe")
-
-        coEvery {
-            mockCreateJWE(
-                algorithm = ALG_VALUE,
-                encryptionMethod = ENCRYPTION_VALUE,
-                compressionAlgorithm = ZIP_VALUE,
-                payload = verifiableCredentialRequestWithResponseEncryptionJson,
-                encryptionKey = issuerPublicKeyJwk,
-            )
-        } returns Ok("verifiable credential request with response encryption jwe")
-
-        coEvery {
-            mockCreateJWE(
-                algorithm = ALG_VALUE,
-                encryptionMethod = ENCRYPTION_VALUE,
-                compressionAlgorithm = ZIP_VALUE,
                 payload = deferredCredentialRequestWithResponseEncryptionJson,
                 encryptionKey = issuerPublicKeyJwk,
             )
-        } returns Ok("deferred credential request with response encryption jwe")
+        } returns Ok("deferred credential request jwe")
     }
 
     val verifiableCredentialType by lazy {
@@ -222,9 +149,6 @@ class CreateCredentialRequestImplTest {
     val deferredCredentialType = CredentialType.Deferred(
         transactionId = TRANSACTION_ID
     )
-
-    val noPayloadEncryption = PayloadEncryptionType.None
-
     val issuerPublicKeyJwk = Jwk(
         x = X_VALUE,
         y = Y_VALUE,
@@ -241,10 +165,6 @@ class CreateCredentialRequestImplTest {
         encValuesSupported = listOf(ENCRYPTION_VALUE),
         zipValuesSupported = listOf(ZIP_VALUE),
         encryptionRequired = true
-    )
-
-    val requestEncryption = PayloadEncryptionType.Request(
-        requestEncryption = credentialRequestEncryption,
     )
 
     val credentialResponseEncryption = CredentialResponseEncryption(
@@ -269,7 +189,7 @@ class CreateCredentialRequestImplTest {
         )
     }
 
-    val responseEncryption = PayloadEncryptionType.Response(
+    val requestEncryption = PayloadEncryption(
         requestEncryption = credentialRequestEncryption,
         responseEncryption = credentialResponseEncryption,
         responseEncryptionKeyPair = payloadEncryptionKeyPair,
@@ -292,13 +212,6 @@ class CreateCredentialRequestImplTest {
         zip = payloadEncryptionKeyPair.zip,
     )
 
-    val verifiableCredentialRequest = VerifiableCredentialRequest(
-        credentialConfigurationId = IDENTIFIER,
-        proofs = null,
-        credentialResponseEncryption = null,
-    )
-    val verifiableCredentialRequestJson = safeJson.safeEncodeObjectToString(verifiableCredentialRequest).value
-
     val verifiableCredentialRequestWithResponseEncryption = VerifiableCredentialRequest(
         credentialConfigurationId = IDENTIFIER,
         proofs = null,
@@ -307,12 +220,6 @@ class CreateCredentialRequestImplTest {
     val verifiableCredentialRequestWithResponseEncryptionJson = safeJson.safeEncodeObjectToString(
         verifiableCredentialRequestWithResponseEncryption
     ).value
-
-    val deferredCredentialRequest = DeferredCredentialRequest(
-        transactionId = TRANSACTION_ID,
-        credentialResponseEncryption = null,
-    )
-    val deferredCredentialRequestJson = safeJson.safeEncodeObjectToString(deferredCredentialRequest).value
 
     val deferredCredentialRequestWithResponseEncryption = DeferredCredentialRequest(
         transactionId = TRANSACTION_ID,

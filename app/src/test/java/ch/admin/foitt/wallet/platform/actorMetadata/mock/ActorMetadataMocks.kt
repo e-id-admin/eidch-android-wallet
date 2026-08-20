@@ -3,9 +3,9 @@ package ch.admin.foitt.wallet.platform.actorMetadata.mock
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorField
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.NonComplianceData
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.NonComplianceReasonDisplay
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.NonComplianceData
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.NonComplianceReasonDisplay
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 

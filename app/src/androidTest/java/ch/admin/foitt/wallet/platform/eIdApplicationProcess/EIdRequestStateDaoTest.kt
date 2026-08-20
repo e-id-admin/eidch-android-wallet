@@ -59,22 +59,23 @@ class EIdRequestStateDaoTest {
         val onlineSessionStartOpenAt = Instant.now().epochSecond
         val onlineSessionStartTimeout = Instant.now().epochSecond
         val legalRepresentativeConsent = LegalRepresentativeConsent.NOT_VERIFIED
-        eIdRequestStateDao.updateByCaseId(EIdRequestState(
-            eIdRequestCaseId = eIdRequestCaseMock().id,
-            state = newState,
-            lastPolled = lastPolled,
-            onlineSessionStartOpenAt = onlineSessionStartOpenAt,
-            onlineSessionStartTimeoutAt = onlineSessionStartTimeout,
-            legalRepresentativeConsent = legalRepresentativeConsent,
-        ))
+        eIdRequestStateDao.updateByCaseId(
+            EIdRequestState(
+                eIdRequestCaseId = eIdRequestCaseMock().id,
+                state = newState,
+                lastPolled = lastPolled,
+                onlineSessionStartOpenAt = onlineSessionStartOpenAt,
+                onlineSessionStartTimeoutAt = onlineSessionStartTimeout,
+                legalRepresentativeConsent = legalRepresentativeConsent,
+            )
+        )
 
         val updatedRequestState = eIdRequestStateDao.getEIdRequestStateById(id)
-        assertEquals(newState, updatedRequestState?.state)
-        assertEquals(lastPolled, updatedRequestState?.lastPolled)
-        assertEquals(onlineSessionStartOpenAt, updatedRequestState?.onlineSessionStartOpenAt)
-        assertEquals(onlineSessionStartTimeout, updatedRequestState?.onlineSessionStartTimeoutAt)
-        assertEquals(legalRepresentativeConsent, updatedRequestState?.legalRepresentativeConsent)
-
+        assertEquals(newState, updatedRequestState.state)
+        assertEquals(lastPolled, updatedRequestState.lastPolled)
+        assertEquals(onlineSessionStartOpenAt, updatedRequestState.onlineSessionStartOpenAt)
+        assertEquals(onlineSessionStartTimeout, updatedRequestState.onlineSessionStartTimeoutAt)
+        assertEquals(legalRepresentativeConsent, updatedRequestState.legalRepresentativeConsent)
     }
 
     @Test(expected = SQLiteConstraintException::class)

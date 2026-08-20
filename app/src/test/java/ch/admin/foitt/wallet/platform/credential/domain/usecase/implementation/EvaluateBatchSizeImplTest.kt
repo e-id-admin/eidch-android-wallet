@@ -30,8 +30,8 @@ class EvaluateBatchSizeImplTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = [-1, 0, 9, 101])
-    fun `Returns an error when batch size is out of allowed bounds`(batchSize: Int) {
+    @ValueSource(ints = [-1, 0, 9])
+    fun `Returns an error when batch size is below the minimum`(batchSize: Int) {
         val issuerCredentialInfo = createIssuerCredentialInfo(batchSize = batchSize)
 
         val error = useCase(issuerCredentialInfo).assertErr()
@@ -40,13 +40,23 @@ class EvaluateBatchSizeImplTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = [11, 50, 99])
+    @ValueSource(ints = [10, 11, 50, 99, 100])
     fun `Returns batch size when it is within allowed bounds`(batchSize: Int) {
         val issuerCredentialInfo = createIssuerCredentialInfo(batchSize = batchSize)
 
         val result = useCase(issuerCredentialInfo).assertOk()
 
         assertEquals(batchSize, result)
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [101, 500, 1000, Int.MAX_VALUE])
+    fun `Caps batch size to the maximum when it exceeds it`(batchSize: Int) {
+        val issuerCredentialInfo = createIssuerCredentialInfo(batchSize = batchSize)
+
+        val result = useCase(issuerCredentialInfo).assertOk()
+
+        assertEquals(100, result)
     }
 
     private fun createIssuerCredentialInfo(batchSize: BatchSize) = mockk<IssuerCredentialInfo> {

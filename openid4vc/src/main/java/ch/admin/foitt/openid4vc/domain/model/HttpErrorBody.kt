@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class HttpErrorBody(
     @SerialName("error")
-    val error: String,
+    val error: String? = null,
     @SerialName("error_code")
     val errorCode: String? = null,
     @SerialName("error_description")

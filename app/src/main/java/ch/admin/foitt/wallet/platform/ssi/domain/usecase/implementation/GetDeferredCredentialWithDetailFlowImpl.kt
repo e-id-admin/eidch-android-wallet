@@ -1,7 +1,6 @@
 package ch.admin.foitt.wallet.platform.ssi.domain.usecase.implementation
 
 import android.content.Context
-import android.os.Build
 import ch.admin.foitt.wallet.platform.credential.domain.model.DeferredCredentialDisplayData
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
 import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedAndThemedDisplay
@@ -40,15 +39,15 @@ class GetDeferredCredentialWithDetailFlowImpl @Inject constructor(
                         credentialId = deferredCredential.deferredCredential.credentialId,
                         credentialDisplay = display,
                         status = deferredCredential.deferredCredential.progressionState,
+                        createdAt = deferredCredential.deferredCredential.createdAt,
                     )
                 }
             }
 
     private fun getDisplay(displays: List<CredentialDisplay>): Result<CredentialDisplay, GetCredentialsWithDetailsFlowError> {
-        val currentTheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && context.resources.configuration.isNightModeActive) {
-            Theme.DARK
-        } else {
-            Theme.LIGHT
+        val currentTheme = when {
+            context.resources.configuration.isNightModeActive -> Theme.DARK
+            else -> Theme.LIGHT
         }
 
         return getLocalizedAndThemedDisplay(

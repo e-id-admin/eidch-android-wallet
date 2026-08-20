@@ -69,7 +69,8 @@ class CredentialClaimDisplayDaoTest {
     @Test
     fun insertAndGetCredentialClaimDisplayTest() = runTest {
         val credentialClaimDisplays = listOf(
-            credentialClaimDisplay1, credentialClaimDisplay2
+            credentialClaimDisplay1,
+            credentialClaimDisplay2
         )
         credentialClaimDisplayDao.insertAll(credentialClaimDisplays)
 

@@ -12,7 +12,7 @@ import timber.log.Timber
 interface PresentationRequestError {
     data object NetworkError : FetchPresentationRequestError, SubmitAnyCredentialPresentationError, SubmitPresentationErrorError
     data object SocketTimeoutError : SubmitAnyCredentialPresentationError
-    data class ValidationError(val error: String, val description: String?) : SubmitAnyCredentialPresentationError
+    data class ValidationError(val error: String?, val description: String?) : SubmitAnyCredentialPresentationError
     data object VerificationError : SubmitAnyCredentialPresentationError
     data object InvalidCredentialError : SubmitAnyCredentialPresentationError
     data object InvalidKeyPairError : CreateVcSdJwtVerifiablePresentationError
@@ -50,11 +50,6 @@ internal fun GetKeyPairForKeyBindingError.toCreateVcSdJwtVerifiablePresentationE
         is GetKeyPairForKeyBindingError.Unexpected -> PresentationRequestError.Unexpected(throwable)
     }
 
-internal fun CreateAnyVerifiablePresentationError.toSubmitAnyCredentialPresentationError(): SubmitAnyCredentialPresentationError =
-    when (this) {
-        is PresentationRequestError.Unexpected -> this
-    }
-
 internal fun Throwable.toSubmitAnyCredentialPresentationError(message: String): SubmitAnyCredentialPresentationError {
     Timber.e(t = this, message = message)
     return PresentationRequestError.Unexpected(this)
@@ -82,15 +77,9 @@ internal fun CreateAnyVerifiablePresentationError.toGetAuthorizationResponseConf
         is PresentationRequestError.Unexpected -> this
     }
 
-internal fun GetAuthorizationResponseConfigError.toSubmitAnyCredentialPresentationError(): SubmitAnyCredentialPresentationError =
-    when (this) {
-        is PresentationRequestError.Unexpected -> this
-    }
-
-internal fun GetAuthorizationResponseConfigError.toSubmitPresentationError(): SubmitPresentationErrorError =
-    when (this) {
-        is PresentationRequestError.Unexpected -> this
-    }
+internal fun JsonParsingError.toSubmitAnyCredentialPresentationError(): SubmitAnyCredentialPresentationError = when (this) {
+    is JsonError.Unexpected -> PresentationRequestError.Unexpected(this.throwable)
+}
 
 internal fun Throwable.toFetchPresentationRequestError(message: String): FetchPresentationRequestError {
     Timber.e(t = this, message = message)

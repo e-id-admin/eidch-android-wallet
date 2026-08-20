@@ -23,10 +23,18 @@ data class BatchCredential(
     val accessToken: String,
     val refreshToken: String?,
     val dpopKeyBinding: KeyBinding?,
-    val credentials: List<VerifiableCredential>,
+    val credentials: List<BatchCredentialItem>,
 ) : FetchCredentialResult
 
+data class BatchCredentialItem(
+    val credential: String,
+    val keyBinding: KeyBinding?,
+)
+
 data class VerifiableCredential(
+    val accessToken: String,
+    val refreshToken: String?,
+    val dpopKeyBinding: KeyBinding?,
     val credential: String,
     val keyBinding: KeyBinding?,
 ) : FetchCredentialResult

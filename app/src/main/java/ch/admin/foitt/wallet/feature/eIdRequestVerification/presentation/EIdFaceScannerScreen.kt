@@ -16,15 +16,17 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -41,6 +43,8 @@ import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.composa
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.faceScanner.EIdFaceScanStatus
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.faceScanner.EIdFaceScannerUiState
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.faceScanner.FaceScannerErrorContent
+import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.faceScanner.FaceScannerEvent
+import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.model.PermissionState
 import ch.admin.foitt.wallet.platform.cameraPermissionHandler.presentation.CameraPermissionWrapper
 import ch.admin.foitt.wallet.platform.composables.presentation.WindowWidthClass
 import ch.admin.foitt.wallet.platform.composables.presentation.addTopScaffoldPadding
@@ -50,6 +54,7 @@ import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.utils.LocalActivity
 import ch.admin.foitt.wallet.platform.utils.OnPauseEventHandler
 import ch.admin.foitt.wallet.platform.utils.OnResumeEventHandler
+import ch.admin.foitt.wallet.platform.utils.RepeatOnLifeCycleHandler
 import ch.admin.foitt.wallet.platform.utils.TraversalIndex
 import ch.admin.foitt.wallet.platform.utils.setIsTraversalGroup
 import ch.admin.foitt.wallet.platform.utils.traversalIndex
@@ -61,6 +66,7 @@ fun EIdFaceScannerScreen(
     viewModel: EIdFaceScannerViewModel,
 ) {
     val currentActivity = LocalActivity.current
+    val haptic = LocalHapticFeedback.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val shouldLock by viewModel.shouldLock.collectAsStateWithLifecycle()
     val permissionState by viewModel.permissionState.collectAsStateWithLifecycle()
@@ -69,8 +75,24 @@ fun EIdFaceScannerScreen(
     OnPauseEventHandler(viewModel::onPause)
     BackHandler(enabled = true, viewModel::onUp)
 
+    RepeatOnLifeCycleHandler {
+        viewModel.updateTopBarState(this)
+    }
+
+    LaunchedEffect(permissionState) {
+        if (permissionState is PermissionState.Granted) {
+            viewModel.initScannerSdk(currentActivity)
+        }
+    }
+
     LaunchedEffect(viewModel) {
-        viewModel.initScannerSdk(currentActivity)
+        viewModel.hapticEvent.collect { event ->
+            when (event) {
+                is FaceScannerEvent.ScanDone -> {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+            }
+        }
     }
 
     OrientationLocker(currentActivity, shouldLock)
@@ -142,7 +164,7 @@ private fun EIdFaceScannerScannerContent(
             onAfterViewLayout = onAfterViewLayout,
         )
 
-        val windowWidthClass = currentWindowAdaptiveInfo().windowWidthClass()
+        val windowWidthClass = currentWindowAdaptiveInfoV2().windowWidthClass()
         val isCompact = windowWidthClass == WindowWidthClass.COMPACT
 
         if (status != EIdFaceScanStatus.Initializing && status != EIdFaceScanStatus.Finished) {

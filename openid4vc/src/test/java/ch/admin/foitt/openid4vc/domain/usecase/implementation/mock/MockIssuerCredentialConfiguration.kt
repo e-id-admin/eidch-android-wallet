@@ -1,6 +1,7 @@
 package ch.admin.foitt.openid4vc.domain.usecase.implementation.mock
 
 import ch.admin.foitt.openid4vc.domain.model.KeyStorageSecurityLevel
+import ch.admin.foitt.openid4vc.domain.model.SignatureAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.SigningAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.Claim
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
@@ -9,7 +10,9 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.KeyAttesta
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.ProofType
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.ProofTypeConfig
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.VcSdJwtCredentialConfiguration
+import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockCredentialOffer.CREDENTIAL_IDENTIFIER
+import io.mockk.mockk
 
 object MockIssuerCredentialConfiguration {
     private const val VCT = "vct"
@@ -17,7 +20,7 @@ object MockIssuerCredentialConfiguration {
     private const val VCT_METADATA_URI = "vct metadata uri"
     private const val VCT_METADATA_URI_INTEGRITY = "vct metadata uri integrity"
     private val CLAIMS = emptyList<Claim>()
-    private val SUPPORTED_CRYPTOGRAPHIC_SUITE = SigningAlgorithm.ES512
+    private val SUPPORTED_CRYPTOGRAPHIC_SUITE = SignatureAlgorithm.ES512
     const val JWK_BINDING_METHOD = "jwk"
     val SUPPORTED_PROOF_TYPE = ProofType.JWT
     private val UNKNOWN_PROOF_TYPE = ProofType.UNKNOWN
@@ -25,6 +28,7 @@ object MockIssuerCredentialConfiguration {
     private val PROOF_SIGNING_ALG_VALUES_SUPPORTED = listOf(SIGNING_ALG)
     val strongboxKeyStorage = listOf(KeyStorageSecurityLevel.HIGH)
     val teeKeyStorage = listOf(KeyStorageSecurityLevel.ENHANCED_BASIC)
+    val protectedIssuanceTrustStatement = mockk<Jwt>()
 
     val proofTypeConfigSoftwareBinding = ProofTypeConfig(PROOF_SIGNING_ALG_VALUES_SUPPORTED)
     val proofTypeConfigHardwareBinding = ProofTypeConfig(
@@ -41,6 +45,7 @@ object MockIssuerCredentialConfiguration {
         cryptographicBindingMethodsSupported = listOf(JWK_BINDING_METHOD),
         format = CredentialFormat.VC_SD_JWT,
         proofTypesSupported = mapOf(SUPPORTED_PROOF_TYPE to proofTypeConfigSoftwareBinding),
+        protectedIssuanceAuthorizationTrustStatement = protectedIssuanceTrustStatement,
         vct = VCT,
         vctIntegrity = VCT_INTEGRITY,
         vctMetadataUri = VCT_METADATA_URI,

@@ -179,10 +179,16 @@ private fun AttestationTimeoutErrorContent(
         )
     },
     stickyBottomContent = {
-        Buttons.FilledPrimary(
-            text = stringResource(R.string.tk_eidRequest_attestation_deviceNotSupported_button_close),
-            onClick = onClose,
-            modifier = Modifier.fillMaxWidth()
+        AdaptiveBottomButtonBar(
+            buttons = listOf(
+                {
+                    Buttons.FilledPrimary(
+                        text = stringResource(R.string.tk_eidRequest_attestation_deviceNotSupported_button_close),
+                        onClick = onClose,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            )
         )
     },
 ) {

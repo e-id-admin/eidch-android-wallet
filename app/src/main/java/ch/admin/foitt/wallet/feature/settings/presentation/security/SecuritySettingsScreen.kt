@@ -101,7 +101,7 @@ private fun SecuritySettingsScreenContent(
     ToastAnimated(
         isVisible = isToastVisible,
         isSnackBarDesign = false,
-        messageToast = R.string.tk_changepassword_successful_notification,
+        message = R.string.tk_changepassword_successful_notification,
         contentBottomPadding = Sizes.s10
     )
 }

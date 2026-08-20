@@ -14,7 +14,7 @@ import ch.admin.foitt.wallet.platform.userInteraction.domain.usecase.UserInterac
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.mapError
-import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onErr
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -47,7 +47,7 @@ class LoginWithPassphraseImpl @Inject constructor(
 
         openAppDatabase(
             passphrase = pepperedPinHash.hash
-        ).onFailure {
+        ).onErr {
             Timber.d("AppDatabase login failed")
         }.mapError(
             OpenDatabaseError::toLoginWithPassphraseError

@@ -11,6 +11,7 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -64,6 +65,14 @@ class CanUseBiometricsForLoginImplTest {
         coEvery { mockBiometricLoginEnabled() } returns false
 
         assertEquals(CanUseBiometricsForLoginResult.NotSetUpInApp, useCase())
+        coVerify(exactly = 1) {
+            mockBiometricLoginEnabled()
+        }
+
+        coVerify(exactly = 0) {
+            mockBiometricsStatus()
+            mockGetBiometricsCipher()
+        }
     }
 
     @Test
@@ -72,11 +81,26 @@ class CanUseBiometricsForLoginImplTest {
         coEvery { mockGetBiometricsCipher() } returns Err(error)
 
         assertEquals(CanUseBiometricsForLoginResult.Changed, useCase())
+
+        coVerify(exactly = 1) {
+            mockBiometricLoginEnabled()
+            mockGetBiometricsCipher()
+        }
+
+        coVerify(exactly = 0) {
+            mockBiometricsStatus()
+        }
     }
 
     @Test
     fun `Calling CanUseBiometricsForLogin when the biometrics are available returns Usable`() = runTest(testDispatcher) {
         assertEquals(CanUseBiometricsForLoginResult.Usable, useCase())
+
+        coVerify(exactly = 1) {
+            mockBiometricLoginEnabled()
+            mockGetBiometricsCipher()
+            mockBiometricsStatus()
+        }
     }
 
     @Test

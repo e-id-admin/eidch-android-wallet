@@ -1,37 +1,37 @@
 package ch.admin.foitt.openid4vc.data
 
 import ch.admin.foitt.openid4vc.di.OpenId4VcModule.Companion.NAMED_DEFAULT_HTTP_CLIENT
-import ch.admin.foitt.openid4vc.domain.model.HttpErrorBody
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseConfig
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseErrorBody
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseResponse
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseType
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.FetchPresentationRequestError
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestError
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.SubmitAnyCredentialPresentationError
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.SubmitPresentationErrorError
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.toSubmitAnyCredentialPresentationError
 import ch.admin.foitt.openid4vc.domain.repository.PresentationRequestRepository
 import ch.admin.foitt.openid4vc.utils.Constants
 import ch.admin.foitt.openid4vc.utils.ContentType
-import ch.admin.foitt.openid4vc.utils.JsonError
 import ch.admin.foitt.openid4vc.utils.JsonParsingError
 import ch.admin.foitt.openid4vc.utils.SafeJson
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.coroutines.runSuspendCatching
-import com.github.michaelbull.result.mapBoth
 import com.github.michaelbull.result.mapError
+import com.github.michaelbull.result.recoverIf
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.network.sockets.SocketTimeoutException
-import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.parameters
+import timber.log.Timber
 import java.io.IOException
 import java.net.URL
 import javax.inject.Inject
@@ -39,7 +39,7 @@ import javax.inject.Named
 
 internal class PresentationRequestRepositoryImpl @Inject constructor(
     @param:Named(NAMED_DEFAULT_HTTP_CLIENT) private val httpClient: HttpClient,
-    private val safeJson: SafeJson,
+    private val safeJson: SafeJson
 ) : PresentationRequestRepository {
     override suspend fun fetchPresentationRequest(url: URL) = runSuspendCatching<String> {
         httpClient.get(url) {
@@ -50,9 +50,9 @@ internal class PresentationRequestRepositoryImpl @Inject constructor(
     override suspend fun submitPresentation(
         url: URL,
         authorizationResponseConfig: AuthorizationResponseConfig,
-    ): Result<Unit, SubmitAnyCredentialPresentationError> = coroutineBinding {
-        runSuspendCatching {
-            httpClient.submitForm(
+    ): Result<AuthorizationResponseResponse, SubmitAnyCredentialPresentationError> = coroutineBinding {
+        runSuspendCatching<AuthorizationResponseResponse> {
+            val response = httpClient.submitForm(
                 url = url.toExternalForm(),
                 formParameters = parameters {
                     authorizationResponseConfig.params.forEach { append(it.key.jsonName, it.value) }
@@ -65,49 +65,42 @@ internal class PresentationRequestRepositoryImpl @Inject constructor(
                     }
                 )
             }
-        }.mapError { throwable ->
-            when (throwable) {
-                is ClientRequestException -> handleClientRequestException(throwable)
-                else -> throwable.toSubmitAnyCredentialPresentationError()
+            val payload = response.bodyAsText()
+            if (payload.isBlank()) {
+                AuthorizationResponseResponse()
+            } else {
+                safeJson.safeDecodeStringTo<AuthorizationResponseResponse>(payload)
+                    .mapError(JsonParsingError::toSubmitAnyCredentialPresentationError).bind()
             }
+        }.recoverIf(
+            predicate = { it is ResponseException },
+            transform = { throwable ->
+                // Any http response means the data reached the verifier, so the submission is
+                // considered successful, independently of status code and body
+                Timber.d(
+                    t = throwable,
+                    message = "Ignoring a ${(throwable as ResponseException).response.status} response after submitting the presentation",
+                )
+                AuthorizationResponseResponse(redirectUri = null)
+            }
+        ).mapError { throwable ->
+            throwable.toSubmitAnyCredentialPresentationError()
         }.bind()
     }
 
     override suspend fun submitPresentationError(
         url: String,
         body: AuthorizationResponseErrorBody,
-    ) = runSuspendCatching<Unit> {
+    ) = runSuspendCatching<AuthorizationResponseResponse> {
         httpClient.submitForm(
             url = url,
             formParameters = parameters {
                 append("error", body.error.key)
                 body.errorDescription?.let { append("error_description", body.errorDescription) }
+                body.state?.let { append("state", body.state) }
             }
-        )
+        ).body()
     }.mapError(Throwable::toSubmitPresentationErrorError)
-
-    private suspend fun handleClientRequestException(clientRequestException: ClientRequestException): SubmitAnyCredentialPresentationError =
-        when (clientRequestException.response.status) {
-            HttpStatusCode.BadRequest -> parseError(clientRequestException)
-            else -> PresentationRequestError.Unexpected(clientRequestException)
-        }
-
-    private suspend fun parseError(clientRequestException: ClientRequestException): SubmitAnyCredentialPresentationError {
-        val errorBodyString = clientRequestException.response.bodyAsText()
-        val errorBodyResult = safeJson.safeDecodeStringTo<HttpErrorBody>(errorBodyString)
-        return errorBodyResult.mapBoth(
-            success = { handleSubmitPresentationErrorBody(it) },
-            failure = JsonParsingError::toSubmitPresentationError
-        )
-    }
-
-    private fun handleSubmitPresentationErrorBody(
-        errorBody: HttpErrorBody,
-    ): SubmitAnyCredentialPresentationError = when (errorBody.error.lowercase()) {
-        "verification_process_closed" -> PresentationRequestError.VerificationError
-        "invalid_credential" -> PresentationRequestError.InvalidCredentialError
-        else -> PresentationRequestError.ValidationError(error = errorBody.error, description = errorBody.errorDescription)
-    }
 }
 
 private fun Throwable.toFetchPresentationRequestError(): FetchPresentationRequestError = when (this) {
@@ -126,8 +119,4 @@ private fun Throwable.toSubmitAnyCredentialPresentationError(): SubmitAnyCredent
 private fun Throwable.toSubmitPresentationErrorError(): SubmitPresentationErrorError = when (this) {
     is IOException -> PresentationRequestError.NetworkError
     else -> PresentationRequestError.Unexpected(this)
-}
-
-private fun JsonParsingError.toSubmitPresentationError(): SubmitAnyCredentialPresentationError = when (this) {
-    is JsonError.Unexpected -> PresentationRequestError.Unexpected(throwable)
 }

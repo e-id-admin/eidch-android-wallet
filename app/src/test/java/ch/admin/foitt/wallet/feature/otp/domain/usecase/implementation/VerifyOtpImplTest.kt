@@ -72,8 +72,8 @@ class VerifyOtpImplTest {
         )
 
         coEvery { mockRequestClientAttestation(any(), any()) } returns Ok(mockClientAttestation)
-        coEvery { mockAppAttestationRepository.fetchChallenge() } returns Ok(mockChallenge)
-        coEvery { mockEnvironmentSetupRepository.attestationsServiceUrl } returns mockUrl
+        coEvery { mockAppAttestationRepository.fetchChallenge(mockUrl) } returns Ok(mockChallenge)
+        coEvery { mockEnvironmentSetupRepository.defaultAttestationServiceUrl } returns mockUrl
         coEvery { mockGenerateProofOfPossession(any(), any(), any(), any()) } returns Ok(mockClientAttestationPoP)
         coEvery { mockOtpRepository.verifyOTP(any(), any(), any()) } returns Ok(Unit)
     }
@@ -89,7 +89,7 @@ class VerifyOtpImplTest {
 
         coVerifyOrder {
             mockRequestClientAttestation()
-            mockAppAttestationRepository.fetchChallenge()
+            mockAppAttestationRepository.fetchChallenge(mockUrl)
             mockGenerateProofOfPossession(
                 clientAttestation = mockClientAttestation,
                 challenge = mockChallenge.challenge,
@@ -118,7 +118,7 @@ class VerifyOtpImplTest {
     @Test
     fun `A challenge fetching failure is propagated`() = runTest {
         coEvery {
-            mockAppAttestationRepository.fetchChallenge()
+            mockAppAttestationRepository.fetchChallenge(mockUrl)
         } returns Err(AttestationError.NetworkError)
 
         verifyOtp(testOtpRequest).assertErrorType(OtpError.NetworkError::class)

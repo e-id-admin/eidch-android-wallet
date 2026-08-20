@@ -3,6 +3,7 @@
 package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.BatchCredential
+import ch.admin.foitt.openid4vc.domain.model.BatchCredentialItem
 import ch.admin.foitt.openid4vc.domain.model.CredentialType
 import ch.admin.foitt.openid4vc.domain.model.DeferredCredential
 import ch.admin.foitt.openid4vc.domain.model.FetchCredentialResult
@@ -22,7 +23,7 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.toFetchVerifiableCr
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.BindingKeyPair
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBinding
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBindingType
-import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryptionType
+import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryption
 import ch.admin.foitt.openid4vc.domain.repository.CredentialOfferRepository
 import ch.admin.foitt.openid4vc.domain.usecase.CreateCredentialRequest
 import ch.admin.foitt.openid4vc.domain.usecase.CreateCredentialRequestProofsJwt
@@ -31,12 +32,11 @@ import ch.admin.foitt.openid4vc.domain.usecase.DeleteKeyPair
 import ch.admin.foitt.openid4vc.domain.usecase.FetchVerifiableCredential
 import ch.admin.foitt.openid4vc.utils.retryUseCase
 import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.andThenRecover
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.mapError
-import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onErr
 import java.net.URL
 import javax.inject.Inject
 
@@ -48,17 +48,12 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
     private val deleteKeyPair: DeleteKeyPair,
 ) : FetchVerifiableCredential {
     override suspend fun invoke(
-        isDPopEnabled: Boolean,
         verifiableCredentialParams: VerifiableCredentialParams,
         credentialBindingKeyPairs: List<BindingKeyPair>?,
         dpopKeyPair: BindingKeyPair?,
-        payloadEncryptionType: PayloadEncryptionType,
+        payloadEncryption: PayloadEncryption,
     ): Result<FetchCredentialResult, FetchVerifiableCredentialError> = coroutineBinding {
-        val isDpop = if (isDPopEnabled) {
-            verifiableCredentialParams.dpopSigningAlgValuesSupported != null
-        } else {
-            false
-        }
+        val isDpop = verifiableCredentialParams.dpopSigningAlgValuesSupported != null
 
         if (isDpop) {
             if (dpopKeyPair == null) {
@@ -68,13 +63,13 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
                 verifiableCredentialParams = verifiableCredentialParams,
                 credentialBindingKeyPairs = credentialBindingKeyPairs,
                 dpopKeyPair = dpopKeyPair,
-                payloadEncryptionType = payloadEncryptionType,
+                payloadEncryption = payloadEncryption,
             ).bind()
         } else {
             fetchCredential(
                 verifiableCredentialParams = verifiableCredentialParams,
                 credentialBindingKeyPairs = credentialBindingKeyPairs,
-                payloadEncryptionType = payloadEncryptionType,
+                payloadEncryptionType = payloadEncryption,
             ).bind()
         }
     }
@@ -83,14 +78,14 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
         verifiableCredentialParams: VerifiableCredentialParams,
         credentialBindingKeyPairs: List<BindingKeyPair>?,
         dpopKeyPair: BindingKeyPair,
-        payloadEncryptionType: PayloadEncryptionType
+        payloadEncryption: PayloadEncryption
     ): Result<FetchCredentialResult, FetchVerifiableCredentialError> {
         return coroutineBinding {
             val tokenRequestNonce = fetchIssuerNonce(verifiableCredentialParams.nonceEndpoint).bind()
             val tokenResponse = getToken(
                 verifiableCredentialParams = verifiableCredentialParams,
                 dpopKeyPair = dpopKeyPair,
-                dpopNonce = tokenRequestNonce?.dpopNonce,
+                dpopNonce = tokenRequestNonce.dpopNonce,
             ).bind()
 
             val credentialNonce = fetchIssuerNonce(verifiableCredentialParams.nonceEndpoint).bind()
@@ -99,13 +94,13 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
                     createCredentialRequestProofsJwt(
                         keyPairs = credentialBindingKeyPairs,
                         issuer = verifiableCredentialParams.issuerEndpoint.toString(),
-                        cNonce = credentialNonce?.cNonce,
+                        cNonce = credentialNonce.cNonce,
                     )
                 }.bind()
             }
 
-            val credentialRequestType = createCredentialRequest(
-                payloadEncryptionType = payloadEncryptionType,
+            val request = createCredentialRequest(
+                payloadEncryption = payloadEncryption,
                 credentialType = CredentialType.Verifiable(
                     verifiableCredentialParams = verifiableCredentialParams,
                     proofs = proofs,
@@ -116,15 +111,15 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
             val credentialDpopProof = createCredentialDpopProof(
                 verifiableCredentialParams = verifiableCredentialParams,
                 dpopKeyPair = dpopKeyPair,
-                dpopNonce = credentialNonce?.dpopNonce,
+                dpopNonce = credentialNonce.dpopNonce,
                 accessToken = tokenResponse.accessToken,
             ).bind()
 
             val fetchCredentialResponse = credentialOfferRepository.fetchCredential(
                 issuerEndpoint = verifiableCredentialParams.credentialEndpoint,
                 tokenResponse = tokenResponse,
-                credentialRequestType = credentialRequestType,
-                payloadEncryptionType = payloadEncryptionType,
+                request = request,
+                payloadEncryption = payloadEncryption,
                 dpopProof = credentialDpopProof,
             ).andThenRecover { error ->
                 if (error is CredentialOfferError.UseDPoPNonce) {
@@ -137,8 +132,8 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
                     credentialOfferRepository.fetchCredential(
                         issuerEndpoint = verifiableCredentialParams.credentialEndpoint,
                         tokenResponse = tokenResponse,
-                        credentialRequestType = credentialRequestType,
-                        payloadEncryptionType = payloadEncryptionType,
+                        request = request,
+                        payloadEncryption = payloadEncryption,
                         dpopProof = retriedDpopProof,
                     )
                 } else {
@@ -153,7 +148,7 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
                 tokenResponse = tokenResponse,
                 dpopKeyPair = dpopKeyPair,
             ).bind()
-        }.onFailure {
+        }.onErr {
             deleteHardwareKeys(
                 bindingKeyPairs = (credentialBindingKeyPairs?.plus(dpopKeyPair)),
             )
@@ -163,26 +158,24 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
     private suspend fun fetchCredential(
         verifiableCredentialParams: VerifiableCredentialParams,
         credentialBindingKeyPairs: List<BindingKeyPair>?,
-        payloadEncryptionType: PayloadEncryptionType
+        payloadEncryptionType: PayloadEncryption
     ): Result<FetchCredentialResult, FetchVerifiableCredentialError> = coroutineBinding {
         val tokenResponse = getToken(verifiableCredentialParams, null, null)
             .bind()
         val proofs = credentialBindingKeyPairs?.let {
-            val nonce = verifiableCredentialParams.nonceEndpoint?.let {
-                credentialOfferRepository.fetchNonce(it)
-                    .mapError(FetchNonceError::toFetchVerifiableCredentialError)
-                    .bind()
-            }
+            val nonce = credentialOfferRepository.fetchNonce(verifiableCredentialParams.nonceEndpoint)
+                .mapError(FetchNonceError::toFetchVerifiableCredentialError)
+                .bind()
             retryUseCase {
                 createCredentialRequestProofsJwt(
                     keyPairs = credentialBindingKeyPairs,
                     issuer = verifiableCredentialParams.issuerEndpoint.toString(),
-                    cNonce = nonce?.cNonce,
+                    cNonce = nonce.cNonce,
                 )
             }.bind()
         }
         val credentialRequestType = createCredentialRequest(
-            payloadEncryptionType = payloadEncryptionType,
+            payloadEncryption = payloadEncryptionType,
             credentialType = CredentialType.Verifiable(
                 verifiableCredentialParams = verifiableCredentialParams,
                 proofs = proofs,
@@ -193,8 +186,8 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
         val fetchCredentialResponse = credentialOfferRepository.fetchCredential(
             issuerEndpoint = verifiableCredentialParams.credentialEndpoint,
             tokenResponse = tokenResponse,
-            credentialRequestType = credentialRequestType,
-            payloadEncryptionType = payloadEncryptionType,
+            request = credentialRequestType,
+            payloadEncryption = payloadEncryptionType,
         ).bind()
 
         getCredentialResult(
@@ -204,7 +197,7 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
             tokenResponse = tokenResponse,
             dpopKeyPair = null,
         ).bind()
-    }.onFailure { deleteHardwareKeys(credentialBindingKeyPairs) }
+    }.onErr { deleteHardwareKeys(credentialBindingKeyPairs) }
 
     private suspend fun getToken(
         verifiableCredentialParams: VerifiableCredentialParams,
@@ -242,6 +235,7 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
                     }
                 }.mapError(FetchAccessTokenError::toFetchVerifiableCredentialError)
             }
+
             grant.refreshToken != null -> {
                 val initialProof = createTokenDpopProof(
                     tokenEndpoint = tokenEndpoint,
@@ -269,6 +263,7 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
                     }
                 }.mapError(FetchAccessTokenError::toFetchVerifiableCredentialError)
             }
+
             else -> {
                 Err(CredentialOfferError.UnsupportedGrantType)
             }
@@ -291,8 +286,8 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
                         accessToken = tokenResponse.accessToken,
                         refreshToken = tokenResponse.refreshToken,
                         dpopKeyBinding = dpopKeyBinding,
-                        credentialResponse.credentials.mapIndexed { index, credential ->
-                            VerifiableCredential(
+                        credentials = credentialResponse.credentials.mapIndexed { index, credential ->
+                            BatchCredentialItem(
                                 credential.credential,
                                 keyBinding = keyBindings?.getOrNull(index),
                             )
@@ -300,8 +295,11 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
                     )
                 } else {
                     VerifiableCredential(
-                        credentialResponse.credentials.first().credential,
-                        keyBinding = keyBindings?.first()
+                        accessToken = tokenResponse.accessToken,
+                        refreshToken = tokenResponse.refreshToken,
+                        dpopKeyBinding = dpopKeyBinding,
+                        credential = credentialResponse.credentials.first().credential,
+                        keyBinding = keyBindings?.first(),
                     )
                 }
             }
@@ -352,11 +350,9 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
         }
     }
 
-    private suspend fun fetchIssuerNonce(nonceEndpoint: URL?): Result<IssuerNonce?, FetchVerifiableCredentialError> =
-        nonceEndpoint?.let {
-            credentialOfferRepository.fetchNonce(it)
-                .mapError(FetchNonceError::toFetchVerifiableCredentialError)
-        } ?: Ok(null)
+    private suspend fun fetchIssuerNonce(nonceEndpoint: URL): Result<IssuerNonce, FetchVerifiableCredentialError> =
+        credentialOfferRepository.fetchNonce(nonceEndpoint)
+            .mapError(FetchNonceError::toFetchVerifiableCredentialError)
 
     private suspend fun createTokenDpopProof(
         tokenEndpoint: URL,
@@ -370,6 +366,7 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
                 keyPair = it.keyPair,
                 nonce = dpopNonce,
                 accessToken = null,
+                requestBody = null,
                 keyAttestationJwt = it.attestationJwt,
             ).mapError(CreateDPoPProofJwtError::toFetchVerifiableCredentialError).bind()
         }
@@ -387,6 +384,7 @@ internal class FetchVerifiableCredentialImpl @Inject constructor(
             keyPair = dpopKeyPair.keyPair,
             nonce = dpopNonce,
             accessToken = accessToken,
+            requestBody = null,
             keyAttestationJwt = null,
         ).mapError(CreateDPoPProofJwtError::toFetchVerifiableCredentialError).bind()
     }

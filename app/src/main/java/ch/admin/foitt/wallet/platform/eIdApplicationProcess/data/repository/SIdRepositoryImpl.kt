@@ -40,6 +40,7 @@ import io.ktor.http.contentType
 import javax.inject.Inject
 import javax.inject.Named
 
+@Suppress("TooManyFunctions")
 class SIdRepositoryImpl @Inject constructor(
     @param:Named(NAMED_DEFAULT_HTTP_CLIENT) private val httpClient: HttpClient,
     private val environmentSetupRepo: EnvironmentSetupRepository,
@@ -190,6 +191,19 @@ class SIdRepositoryImpl @Inject constructor(
             setBody(request)
         }.body()
     }.mapError { it.toSIdRepositoryError("Set peer pushId failed") }
+
+    override suspend fun abortSIdProcess(
+        caseId: String,
+        clientAttestation: ClientAttestation,
+        clientAttestationPoP: ClientAttestationPoP,
+    ) = runSuspendCatching<Unit> {
+        httpClient.put(
+            environmentSetupRepo.sidBackendUrl + REST_API + "eid/$caseId/abort"
+        ) {
+            header(ClientAttestation.REQUEST_HEADER, clientAttestation.attestation.rawJwt)
+            header(ClientAttestationPoP.REQUEST_HEADER, clientAttestationPoP.value)
+        }.body()
+    }.mapError { it.toSIdRepositoryError("Abort SId process failed") }
 
     companion object {
         private const val REST_API = "api/rest/"

@@ -2,22 +2,27 @@
 
 package ch.admin.foitt.wallet.platform.genericScreens.domain.model
 
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseErrorBody
 import ch.admin.foitt.wallet.R
 
 sealed interface GenericErrorScreenState {
 
     data class Error(
+        val image: Int = R.drawable.wallet_ic_cross_circle_colored,
         val title: Int,
         val subtitle: Int,
         val errorText: String? = null,
         val errorDescription: Int? = null,
+        val declineData: DeclineData? = null,
     ) : GenericErrorScreenState
 
     data class PresentationError(
+        val image: Int = R.drawable.wallet_ic_cross_circle_colored,
         val title: Int,
         val subtitle: Int,
         val errorText: String? = null,
-        val errorDescription: String? = null
+        val errorDescription: String? = null,
+        val responseUri: String? = null,
     ) : GenericErrorScreenState
 
     companion object {
@@ -147,11 +152,29 @@ sealed interface GenericErrorScreenState {
             errorText = "unauthorized_grant_type",
             errorDescription = R.string.tk_credentialOffer_error_unauthorizedGrantType_description,
         )
+
+        fun unverifiedIssuer() = Error(
+            image = R.drawable.wallet_ic_blocked_colored,
+            title = R.string.tk_error_governance_error_primary,
+            subtitle = R.string.tk_error_governance_error_secondary,
+            errorText = "unverified_actor",
+            errorDescription = R.string.tk_credentialOffer_error_unverifiedIssuer_description,
+        )
+
+        fun unauthorizedIssuance() = Error(
+            image = R.drawable.wallet_ic_blocked_colored,
+            title = R.string.tk_error_governance_error_primary,
+            subtitle = R.string.tk_error_governance_error_secondary,
+            errorText = "unauthorized_issuance",
+            errorDescription = R.string.tk_credentialOffer_error_unauthorizedIssuance_description,
+        )
     }
 
     object Presentation {
         private val presentationErrorTitle = R.string.tk_present_error_primary
         private val presentationErrorSubtitle = R.string.tk_present_error_secondary
+        private val presentationErrorGovErrorTitle = R.string.tk_error_governance_error_primary
+        private val presentationErrorGovErrorSubtitle = R.string.tk_error_governance_error_secondary
 
         fun generic() = Error(
             title = presentationErrorTitle,
@@ -162,21 +185,39 @@ sealed interface GenericErrorScreenState {
             title = presentationErrorTitle,
             subtitle = presentationErrorSubtitle,
             errorText = "invalid_request",
-            errorDescription = R.string.tk_credentialOffer_error_invalidRequest_description
+            errorDescription = R.string.tk_credentialOffer_error_invalidRequest_description,
+            declineData = null, // is already declined in the viewmodel
         )
 
-        fun invalidClient() = Error(
+        fun invalidClient(
+            responseUri: String?,
+            state: String?,
+        ) = Error(
             title = presentationErrorTitle,
             subtitle = presentationErrorSubtitle,
             errorText = "invalid_client",
-            errorDescription = R.string.tk_credentialOffer_error_invalidClient_description
+            errorDescription = R.string.tk_credentialOffer_error_invalidClient_description,
+            declineData = responseUri?.let {
+                DeclineData(
+                    responseUri = it,
+                    reason = AuthorizationResponseErrorBody.ErrorType.INVALID_CLIENT,
+                    state = state,
+                )
+            },
         )
 
-        fun invalidTransactionData() = Error(
+        fun invalidTransactionData(responseUri: String?, state: String?) = Error(
             title = presentationErrorTitle,
             subtitle = presentationErrorSubtitle,
             errorText = "invalid_request",
-            errorDescription = R.string.tk_present_error_invalidTransactionData_secondary
+            errorDescription = R.string.tk_present_error_invalidTransactionData_secondary,
+            declineData = responseUri?.let {
+                DeclineData(
+                    responseUri = it,
+                    reason = AuthorizationResponseErrorBody.ErrorType.INVALID_REQUEST,
+                    state = state,
+                )
+            },
         )
 
         fun presentationError(
@@ -187,6 +228,70 @@ sealed interface GenericErrorScreenState {
             subtitle = presentationErrorSubtitle,
             errorText = errorText,
             errorDescription = errorDescription,
+        )
+
+        fun unverifiedVerifier(
+            responseUri: String?,
+            state: String?,
+        ) = Error(
+            image = R.drawable.wallet_ic_blocked_colored,
+            title = presentationErrorGovErrorTitle,
+            subtitle = presentationErrorGovErrorSubtitle,
+            errorText = "unverified_actor",
+            errorDescription = R.string.tk_present_error_unverifiedVerifier_secondary,
+            declineData = responseUri?.let {
+                DeclineData(
+                    responseUri = it,
+                    reason = AuthorizationResponseErrorBody.ErrorType.ACCESS_DENIED,
+                    state = state,
+                )
+            },
+        )
+
+        fun unauthorizedVerification(
+            responseUri: String?,
+            state: String?,
+        ) = Error(
+            image = R.drawable.wallet_ic_blocked_colored,
+            title = presentationErrorGovErrorTitle,
+            subtitle = presentationErrorGovErrorSubtitle,
+            errorText = "unauthorized_verification",
+            errorDescription = R.string.tk_present_error_unauthorizedVerification_secondary,
+            declineData = responseUri?.let {
+                DeclineData(
+                    responseUri = it,
+                    reason = AuthorizationResponseErrorBody.ErrorType.ACCESS_DENIED,
+                    state = state,
+                )
+            },
+        )
+    }
+
+    object General {
+        private val title = R.string.tk_error_governance_error_primary
+        private val subtitle = R.string.tk_error_governance_error_secondary
+
+        fun unknownRegistry(
+            responseUri: String?,
+            state: String?,
+        ) = Error(
+            image = R.drawable.wallet_ic_blocked_colored,
+            title = title,
+            subtitle = subtitle,
+            errorText = "unknown_registry",
+            errorDescription = R.string.tk_gov_error_unknownRegistry_description,
+            declineData = responseUri?.let {
+                DeclineData(
+                    responseUri = it,
+                    reason = AuthorizationResponseErrorBody.ErrorType.ACCESS_DENIED,
+                    state = state,
+                )
+            },
+        )
+
+        fun invalidRedirectUri() = Error(
+            title = R.string.tk_error_redirectUri_invalid_primary,
+            subtitle = R.string.tk_error_redirectUri_invalid_secondary,
         )
     }
 }

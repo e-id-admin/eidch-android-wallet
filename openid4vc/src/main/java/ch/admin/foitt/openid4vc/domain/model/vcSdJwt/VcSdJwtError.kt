@@ -39,6 +39,8 @@ interface VcSdJwtError {
 
     data class InvalidVcSdJwt(val cause: Throwable) : VerifyVcSdJwtSignatureError
 
+    data object BatchConsistencyValidationFailed : VerifyVcSdJwtBatchConsistencyError
+
     data class Unexpected(val cause: Throwable?) :
         VerifyRequestObjectSignatureError,
         VerifyJwtError,
@@ -49,6 +51,7 @@ interface VcSdJwtError {
 sealed interface VerifyRequestObjectSignatureError
 sealed interface VerifyJwtError
 sealed interface VerifyVcSdJwtSignatureError
+sealed interface VerifyVcSdJwtBatchConsistencyError
 sealed interface ResolvePublicKeyError
 
 internal fun VerifyJwtSignatureError.toVerifyRequestObjectSignatureError(): VerifyRequestObjectSignatureError = when (this) {

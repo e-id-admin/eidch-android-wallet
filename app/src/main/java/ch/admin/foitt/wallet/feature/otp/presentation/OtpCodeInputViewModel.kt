@@ -21,8 +21,8 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.utils.openLink
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -114,18 +114,21 @@ class OtpCodeInputViewModel @Inject constructor(
                 email = email,
                 code = textFieldValue.value.text
             )
-        ).onFailure { error ->
+        ).onErr { error ->
             resetCodeFieldValue()
             when (error) {
                 OtpError.OtpExpired -> onExpired()
                 OtpError.NetworkError -> _uiState.value = OtpCodeInputUiState.NetworkError
                 OtpError.ServiceDeactivated -> _uiState.value = OtpCodeInputUiState.Unavailable
-                OtpError.InvalidClientAttestation -> _uiState.value = OtpCodeInputUiState.NotSupported
+                OtpError.InvalidClientAttestation ->
+                    _uiState.value =
+                        OtpCodeInputUiState.NotSupported
+
                 OtpError.TooManyRequests -> _uiState.value = OtpCodeInputUiState.TooManyAttempts
                 OtpError.InvalidField -> _uiState.value = OtpCodeInputUiState.WrongCode
                 else -> _uiState.value = OtpCodeInputUiState.Unexpected
             }
-        }.onSuccess {
+        }.onOk {
             otpStateCompletionRepository.setOtpFlowWasDone(isCompleted = true)
             continueToEId()
         }

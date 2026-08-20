@@ -1,10 +1,13 @@
 package ch.admin.foitt.wallet.platform.environmentSetup.domain.repository
 
 interface EnvironmentSetupRepository {
+    val userAgent: String
     val appVersionEnforcementUrl: String
-    val attestationsServiceUrl: String
+    val defaultAttestationServiceUrl: String
+    val attestationServiceMapping: Map<String, String>
     val attestationsServiceTrustedDids: List<String>
     val trustRegistryMapping: Map<String, String>
+    val statusListMapping: Map<String, String>
     val trustV1TrustRegistryTrustedDids: Map<String, List<String>>
     val trustRegistryTrustedDids: Map<String, Map<String, List<String>>>
     val trustEnvironmentDidRegex: String
@@ -22,12 +25,10 @@ interface EnvironmentSetupRepository {
     val nonComplianceEnabled: Boolean
     val nonComplianceBaseUrl: String
     val batchIssuanceEnabled: Boolean
-    val payloadEncryptionEnabled: Boolean
     val allowBypassOtp: Boolean
     val isLottieViewerEnabled: Boolean
     val devsSettingsEnabled: Boolean
     val isProximityEngagementEnabled: Boolean
-    val verifyRequestObjectSignature: Boolean
     val isVersionEnforcementEnabled: Boolean
-    val isDPopEnabled: Boolean
+    val terminateOnInvalidIdTSEnabled: Boolean
 }

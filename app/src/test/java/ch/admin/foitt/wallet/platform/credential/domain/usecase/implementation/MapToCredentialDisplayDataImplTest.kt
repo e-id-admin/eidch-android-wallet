@@ -10,23 +10,17 @@ import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.model.toDisplayStatus
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.MapToCredentialDisplayData
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.ResolveClaimTemplate
-import ch.admin.foitt.wallet.platform.database.domain.model.BundleItemEntity
-import ch.admin.foitt.wallet.platform.database.domain.model.BundleItemWithKeyBinding
-import ch.admin.foitt.wallet.platform.database.domain.model.Credential
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimWithDisplays
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialDisplay
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialEntity
-import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialWithBundleItemsWithKeyBinding
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableProgressionState
 import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedAndThemedDisplay
-import ch.admin.foitt.wallet.platform.ssi.domain.repository.VerifiableCredentialWithBundleItemsWithKeyBindingRepository
 import ch.admin.foitt.wallet.platform.theme.domain.model.Theme
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
-import com.github.michaelbull.result.Ok
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -52,17 +46,10 @@ class MapToCredentialDisplayDataImplTest {
     private lateinit var mockResolveClaimTemplate: ResolveClaimTemplate
 
     @MockK
-    private lateinit var mockVerifiableCredentialWithBundleItemsWithKeyBindingRepository:
-        VerifiableCredentialWithBundleItemsWithKeyBindingRepository
-
-    @MockK
     private lateinit var mockGetActorEnvironment: GetActorEnvironment
 
     @MockK
     private lateinit var mockVerifiableCredential: VerifiableCredentialEntity
-
-    @MockK
-    private lateinit var mockCredential: Credential
 
     private lateinit var claims: List<CredentialClaimWithDisplays>
     private lateinit var claimsWithNullValue: List<CredentialClaimWithDisplays>
@@ -78,7 +65,6 @@ class MapToCredentialDisplayDataImplTest {
             getActorEnvironment = mockGetActorEnvironment,
             context = mockAppContext,
             getLocalizedAndThemedDisplay = mockGetLocalizedAndThemedDisplay,
-            verifiableCredentialWithBundleItemsWithKeyBindingRepository = mockVerifiableCredentialWithBundleItemsWithKeyBindingRepository,
         )
 
         setupDefaultMocks()
@@ -91,7 +77,8 @@ class MapToCredentialDisplayDataImplTest {
 
     @Test
     fun `Valid input returns credential display data`() = runTest {
-        val result = useCase(mockVerifiableCredential, credentialDisplays, claims, CredentialFormat.VC_SD_JWT)
+        val result =
+            useCase(mockVerifiableCredential, credentialDisplays, claims, CredentialFormat.VC_SD_JWT, CredentialStatus.VALID)
 
         val displayData = result.assertOk()
         assertEquals(CREDENTIAL_ID, displayData.credentialId)
@@ -112,7 +99,8 @@ class MapToCredentialDisplayDataImplTest {
             mockGetLocalizedAndThemedDisplay(credentialDisplays = displays, preferredTheme = Theme.LIGHT)
         } returns display
 
-        val result = useCase(mockVerifiableCredential, displays, claims, CredentialFormat.VC_SD_JWT)
+        val result =
+            useCase(mockVerifiableCredential, displays, claims, CredentialFormat.VC_SD_JWT, CredentialStatus.VALID)
 
         val displayData = result.assertOk()
         assertEquals(null, displayData.subtitle)
@@ -133,7 +121,7 @@ class MapToCredentialDisplayDataImplTest {
                     coEvery { mockGetActorEnvironment(ISSUER) } returns actorEnvironment
 
                     val result =
-                        useCase(mockVerifiableCredential, credentialDisplays, claims, CredentialFormat.VC_SD_JWT)
+                        useCase(mockVerifiableCredential, credentialDisplays, claims, CredentialFormat.VC_SD_JWT, CredentialStatus.VALID)
 
                     val displayData = result.assertOk()
                     assertEquals(actorEnvironment, displayData.actorEnvironment)
@@ -148,141 +136,97 @@ class MapToCredentialDisplayDataImplTest {
             mockGetLocalizedAndThemedDisplay(listOf(element = credentialDisplay), preferredTheme = Theme.LIGHT)
         } returns null
 
-        val result = useCase(mockVerifiableCredential, credentialDisplays, claims, CredentialFormat.VC_SD_JWT)
+        val result =
+            useCase(mockVerifiableCredential, credentialDisplays, claims, CredentialFormat.VC_SD_JWT, CredentialStatus.VALID)
         result.assertErrorType(CredentialError.Unexpected::class)
     }
 
-    @TestFactory
-    fun `Mapping the credential display data correctly resolves a simple template`(): List<DynamicTest> {
-        val inputs = listOf(
-            credentialDisplaySimpleTemplateJsonPath,
-            credentialDisplaySimpleTemplateClaimsPathPointer,
+    @Test
+    fun `Mapping the credential display data correctly resolves a simple template`() = runTest {
+        val credentialDisplays = listOf(credentialDisplaySimpleTemplateClaimsPathPointer)
+        coEvery {
+            mockGetLocalizedAndThemedDisplay(credentialDisplays = credentialDisplays, preferredTheme = Theme.LIGHT)
+        } returns credentialDisplaySimpleTemplateClaimsPathPointer
+
+        val result = useCase(
+            verifiableCredential = mockVerifiableCredential,
+            credentialDisplays = credentialDisplays,
+            claims = claims,
+            credentialFormat = CredentialFormat.VC_SD_JWT,
+            status = CredentialStatus.VALID,
+        ).assertOk()
+
+        assertEquals("Test: value1", result.subtitle)
+    }
+
+    @Test
+    fun `Mapping the credential display data correctly resolves a multi template`() = runTest {
+        val credentialDisplays = listOf(credentialDisplayMultiTemplateClaimsPathPointer)
+        coEvery {
+            mockGetLocalizedAndThemedDisplay(credentialDisplays = credentialDisplays, preferredTheme = Theme.LIGHT)
+        } returns credentialDisplayMultiTemplateClaimsPathPointer
+
+        val claims = listOf(
+            CredentialClaimWithDisplays(
+                claim = claim1,
+                displays = listOf(claimDisplay)
+            ),
+            CredentialClaimWithDisplays(
+                claim = claim2,
+                displays = listOf(claimDisplay)
+            )
         )
 
-        return inputs.map { display ->
-            DynamicTest.dynamicTest("$display with template is correctly resolved") {
-                runTest {
-                    val credentialDisplays = listOf(display)
-                    coEvery {
-                        mockGetLocalizedAndThemedDisplay(credentialDisplays = credentialDisplays, preferredTheme = Theme.LIGHT)
-                    } returns display
+        val result = useCase(
+            verifiableCredential = mockVerifiableCredential,
+            credentialDisplays = credentialDisplays,
+            claims = claims,
+            credentialFormat = CredentialFormat.VC_SD_JWT,
+            status = CredentialStatus.VALID,
+        ).assertOk()
 
-                    val result = useCase(
-                        verifiableCredential = mockVerifiableCredential,
-                        credentialDisplays = credentialDisplays,
-                        claims = claims,
-                        credentialFormat = CredentialFormat.VC_SD_JWT,
-                    ).assertOk()
-
-                    assertEquals("Test: value1", result.subtitle)
-                }
-            }
-        }
+        assertEquals("Test: value1, value2", result.subtitle)
     }
 
     @TestFactory
-    fun `Mapping the credential display data correctly resolves a multi template`(): List<DynamicTest> {
-        val inputs = listOf(
-            credentialDisplayMultiTemplateJsonPath,
-            credentialDisplayMultiTemplateClaimsPathPointer,
-        )
+    fun `Mapping the credential display where the template references an unknown key is replaced by empty string`() = runTest {
+        val credentialDisplays = listOf(credentialDisplayUnknownKeyClaimsPathPointer)
+        coEvery {
+            mockGetLocalizedAndThemedDisplay(credentialDisplays = credentialDisplays, preferredTheme = Theme.LIGHT)
+        } returns credentialDisplayUnknownKeyClaimsPathPointer
 
-        return inputs.map { display ->
-            DynamicTest.dynamicTest("$display with template is correctly resolved") {
-                runTest {
-                    val credentialDisplays = listOf(display)
-                    coEvery {
-                        mockGetLocalizedAndThemedDisplay(credentialDisplays = credentialDisplays, preferredTheme = Theme.LIGHT)
-                    } returns display
+        val result = useCase(
+            verifiableCredential = mockVerifiableCredential,
+            credentialDisplays = credentialDisplays,
+            claims = claims,
+            credentialFormat = CredentialFormat.VC_SD_JWT,
+            status = CredentialStatus.VALID,
+        ).assertOk()
 
-                    val claims = listOf(
-                        CredentialClaimWithDisplays(
-                            claim = claim1,
-                            displays = listOf(claimDisplay)
-                        ),
-                        CredentialClaimWithDisplays(
-                            claim = claim2,
-                            displays = listOf(claimDisplay)
-                        )
-                    )
-
-                    val result = useCase(
-                        verifiableCredential = mockVerifiableCredential,
-                        credentialDisplays = credentialDisplays,
-                        claims = claims,
-                        credentialFormat = CredentialFormat.VC_SD_JWT,
-                    ).assertOk()
-
-                    assertEquals("Test: value1, value2", result.subtitle)
-                }
-            }
-        }
+        assertEquals("Test: ", result.subtitle)
     }
 
-    @TestFactory
-    fun `Mapping the credential display where the template references an unknown key is replaced by empty string`(): List<DynamicTest> {
-        val inputs = listOf(
-            credentialDisplayUnknownKeyJsonPath,
-            credentialDisplayUnknownKeyClaimsPathPointer,
-        )
+    @Test
+    fun `Mapping the credential display where the template references an null claim is replaced by hyphen`() = runTest {
+        val credentialDisplays = listOf(credentialDisplaySimpleTemplateClaimsPathPointer)
+        coEvery {
+            mockGetLocalizedAndThemedDisplay(credentialDisplays = credentialDisplays, preferredTheme = Theme.LIGHT)
+        } returns credentialDisplaySimpleTemplateClaimsPathPointer
 
-        return inputs.map { display ->
-            DynamicTest.dynamicTest("$display with template is correctly resolved") {
-                runTest {
-                    val credentialDisplays = listOf(display)
-                    coEvery {
-                        mockGetLocalizedAndThemedDisplay(credentialDisplays = credentialDisplays, preferredTheme = Theme.LIGHT)
-                    } returns display
+        val result = useCase(
+            verifiableCredential = mockVerifiableCredential,
+            credentialDisplays = credentialDisplays,
+            claims = claimsWithNullValue,
+            credentialFormat = CredentialFormat.VC_SD_JWT,
+            status = CredentialStatus.VALID,
+        ).assertOk()
 
-                    val result = useCase(
-                        verifiableCredential = mockVerifiableCredential,
-                        credentialDisplays = credentialDisplays,
-                        claims = claims,
-                        credentialFormat = CredentialFormat.VC_SD_JWT,
-                    ).assertOk()
-
-                    assertEquals("Test: ", result.subtitle)
-                }
-            }
-        }
-    }
-
-    @TestFactory
-    fun `Mapping the credential display where the template references an null claim is replaced by hyphen`(): List<DynamicTest> {
-        val inputs = listOf(
-            credentialDisplaySimpleTemplateJsonPath,
-            credentialDisplaySimpleTemplateClaimsPathPointer,
-        )
-
-        return inputs.map { display ->
-            DynamicTest.dynamicTest("$display with template is correctly resolved") {
-                runTest {
-                    val credentialDisplays = listOf(display)
-                    coEvery {
-                        mockGetLocalizedAndThemedDisplay(credentialDisplays = credentialDisplays, preferredTheme = Theme.LIGHT)
-                    } returns display
-
-                    val result = useCase(
-                        verifiableCredential = mockVerifiableCredential,
-                        credentialDisplays = credentialDisplays,
-                        claims = claimsWithNullValue,
-                        credentialFormat = CredentialFormat.VC_SD_JWT,
-                    ).assertOk()
-
-                    assertEquals("Test: –", result.subtitle)
-                }
-            }
-        }
+        assertEquals("Test: –", result.subtitle)
     }
 
     @TestFactory
     fun `Mapping the credential display correctly resolves nested templates`(): List<DynamicTest> {
         val input = listOf(
-            "{{$.claim2Key {{$.claim1Key}}}}" to "{{$.claim2Key value1}}",
-            "{{{$.claim1Key}}}" to "{value1}",
-            "{{{{$.claim1Key}}}}" to "{{value1}}",
-            "{{{$.claim1Key}}}}" to "{value1}}",
-
             "{{[\"claim2Key\"] {{[\"claim1Key\"]}}}}" to "{{[\"claim2Key\"] value1}}",
             "{{{[\"claim1Key\"]}}}" to "{value1}",
             "{{{{[\"claim1Key\"]}}}}" to "{{value1}}",
@@ -303,6 +247,7 @@ class MapToCredentialDisplayDataImplTest {
                         credentialDisplays,
                         claims,
                         CredentialFormat.VC_SD_JWT,
+                        CredentialStatus.VALID,
                     ).assertOk()
 
                     assertEquals(resolvedResult, result.subtitle)
@@ -316,12 +261,6 @@ class MapToCredentialDisplayDataImplTest {
         val input = listOf(
             "{{}}", // empty
             "{{ }}", // empty
-
-            "{{$.claim1Key }}", // whitespace
-            "{$.claim1Key}", // single brackets
-            "{$.claim1Key}}", // missing opening bracket
-            "{{$.claim1Key}", // missing closing bracket
-
             "{{[\"claim1Key\"] }}", // whitespace
             "{[\"claim1Key\"]}", // single brackets
             "{[\"claim1Key\"]}}", // missing opening bracket
@@ -342,6 +281,7 @@ class MapToCredentialDisplayDataImplTest {
                         credentialDisplays,
                         claims,
                         CredentialFormat.VC_SD_JWT,
+                        CredentialStatus.VALID,
                     ).assertOk()
 
                     assertEquals(template, result.subtitle)
@@ -352,13 +292,13 @@ class MapToCredentialDisplayDataImplTest {
 
     @Suppress("CyclomaticComplexMethod")
     private fun setupDefaultMocks() {
+        every { mockAppContext.resources.configuration.isNightModeActive } returns false
         every { mockVerifiableCredential.credentialId } returns CREDENTIAL_ID
         every { mockVerifiableCredential.validFrom } returns 0
         every { mockVerifiableCredential.validUntil } returns 17768026519L
         every { mockVerifiableCredential.issuer } returns ISSUER
         every { mockVerifiableCredential.progressionState } returns progressionState
-        every { mockVerifiableCredential.nextPresentableBundleItemId } returns BUNDLE_ITEM_ID
-        every { mockCredential.id } returns CREDENTIAL_ID
+        every { mockVerifiableCredential.createdAt } returns CREATED_AT
 
         claims = listOf(
             CredentialClaimWithDisplays(
@@ -383,16 +323,12 @@ class MapToCredentialDisplayDataImplTest {
 
             when (template) {
                 DESCRIPTION -> RESOLVED_DESCRIPTION
-                "Test: {{$.claim1Key}}",
                 "Test: {{[\"claim1Key\"]}}" -> if (claim1Value == null) "Test: –" else "Test: value1"
-                "Test: {{$.claim1Key}}, {{$.claim2Key}}",
+
                 "Test: {{[\"claim1Key\"]}}, {{[\"claim2Key\"]}}" -> "Test: value1, value2"
-                "Test: {{$.claim3Key}}",
+
                 "Test: {{[\"claim3Key\"]}}" -> "Test: "
-                "{{$.claim2Key {{$.claim1Key}}}}" -> "{{$.claim2Key value1}}"
-                "{{{$.claim1Key}}}" -> "{value1}"
-                "{{{{$.claim1Key}}}}" -> "{{value1}}"
-                "{{{$.claim1Key}}}}" -> "{value1}}"
+
                 "{{[\"claim2Key\"] {{[\"claim1Key\"]}}}}" -> "{{[\"claim2Key\"] value1}}"
                 "{{{[\"claim1Key\"]}}}" -> "{value1}"
                 "{{{{[\"claim1Key\"]}}}}" -> "{{value1}}"
@@ -400,26 +336,6 @@ class MapToCredentialDisplayDataImplTest {
                 else -> template
             }
         }
-
-        coEvery {
-            mockVerifiableCredentialWithBundleItemsWithKeyBindingRepository.getByCredentialId(CREDENTIAL_ID)
-        } returns Ok(
-            VerifiableCredentialWithBundleItemsWithKeyBinding(
-                verifiableCredential = mockVerifiableCredential,
-                credential = mockCredential,
-                bundleItemsWithKeyBinding = listOf(
-                    BundleItemWithKeyBinding(
-                        bundleItem = BundleItemEntity(
-                            id = BUNDLE_ITEM_ID,
-                            status = CredentialStatus.VALID,
-                            credentialId = CREDENTIAL_ID,
-                            payload = "payload"
-                        ),
-                        keyBinding = null,
-                    )
-                ),
-            )
-        )
 
         coEvery {
             mockGetLocalizedAndThemedDisplay(
@@ -432,13 +348,13 @@ class MapToCredentialDisplayDataImplTest {
 
     private companion object {
         const val CREDENTIAL_ID = 1L
-        const val BUNDLE_ITEM_ID = 11L
         const val ISSUER = "issuer"
         const val NAME = "name"
         const val DESCRIPTION = "description"
         const val RESOLVED_DESCRIPTION = "resolved description"
         const val LOGO_URI = "logoUri"
         const val BACKGROUND_COLOR = "backgroundColor"
+        const val CREATED_AT = 1L
         val progressionState = VerifiableProgressionState.ACCEPTED
         val claim1Path = listOf(ClaimsPathPointerComponent.String("claim1Key"))
         val claim1PathString = claim1Path.toPointerString()
@@ -448,12 +364,6 @@ class MapToCredentialDisplayDataImplTest {
         val credentialDisplay = createCredentialDisplay(DESCRIPTION)
 
         val credentialDisplays = listOf(credentialDisplay)
-
-        val credentialDisplaySimpleTemplateJsonPath = createCredentialDisplay("Test: {{$.claim1Key}}")
-
-        val credentialDisplayMultiTemplateJsonPath = createCredentialDisplay("Test: {{$.claim1Key}}, {{$.claim2Key}}")
-
-        val credentialDisplayUnknownKeyJsonPath = createCredentialDisplay("Test: {{$.claim3Key}}")
 
         val credentialDisplaySimpleTemplateClaimsPathPointer = createCredentialDisplay("Test: {{[\"claim1Key\"]}}")
 

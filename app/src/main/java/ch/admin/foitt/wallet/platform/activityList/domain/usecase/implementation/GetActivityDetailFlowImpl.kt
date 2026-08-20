@@ -50,7 +50,8 @@ class GetActivityDetailFlowImpl @Inject constructor(
                     verifiableCredential = credentialWithDisplaysAndClusters.verifiableCredential,
                     credentialDisplays = credentialWithDisplaysAndClusters.credentialDisplays,
                     claims = credentialWithDisplaysAndClusters.clusters.flatMap { it.claimsWithDisplays },
-                    credentialFormat = credentialWithDisplaysAndClusters.credential.format
+                    credentialFormat = credentialWithDisplaysAndClusters.credential.format,
+                    status = credentialWithDisplaysAndClusters.nextPresentableStatus,
                 ).mapError(MapToCredentialDisplayDataError::toGetActivityDetailFlowError)
                     .bind()
 

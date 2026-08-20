@@ -6,6 +6,7 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,4 +21,8 @@ class EIdNotSupportedDeviceViewModel @Inject constructor(
     )
 
     fun onClose() = navManager.navigateBackToHomeScreen(Destination.EIdIntroScreen::class)
+
+    init {
+        Timber.w("Device is not supported")
+    }
 }

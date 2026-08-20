@@ -1,6 +1,7 @@
 package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseErrorBody
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseResponse
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestError
 import ch.admin.foitt.openid4vc.domain.repository.PresentationRequestRepository
 import ch.admin.foitt.openid4vc.domain.usecase.DeclinePresentation
@@ -14,6 +15,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -21,6 +23,9 @@ class DeclinePresentationImplTest {
 
     @MockK
     private lateinit var mockPresentationRequestRepository: PresentationRequestRepository
+
+    @MockK
+    private lateinit var mockAuthorizationResponseResponse: AuthorizationResponseResponse
 
     private lateinit var useCase: DeclinePresentation
 
@@ -30,7 +35,7 @@ class DeclinePresentationImplTest {
 
         coEvery {
             mockPresentationRequestRepository.submitPresentationError(URL, authorizationResponseErrorBody)
-        } returns Ok(Unit)
+        } returns Ok(mockAuthorizationResponseResponse)
 
         useCase = DeclinePresentationImpl(
             presentationRequestRepository = mockPresentationRequestRepository,
@@ -44,7 +49,14 @@ class DeclinePresentationImplTest {
 
     @Test
     fun `Successfully submitting a presentation error returns a success`() = runTest {
-        useCase(URL, errorType).assertOk()
+        val result = useCase(URL, errorType, STATE).assertOk()
+
+        assertEquals(mockAuthorizationResponseResponse, result)
+    }
+
+    @Test
+    fun `Missing uri returns an error`() = runTest {
+        useCase(null, errorType, STATE).assertErrorType(PresentationRequestError.Unexpected::class)
     }
 
     @Test
@@ -53,12 +65,13 @@ class DeclinePresentationImplTest {
             mockPresentationRequestRepository.submitPresentationError(URL, authorizationResponseErrorBody)
         } returns Err(PresentationRequestError.NetworkError)
 
-        useCase(URL, errorType).assertErrorType(PresentationRequestError.NetworkError::class)
+        useCase(URL, errorType, STATE).assertErrorType(PresentationRequestError.NetworkError::class)
     }
 
     private companion object {
         const val URL = "url"
         val errorType = AuthorizationResponseErrorBody.ErrorType.ACCESS_DENIED
-        val authorizationResponseErrorBody = AuthorizationResponseErrorBody(errorType)
+        const val STATE = "state"
+        val authorizationResponseErrorBody = AuthorizationResponseErrorBody(error = errorType, state = STATE)
     }
 }

@@ -120,7 +120,7 @@ private fun EIdParingOverviewScreenContent(
     ToastAnimated(
         isVisible = isToastVisible,
         isSnackBarDesign = false,
-        messageToast = R.string.tk_eidRequest_walletPairing_notification_success,
+        message = R.string.tk_eidRequest_walletPairing_notification_success,
         contentBottomPadding = Sizes.s24
     )
 }

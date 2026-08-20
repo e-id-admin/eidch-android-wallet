@@ -24,7 +24,7 @@ import ch.admin.foitt.wallet.platform.utils.trackCompletion
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.model.AppVersionInfo
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.model.EnforcementType
 import ch.admin.foitt.wallet.platform.versionEnforcement.domain.usecase.FetchAppVersionInfo
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onOk
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -117,9 +117,10 @@ class LockoutViewModel @Inject constructor(
         )
 
         loginWithBiometrics(biometricPromptWrapper)
-            .onSuccess {
+            .onOk {
                 resetLockout()
-                val info = appVersionInfo.value // if it is available now, perfect, otherwise it acts like a time-out
+                val info =
+                    appVersionInfo.value // if it is available now, perfect, otherwise it acts like a time-out
                 if (info is AppVersionInfo.Blocked) {
                     navigateToAppVersionBlocked(info.title, info.text, info.playStoreUrl, info.type)
                 } else {

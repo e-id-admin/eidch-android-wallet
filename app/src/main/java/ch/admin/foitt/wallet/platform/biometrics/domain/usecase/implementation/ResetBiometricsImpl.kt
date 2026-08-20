@@ -9,7 +9,7 @@ import ch.admin.foitt.wallet.platform.passphrase.domain.repository.PassphraseRep
 import ch.admin.foitt.wallet.platform.passphrase.domain.usecase.DeleteSecretKey
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.mapError
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onOk
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -26,7 +26,7 @@ class ResetBiometricsImpl @Inject constructor(
         useBiometricLoginRepository.saveUseBiometricLogin(isEnabled = false)
         return@withContext deleteSecretKey().mapError {
             it.toResetBiometricsError()
-        }.onSuccess {
+        }.onOk {
             Timber.d("Deletion succeeded")
         }
     }

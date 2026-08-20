@@ -7,5 +7,5 @@ import com.github.michaelbull.result.Result
 interface ProcessIdentityV1TrustStatement {
     suspend operator fun invoke(
         did: String,
-    ): Result<IdentityV1TrustStatement, ProcessIdentityV1TrustStatementError>
+    ): Result<IdentityV1TrustStatement?, ProcessIdentityV1TrustStatementError>
 }

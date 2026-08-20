@@ -50,10 +50,14 @@ internal class Migration15To16 : Migration(15, 16) {
                             json.decodeFromString<IssuerCredentialInfo>(rawOIDMetadata)
                         }
 
-                        // if migration of the metadata fails, we skip the migration of this Credential and also delete the corresponding
-                        // RawCredentialData
+                        // If migration of the metadata is not possible, we skip the migration of this Credential.
+                        // IMPORTANT: in the current implemention, the migration will lead to an inconsistent database due to orphaned
+                        // child tables. This bug was found too late, fixing it has no impact anymore…
                         if (metadataResult.isErr) {
                             Timber.e(t = metadataResult.error, message = "Credential could not be migrated due to invalid metadata")
+                            // The next line only fixes the corresponding instrumentation test case.
+                            // To make the migration work in general, a manual "cascade delete" of all children of Credential with id
+                            // $credentialId would've been necessary
                             db.execSQL("DELETE FROM `RawCredentialData` WHERE `credentialId` = $credentialId")
                             continue
                         }

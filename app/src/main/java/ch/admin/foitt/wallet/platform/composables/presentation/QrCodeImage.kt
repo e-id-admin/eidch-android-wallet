@@ -28,6 +28,7 @@ import kotlinx.coroutines.withContext
 fun QrCodeImage(
     content: String?,
     modifier: Modifier = Modifier,
+    contentDescription: String? = null,
 ) {
     val bitmap = rememberQrCodeBitmap(content)
 
@@ -41,7 +42,7 @@ fun QrCodeImage(
         if (bitmap != null) {
             Image(
                 bitmap = bitmap,
-                contentDescription = null,
+                contentDescription = contentDescription,
             )
         } else {
             Box(

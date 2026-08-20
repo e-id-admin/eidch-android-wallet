@@ -56,7 +56,7 @@ class HandleDeferredCredentialResultImpl @Inject constructor(
         val rawCredentialData = RawCredentialData(
             credentialId = -1,
             rawOcaBundle = rawOcaBundle?.toByteArray()?.compress(),
-            rawOIDMetadata = rawAndParsedCredentialInfo.rawIssuerCredentialInfo.toByteArray().compress()
+            rawOIDMetadata = rawAndParsedCredentialInfo.rawIssuerCredentialInfo.payloadString.toByteArray().compress()
         )
 
         credentialOfferRepository.saveDeferredCredentialOffer(

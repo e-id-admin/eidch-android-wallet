@@ -2,16 +2,22 @@ package ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialResponse
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.GetSignedMetadataDidError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.RawAndParsedIssuerCredentialInfo
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBinding
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VerifyVcSdJwtSignatureError
+import ch.admin.foitt.openid4vc.domain.usecase.GetSignedMetadataDid
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.VerifyVcSdJwtSignature
+import ch.admin.foitt.wallet.platform.actorEnvironment.domain.model.ActorEnvironment
+import ch.admin.foitt.wallet.platform.actorEnvironment.domain.usecase.GetActorEnvironment
 import ch.admin.foitt.wallet.platform.credential.domain.model.CredentialError
+import ch.admin.foitt.wallet.platform.credential.domain.model.FetchTrustForIssuanceError
 import ch.admin.foitt.wallet.platform.credential.domain.model.GenerateCredentialDisplaysError
 import ch.admin.foitt.wallet.platform.credential.domain.model.SaveCredentialFromDeferredError
 import ch.admin.foitt.wallet.platform.credential.domain.model.toKeyBinding
 import ch.admin.foitt.wallet.platform.credential.domain.model.toSaveCredentialFromDeferredError
+import ch.admin.foitt.wallet.platform.credential.domain.model.toUnverifiedIssuerError
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchTrustForIssuance
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GenerateAnyDisplays
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.SaveCredentialFromDeferred
@@ -22,10 +28,12 @@ import ch.admin.foitt.wallet.platform.oca.domain.usecase.FetchVcMetadataByFormat
 import ch.admin.foitt.wallet.platform.oca.domain.usecase.OcaBundler
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialOfferRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialOfferRepository
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.IdentityV2TrustStatement
 import ch.admin.foitt.wallet.platform.utils.compress
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
+import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getOr
 import com.github.michaelbull.result.mapError
@@ -34,6 +42,8 @@ import javax.inject.Inject
 
 class SaveCredentialFromDeferredImpl @Inject constructor(
     private val verifyVcSdJwtSignature: VerifyVcSdJwtSignature,
+    private val getSignedMetadataDid: GetSignedMetadataDid,
+    private val getActorEnvironment: GetActorEnvironment,
     private val fetchVcMetadataByFormat: FetchVcMetadataByFormat,
     private val fetchTrustForIssuance: FetchTrustForIssuance,
     private val ocaBundler: OcaBundler,
@@ -44,6 +54,7 @@ class SaveCredentialFromDeferredImpl @Inject constructor(
         deferredCredentialEntity: DeferredCredentialWithAuthenticationAndKeyBinding,
         credentialResponse: CredentialResponse.VerifiableCredential,
         rawAndParsedIssuerCredentialInfo: RawAndParsedIssuerCredentialInfo,
+        identityV2TrustStatement: IdentityV2TrustStatement?,
     ): Result<Long, SaveCredentialFromDeferredError> = coroutineBinding {
         Timber.d("Deferred refresh: handle getting credential for ${deferredCredentialEntity.deferredCredential.credentialId}")
 
@@ -65,13 +76,31 @@ class SaveCredentialFromDeferredImpl @Inject constructor(
             }
         }
 
+        val metadataDid = getSignedMetadataDid(rawAndParsedIssuerCredentialInfo.rawIssuerCredentialInfo)
+            .mapError(GetSignedMetadataDidError::toSaveCredentialFromDeferredError)
+            .bind()
+        runSuspendCatching {
+            check(anyCredential.issuer == metadataDid)
+        }.mapError(Throwable::toUnverifiedIssuerError)
+            .bind()
+
+        // Reject issuers whose DID is not on the BaseRegistry
+        val issuerEnvironment = getActorEnvironment(anyCredential.issuer)
+        if (issuerEnvironment == ActorEnvironment.EXTERNAL) {
+            Err(CredentialError.UnknownRegistry).bind()
+        }
+
         val vcMetadata = fetchVcMetadataByFormat(anyCredential)
             .mapError(FetchVcMetadataByFormatError::toSaveCredentialFromDeferredError).bind()
 
+        // this only exists here while we support trust statement flow 1.0 and 2.0
         val trustCheckResult = fetchTrustForIssuance(
+            identityTrustStatement = identityV2TrustStatement,
+            protectedIssuanceAuthorizationTrustStatement = null,
             issuerDid = anyCredential.issuer,
             vcSchemaId = anyCredential.vcSchemaId,
-        )
+        ).mapError(FetchTrustForIssuanceError::toSaveCredentialFromDeferredError)
+            .bind()
 
         val rawOcaBundle = vcMetadata.rawOcaBundle?.rawOcaBundle
         val ocaBundle = rawOcaBundle?.let {
@@ -85,7 +114,7 @@ class SaveCredentialFromDeferredImpl @Inject constructor(
         val displays = generateAnyDisplays(
             anyCredential = anyCredential,
             issuerInfo = rawAndParsedIssuerCredentialInfo.issuerCredentialInfo,
-            trustStatement = trustCheckResult.actorTrustStatement,
+            trustStatement = trustCheckResult?.identityTrustStatement,
             credentialConfiguration = credentialConfig,
             ocaBundle = ocaBundle,
         ).mapError(GenerateCredentialDisplaysError::toSaveCredentialFromDeferredError).bind()
@@ -93,7 +122,7 @@ class SaveCredentialFromDeferredImpl @Inject constructor(
         val rawCredentialData = RawCredentialData(
             credentialId = deferredCredentialEntity.credential.id,
             rawOcaBundle = rawOcaBundle?.toByteArray()?.compress(),
-            rawOIDMetadata = rawAndParsedIssuerCredentialInfo.rawIssuerCredentialInfo.toByteArray().compress()
+            rawOIDMetadata = rawAndParsedIssuerCredentialInfo.rawIssuerCredentialInfo.payloadString.toByteArray().compress()
         )
 
         credentialOfferRepository.saveCredentialFromDeferred(

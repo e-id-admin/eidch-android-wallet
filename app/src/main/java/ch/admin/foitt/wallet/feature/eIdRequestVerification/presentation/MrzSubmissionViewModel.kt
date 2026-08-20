@@ -32,7 +32,7 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getError
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -102,7 +102,7 @@ internal class MrzSubmissionViewModel @AssistedInject constructor(
             return
         }
         viewModelScope.launch {
-            fetchSIdCase().onSuccess { sIdCase ->
+            fetchSIdCase().onOk { sIdCase ->
                 checkStatus(caseResponse = sIdCase, mrzLines = mrzLines)
             }
         }.trackCompletion(isLoading)
@@ -116,29 +116,30 @@ internal class MrzSubmissionViewModel @AssistedInject constructor(
     }
 
     private suspend fun checkStatus(caseResponse: CaseResponse, mrzLines: List<String>) {
-        fetchStatusResult.value = fetchSIdStatus(caseId = caseResponse.caseId)
-            .onSuccess { stateResponse ->
-                val rawMrz = mrzLines.joinToString(";")
-                saveData(
-                    rawMrz,
-                    caseResponse,
-                    stateResponse
-                )
-                getDocumentScanResult().value?.let {
-                    saveEIdRequestFiles(
-                        sIdCaseId = caseResponse.caseId,
-                        filesDataList = it.filesWithExtractDataList,
-                        filesCategory = EIdRequestFileCategory.DOCUMENT_SCAN,
-                    ).onSuccess {
-                        Timber.d("Files saved successfully")
-                    }
-                } ?: Timber.d("No document scan result found")
+        fetchStatusResult.value =
+            fetchSIdStatus(caseId = caseResponse.caseId)
+                .onOk { stateResponse ->
+                    val rawMrz = mrzLines.joinToString(";")
+                    saveData(
+                        rawMrz,
+                        caseResponse,
+                        stateResponse
+                    )
+                    getDocumentScanResult().value?.let {
+                        saveEIdRequestFiles(
+                            sIdCaseId = caseResponse.caseId,
+                            filesDataList = it.filesWithExtractDataList,
+                            filesCategory = EIdRequestFileCategory.DOCUMENT_SCAN,
+                        ).onOk {
+                            Timber.d("Files saved successfully")
+                        }
+                    } ?: Timber.d("No document scan result found")
 
-                navManager.popUpToAndNavigate(
-                    popToInclusive = Destination.EIdGuardianshipScreen::class,
-                    destination = Destination.EIdPushNotificationScreen(caseResponse.caseId)
-                )
-            }
+                    navManager.popUpToAndNavigate(
+                        popToInclusive = Destination.EIdGuardianshipScreen::class,
+                        destination = Destination.EIdPushNotificationScreen(caseResponse.caseId)
+                    )
+                }
     }
 
     private suspend fun saveData(rawMrz: String, applyResponseBody: CaseResponse, stateResponseBody: StateResponse) {

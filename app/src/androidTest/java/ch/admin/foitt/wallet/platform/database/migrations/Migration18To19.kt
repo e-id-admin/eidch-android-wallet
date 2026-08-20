@@ -46,7 +46,7 @@ class Migration18To19 : BaseDBMigrationTest() {
         db.execSQL(
             "INSERT INTO `CredentialActivityEntity` (`id`,`credentialId`,`type`,`actorTrust`,`vcSchemaTrust`,`nonComplianceData`,`createdAt`) " +
                 "VALUES (" +
-                "$expectedActivityId,"+
+                "$expectedActivityId," +
                 "$expectedCredentialId," +
                 "'$expectedType'," +
                 "'$expectedActorTrust'," +

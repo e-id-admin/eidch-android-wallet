@@ -17,7 +17,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -61,8 +61,8 @@ import ch.admin.foitt.wallet.platform.credential.presentation.credentialElements
 import ch.admin.foitt.wallet.platform.credential.presentation.credentialInfoWithClaimBadgesWidget
 import ch.admin.foitt.wallet.platform.credential.presentation.mock.CredentialMocks
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 import ch.admin.foitt.wallet.platform.utils.TestTags
@@ -104,6 +104,23 @@ fun PresentationRequestScreen(viewModel: PresentationRequestViewModel) {
             onDismiss = viewModel::onDismissConfirmationBottomSheet,
         )
     }
+    // NOTE: Use its own bottom sheet logic because later it will have an additional
+    // report button compared to confirm bottom sheet and the logic of untrusted differs
+    // from confirm anyway
+    val untrustedRequestBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val showUntrustedRequestBottomSheet = viewModel.showUntrustedRequestBottomSheet.collectAsStateWithLifecycle().value
+    if (showUntrustedRequestBottomSheet) {
+        ConfirmationBottomSheet(
+            sheetState = untrustedRequestBottomSheetState,
+            title = R.string.tk_present_unregisteredRequest_title,
+            body = R.string.tk_present_unregisteredRequest_body,
+            acceptButtonText = R.string.tk_present_review_confirmPresentation_button_primary,
+            declineButtonText = R.string.tk_present_review_confirmPresentation_button_secondary,
+            onAccept = viewModel::onSubmitUntrustedRequest,
+            onDecline = viewModel::onDeclineUntrustedRequest,
+            onDismiss = viewModel::onDismissUntrustedRequestBottomSheet,
+        )
+    }
 
     val presentationRequestUiState = viewModel.presentationRequestUiState.stateFlow.collectAsStateWithLifecycle().value
     val verifierUiState = viewModel.verifierUiState.collectAsStateWithLifecycle().value
@@ -115,10 +132,11 @@ fun PresentationRequestScreen(viewModel: PresentationRequestViewModel) {
         isSubmitting = viewModel.isSubmitting.collectAsStateWithLifecycle().value,
         submissionProgress = viewModel.proximitySubmissionProgress.collectAsStateWithLifecycle().value,
         showDelayReason = viewModel.showDelayReason.collectAsStateWithLifecycle().value,
-        onWrongData = viewModel::onReportWrongData,
         onSubmit = viewModel::onAccept,
         onDecline = viewModel::onDecline,
-        onBadge = viewModel::onBadge,
+        onActorNameTap = viewModel::onActorNameTap,
+        onReportedActorInfo = viewModel::onReportedActorInfo,
+        onBadge = viewModel::onBadge
     )
 }
 
@@ -130,17 +148,18 @@ private fun PresentationRequestContent(
     isSubmitting: Boolean,
     submissionProgress: Double?,
     showDelayReason: Boolean,
-    onWrongData: () -> Unit,
     onSubmit: () -> Unit,
     onDecline: () -> Unit,
-    onBadge: (BadgeType) -> Unit,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit,
+    onBadge: (BadgeType) -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(color = WalletTheme.colorScheme.surfaceContainerLow)
     ) {
-        val modifier = when (currentWindowAdaptiveInfo().windowWidthClass()) {
+        val modifier = when (currentWindowAdaptiveInfoV2().windowWidthClass()) {
             WindowWidthClass.COMPACT -> Modifier.fillMaxWidth()
             else ->
                 Modifier
@@ -155,17 +174,19 @@ private fun PresentationRequestContent(
                 submissionProgress = submissionProgress,
                 modifier = modifier,
                 showDelayReason = showDelayReason,
-                onBadge = onBadge,
+                onActorNameTap = onActorNameTap,
+                onReportedActorInfo = onReportedActorInfo
             )
         } else {
             ContentList(
                 verifierUiState = verifierUiState,
                 presentationRequestUiState = presentationRequestUiState,
                 modifier = modifier,
-                onWrongData = onWrongData,
                 onSubmit = onSubmit,
                 onDecline = onDecline,
-                onBadge = onBadge,
+                onActorNameTap = onActorNameTap,
+                onReportedActorInfo = onReportedActorInfo,
+                onBadge = onBadge
             )
         }
 
@@ -183,12 +204,14 @@ private fun IsSubmittingContent(
     submissionProgress: Double?,
     modifier: Modifier,
     showDelayReason: Boolean,
-    onBadge: (BadgeType) -> Unit,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit
 ) {
     Column(modifier = modifier) {
         Header(
             verifierUiState = verifierUiState,
-            onBadge = onBadge,
+            onActorNameTap = onActorNameTap,
+            onReportedActorInfo = onReportedActorInfo
         )
         Box(
             modifier = Modifier
@@ -263,14 +286,15 @@ private fun ContentList(
     verifierUiState: ActorUiState,
     presentationRequestUiState: PresentationRequestUiState,
     modifier: Modifier,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit,
     onBadge: (BadgeType) -> Unit,
-    onWrongData: () -> Unit,
     onSubmit: () -> Unit,
     onDecline: () -> Unit,
 ) {
     var buttonsHeight by remember { mutableStateOf(0.dp) }
 
-    val windowWidthClass = currentWindowAdaptiveInfo().windowWidthClass()
+    val windowWidthClass = currentWindowAdaptiveInfoV2().windowWidthClass()
     val maxWidth = remember(windowWidthClass) {
         if (windowWidthClass == WindowWidthClass.COMPACT) 1.0f else 0.8f
     }
@@ -290,11 +314,11 @@ private fun ContentList(
             item {
                 Header(
                     verifierUiState = verifierUiState,
-                    onBadge = onBadge,
+                    onActorNameTap = onActorNameTap,
+                    onReportedActorInfo = onReportedActorInfo
                 )
             }
             item { Spacer(modifier = Modifier.height(Sizes.s04)) }
-
             item {
                 WalletTexts.HeadlineSmallEmphasized(
                     text = stringResource(id = R.string.tk_present_review_credential_dataSection_primary),
@@ -306,6 +330,7 @@ private fun ContentList(
             item { Spacer(modifier = Modifier.height(Sizes.s04)) }
 
             credentialInfoWithClaimBadgesWidget(
+                showsUnregisteredRequestCallout = presentationRequestUiState.showsUnregisteredRequestCallout,
                 credentialCardState = presentationRequestUiState.credentialCardState,
                 claimBadgesUiStates = presentationRequestUiState.claimBadgesUiStates,
                 onBadge = onBadge
@@ -314,7 +339,6 @@ private fun ContentList(
 
             credentialElements(
                 elements = presentationRequestUiState.requestedClaims,
-                onWrongData = onWrongData,
             )
         }
 
@@ -332,11 +356,13 @@ private fun ContentList(
 @Composable
 private fun Header(
     verifierUiState: ActorUiState,
-    onBadge: (BadgeType) -> Unit,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit
 ) {
     InvitationHeader(
         actorUiState = verifierUiState,
-        onBadge = onBadge,
+        onActorNameTap = onActorNameTap,
+        onReportedActorInfo = onReportedActorInfo
     )
 }
 
@@ -435,16 +461,18 @@ private fun PresentationRequestScreenPreview() {
                         isSensitive = false
                     ),
                 ),
-                numberOfClaims = 5
+                numberOfClaims = 5,
+                showsUnregisteredRequestCallout = true
             ),
             isLoading = false,
             isSubmitting = false,
             submissionProgress = 0.5,
             showDelayReason = false,
-            onWrongData = {},
             onSubmit = {},
             onDecline = {},
-            onBadge = {},
+            onActorNameTap = {},
+            onReportedActorInfo = {},
+            onBadge = {}
         )
     }
 }

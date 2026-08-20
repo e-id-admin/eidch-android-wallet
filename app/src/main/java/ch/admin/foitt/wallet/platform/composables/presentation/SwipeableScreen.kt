@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.platform.composables.presentation
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -26,6 +27,7 @@ fun SwipeableScreen(
     ratioToSwipe: Float = 0.20f,
     content: @Composable () -> Unit
 ) {
+    @SuppressLint("ConfigurationScreenWidthHeight")
     val currentScreenWidth: Dp = LocalConfiguration.current.screenWidthDp.dp
     var totalOffset: Float by remember {
         mutableFloatStateOf(0f)

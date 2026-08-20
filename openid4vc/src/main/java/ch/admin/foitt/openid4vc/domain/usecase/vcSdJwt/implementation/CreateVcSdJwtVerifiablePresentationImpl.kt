@@ -3,12 +3,13 @@ package ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation
 import ch.admin.foitt.openid4vc.di.DefaultDispatcher
 import ch.admin.foitt.openid4vc.domain.model.GetKeyPairForKeyBindingError
 import ch.admin.foitt.openid4vc.domain.model.SigningAlgorithm
-import ch.admin.foitt.openid4vc.domain.model.claimsPathPointer.ClaimsPathPointer
 import ch.admin.foitt.openid4vc.domain.model.jwk.Jwk
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBinding
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationRequest
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.CreateVcSdJwtVerifiablePresentationError
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationFlowContext
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestError
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationResponseMode
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.toCreateVcSdJwtVerifiablePresentationError
 import ch.admin.foitt.openid4vc.domain.model.toJWSAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtCredential
@@ -41,12 +42,12 @@ internal class CreateVcSdJwtVerifiablePresentationImpl @Inject constructor(
     override suspend fun invoke(
         credential: VcSdJwtCredential,
         keyBinding: KeyBinding?,
-        presentationPaths: List<ClaimsPathPointer>,
         authorizationRequest: AuthorizationRequest,
+        presentationContext: PresentationFlowContext,
     ): Result<String, CreateVcSdJwtVerifiablePresentationError> = withContext(defaultDispatcher) {
         coroutineBinding {
             val sdJwtWithDisclosures = runSuspendCatching {
-                credential.createVerifiableCredential(presentationPaths)
+                credential.createVerifiableCredential(presentationContext.presentationPaths)
             }.mapError { throwable -> throwable.toCreateVcSdJwtVerifiablePresentationError("createVerifiableCredential error") }
                 .bind()
 
@@ -61,7 +62,9 @@ internal class CreateVcSdJwtVerifiablePresentationImpl @Inject constructor(
                     .bind()
 
                 val keyBindingJwt =
-                    createKeyBindingJwt(keyBinding.algorithm, base64UrlEncodedSdHash, authorizationRequest)
+                    createKeyBindingJwt(keyBinding.algorithm, base64UrlEncodedSdHash, authorizationRequest, presentationContext)
+                        .bind()
+
                 val jwk = getKeyBindingJwk(credential).bind()
                 val signer = ECDSASigner(keyPair.private, Curve(jwk.crv))
                 keyBindingJwt.sign(signer)
@@ -78,19 +81,23 @@ internal class CreateVcSdJwtVerifiablePresentationImpl @Inject constructor(
         keyBindingAlgorithm: SigningAlgorithm,
         base64UrlEncodedSdHash: String,
         authorizationRequest: AuthorizationRequest,
-    ): SignedJWT {
+        presentationContext: PresentationFlowContext,
+    ): Result<SignedJWT, CreateVcSdJwtVerifiablePresentationError> = runSuspendCatching {
         val jwtHeader = JWSHeader.Builder(keyBindingAlgorithm.toJWSAlgorithm())
             .type(JOSEObjectType(HEADER_TYPE))
             .build()
+
+        val audClaimValue = getAudClaimValue(authorizationRequest, presentationContext)
+
         val jwtBody = JWTClaimsSet.Builder()
             .claim(CLAIM_KEY_SD_HASH, base64UrlEncodedSdHash)
-            .claim(CLAIM_KEY_AUD, authorizationRequest.clientId)
+            .claim(CLAIM_KEY_AUD, audClaimValue)
             .claim(CLAIM_KEY_NONCE, authorizationRequest.nonce)
             .claim(CLAIM_KEY_IAT, Instant.now().epochSecond)
             .build()
 
-        return SignedJWT(jwtHeader, jwtBody)
-    }
+        SignedJWT(jwtHeader, jwtBody)
+    }.mapError { throwable -> throwable.toCreateVcSdJwtVerifiablePresentationError("createKeyBindingJwt error") }
 
     private suspend fun getKeyBindingJwk(
         credential: VcSdJwtCredential
@@ -105,6 +112,18 @@ internal class CreateVcSdJwtVerifiablePresentationImpl @Inject constructor(
 
         safeJson.safeDecodeFromJsonElement<Jwk>(cnfJwk)
             .mapError(JsonParsingError::toCreateVcSdJwtVerifiablePresentationError).bind()
+    }
+
+    private fun getAudClaimValue(
+        authorizationRequest: AuthorizationRequest,
+        presentationContext: PresentationFlowContext,
+    ): String {
+        return if (authorizationRequest.responseMode == PresentationResponseMode.DC_API_JWT.value) {
+            val origin = presentationContext.proximityOrigin ?: error("origin must be provided for DC_API_JWT response mode")
+            "origin:$origin"
+        } else {
+            authorizationRequest.clientIdentifier.raw
+        }
     }
 
     companion object {

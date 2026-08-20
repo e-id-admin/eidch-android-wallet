@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,7 +23,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -38,9 +40,11 @@ import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.composa
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.composables.ScannerInfoBox
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentScanner.DocumentScannerBacksideInfoContent
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentScanner.DocumentScannerErrorContent
+import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentScanner.DocumentScannerEvent
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentScanner.EIdDocumentScanStatus
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentScanner.EIdDocumentScannerUiState
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.model.DocumentTypeDrawable
+import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.model.PermissionState
 import ch.admin.foitt.wallet.platform.cameraPermissionHandler.presentation.CameraPermissionWrapper
 import ch.admin.foitt.wallet.platform.composables.presentation.WindowWidthClass
 import ch.admin.foitt.wallet.platform.composables.presentation.addTopScaffoldPadding
@@ -51,6 +55,7 @@ import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.utils.LocalActivity
 import ch.admin.foitt.wallet.platform.utils.OnPauseEventHandler
 import ch.admin.foitt.wallet.platform.utils.OnResumeEventHandler
+import ch.admin.foitt.wallet.platform.utils.RepeatOnLifeCycleHandler
 import ch.admin.foitt.wallet.platform.utils.TraversalIndex
 import ch.admin.foitt.wallet.platform.utils.setIsTraversalGroup
 import ch.admin.foitt.wallet.platform.utils.traversalIndex
@@ -62,6 +67,7 @@ fun EIdDocumentScannerScreen(
     viewModel: EIdDocumentScannerViewModel,
 ) {
     val currentActivity = LocalActivity.current
+    val haptic = LocalHapticFeedback.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val shouldLock by viewModel.shouldLock.collectAsStateWithLifecycle()
     val documentType = viewModel.documentType.collectAsStateWithLifecycle().value
@@ -71,8 +77,32 @@ fun EIdDocumentScannerScreen(
     OnPauseEventHandler(viewModel::onPauseScan)
     BackHandler(onBack = viewModel::onUp)
 
+    RepeatOnLifeCycleHandler {
+        viewModel.updateTopBarState(this)
+    }
+
+    LaunchedEffect(permissionState) {
+        if (permissionState is PermissionState.Granted) {
+            viewModel.initScannerSdk(currentActivity)
+        }
+    }
+
     LaunchedEffect(viewModel) {
-        viewModel.initScannerSdk(currentActivity)
+        viewModel.hapticEvent.collect { event ->
+            when (event) {
+                DocumentScannerEvent.FirstPageDone -> {
+                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                }
+
+                is DocumentScannerEvent.ScanDone -> {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+
+                DocumentScannerEvent.ScanFailed -> {
+                    haptic.performHapticFeedback(HapticFeedbackType.Reject)
+                }
+            }
+        }
     }
 
     OrientationLocker(currentActivity, shouldLock)
@@ -137,7 +167,7 @@ private fun EIdScanContent(
     onToggleScan: () -> Unit,
     onContinueToBackside: () -> Unit,
 ) {
-    val windowWidthClass = currentWindowAdaptiveInfo().windowWidthClass()
+    val windowWidthClass = currentWindowAdaptiveInfoV2().windowWidthClass()
     val isCompact = windowWidthClass == WindowWidthClass.COMPACT
     val showInfoOverlay = status == EIdDocumentScanStatus.BACKSIDE_INFO
 

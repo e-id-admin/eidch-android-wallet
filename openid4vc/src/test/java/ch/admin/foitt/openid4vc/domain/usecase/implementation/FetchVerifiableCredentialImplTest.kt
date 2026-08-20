@@ -1,7 +1,6 @@
 package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
 import android.annotation.SuppressLint
-import ch.admin.foitt.openid4vc.domain.model.CredentialRequestType
 import ch.admin.foitt.openid4vc.domain.model.DeferredCredential
 import ch.admin.foitt.openid4vc.domain.model.SigningAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.VerifiableCredential
@@ -15,8 +14,8 @@ import ch.admin.foitt.openid4vc.domain.model.jwk.Jwks
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.BindingKeyPair
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBindingType
 import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.EncryptionAlgorithm
+import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryption
 import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryptionKeyPair
-import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryptionType
 import ch.admin.foitt.openid4vc.domain.repository.CredentialOfferRepository
 import ch.admin.foitt.openid4vc.domain.usecase.CreateCredentialRequest
 import ch.admin.foitt.openid4vc.domain.usecase.CreateCredentialRequestProofsJwt
@@ -85,12 +84,6 @@ class FetchVerifiableCredentialImplTest {
     private lateinit var mockDeleteKeyPair: DeleteKeyPair
 
     @MockK
-    private lateinit var mockJsonCredentialRequestType: CredentialRequestType.Json
-
-    @MockK
-    private lateinit var mockJwtCredentialRequestType: CredentialRequestType.Jwt
-
-    @MockK
     private lateinit var mockBindingKeyPair: BindingKeyPair
 
     private lateinit var fetchCredentialUseCase: FetchVerifiableCredential
@@ -118,10 +111,9 @@ class FetchVerifiableCredentialImplTest {
     @Test
     fun `when credential has software key binding it returns a VerifiableCredential with a software key binding`() = runTest {
         val result = fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsSoftwareBinding,
             credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_SOFTWARE, null)),
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertOk() as VerifiableCredential
 
         assertEquals(CREDENTIAL, result.credential)
@@ -133,42 +125,16 @@ class FetchVerifiableCredentialImplTest {
 
         verifySuccessCalls(
             keyPair = VALID_KEY_PAIR_SOFTWARE,
-            payloadEncryptionType = noEncryptionType,
-        )
-    }
-
-    @Test
-    fun `when credential has software key binding but no nonce endpoint it returns a VerifiableCredential with a software key binding`() = runTest {
-        val result = fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
-            verifiableCredentialParams = verifiableCredentialParamsSoftwareBinding.copy(
-                nonceEndpoint = null
-            ),
-            credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_SOFTWARE, null)),
-            payloadEncryptionType = noEncryptionType,
-        ).assertOk() as VerifiableCredential
-
-        assertEquals(CREDENTIAL, result.credential)
-        assertEquals(VALID_KEY_PAIR_SOFTWARE.keyId, result.keyBinding?.identifier)
-        assertEquals(VALID_KEY_PAIR_SOFTWARE.algorithm, result.keyBinding?.algorithm)
-        assertEquals(KeyBindingType.SOFTWARE, result.keyBinding?.bindingType)
-        assertNotNull(result.keyBinding?.publicKey)
-        assertNotNull(result.keyBinding?.privateKey)
-
-        verifySuccessCalls(
-            keyPair = VALID_KEY_PAIR_SOFTWARE,
-            hasNonceEndpoint = false,
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         )
     }
 
     @Test
     fun `when credential has hardware key binding it returns a VerifiableCredential with a hardware key binding`() = runTest {
         val result = fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsHardwareBinding,
             credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_HARDWARE, null)),
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertOk() as VerifiableCredential
 
         assertEquals(CREDENTIAL, result.credential)
@@ -180,17 +146,16 @@ class FetchVerifiableCredentialImplTest {
 
         verifySuccessCalls(
             keyPair = VALID_KEY_PAIR_HARDWARE,
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         )
     }
 
     @Test
     fun `when credential has no key binding (empty proof type) it returns a VerifiableCredential without key binding`() = runTest {
         val result = fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsWithoutBinding,
             credentialBindingKeyPairs = null,
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertOk() as VerifiableCredential
 
         assertEquals(CREDENTIAL, result.credential)
@@ -198,7 +163,7 @@ class FetchVerifiableCredentialImplTest {
 
         verifySuccessCalls(
             keyPair = null,
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         )
     }
 
@@ -209,10 +174,9 @@ class FetchVerifiableCredentialImplTest {
         } returns Err(CredentialOfferError.InvalidCredentialOffer)
 
         fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsSoftwareBinding,
             credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_SOFTWARE, null)),
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertErrorType(CredentialOfferError.InvalidCredentialOffer::class)
 
         coVerify(exactly = 0) {
@@ -227,10 +191,9 @@ class FetchVerifiableCredentialImplTest {
         } returns Err(CredentialOfferError.InvalidCredentialOffer)
 
         fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsHardwareBinding,
             credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_HARDWARE, null)),
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertErrorType(CredentialOfferError.InvalidCredentialOffer::class)
 
         coVerify(exactly = 1) {
@@ -241,10 +204,9 @@ class FetchVerifiableCredentialImplTest {
     @Test
     fun `credential offer without pre-authorized code should return an unsupported grant type error, token not fetched`() = runTest {
         fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsSoftwareBinding.copy(grants = offerWithoutPreAuthorizedCode.grants),
             credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_SOFTWARE, null)),
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertErrorType(CredentialOfferError.UnsupportedGrantType::class)
 
         coVerify(exactly = 0) {
@@ -259,10 +221,9 @@ class FetchVerifiableCredentialImplTest {
         } returns Err(CredentialOfferError.NetworkInfoError)
 
         fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsSoftwareBinding,
             credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_SOFTWARE, null)),
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertErrorType(CredentialOfferError.NetworkInfoError::class)
 
         coVerify(exactly = 0) {
@@ -277,10 +238,9 @@ class FetchVerifiableCredentialImplTest {
         } returns Err(CredentialOfferError.NetworkInfoError)
 
         fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsHardwareBinding,
             credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_HARDWARE, null)),
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertErrorType(CredentialOfferError.NetworkInfoError::class)
 
         coVerify(exactly = 1) {
@@ -295,10 +255,9 @@ class FetchVerifiableCredentialImplTest {
         } returns Err(CredentialOfferError.UnsupportedCryptographicSuite)
 
         fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsSoftwareBinding,
             credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_SOFTWARE, null)),
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertErrorType(CredentialOfferError.UnsupportedCryptographicSuite::class)
 
         coVerify(exactly = 0) {
@@ -313,10 +272,9 @@ class FetchVerifiableCredentialImplTest {
         } returns Err(CredentialOfferError.UnsupportedCryptographicSuite)
 
         fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsHardwareBinding,
             credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_HARDWARE, null)),
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertErrorType(CredentialOfferError.UnsupportedCryptographicSuite::class)
 
         coVerify(exactly = 1) {
@@ -325,66 +283,21 @@ class FetchVerifiableCredentialImplTest {
     }
 
     @Test
-    fun `Fetching a credential with request encryption creates a credential request as jwe`() = runTest {
-        val result = fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
-            verifiableCredentialParams = verifiableCredentialParamsSoftwareBinding,
-            credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_SOFTWARE, null)),
-            payloadEncryptionType = requestEncryptionType,
-        ).assertOk() as VerifiableCredential
-
-        assertEquals(CREDENTIAL, result.credential)
-        assertEquals(VALID_KEY_PAIR_SOFTWARE.keyId, result.keyBinding?.identifier)
-        assertEquals(VALID_KEY_PAIR_SOFTWARE.algorithm, result.keyBinding?.algorithm)
-        assertEquals(KeyBindingType.SOFTWARE, result.keyBinding?.bindingType)
-        assertNotNull(result.keyBinding?.publicKey)
-        assertNotNull(result.keyBinding?.privateKey)
-
-        verifySuccessCalls(
-            keyPair = VALID_KEY_PAIR_SOFTWARE,
-            payloadEncryptionType = requestEncryptionType,
-        )
-    }
-
-    @Test
-    fun `Fetching a credential with response encryption creates a credential request as jwe (that also contains the wallet public key) and sends it as content type jwt`() = runTest {
-        val result = fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
-            verifiableCredentialParams = verifiableCredentialParamsSoftwareBinding,
-            credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_SOFTWARE, null)),
-            payloadEncryptionType = responseEncryptionType,
-        ).assertOk() as VerifiableCredential
-
-        assertEquals(CREDENTIAL, result.credential)
-        assertEquals(VALID_KEY_PAIR_SOFTWARE.keyId, result.keyBinding?.identifier)
-        assertEquals(VALID_KEY_PAIR_SOFTWARE.algorithm, result.keyBinding?.algorithm)
-        assertEquals(KeyBindingType.SOFTWARE, result.keyBinding?.bindingType)
-        assertNotNull(result.keyBinding?.publicKey)
-        assertNotNull(result.keyBinding?.privateKey)
-
-        verifySuccessCalls(
-            keyPair = VALID_KEY_PAIR_SOFTWARE,
-            payloadEncryptionType = responseEncryptionType,
-        )
-    }
-
-    @Test
     fun `when fetching the credential returns a deferred response, successfully return a deferred credential`() = runTest {
         coEvery {
             mockCredentialOfferRepository.fetchCredential(
                 issuerEndpoint = validIssuerCredentialInfo.credentialEndpoint,
                 tokenResponse = any(),
-                credentialRequestType = any(),
-                payloadEncryptionType = any(),
+                request = any(),
+                payloadEncryption = any(),
                 dpopProof = any(),
             )
         } returns Ok(validDeferredCredentialResponse)
 
         val result = fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableDeferredCredentialParamsHardwareBinding,
             credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_HARDWARE, null)),
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertOk() as DeferredCredential
 
         assertEquals(CredentialFormat.VC_SD_JWT, result.format)
@@ -403,10 +316,9 @@ class FetchVerifiableCredentialImplTest {
         } returns Err(CredentialOfferError.NetworkInfoError)
 
         fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsSoftwareBinding,
             credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_SOFTWARE, null)),
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertErrorType(CredentialOfferError.NetworkInfoError::class)
 
         coVerify(exactly = 0) {
@@ -421,10 +333,9 @@ class FetchVerifiableCredentialImplTest {
         } returns Err(CredentialOfferError.NetworkInfoError)
 
         fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsHardwareBinding,
             credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_HARDWARE, null)),
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
         ).assertErrorType(CredentialOfferError.NetworkInfoError::class)
 
         coVerify(exactly = 1) {
@@ -442,6 +353,7 @@ class FetchVerifiableCredentialImplTest {
                 nonce = DPOP_NONCE,
                 accessToken = null,
                 keyAttestationJwt = null,
+                requestBody = null,
             )
         } returns Ok(DPOP_TOKEN_PROOF)
         coEvery {
@@ -452,6 +364,7 @@ class FetchVerifiableCredentialImplTest {
                 nonce = RETRY_DPOP_NONCE,
                 accessToken = null,
                 keyAttestationJwt = null,
+                requestBody = null,
             )
         } returns Ok(RETRY_DPOP_TOKEN_PROOF)
         coEvery {
@@ -476,14 +389,14 @@ class FetchVerifiableCredentialImplTest {
                 nonce = DPOP_NONCE,
                 accessToken = validTokenResponse.accessToken,
                 keyAttestationJwt = null,
+                requestBody = null,
             )
         } returns Ok(DPOP_CREDENTIAL_PROOF)
 
         fetchCredentialUseCase.invoke(
-            isDPopEnabled = true,
             verifiableCredentialParams = verifiableCredentialParamsWithoutBindingWithDpop,
             credentialBindingKeyPairs = null,
-            payloadEncryptionType = noEncryptionType,
+            payloadEncryption = payloadEncryption,
             dpopKeyPair = mockBindingKeyPair
         ).assertOk()
 
@@ -495,23 +408,9 @@ class FetchVerifiableCredentialImplTest {
                 nonce = DPOP_NONCE,
                 accessToken = null,
                 keyAttestationJwt = null,
+                requestBody = null,
             )
         }
-    }
-
-    @Test
-    fun `With dpop disabled fetch credential normally`() = runTest {
-        val result = fetchCredentialUseCase.invoke(
-            isDPopEnabled = false,
-            verifiableCredentialParams = verifiableCredentialParamsSoftwareBinding,
-            credentialBindingKeyPairs = listOf(BindingKeyPair(VALID_KEY_PAIR_SOFTWARE, null)),
-            payloadEncryptionType = noEncryptionType,
-        ).assertOk() as VerifiableCredential
-
-        verifySuccessCalls(
-            keyPair = VALID_KEY_PAIR_SOFTWARE,
-            payloadEncryptionType = noEncryptionType,
-        )
     }
 
     private fun initDefaultMocks() {
@@ -519,29 +418,23 @@ class FetchVerifiableCredentialImplTest {
             mockCredentialOfferRepository.fetchAccessToken(validIssuerConfig.tokenEndpoint, any(), any())
         } returns Ok(validTokenResponse)
         coEvery {
-            mockCredentialOfferRepository.fetchNonce(validIssuerCredentialInfo.nonceEndpoint!!)
+            mockCredentialOfferRepository.fetchNonce(validIssuerCredentialInfo.nonceEndpoint)
         } returns Ok(validIssuerNonce)
         coEvery {
             mockCreateCredentialRequestProofsJwt(any(), any(), any())
         } returns Ok(jwtProofs)
         coEvery {
-            mockCreateDPoPProofJwt(any(), any(), any(), any(), any(), any())
+            mockCreateDPoPProofJwt(any(), any(), any(), any(), any(), any(), any())
         } returns Ok(DPOP_TOKEN_PROOF)
         coEvery {
-            mockCreateCredentialRequest(noEncryptionType, any())
-        } returns Ok(mockJsonCredentialRequestType)
-        coEvery {
-            mockCreateCredentialRequest(requestEncryptionType, any())
-        } returns Ok(mockJwtCredentialRequestType)
-        coEvery {
-            mockCreateCredentialRequest(responseEncryptionType, any())
-        } returns Ok(mockJwtCredentialRequestType)
+            mockCreateCredentialRequest(payloadEncryption, any())
+        } returns Ok(REQUEST_PAYLOAD)
         coEvery {
             mockCredentialOfferRepository.fetchCredential(
                 issuerEndpoint = validIssuerCredentialInfo.credentialEndpoint,
                 tokenResponse = any(),
-                credentialRequestType = any(),
-                payloadEncryptionType = any(),
+                request = any(),
+                payloadEncryption = any(),
                 dpopProof = any(),
             )
         } returns Ok(validCredentialResponse)
@@ -561,8 +454,7 @@ class FetchVerifiableCredentialImplTest {
     @SuppressLint("CheckResult")
     private fun verifySuccessCalls(
         keyPair: JWSKeyPair?,
-        hasNonceEndpoint: Boolean = true,
-        payloadEncryptionType: PayloadEncryptionType,
+        payloadEncryption: PayloadEncryption,
     ) {
         coVerify(ordering = Ordering.SEQUENCE) {
             mockCredentialOfferRepository.fetchAccessToken(
@@ -571,43 +463,32 @@ class FetchVerifiableCredentialImplTest {
                 dpopProof = null,
             )
             keyPair?.let {
-                if (hasNonceEndpoint) {
-                    mockCredentialOfferRepository.fetchNonce(validIssuerCredentialInfo.nonceEndpoint!!)
-                }
+                mockCredentialOfferRepository.fetchNonce(validIssuerCredentialInfo.nonceEndpoint)
                 mockCreateCredentialRequestProofsJwt(
                     keyPairs = listOf(BindingKeyPair(it, null)),
                     issuer = offerWithPreAuthorizedCode.credentialIssuer.toString(),
-                    cNonce = if (hasNonceEndpoint) C_NONCE else null,
+                    cNonce = C_NONCE,
                 )
             }
             mockCreateCredentialRequest(
-                payloadEncryptionType = payloadEncryptionType,
+                payloadEncryption = payloadEncryption,
                 credentialType = any(),
             )
-
-            val credentialRequestType = when (payloadEncryptionType) {
-                is PayloadEncryptionType.None -> mockJsonCredentialRequestType
-                is PayloadEncryptionType.Request,
-                is PayloadEncryptionType.Response -> mockJwtCredentialRequestType
-            }
 
             mockCredentialOfferRepository.fetchCredential(
                 issuerEndpoint = validIssuerCredentialInfo.credentialEndpoint,
                 tokenResponse = validTokenResponse,
-                credentialRequestType = credentialRequestType,
-                payloadEncryptionType = payloadEncryptionType,
+                request = REQUEST_PAYLOAD,
+                payloadEncryption = payloadEncryption,
                 dpopProof = null,
             )
         }
 
         coVerify(exactly = 0) {
             mockDeleteKeyPair(any())
-            mockCreateDPoPProofJwt(any(), any(), any(), any(), any(), any())
+            mockCreateDPoPProofJwt(any(), any(), any(), any(), any(), any(), any())
             if (keyPair == null) {
                 mockCreateCredentialRequestProofsJwt(any(), any(), any())
-            }
-            if (!hasNonceEndpoint) {
-                mockCredentialOfferRepository.fetchNonce(any())
             }
         }
     }
@@ -617,6 +498,7 @@ class FetchVerifiableCredentialImplTest {
         const val RETRY_DPOP_TOKEN_PROOF = "retry-dpop-token-proof"
         const val DPOP_CREDENTIAL_PROOF = "dpop-credential-proof"
         const val RETRY_DPOP_NONCE = "retry-dpop-nonce"
+        const val REQUEST_PAYLOAD = "requestPayload"
 
         val issuerKeyPair = createKeyPair()
         val issuerPublicKey: ECKey = ECKey.Builder(P_256, issuerKeyPair.public as ECPublicKey).build()
@@ -645,11 +527,7 @@ class FetchVerifiableCredentialImplTest {
             encryptionRequired = true,
         )
 
-        val noEncryptionType = PayloadEncryptionType.None
-        val requestEncryptionType = PayloadEncryptionType.Request(
-            requestEncryption = requestEncryption,
-        )
-        val responseEncryptionType = PayloadEncryptionType.Response(
+        val payloadEncryption = PayloadEncryption(
             requestEncryption = requestEncryption,
             responseEncryption = responseEncryption,
             responseEncryptionKeyPair = PayloadEncryptionKeyPair(

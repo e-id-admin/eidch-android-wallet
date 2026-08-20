@@ -32,7 +32,7 @@ class VerifyOtpImpl @Inject constructor(
     override suspend fun invoke(otpVerify: OtpVerify): Result<Unit, RequestOtpError> = coroutineBinding {
         val clientAttestation: ClientAttestation = requestClientAttestation()
             .mapError(RequestClientAttestationError::toRequestOtpError).bind()
-        val challengeResponse = appAttestationRepository.fetchChallenge()
+        val challengeResponse = appAttestationRepository.fetchChallenge(environmentSetupRepository.defaultAttestationServiceUrl)
             .mapError(AppAttestationRepositoryError::toRequestOtpError).bind()
         val requestBody = safeJson.safeEncodeObjectToJsonElement(otpVerify)
             .mapError(JsonParsingError::toRequestOtpError).bind()
@@ -40,7 +40,7 @@ class VerifyOtpImpl @Inject constructor(
         val clientAttestationProofOfPossession: ClientAttestationPoP = generateProofOfPossession(
             clientAttestation = clientAttestation,
             challenge = challengeResponse.challenge,
-            audience = environmentSetupRepository.attestationsServiceUrl,
+            audience = environmentSetupRepository.defaultAttestationServiceUrl,
             requestBody = requestBody,
         ).mapError(GenerateProofOfPossessionError::toRequestOtpError).bind()
 

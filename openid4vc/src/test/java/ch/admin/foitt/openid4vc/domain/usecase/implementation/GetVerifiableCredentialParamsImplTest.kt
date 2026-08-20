@@ -2,9 +2,11 @@ package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
 import android.annotation.SuppressLint
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOfferError
-import ch.admin.foitt.openid4vc.domain.repository.CredentialOfferRepository
+import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.RawAndParsedIssuerCredentialInfo
 import ch.admin.foitt.openid4vc.domain.usecase.FetchIssuerConfiguration
+import ch.admin.foitt.openid4vc.domain.usecase.FetchRawAndParsedIssuerCredentialInfo
 import ch.admin.foitt.openid4vc.domain.usecase.GetVerifiableCredentialParams
+import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockCredentialOffer.CREDENTIAL_ISSUER
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockCredentialOffer.offerWithPreAuthorizedCode
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockCredentialOffer.offerWithoutMatchingCredentialIdentifier
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockCredentialOffer.validIssuerConfig
@@ -25,6 +27,7 @@ import io.mockk.MockKAnnotations
 import io.mockk.Ordering
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
@@ -34,12 +37,14 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class GetVerifiableCredentialParamsImplTest {
-
-    @MockK
-    private lateinit var mockCredentialOfferRepository: CredentialOfferRepository
-
     @MockK
     private lateinit var mockFetchIssuerConfiguration: FetchIssuerConfiguration
+
+    @MockK
+    private lateinit var mockFetchRawAndParsedIssuerCredentialInfo: FetchRawAndParsedIssuerCredentialInfo
+
+    @MockK
+    private lateinit var mockRawAndParsedIssuerCredentialInfo: RawAndParsedIssuerCredentialInfo
 
     private lateinit var useCase: GetVerifiableCredentialParams
 
@@ -50,8 +55,8 @@ class GetVerifiableCredentialParamsImplTest {
         initDefaultMocks()
 
         useCase = GetVerifiableCredentialParamsImpl(
-            mockCredentialOfferRepository,
-            mockFetchIssuerConfiguration
+            fetchIssuerConfiguration = mockFetchIssuerConfiguration,
+            fetchRawAndParsedIssuerCredentialInfo = mockFetchRawAndParsedIssuerCredentialInfo,
         )
     }
 
@@ -79,8 +84,8 @@ class GetVerifiableCredentialParamsImplTest {
         assertEquals(validIssuerCredentialInfo.nonceEndpoint, verifiableCredentialParams.nonceEndpoint)
 
         coVerify(ordering = Ordering.SEQUENCE) {
-            mockFetchIssuerConfiguration(any())
-            mockCredentialOfferRepository.getIssuerCredentialInfo(any())
+            mockFetchIssuerConfiguration(CREDENTIAL_ISSUER)
+            mockFetchRawAndParsedIssuerCredentialInfo(CREDENTIAL_ISSUER)
         }
     }
 
@@ -103,8 +108,8 @@ class GetVerifiableCredentialParamsImplTest {
         assertEquals(validIssuerCredentialInfo.nonceEndpoint, verifiableCredentialParams.nonceEndpoint)
 
         coVerify(ordering = Ordering.SEQUENCE) {
-            mockFetchIssuerConfiguration(any())
-            mockCredentialOfferRepository.getIssuerCredentialInfo(any())
+            mockFetchIssuerConfiguration(CREDENTIAL_ISSUER)
+            mockFetchRawAndParsedIssuerCredentialInfo(CREDENTIAL_ISSUER)
         }
     }
 
@@ -127,8 +132,8 @@ class GetVerifiableCredentialParamsImplTest {
         assertEquals(validIssuerCredentialInfo.nonceEndpoint, verifiableCredentialParams.nonceEndpoint)
 
         coVerify(ordering = Ordering.SEQUENCE) {
-            mockFetchIssuerConfiguration(any())
-            mockCredentialOfferRepository.getIssuerCredentialInfo(any())
+            mockFetchIssuerConfiguration(CREDENTIAL_ISSUER)
+            mockFetchRawAndParsedIssuerCredentialInfo(CREDENTIAL_ISSUER)
         }
     }
 
@@ -143,7 +148,8 @@ class GetVerifiableCredentialParamsImplTest {
             ).assertErrorType(CredentialOfferError.InvalidCredentialOffer::class)
 
             coVerify(exactly = 0) {
-                mockCredentialOfferRepository.fetchAccessToken(any(), any())
+                mockFetchIssuerConfiguration(any())
+                mockFetchRawAndParsedIssuerCredentialInfo(any())
             }
         }
 
@@ -157,7 +163,8 @@ class GetVerifiableCredentialParamsImplTest {
         ).assertErrorType(CredentialOfferError.UnsupportedProofType::class)
 
         coVerify(exactly = 0) {
-            mockCredentialOfferRepository.fetchAccessToken(any(), any())
+            mockFetchIssuerConfiguration(any())
+            mockFetchRawAndParsedIssuerCredentialInfo(any())
         }
     }
 
@@ -189,6 +196,7 @@ class GetVerifiableCredentialParamsImplTest {
         ).assertOk()
     }
 
+    @SuppressLint("CheckResult")
     @Test
     fun `when the cryptographic binding method is not supported return an unsupported cryptographic suite error, access token not fetched`() =
         runTest {
@@ -199,47 +207,47 @@ class GetVerifiableCredentialParamsImplTest {
             ).assertErrorType(CredentialOfferError.UnsupportedCryptographicSuite::class)
 
             coVerify(exactly = 0) {
-                mockCredentialOfferRepository.fetchAccessToken(any(), any())
+                mockFetchIssuerConfiguration(any())
+                mockFetchRawAndParsedIssuerCredentialInfo(any())
             }
         }
 
+    @SuppressLint("CheckResult")
     @Test
     fun `when fetching issuer configuration fails return error`() = runTest {
         coEvery {
-            mockFetchIssuerConfiguration(offerWithPreAuthorizedCode.credentialIssuer)
+            mockFetchIssuerConfiguration(CREDENTIAL_ISSUER)
         } returns Err(CredentialOfferError.NetworkInfoError)
 
-        val result = useCase(
+        useCase(
             credentialConfiguration = vcSdJwtCredentialConfiguration.copy(cryptographicBindingMethodsSupported = null),
             credentialOffer = offerWithPreAuthorizedCode,
             issuerCredentialInfo = validIssuerCredentialInfo,
-        )
-
-        result.assertErrorType(CredentialOfferError.NetworkInfoError::class)
+        ).assertErrorType(CredentialOfferError.NetworkInfoError::class)
     }
 
     @Test
     fun `when fetching issuer info fails return error`() = runTest {
         coEvery {
-            mockCredentialOfferRepository.getIssuerCredentialInfo(offerWithPreAuthorizedCode.credentialIssuer)
+            mockFetchRawAndParsedIssuerCredentialInfo(CREDENTIAL_ISSUER)
         } returns Err(CredentialOfferError.NetworkInfoError)
 
-        val result = useCase(
+        useCase(
             credentialConfiguration = vcSdJwtCredentialConfiguration.copy(cryptographicBindingMethodsSupported = null),
             credentialOffer = offerWithPreAuthorizedCode,
             issuerCredentialInfo = validIssuerCredentialInfo,
-        )
-
-        result.assertErrorType(CredentialOfferError.NetworkInfoError::class)
+        ).assertErrorType(CredentialOfferError.NetworkInfoError::class)
     }
 
     private fun initDefaultMocks() {
         coEvery {
-            mockCredentialOfferRepository.getIssuerCredentialInfo(offerWithPreAuthorizedCode.credentialIssuer)
-        } returns Ok(validIssuerCredentialInfo)
+            mockFetchIssuerConfiguration(CREDENTIAL_ISSUER)
+        } returns Ok(validIssuerConfig)
+
+        every { mockRawAndParsedIssuerCredentialInfo.issuerCredentialInfo } returns validIssuerCredentialInfo
 
         coEvery {
-            mockFetchIssuerConfiguration(offerWithPreAuthorizedCode.credentialIssuer)
-        } returns Ok(validIssuerConfig)
+            mockFetchRawAndParsedIssuerCredentialInfo(CREDENTIAL_ISSUER)
+        } returns Ok(mockRawAndParsedIssuerCredentialInfo)
     }
 }

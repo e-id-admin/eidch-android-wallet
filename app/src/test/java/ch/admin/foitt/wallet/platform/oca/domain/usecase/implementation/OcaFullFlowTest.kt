@@ -36,7 +36,7 @@ class OcaFullFlowTest {
 
         ocaCesrHashValidator = OcaCesrHashValidatorImpl(safeJson = testSafeJson)
         getRootCaptureBase = GetRootCaptureBaseImpl()
-        ocaCaptureBaseValidator = OcaCaptureBaseValidatorImpl(getRootCaptureBase)
+        ocaCaptureBaseValidator = OcaCaptureBaseValidatorImpl()
         ocaOverlayValidator = OcaOverlayValidatorImpl()
         transformOcaOverlays = TransformOcaOverlaysImpl()
         generateOcaClaimData = GenerateOcaClaimDataImpl()

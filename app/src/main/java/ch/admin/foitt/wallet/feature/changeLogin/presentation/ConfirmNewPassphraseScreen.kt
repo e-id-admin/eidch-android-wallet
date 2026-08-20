@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -74,7 +75,7 @@ private fun ConfirmNewPassphraseScreenContent(
     onTextFieldValueChange: (TextFieldValue) -> Unit,
     onCheckPassphrase: () -> Unit,
 ) {
-    when (currentWindowAdaptiveInfo().windowWidthClass()) {
+    when (currentWindowAdaptiveInfoV2().windowWidthClass()) {
         WindowWidthClass.COMPACT -> WalletLayouts.CompactContainerFloatingBottom(
             modifier = Modifier.background(WalletTheme.colorScheme.surfaceContainerLow),
             shouldScrollUnderTopBar = false,
@@ -137,6 +138,10 @@ private fun CompactContent(
         modifier = Modifier.fillMaxWidth(),
         colors = WalletTextFieldColors.textFieldColors(),
         passphraseInputFieldState = passphraseInputFieldState,
+        errorMessage = errorMessage(
+            hideSupportText = hideSupportText,
+            remainingConfirmationAttempts = remainingConfirmationAttempts,
+        ),
         textFieldValue = textFieldValue,
         label = {
             Label(
@@ -147,6 +152,7 @@ private fun CompactContent(
             if (!hideSupportText) {
                 SupportingText(
                     remainingConfirmationAttempts = remainingConfirmationAttempts,
+                    isError = passphraseInputFieldState is PassphraseInputFieldState.Error,
                 )
             }
         },
@@ -175,6 +181,10 @@ private fun LargeContent(
             modifier = Modifier.weight(1f),
             colors = WalletTextFieldColors.textFieldColors(),
             passphraseInputFieldState = passphraseInputFieldState,
+            errorMessage = errorMessage(
+                hideSupportText = hideSupportText,
+                remainingConfirmationAttempts = remainingConfirmationAttempts,
+            ),
             textFieldValue = textFieldValue,
             label = {
                 Label(
@@ -185,6 +195,7 @@ private fun LargeContent(
                 if (!hideSupportText) {
                     SupportingText(
                         remainingConfirmationAttempts = remainingConfirmationAttempts,
+                        isError = passphraseInputFieldState is PassphraseInputFieldState.Error,
                     )
                 }
             },
@@ -214,14 +225,35 @@ private fun Label(
 )
 
 @Composable
+private fun attemptsLeftText(
+    remainingConfirmationAttempts: Int,
+): String = pluralStringResource(
+    R.plurals.tk_changepassword_error1_android_note2,
+    remainingConfirmationAttempts,
+    remainingConfirmationAttempts
+)
+
+@Composable
+private fun errorMessage(
+    hideSupportText: Boolean,
+    remainingConfirmationAttempts: Int,
+): String? = if (hideSupportText) {
+    null
+} else {
+    attemptsLeftText(remainingConfirmationAttempts)
+}
+
+@Composable
 private fun SupportingText(
     remainingConfirmationAttempts: Int,
+    isError: Boolean,
 ) = WalletTexts.BodySmall(
-    text = pluralStringResource(
-        R.plurals.tk_changepassword_error1_android_note2,
-        remainingConfirmationAttempts,
-        remainingConfirmationAttempts
-    ),
+    // In the error state the attempts-left info is already announced via the field's
+    // error() semantics (see errorMessage), so clear semantics here to avoid a double
+    // announcement. When not in error (e.g. arriving with attempts already reduced), the
+    // error() semantics is absent, so keep this readable as the only carrier of the info.
+    modifier = if (isError) Modifier.clearAndSetSemantics {} else Modifier,
+    text = attemptsLeftText(remainingConfirmationAttempts),
     color = WalletTheme.colorScheme.error
 )
 

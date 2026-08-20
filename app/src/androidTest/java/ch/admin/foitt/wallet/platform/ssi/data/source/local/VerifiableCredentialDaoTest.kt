@@ -8,7 +8,6 @@ import ch.admin.foitt.wallet.platform.database.data.dao.CredentialDao
 import ch.admin.foitt.wallet.platform.database.data.dao.VerifiableCredentialDao
 import ch.admin.foitt.wallet.platform.ssi.data.source.local.mock.CredentialTestData.credential1
 import ch.admin.foitt.wallet.platform.ssi.data.source.local.mock.CredentialTestData.verifiableCredential1
-import junit.framework.TestCase
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -50,18 +49,6 @@ class VerifiableCredentialDaoTest {
     @Test(expected = SQLiteConstraintException::class)
     fun insertVerifiableCredentialWithoutCredentialShouldThrow() = runTest {
         verifiableCredentialDao.insert(verifiableCredential1)
-    }
-
-    @Test
-    fun updateVerifiableCredentialByCredentialIdTest() = runTest {
-        val id = credentialDao.insert(credential1)
-        verifiableCredentialDao.insert(verifiableCredential1)
-        val updatedAt = 2L
-
-        verifiableCredentialDao.updatedAt(id, updatedAt)
-
-        val verifiableCredential = verifiableCredentialDao.getById(id)
-        TestCase.assertEquals("UpdatedAt should be updated", updatedAt, verifiableCredential.updatedAt)
     }
 
     @Test

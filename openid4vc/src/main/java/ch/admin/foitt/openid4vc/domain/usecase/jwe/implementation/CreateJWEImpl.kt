@@ -16,6 +16,7 @@ import com.nimbusds.jose.Payload
 import com.nimbusds.jose.crypto.ECDHEncrypter
 import com.nimbusds.jose.jwk.Curve.parse
 import com.nimbusds.jose.jwk.ECKey
+import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.util.Base64URL
 import timber.log.Timber
 import javax.inject.Inject
@@ -46,11 +47,15 @@ internal class CreateJWEImpl @Inject constructor() : CreateJWE {
         val jwe = JWEObject(jweHeader, jwePayload)
 
         // use encryption key to encrypt
-        val issuerPublicKey = ECKey.Builder(
-            parse(encryptionKey.crv),
-            Base64URL.from(encryptionKey.x),
-            Base64URL.from(encryptionKey.y),
-        ).build()
+        val issuerPublicKey = when (encryptionKey.kty) {
+            KeyType.EC.value -> ECKey.Builder(
+                parse(encryptionKey.crv),
+                Base64URL.from(encryptionKey.x),
+                Base64URL.from(checkNotNull(encryptionKey.y) { "EC encryption key is missing the y coordinate" }),
+            ).build()
+
+            else -> error("unsupported key type for jwe creation")
+        }
 
         jwe.encrypt(ECDHEncrypter(issuerPublicKey))
 

@@ -24,6 +24,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import uniffi.heidi_dcql_rust.DcqlQuery
 
 class ProcessPresentationRequestImplTest {
     @MockK
@@ -34,6 +35,9 @@ class ProcessPresentationRequestImplTest {
 
     @MockK
     private lateinit var mockAuthorizationRequest: AuthorizationRequest
+
+    @MockK
+    private lateinit var mockDcqlQuery: DcqlQuery
 
     @MockK
     private lateinit var mockJwt: Jwt
@@ -55,7 +59,7 @@ class ProcessPresentationRequestImplTest {
 
         useCase = ProcessPresentationRequestImpl(
             mockGetCompatibleCredentials,
-            mockVerifiableCredentialRepo
+            mockVerifiableCredentialRepo,
         )
 
         setupDefaultMocks()
@@ -67,37 +71,37 @@ class ProcessPresentationRequestImplTest {
     }
 
     @Test
-    fun `Processing presentation request which matches one credential returns the credential`() = runTest {
-        coEvery { mockGetCompatibleCredentials(mockAuthorizationRequest) } returns Ok(setOf(mockCompatibleCredential))
+    fun `Processing presentation request which matches one credential returns untrusted query`() = runTest {
+        coEvery { mockGetCompatibleCredentials(mockDcqlQuery) } returns Ok(setOf(mockCompatibleCredential))
 
         val result = useCase(mockPresentationRequestWithRaw)
 
-        val expected = ProcessPresentationRequestResult.Credential(
-            mockCompatibleCredential,
-            mockPresentationRequestWithRaw,
+        val expected = ProcessPresentationRequestResult.UntrustedQuery(
+            credentials = setOf(mockCompatibleCredential),
+            presentationRequest = mockPresentationRequestWithRaw,
         )
-        val processPresentationResult = result.assertSuccessType(ProcessPresentationRequestResult.Credential::class)
+        val processPresentationResult = result.assertSuccessType(ProcessPresentationRequestResult.UntrustedQuery::class)
         assertEquals(expected, processPresentationResult)
     }
 
     @Test
-    fun `Processing presentation request which matches multiple credentials returns the credentials`() = runTest {
+    fun `Processing presentation request which matches multiple credentials returns untrusted query`() = runTest {
         val credentials = setOf(mockCompatibleCredential, mockCompatibleCredential2)
-        coEvery { mockGetCompatibleCredentials(mockAuthorizationRequest) } returns Ok(credentials)
+        coEvery { mockGetCompatibleCredentials(mockDcqlQuery) } returns Ok(credentials)
 
         val result = useCase(mockPresentationRequestWithRaw)
 
-        val expected = ProcessPresentationRequestResult.CredentialList(
-            credentials,
-            mockPresentationRequestWithRaw,
+        val expected = ProcessPresentationRequestResult.UntrustedQuery(
+            credentials = credentials,
+            presentationRequest = mockPresentationRequestWithRaw,
         )
-        val processPresentationResult = result.assertSuccessType(ProcessPresentationRequestResult.CredentialList::class)
+        val processPresentationResult = result.assertSuccessType(ProcessPresentationRequestResult.UntrustedQuery::class)
         assertEquals(expected, processPresentationResult)
     }
 
     @Test
     fun `Processing presentation request which matches no credential returns no compatible credential error`() = runTest {
-        coEvery { mockGetCompatibleCredentials(mockAuthorizationRequest) } returns Ok(emptySet())
+        coEvery { mockGetCompatibleCredentials(mockDcqlQuery) } returns Ok(emptySet())
 
         val result = useCase(mockPresentationRequestWithRaw)
 
@@ -128,7 +132,7 @@ class ProcessPresentationRequestImplTest {
     fun `Processing presentation request maps errors from getting compatible credentials`() = runTest {
         val exception = IllegalStateException()
         coEvery {
-            mockGetCompatibleCredentials(mockAuthorizationRequest)
+            mockGetCompatibleCredentials(mockDcqlQuery)
         } returns Err(CredentialPresentationError.Unexpected(exception))
 
         val result = useCase(mockPresentationRequestWithRaw)
@@ -139,16 +143,20 @@ class ProcessPresentationRequestImplTest {
 
     private fun setupDefaultMocks() {
         every { mockAuthorizationRequest.responseUri } returns RESPONSE_URI
+        every { mockAuthorizationRequest.state } returns STATE
+        every { mockAuthorizationRequest.dcqlQuery } returns null
         coEvery { mockVerifiableCredentialRepo.getAllIds() } returns Ok(listOf(1, 2, 3))
-        coEvery { mockGetCompatibleCredentials(mockAuthorizationRequest) } returns Ok(setOf(mockCompatibleCredential))
         coEvery { mockJwt.rawJwt } returns RAW_JWT
 
         every { mockPresentationRequestWithRaw.authorizationRequest } returns mockAuthorizationRequest
         every { mockPresentationRequestWithRaw.rawPresentationRequest } returns RAW_JWT
+        every { mockPresentationRequestWithRaw.dcqlQuery } returns mockDcqlQuery
+        every { mockPresentationRequestWithRaw.hasVerifiedQuery } returns false
     }
 
     private companion object {
         const val RESPONSE_URI = "response uri"
+        const val STATE = "state"
         const val RAW_JWT = "rawJwt"
     }
 }

@@ -4,6 +4,7 @@ import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.GetTrustDomainF
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.GetTrustUrlFromDidError
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatementType
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toGetTrustUrlFromDidError
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toUnexpected
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.GetTrustDomainFromDid
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.GetTrustUrlFromDid
 import com.github.michaelbull.result.Result
@@ -60,9 +61,7 @@ internal class GetTrustUrlFromDidImpl @Inject constructor(
         }
 
         URL(urlString)
-    }.mapError { throwable ->
-        throwable.toGetTrustUrlFromDidError(message = "Failed to build trust URL")
-    }
+    }.mapError(Throwable::toUnexpected)
 
     private companion object {
         const val TRUST_SCHEME = "https://"

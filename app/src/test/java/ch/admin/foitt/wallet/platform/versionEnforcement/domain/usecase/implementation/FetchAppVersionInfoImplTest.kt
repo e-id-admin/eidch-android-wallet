@@ -84,7 +84,7 @@ class FetchAppVersionInfoImplTest {
     @Test
     fun `Fetching app version info where device is blacklisted returns blocked`() = runTest {
         coEvery { mockVersionEnforcementRepository.fetchVersionEnforcement() } returns Ok(
-            defaultVersionEnforcement.copy(defaultBlacklist = listOf(DEVICE_MODEL))
+            defaultVersionEnforcement.copy(deviceBlacklist = listOf(DEVICE_MODEL))
         )
 
         val info = useCase()
@@ -238,7 +238,7 @@ class FetchAppVersionInfoImplTest {
             appId = "ch.admin.foitt.wallet",
             displays = listOf(display),
             lifetime = 30,
-            defaultBlacklist = emptyList(),
+            deviceBlacklist = emptyList(),
             minOSVersion = AppVersion("15"),
             platform = VersionEnforcement.Platform.ANDROID,
             storeUrl = "https://play.google.com/store/apps/details?id=ch.admin.foitt.wallet",

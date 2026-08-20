@@ -1,8 +1,6 @@
 package ch.admin.foitt.wallet.platform.permission.presentation
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,7 +55,7 @@ fun PermissionScaffold(
         if (permissionState.allPermissionsGranted) {
             permissionGrantedContent()
         } else if (showPermissionRationale) {
-            permissionRationaleContent.invoke {
+            permissionRationaleContent {
                 wasDenied = false
             }
         } else {
@@ -69,7 +67,7 @@ fun PermissionScaffold(
     }
 
     LaunchedEffect(wasDenied) {
-        if (wasDenied && !permissionState.shouldShowRationale) {
+        if (wasDenied) {
             showPermissionRationale = true
         }
     }
@@ -84,57 +82,20 @@ fun PermissionScaffold(
     LaunchedEffect(shouldRequestPermission) {
         // Actively request the permission or trigger the rationale if the flag is set
         if (shouldRequestPermission) {
-            requestPermissionOrSettingsChange(
-                permission = permissions.first(),
-                isGranted = permissionState.allPermissionsGranted,
-                onRequestPermission = {
+            when {
+                permissionState.allPermissionsGranted -> {
+                    // Permission is granted, immediately invoke the callback
+                    onPermissionGranted()
+                }
+
+                else -> {
+                    // Request the permission
                     wasDenied = false
                     permissionState.launchMultiplePermissionRequest()
-                },
-                onPermissionGranted = {
-                    showPermissionRationale = false
-                },
-                onShowRationale = {
-                    showPermissionRationale = true
-                },
-            )
+                }
+            }
 
             shouldRequestPermission = false
         }
-    }
-}
-
-private fun requestPermissionOrSettingsChange(
-    permission: String,
-    isGranted: Boolean,
-    onRequestPermission: () -> Unit,
-    onPermissionGranted: () -> Unit,
-    onShowRationale: () -> Unit,
-) {
-    when {
-        isGranted -> {
-            // Permission is granted, immediately invoke the callback
-            onPermissionGranted()
-        }
-        permission == Manifest.permission.ACCESS_FINE_LOCATION -> {
-            onRequestPermission()
-        }
-        Build.VERSION.SDK_INT < getPermissionIntroducedInSdkVersion(permission) -> {
-            // The permission launcher does nothing if the permission was introduced in a higher SDK version, show the rationale to jump to the app settings
-            onShowRationale()
-        }
-        else -> {
-            // Request the permission
-            onRequestPermission()
-        }
-    }
-}
-
-private fun getPermissionIntroducedInSdkVersion(permission: String): Int {
-    return when (permission) {
-        Manifest.permission.BLUETOOTH_ADVERTISE,
-        Manifest.permission.BLUETOOTH_CONNECT,
-        Manifest.permission.BLUETOOTH_SCAN -> Build.VERSION_CODES.S
-        else -> Build.VERSION_CODES.BASE
     }
 }

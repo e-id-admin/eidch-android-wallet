@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwt
+import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.GetTrustUrlFromDidError
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.IdentityV1TrustStatement
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ProcessIdentityV1TrustStatementError
@@ -8,18 +9,22 @@ import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustRegistryEr
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatementRepositoryError
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatementType
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toProcessIdentityV1TrustStatementError
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toUnexpected
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.repository.TrustStatementRepository
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.GetTrustUrlFromDid
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.ProcessIdentityV1TrustStatement
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.ValidateTrustStatement
 import ch.admin.foitt.wallet.platform.utils.JsonParsingError
 import ch.admin.foitt.wallet.platform.utils.SafeJson
+import ch.admin.foitt.wallet.platform.utils.ignoreErrorUnless
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.mapError
+import com.github.michaelbull.result.onErr
+import timber.log.Timber
 import javax.inject.Inject
 
 class ProcessIdentityV1TrustStatementImpl @Inject constructor(
@@ -27,10 +32,11 @@ class ProcessIdentityV1TrustStatementImpl @Inject constructor(
     private val trustStatementRepository: TrustStatementRepository,
     private val validateTrustStatement: ValidateTrustStatement,
     private val safeJson: SafeJson,
+    private val environmentSetupRepository: EnvironmentSetupRepository,
 ) : ProcessIdentityV1TrustStatement {
     override suspend fun invoke(
         did: String
-    ): Result<IdentityV1TrustStatement, ProcessIdentityV1TrustStatementError> = coroutineBinding {
+    ): Result<IdentityV1TrustStatement?, ProcessIdentityV1TrustStatementError> = coroutineBinding {
         val trustUrl = getTrustUrlFromDid(
             trustStatementType = TrustStatementType.IDENTITY,
             actorDid = did,
@@ -45,9 +51,7 @@ class ProcessIdentityV1TrustStatementImpl @Inject constructor(
 
         val trustStatements = runSuspendCatching {
             trustStatementsRaw.map { VcSdJwt(it) }
-        }.mapError { throwable ->
-            throwable.toProcessIdentityV1TrustStatementError(message = "trust statement vc sd jwt creation failed")
-        }.bind()
+        }.mapError(Throwable::toUnexpected).bind()
 
         val identityStatements = trustStatements.filter { it.vct == IDENTITY_VCT }
 
@@ -68,7 +72,13 @@ class ProcessIdentityV1TrustStatementImpl @Inject constructor(
             .bind()
 
         identityTrustStatement
-    }
+    }.ignoreErrorUnless(environmentSetupRepository.terminateOnInvalidIdTSEnabled)
+        .onErr {
+            when (it) {
+                is TrustRegistryError.InvalidTrustStatus -> Timber.e("Process idTS v1: Unverified actor, invalid trust status")
+                is TrustRegistryError.Unexpected -> Timber.e(t = it.cause, message = "Process idTS v1: Unverified actor")
+            }
+        }
 
     private companion object {
         const val IDENTITY_VCT = "TrustStatementIdentityV1"

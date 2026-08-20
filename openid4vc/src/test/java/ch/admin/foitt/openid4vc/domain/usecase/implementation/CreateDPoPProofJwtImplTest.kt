@@ -1,5 +1,6 @@
 package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
+import ch.admin.foitt.openid4vc.domain.model.DigestAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.JwkError
 import ch.admin.foitt.openid4vc.domain.model.SigningAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOfferError
@@ -10,6 +11,7 @@ import ch.admin.foitt.openid4vc.domain.usecase.CreateJwk
 import ch.admin.foitt.openid4vc.util.assertErrorType
 import ch.admin.foitt.openid4vc.util.assertOk
 import ch.admin.foitt.openid4vc.utils.Constants
+import ch.admin.foitt.openid4vc.utils.createBase64UrlEncodedDigest
 import ch.admin.foitt.openid4vc.utils.toBase64StringUrlEncodedWithoutPadding
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
@@ -72,6 +74,7 @@ class CreateDPoPProofJwtImplTest {
             nonce = NONCE,
             accessToken = ACCESS_TOKEN,
             keyAttestationJwt = mockKeyAttestationJwt,
+            requestBody = null,
         ).assertOk()
 
         val signedJwt = SignedJWT.parse(proof)
@@ -88,7 +91,7 @@ class CreateDPoPProofJwtImplTest {
     }
 
     @Test
-    fun `creating a dpop proof jwt without nonce or access token omits optional claims`() = runTest {
+    fun `creating a dpop proof jwt without nonce, requestBody, or access token omits optional claims`() = runTest {
         val proof = createDPoPProofJwt(
             method = "get",
             url = URL("https://issuer.example/credential"),
@@ -96,6 +99,7 @@ class CreateDPoPProofJwtImplTest {
             nonce = null,
             accessToken = null,
             keyAttestationJwt = null,
+            requestBody = null,
         ).assertOk()
 
         val signedJwt = SignedJWT.parse(proof)
@@ -105,6 +109,31 @@ class CreateDPoPProofJwtImplTest {
         assertEquals(null, signedJwt.jwtClaimsSet.getClaim("nonce"))
         assertEquals(null, signedJwt.jwtClaimsSet.getClaim("ath"))
         assertEquals(null, signedJwt.header.getCustomParam("key_attestation"))
+        assertEquals(null, signedJwt.jwtClaimsSet.getClaim("req"))
+    }
+
+    @Test
+    fun `creating a dpop for the AutoVerification session adapt the result to the AutoVerification API spec`() = runTest {
+        val requestBody = byteArrayOf(1, 2, 3)
+        val requestBodyHash = requestBody.createBase64UrlEncodedDigest(DigestAlgorithm.SHA256)
+
+        val proof = createDPoPProofJwt(
+            method = "get",
+            url = URL("https://issuer.example/credential"),
+            keyPair = validKeyPair,
+            nonce = null,
+            accessToken = null,
+            keyAttestationJwt = null,
+            requestBody = requestBody,
+        ).assertOk()
+
+        val signedJwt = SignedJWT.parse(proof)
+
+        assertEquals(null, signedJwt.jwtClaimsSet.getClaim("nonce"))
+        assertEquals(null, signedJwt.jwtClaimsSet.getClaim("ath"))
+        assertEquals(null, signedJwt.header.getCustomParam("key_attestation"))
+        assertEquals(requestBodyHash, signedJwt.jwtClaimsSet.getClaim("req"))
+        assertEquals(null, signedJwt.header.getCustomParam(Constants.DPOP_SWISS_PROFILE_HEADER))
     }
 
     @Test
@@ -120,6 +149,7 @@ class CreateDPoPProofJwtImplTest {
             nonce = NONCE,
             accessToken = ACCESS_TOKEN,
             keyAttestationJwt = null,
+            requestBody = null,
         ).assertErrorType(CredentialOfferError.Unexpected::class)
     }
 

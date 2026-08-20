@@ -4,8 +4,10 @@ import android.database.sqlite.SQLiteConstraintException
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import ch.admin.foitt.wallet.platform.database.data.AppDatabase
+import ch.admin.foitt.wallet.platform.database.data.dao.CredentialAuthenticationDao
 import ch.admin.foitt.wallet.platform.database.data.dao.CredentialDao
 import ch.admin.foitt.wallet.platform.database.data.dao.DeferredCredentialDao
+import ch.admin.foitt.wallet.platform.ssi.data.source.local.mock.CredentialTestData.authentication1
 import ch.admin.foitt.wallet.platform.ssi.data.source.local.mock.CredentialTestData.credential1
 import ch.admin.foitt.wallet.platform.ssi.data.source.local.mock.CredentialTestData.deferredCredential1
 import kotlinx.coroutines.test.runTest
@@ -13,6 +15,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.assertThrows
 
 class DeferredCredentialDaoTest {
@@ -20,6 +23,7 @@ class DeferredCredentialDaoTest {
     private lateinit var database: AppDatabase
     private lateinit var credentialDao: CredentialDao
     private lateinit var deferredCredentialDao: DeferredCredentialDao
+    private lateinit var credentialAuthenticationDao: CredentialAuthenticationDao
 
     @Before
     fun setupDatabase() {
@@ -29,6 +33,7 @@ class DeferredCredentialDaoTest {
 
         credentialDao = database.credentialDao()
         deferredCredentialDao = database.deferredCredentialDao()
+        credentialAuthenticationDao = database.credentialAuthenticationDao()
     }
 
     @After
@@ -39,6 +44,7 @@ class DeferredCredentialDaoTest {
     @Test
     fun insertDeferredCredentialTest() = runTest {
         credentialDao.insert(credential1)
+        credentialAuthenticationDao.insert(authentication1)
         val id = deferredCredentialDao.insert(deferredCredential1)
 
         val deferredCredential = deferredCredentialDao.getById(id)
@@ -54,10 +60,13 @@ class DeferredCredentialDaoTest {
     @Test
     fun deleteCredentialTest() = runTest {
         credentialDao.insert(credential1)
+        credentialAuthenticationDao.insert(authentication1)
         deferredCredentialDao.insert(deferredCredential1)
 
         credentialDao.deleteById(credential1.id)
 
+        // deleting credential should cascade delete authentication and deferred entities
+        assertNull(credentialAuthenticationDao.getByCredentialId(credential1.id))
         assertThrows<IllegalStateException> {
             deferredCredentialDao.getById(credential1.id)
         }

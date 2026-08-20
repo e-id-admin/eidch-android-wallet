@@ -12,7 +12,6 @@ import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateCred
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialStatus
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.BundleItemRepository
-import ch.admin.foitt.wallet.platform.ssi.domain.repository.VerifiableCredentialRepository
 import ch.admin.foitt.wallet.util.SafeJsonTestInstance
 import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
@@ -38,9 +37,6 @@ class UpdateCredentialStatusImplTest {
     private val json = SafeJsonTestInstance.json
 
     @MockK
-    private lateinit var mockVerifiableCredentialRepo: VerifiableCredentialRepository
-
-    @MockK
     private lateinit var mockBundleItemRepo: BundleItemRepository
 
     @MockK
@@ -60,7 +56,6 @@ class UpdateCredentialStatusImplTest {
 
         useCase = UpdateCredentialStatusImpl(
             ioDispatcher = testDispatcher,
-            verifiableCredentialRepository = mockVerifiableCredentialRepo,
             bundleItemRepository = mockBundleItemRepo,
             getAllAnyCredentialsByCredentialId = mockGetAllAnyCredentialsByCredentialId,
             fetchCredentialStatus = mockFetchCredentialStatus,
@@ -192,9 +187,6 @@ class UpdateCredentialStatusImplTest {
 
         coEvery { mockGetAllAnyCredentialsByCredentialId(CREDENTIAL_ID) } returns Ok(listOf(mockVcSdJwtCredential))
         coEvery { mockFetchCredentialStatus(any(), credentialStatusProperties) } returns Ok(CredentialStatus.VALID)
-        coEvery {
-            mockVerifiableCredentialRepo.onBundleItemUpdate(CREDENTIAL_ID)
-        } returns Ok(CREDENTIAL_ID.toInt())
         coEvery {
             mockBundleItemRepo.updateStatusByCredentialId(CREDENTIAL_ID, any())
         } returns Ok(CREDENTIAL_ID.toInt())

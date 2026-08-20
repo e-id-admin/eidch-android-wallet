@@ -7,6 +7,7 @@ import ch.admin.foitt.openid4vc.domain.model.TokenType
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.IssuerCredentialInfo
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.RawAndParsedIssuerCredentialInfo
+import ch.admin.foitt.openid4vc.domain.model.jwt.Jwt
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBinding
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBindingType
 import ch.admin.foitt.wallet.platform.credential.domain.model.AnyDisplays
@@ -54,6 +55,9 @@ class HandleDeferredCredentialResultImplTest {
     @MockK
     private lateinit var mockCredentialOfferRepository: CredentialOfferRepository
 
+    @MockK
+    private lateinit var mockIssuerCredentialInfoJwt: Jwt
+
     private lateinit var useCase: HandleDeferredCredentialResult
 
     @BeforeEach
@@ -83,7 +87,7 @@ class HandleDeferredCredentialResultImplTest {
             deferredCredential = deferredCredential,
             rawAndParsedCredentialInfo = RawAndParsedIssuerCredentialInfo(
                 issuerCredentialInfo = oneConfigCredentialInformation,
-                rawIssuerCredentialInfo = ""
+                rawIssuerCredentialInfo = mockIssuerCredentialInfoJwt
             ),
             credentialConfig = credentialConfig,
         )
@@ -134,7 +138,7 @@ class HandleDeferredCredentialResultImplTest {
             deferredCredential = deferredCredential,
             rawAndParsedCredentialInfo = RawAndParsedIssuerCredentialInfo(
                 issuerCredentialInfo = oneConfigCredentialInformation,
-                rawIssuerCredentialInfo = ""
+                rawIssuerCredentialInfo = mockIssuerCredentialInfoJwt
             ),
             credentialConfig = credentialConfig,
         ).assertErrorType(CredentialError.Unexpected::class)
@@ -160,7 +164,7 @@ class HandleDeferredCredentialResultImplTest {
             deferredCredential = deferredCredential,
             rawAndParsedCredentialInfo = RawAndParsedIssuerCredentialInfo(
                 issuerCredentialInfo = oneConfigCredentialInformation,
-                rawIssuerCredentialInfo = ""
+                rawIssuerCredentialInfo = mockIssuerCredentialInfoJwt
             ),
             credentialConfig = credentialConfig,
         ).assertErrorType(CredentialError.Unexpected::class)
@@ -181,7 +185,7 @@ class HandleDeferredCredentialResultImplTest {
             deferredCredential = deferredCredential,
             rawAndParsedCredentialInfo = RawAndParsedIssuerCredentialInfo(
                 issuerCredentialInfo = oneConfigCredentialInformation,
-                rawIssuerCredentialInfo = ""
+                rawIssuerCredentialInfo = mockIssuerCredentialInfoJwt
             ),
             credentialConfig = credentialConfig,
         )
@@ -195,6 +199,8 @@ class HandleDeferredCredentialResultImplTest {
     ) {
         every { credentialConfig.format } returns CredentialFormat.VC_SD_JWT
         every { credentialConfig.identifier } returns CREDENTIAL_IDENTIFIER
+
+        every { mockIssuerCredentialInfoJwt.payloadString } returns ""
 
         coEvery { mockOcaBundler(any()) } returns Ok(ocaBundle)
 

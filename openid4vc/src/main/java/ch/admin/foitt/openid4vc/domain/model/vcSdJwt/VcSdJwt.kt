@@ -31,8 +31,19 @@ open class VcSdJwt(
     val vctIntegrity: String? = processedJson.jsonObject[CLAIM_KEY_VCT_INTEGRITY]?.jsonPrimitive?.content
     val vctMetadataUri: String? = processedJson.jsonObject[CLAIM_KEY_VCT_METADATA_URI]?.jsonPrimitive?.content
     val vctMetadataUriIntegrity: String? = processedJson.jsonObject[CLAIM_KEY_VCT_METADATA_URI_INTEGRITY]?.jsonPrimitive?.content
+
+    /**
+     * Resolves the key binding JWK by decoding the `cnf` claim, supporting both the standard and legacy structures.
+     *
+     * Two CNF structures are intentionally supported:
+     * - the standard `cnf.jwk`, where the JWK is nested under the `jwk` key;
+     * - the legacy flat `cnf`, where the JWK fields are held directly.
+     *
+     * Keeping both decoding paths is an accepted business decision for the time being. Some early production
+     * credentials were released with the flat CNF format and we decided to keep managing them to not break usage
+     * until further notice.
+     */
     val cnfJwk = processedJson.jsonObject[CLAIM_KEY_CNF]?.jsonObject[CLAIM_KEY_CNF_JWK]
-        // Support for both malformed and standard format of cnf claim
         ?: processedJson.jsonObject[CLAIM_KEY_CNF]
     val status = processedJson.jsonObject[CLAIM_KEY_STATUS]
 

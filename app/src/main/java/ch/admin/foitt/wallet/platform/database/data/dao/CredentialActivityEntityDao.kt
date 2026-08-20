@@ -18,4 +18,7 @@ interface CredentialActivityEntityDao {
 
     @Query("DELETE FROM credentialactivityentity")
     fun deleteAllActivities(): Unit
+
+    @Query("DELETE FROM credentialactivityentity WHERE credentialId = :credentialId")
+    fun deleteByCredentialId(credentialId: Long): Int
 }

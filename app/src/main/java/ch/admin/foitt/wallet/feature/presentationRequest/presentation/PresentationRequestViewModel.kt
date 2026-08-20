@@ -14,10 +14,12 @@ import ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.SubmitPr
 import ch.admin.foitt.wallet.feature.presentationRequest.presentation.model.PresentationRequestUiState
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.SavePresentationAcceptedActivity
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.SavePresentationDeclinedActivity
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorMetaDataError
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchAndCacheVerifierDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.GetActorForScope
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.toBadgeBottomSheetUiState
 import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
 import ch.admin.foitt.wallet.platform.badges.presentation.model.BadgeBottomSheetUiState
 import ch.admin.foitt.wallet.platform.badges.presentation.model.ClaimBadgeUiState
@@ -41,12 +43,16 @@ import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimImage
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimText
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialElement
 import ch.admin.foitt.wallet.platform.ssi.domain.model.getClaimIds
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.usecase.ProcessVerificationAuthorizationTrustStatement
 import ch.admin.foitt.wallet.platform.utils.launchWithDelayedLoading
 import ch.admin.foitt.wallet.platform.utils.openLink
 import ch.admin.foitt.wallet.platform.utils.trackCompletion
+import com.github.michaelbull.result.annotation.UnsafeResultErrorAccess
 import com.github.michaelbull.result.mapBoth
-import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -55,11 +61,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+@Suppress("TooManyFunctions")
 @HiltViewModel(assistedFactory = PresentationRequestViewModel.Factory::class)
 class PresentationRequestViewModel @AssistedInject constructor(
     @param:ApplicationContext private val appContext: Context,
@@ -75,6 +83,7 @@ class PresentationRequestViewModel @AssistedInject constructor(
     private val getProximityRepositoryForScope: GetProximityRepositoryForScope,
     private val savePresentationAcceptedActivity: SavePresentationAcceptedActivity,
     private val savePresentationDeclinedActivity: SavePresentationDeclinedActivity,
+    private val processVerificationAuthorizationTrustStatement: ProcessVerificationAuthorizationTrustStatement,
     setTopBarState: SetTopBarState,
     @Assisted private val compatibleCredential: CompatibleCredential,
     @Assisted private val presentationRequestWithRaw: PresentationRequestWithRaw,
@@ -110,11 +119,33 @@ class PresentationRequestViewModel @AssistedInject constructor(
     private val _showConfirmationBottomSheet: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showConfirmationBottomSheet = _showConfirmationBottomSheet.asStateFlow()
 
+    private val _showUntrustedRequestBottomSheet: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val showUntrustedRequestBottomSheet = _showUntrustedRequestBottomSheet.asStateFlow()
+
+    @OptIn(UnsafeResultErrorAccess::class)
     val presentationRequestUiState = refreshableStateFlow(PresentationRequestUiState.EMPTY) {
+        val pvaTSResult = processVerificationAuthorizationTrustStatement(
+            presentationRequestWithRaw,
+            compatibleCredential.presentationPaths
+        )
+
+        if (pvaTSResult.isErr) {
+            val responseUri = presentationRequestWithRaw.authorizationRequest.responseUri
+            navManager.replaceCurrentWith(
+                Destination.GenericErrorScreen(
+                    GenericErrorScreenState.Presentation.unauthorizedVerification(
+                        responseUri = responseUri,
+                        state = presentationRequestWithRaw.authorizationRequest.state,
+                    )
+                )
+            )
+            return@refreshableStateFlow emptyFlow()
+        }
+
         getPresentationRequestFlow(
             id = compatibleCredential.credentialId,
             presentationPaths = compatibleCredential.presentationPaths,
-        ).map { result ->
+        ).mapNotNull { result ->
             result.mapBoth(
                 success = { presentationRequestUi ->
                     _isLoading.value = false
@@ -125,7 +156,7 @@ class PresentationRequestViewModel @AssistedInject constructor(
                     null
                 },
             )
-        }.filterNotNull()
+        }
     }
 
     private val _isLoading = MutableStateFlow(true)
@@ -140,15 +171,22 @@ class PresentationRequestViewModel @AssistedInject constructor(
     private val credentialCardStatus: CredentialDisplayStatus
         get() = presentationRequestUiState.stateFlow.value.credentialCardState.status ?: CredentialDisplayStatus.Unknown
 
-    val confirmationBottomSheetTitle: Int get() = when (credentialCardStatus) {
-        is CredentialDisplayStatus.BusinessExpired -> R.string.tk_present_review_businessExpiryWarning_primary
-        CredentialDisplayStatus.Suspended -> R.string.tk_present_review_suspendedWarning_primary
+    private val isActorReported: Boolean
+        get() = verifierUiState.value.actorComplianceState == ActorComplianceState.REPORTED
+
+    val confirmationBottomSheetTitle: Int get() = when {
+        isActorReported -> R.string.tk_present_review_nonCompliantActorWarning_primary
+        credentialCardStatus is CredentialDisplayStatus.BusinessExpired ->
+            R.string.tk_present_review_businessExpiryWarning_primary
+        credentialCardStatus == CredentialDisplayStatus.Suspended -> R.string.tk_present_review_suspendedWarning_primary
         else -> R.string.tk_present_review_confirmPresentation_primary
     }
 
-    val confirmationBottomSheetBody: Int get() = when (credentialCardStatus) {
-        is CredentialDisplayStatus.BusinessExpired -> R.string.tk_present_review_businessExpiryWarning_secondary
-        CredentialDisplayStatus.Suspended -> R.string.tk_present_review_suspendedWarning_secondary
+    val confirmationBottomSheetBody: Int get() = when {
+        isActorReported -> R.string.tk_present_review_nonCompliantActorWarning_secondary
+        credentialCardStatus is CredentialDisplayStatus.BusinessExpired ->
+            R.string.tk_present_review_businessExpiryWarning_secondary
+        credentialCardStatus == CredentialDisplayStatus.Suspended -> R.string.tk_present_review_suspendedWarning_secondary
         else -> R.string.tk_present_review_confirmPresentation_secondary
     }
 
@@ -158,18 +196,48 @@ class PresentationRequestViewModel @AssistedInject constructor(
                 presentationRequestWithRaw.authorizationRequest,
                 presentationRequestWithRaw.verificationProcessType,
                 presentationRequestWithRaw.verifierAttestationTrusted,
-            )
+            ).onErr { error ->
+                when (error) {
+                    is ActorMetaDataError.UnverifiedVerifier -> {
+                        navManager.replaceCurrentWith(
+                            Destination.GenericErrorScreen(
+                                GenericErrorScreenState.Presentation.unverifiedVerifier(
+                                    responseUri = error.responseUri,
+                                    state = presentationRequestWithRaw.authorizationRequest.state,
+                                )
+                            )
+                        )
+                    }
+                    is ActorMetaDataError.UnknownRegistry -> {
+                        navManager.replaceCurrentWith(
+                            Destination.GenericErrorScreen(
+                                GenericErrorScreenState.General.unknownRegistry(
+                                    responseUri = error.responseUri,
+                                    state = presentationRequestWithRaw.authorizationRequest.state,
+                                )
+                            )
+                        )
+                    }
+                    else -> {}
+                }
+            }
         }
     }
 
     fun onAccept() {
-        _showConfirmationBottomSheet.value = when (credentialCardStatus) {
-            CredentialDisplayStatus.Suspended,
-            is CredentialDisplayStatus.BusinessExpired -> true
-            else -> verifierUiState.value.trustStatus == TrustStatus.EXTERNAL
-        }
-        if (!_showConfirmationBottomSheet.value) {
-            submit()
+        when {
+            isActorReported -> _showConfirmationBottomSheet.value = true
+            !presentationRequestWithRaw.hasVerifiedQuery -> _showUntrustedRequestBottomSheet.value = true
+            else -> {
+                _showConfirmationBottomSheet.value = when (credentialCardStatus) {
+                    CredentialDisplayStatus.Suspended,
+                    is CredentialDisplayStatus.BusinessExpired -> true
+                    else -> verifierUiState.value.trustStatus == TrustStatus.EXTERNAL
+                }
+                if (!_showConfirmationBottomSheet.value) {
+                    submit()
+                }
+            }
         }
     }
 
@@ -181,40 +249,37 @@ class PresentationRequestViewModel @AssistedInject constructor(
             submitPresentation(
                 presentationRequestWithRaw = presentationRequestWithRaw,
                 compatibleCredential = compatibleCredential,
-            ).mapBoth(
-                success = {
-                    saveAcceptedActivity()
-                    navigateToSuccess()
-                },
-                failure = { error ->
-                    when (error) {
-                        PresentationRequestError.InvalidUrl,
-                        PresentationRequestError.RawSdJwtParsingError,
-                        PresentationRequestError.SocketTimeoutError,
-                        is PresentationRequestError.Unexpected -> {
-                            saveAcceptedActivity()
-                            navigateToFailure()
-                        }
-
-                        is PresentationRequestError.ValidationError -> {
-                            saveAcceptedActivity()
-                            navigateToErrorScreen(error)
-                        }
-
-                        PresentationRequestError.VerificationError -> {
-                            saveAcceptedActivity()
-                            navigateToVerificationError()
-                        }
-
-                        PresentationRequestError.InvalidCredentialError -> {
-                            saveAcceptedActivity()
-                            navigateToSuccess()
-                        }
-                        // Don't save the activity in this case
-                        PresentationRequestError.NetworkError -> navigateToFailure()
+            ).onOk { authorizationResponseResponse ->
+                saveAcceptedActivity()
+                navigateToSuccess(authorizationResponseResponse?.redirectUri)
+            }.onErr { error ->
+                when (error) {
+                    PresentationRequestError.InvalidUrl,
+                    PresentationRequestError.RawSdJwtParsingError,
+                    PresentationRequestError.SocketTimeoutError,
+                    is PresentationRequestError.Unexpected -> {
+                        saveAcceptedActivity()
+                        navigateToFailure()
                     }
+
+                    is PresentationRequestError.ValidationError -> {
+                        saveAcceptedActivity()
+                        navigateToErrorScreen(error)
+                    }
+
+                    PresentationRequestError.VerificationError -> {
+                        saveAcceptedActivity()
+                        navigateToVerificationError()
+                    }
+
+                    PresentationRequestError.InvalidCredentialError -> {
+                        saveAcceptedActivity()
+                        navigateToSuccess(null)
+                    }
+                    // Don't save the activity in this case
+                    PresentationRequestError.NetworkError -> navigateToFailure()
                 }
-            )
+            }
         }.trackCompletion(_isSubmitting)
     }
 
@@ -242,19 +307,28 @@ class PresentationRequestViewModel @AssistedInject constructor(
             declinePresentation(
                 url = presentationRequestWithRaw.authorizationRequest.responseUri,
                 reason = AuthorizationResponseErrorBody.ErrorType.ACCESS_DENIED,
-            ).onFailure { error ->
+                state = presentationRequestWithRaw.authorizationRequest.state,
+            ).onOk { authorizationResponseResponse ->
+                navManager.replaceCurrentWith(
+                    destination = Destination.PresentationDeclinedScreen(authorizationResponseResponse.redirectUri)
+                )
+            }.onOk { authorizationResponseResponse ->
+                navManager.replaceCurrentWith(
+                    destination = Destination.PresentationDeclinedScreen(authorizationResponseResponse.redirectUri)
+                )
+            }.onErr { error ->
                 Timber.w("Decline presentation error: $error")
+                navManager.replaceCurrentWith(
+                    destination = Destination.PresentationDeclinedScreen(null)
+                )
             }
         }
-        navManager.replaceCurrentWith(
-            destination = Destination.PresentationDeclinedScreen
-        )
     }
 
-    private fun navigateToSuccess() {
+    private fun navigateToSuccess(redirectUri: String?) {
         navManager.replaceCurrentWith(
             destination = Destination.PresentationSuccessScreen(
-                sentFields = getSentFields(),
+                redirectUri = redirectUri,
             )
         )
     }
@@ -263,10 +337,6 @@ class PresentationRequestViewModel @AssistedInject constructor(
         navManager.replaceCurrentWith(
             destination = Destination.PresentationVerificationErrorScreen
         )
-    }
-
-    private fun getSentFields() = presentationRequestUiState.stateFlow.value.requestedClaims.flatMap { item ->
-        getClusterFields(item.items)
     }
 
     private fun getClusterFields(items: MutableList<CredentialElement>): List<String> {
@@ -300,7 +370,8 @@ class PresentationRequestViewModel @AssistedInject constructor(
             credentialCardState = getCredentialCardState(credential),
             requestedClaims = requestedClaims,
             claimBadgesUiStates = requestedClaims.toClaimBadgesUiStates(isParentSensitive = false),
-            numberOfClaims = getAmountOfClaims(requestedClaims)
+            numberOfClaims = getAmountOfClaims(requestedClaims),
+            showsUnregisteredRequestCallout = !presentationRequestWithRaw.hasVerifiedQuery
         )
     }
 
@@ -341,14 +412,40 @@ class PresentationRequestViewModel @AssistedInject constructor(
         return amount
     }
 
-    fun onReportWrongData() {
-        navManager.navigateTo(Destination.ReportWrongDataScreen)
+    fun onActorNameTap() {
+        _badgeBottomSheetUiState.value = verifierUiState.value.toBadgeBottomSheetUiState {
+            onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value)
+        }
+    }
+
+    fun onReportedActorInfo() {
+        _badgeBottomSheetUiState.value = BadgeBottomSheetUiState.NonCompliantActor(
+            actorName = verifierUiState.value.name ?: "",
+            actorPainter = verifierUiState.value.painter,
+            reason = verifierUiState.value.nonComplianceReason,
+            onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
+        )
+    }
+
+    fun onDeclineUntrustedRequest() {
+        _showUntrustedRequestBottomSheet.value = false
+        onDecline()
+    }
+
+    fun onSubmitUntrustedRequest() {
+        _showUntrustedRequestBottomSheet.value = false
+        submit()
+    }
+
+    fun onDismissUntrustedRequestBottomSheet() {
+        _showUntrustedRequestBottomSheet.value = false
     }
 
     fun onBadge(badgeType: BadgeType) {
         _badgeBottomSheetUiState.value = when (badgeType) {
             is BadgeType.ActorInfoBadge -> badgeType.toBadgeBottomSheetUiState(
                 actorName = verifierUiState.value.name ?: "",
+                actorPainter = verifierUiState.value.painter,
                 reason = verifierUiState.value.nonComplianceReason,
                 onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
             )

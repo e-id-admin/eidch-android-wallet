@@ -1,8 +1,8 @@
 plugins {
-    id("android-sdk")
-    id("jacoco-android-sdk")
     alias(libs.plugins.devtools.ksp)
-    alias(libs.plugins.junit5)
+    alias(libs.plugins.swiyu.android.library)
+    alias(libs.plugins.mannodermaus.junit)
+    kotlin("plugin.serialization") version "2.3.21"
 }
 
 android {
@@ -17,6 +17,7 @@ dependencies {
     ksp(libs.hilt.android.compiler)
 
     // Serialization
+    implementation(libs.kotlin.serialization)
     implementation(libs.kotlinx.serialization.json)
 
     // ktor
@@ -26,6 +27,8 @@ dependencies {
 
     // JWT
     implementation(libs.nimbus.jose.jwt)
+    // Required at runtime by Nimbus' Ed25519Verifier (EdDSA signature verification)
+    implementation(libs.tink.android)
 
     // DID resolver
     implementation(libs.didresolver)
@@ -40,6 +43,9 @@ dependencies {
     // Dcql
     implementation(libs.dcql)
 
+    // Consistency
+    implementation(libs.consistency)
+
     // Testing
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.slf4j.nop)
@@ -48,8 +54,9 @@ dependencies {
     testImplementation(libs.ktor.server.core)
     testImplementation(libs.ktor.server.netty)
 
+    val junitBom = platform(libs.junit.jupiter.bom)
+    testImplementation(junitBom)
     testImplementation(libs.junit.jupiter.api)
-    testRuntimeOnly(libs.junit.jupiter.engine)
-    // for "Parameterized Tests"
     testImplementation(libs.junit.jupiter.params)
+    testRuntimeOnly(libs.junit.jupiter.engine)
 }

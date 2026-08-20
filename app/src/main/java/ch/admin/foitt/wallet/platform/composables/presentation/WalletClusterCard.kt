@@ -15,7 +15,6 @@ fun ClaimClusterCard(
     content: @Composable () -> Unit,
 ) = ClusterCard(
     modifier = Modifier.padding(start = Sizes.s04, end = Sizes.s04),
-    colors = CardDefaults.cardColors().copy(containerColor = WalletTheme.colorScheme.listItemBackground),
 ) {
     content()
 }
@@ -32,7 +31,7 @@ fun InfoClusterCard(
 @Composable
 private fun ClusterCard(
     modifier: Modifier = Modifier,
-    colors: CardColors = CardDefaults.cardColors(),
+    colors: CardColors = CardDefaults.cardColors().copy(containerColor = WalletTheme.colorScheme.listItemBackground),
     shape: RoundedCornerShape = RoundedCornerShape(Sizes.s05),
     content: @Composable () -> Unit,
 ) = Card(

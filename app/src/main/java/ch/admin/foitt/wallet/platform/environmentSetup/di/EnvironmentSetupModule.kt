@@ -1,5 +1,6 @@
 package ch.admin.foitt.wallet.platform.environmentSetup.di
 
+import ch.admin.foitt.openid4vc.di.OpenId4VcModule
 import ch.admin.foitt.wallet.platform.environmentSetup.data.MainEnvironmentSetupRepositoryImpl
 import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import dagger.Module
@@ -8,6 +9,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
 import dagger.multibindings.IntKey
 import dagger.multibindings.IntoMap
+import javax.inject.Named
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
@@ -35,4 +37,9 @@ object EnvironmentSetupModule {
         val preferredEnvironmentSetup = availableSetups.maxByOrNull { it.key }
         return checkNotNull(preferredEnvironmentSetup?.value) { "No environment setups were provided" }
     }
+
+    @Provides
+    @Named(OpenId4VcModule.NAMED_USER_AGENT)
+    fun provideUserAgent(environmentSetupRepository: EnvironmentSetupRepository): String =
+        environmentSetupRepository.userAgent
 }

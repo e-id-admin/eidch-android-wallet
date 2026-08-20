@@ -6,6 +6,7 @@ import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequ
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.PairCurrentWalletError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.PairWalletResponse
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.StartOnlineSessionError
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.AddWalletPairingId
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.PairCurrentWallet
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.StartOnlineSession
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
@@ -34,6 +35,7 @@ import kotlinx.coroutines.launch
 internal class EIdWalletPairingViewModel @AssistedInject constructor(
     private val startOnlineSession: StartOnlineSession,
     private val pairCurrentWallet: PairCurrentWallet,
+    private val addWalletPairingId: AddWalletPairingId,
     private val navManager: NavigationManager,
     @Assisted private val caseId: String,
     setTopBarState: SetTopBarState,
@@ -84,7 +86,9 @@ internal class EIdWalletPairingViewModel @AssistedInject constructor(
             startOnlineSessionResult.value?.get() ?: return@launch
 
             pairCurrentWalletResult.update { pairCurrentWallet(caseId = caseId) }
-            pairCurrentWalletResult.value?.get() ?: return@launch
+            val pairingResponse = pairCurrentWalletResult.value?.get() ?: return@launch
+
+            addWalletPairingId(caseId, pairingResponse.walletPairingId)
 
             navManager.replaceCurrentWith(
                 Destination.EIdStartAutoVerificationScreen(
@@ -104,6 +108,7 @@ internal class EIdWalletPairingViewModel @AssistedInject constructor(
                 }
             }
             startOnlineSessionResult.value?.get() ?: return@launch
+
             navManager.popUpToAndNavigate(
                 popToInclusive = Destination.EIdStartAvSessionScreen::class,
                 destination = Destination.EIdPairingOverviewScreen(caseId = caseId)

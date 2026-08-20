@@ -23,6 +23,15 @@ interface EIdRequestCaseRepository {
         pushId: String?
     ): Result<Unit, EIdRequestCaseRepositoryError>
 
+    suspend fun addPairingId(
+        caseId: String,
+        pairingId: String,
+    ): Result<Unit, EIdRequestCaseRepositoryError>
+
+    suspend fun getPairingIds(
+        caseId: String,
+    ): Result<List<String>, EIdRequestCaseRepositoryError>
+
     suspend fun getEIdRequestCase(caseId: String): Result<EIdRequestCase, EIdRequestCaseRepositoryError>
 
     suspend fun getEIdRequestCasesWithPushId(): Result<List<EIdRequestCase>, EIdRequestCaseRepositoryError>

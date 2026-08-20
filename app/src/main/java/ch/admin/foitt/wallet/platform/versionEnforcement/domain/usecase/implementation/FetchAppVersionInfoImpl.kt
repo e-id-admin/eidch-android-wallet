@@ -40,7 +40,7 @@ internal class FetchAppVersionInfoImpl @Inject constructor(
     }
 
     private fun getCorrectMessage(enforcement: VersionEnforcement): List<Display> {
-        val matchingVersion = enforcement.versions.find { it.version == currentVersion }
+        val matchingVersion = enforcement.versions.find { it.version >= currentVersion }
         return matchingVersion?.message ?: enforcement.displays
     }
 
@@ -63,7 +63,7 @@ internal class FetchAppVersionInfoImpl @Inject constructor(
     }
 
     private fun checkEnforcementForBlackList(enforcement: VersionEnforcement): AppVersionInfo {
-        return if (enforcement.defaultBlacklist.contains(getDeviceModel())) {
+        return if (enforcement.deviceBlacklist.contains(getDeviceModel())) {
             AppVersionInfo.Blocked(null, null, enforcement.storeUrl, EnforcementType.DEVICE_BLACKLIST)
         } else {
             AppVersionInfo.Valid
@@ -109,7 +109,7 @@ internal class FetchAppVersionInfoImpl @Inject constructor(
         return if (enforcement.versions.any {
                 it.updateType == "optional" &&
                     it.version >= currentVersion &&
-                    it.supportUntil.isBefore(LocalDate.now())
+                    it.supportUntil?.isBefore(LocalDate.now()) == true
             }
         ) {
             val display = getLocalizedDisplay(getCorrectMessage(enforcement))
@@ -156,7 +156,7 @@ internal class FetchAppVersionInfoImpl @Inject constructor(
         val suggestedVersion = enforcement.versions.find {
             it.updateType == "optional" &&
                 it.version > currentVersion &&
-                it.supportUntil.isAfter(today) &&
+                it.supportUntil?.isAfter(today) == true &&
                 it.releaseDate.plusDays(lifetimeDays).isAfter(today)
         }
 

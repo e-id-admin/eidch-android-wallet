@@ -5,25 +5,26 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.feature.credentialOffer.presentation.model.DeclineCredentialOfferUiState
+import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityType
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.GetActorForScope
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
-import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.toBadgeBottomSheetUiState
 import ch.admin.foitt.wallet.platform.badges.presentation.model.BadgeBottomSheetUiState
-import ch.admin.foitt.wallet.platform.badges.presentation.model.toBadgeBottomSheetUiState
-import ch.admin.foitt.wallet.platform.messageEvents.domain.model.CredentialOfferEvent
-import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialOfferEventRepository
+import ch.admin.foitt.wallet.platform.messageEvents.domain.model.CredentialEvent
+import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialEventRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.navigation.domain.model.ComponentScope
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination
 import ch.admin.foitt.wallet.platform.navigation.domain.model.DestinationGroup
+import ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.GetNonComplianceReportingData
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.DeleteCredential
 import ch.admin.foitt.wallet.platform.utils.openLink
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -41,7 +42,8 @@ class DeclineCredentialOfferViewModel @AssistedInject constructor(
     @param:ApplicationContext private val appContext: Context,
     private val getActorUiState: GetActorUiState,
     private val navManager: NavigationManager,
-    private val credentialOfferEventRepository: CredentialOfferEventRepository,
+    private val credentialEventRepository: CredentialEventRepository,
+    private val getNonComplianceReportingData: GetNonComplianceReportingData,
     getActorForScope: GetActorForScope,
     private val deleteCredential: DeleteCredential,
     @Assisted private val credentialId: Long,
@@ -74,32 +76,61 @@ class DeclineCredentialOfferViewModel @AssistedInject constructor(
 
     fun onCancel() = navManager.popBackStack()
 
+    fun onDeclineAndReport() {
+        viewModelScope.launch {
+            getNonComplianceReportingData(
+                credentialId = credentialId,
+                actorDisplayData = issuerDisplayData.value,
+                activityType = ActivityType.ISSUANCE
+            ).onOk { reportingData ->
+                deleteCredential(credentialId)
+                    .onErr { error ->
+                        when (error) {
+                            is SsiError.Unexpected -> Timber.e(error.cause)
+                        }
+                    }
+                    .onOk {
+                        credentialEventRepository.setEvent(CredentialEvent.DECLINED)
+                        navManager.navigateOutAndTo(
+                            destinationGroup = DestinationGroup.CredentialOffer::class,
+                            destination = Destination.NonComplianceListScreen(
+                                reportingData = reportingData
+                            ),
+                        )
+                    }
+            }.onErr { error ->
+                Timber.e("Failed to gather reporting data: $error")
+            }
+        }
+    }
+
     fun onDecline() {
         viewModelScope.launch {
             deleteCredential(credentialId = credentialId)
-                .onFailure { error ->
+                .onErr { error ->
                     when (error) {
                         is SsiError.Unexpected -> Timber.e(error.cause)
                     }
-                }.onSuccess {
-                    credentialOfferEventRepository.setEvent(CredentialOfferEvent.DECLINED)
+                }.onOk {
+                    credentialEventRepository.setEvent(CredentialEvent.DECLINED)
                 }
             navManager.navigateOutAndTo(DestinationGroup.CredentialOffer::class, Destination.HomeScreen)
         }
     }
 
-    fun onBadge(badgeType: BadgeType) {
-        _badgeBottomSheetUiState.value = when (badgeType) {
-            is BadgeType.ActorInfoBadge -> badgeType.toBadgeBottomSheetUiState(
-                actorName = uiState.value.issuer.name ?: "",
-                reason = uiState.value.issuer.nonComplianceReason,
-                onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
-            )
-
-            is BadgeType.ClaimInfoBadge -> badgeType.toBadgeBottomSheetUiState(
-                onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
-            )
+    fun onActorNameTap() {
+        _badgeBottomSheetUiState.value = uiState.value.issuer.toBadgeBottomSheetUiState {
+            onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value)
         }
+    }
+
+    fun onReportedActorInfo() {
+        _badgeBottomSheetUiState.value = BadgeBottomSheetUiState.NonCompliantActor(
+            actorName = uiState.value.issuer.name ?: "",
+            actorPainter = uiState.value.issuer.painter,
+            reason = uiState.value.issuer.nonComplianceReason,
+            onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
+        )
     }
 
     fun onDismissBottomSheet() {

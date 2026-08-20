@@ -1,8 +1,10 @@
 package ch.admin.foitt.wallet.platform.ssi.data.source.local.mock
 
+import ch.admin.foitt.openid4vc.domain.model.TokenType
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.CredentialFormat
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBindingType
 import ch.admin.foitt.wallet.platform.database.domain.model.Credential
+import ch.admin.foitt.wallet.platform.database.domain.model.CredentialAuthenticationEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaim
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimClusterDisplayEntity
 import ch.admin.foitt.wallet.platform.database.domain.model.CredentialClaimClusterEntity
@@ -32,7 +34,6 @@ object CredentialTestData {
     private const val NAME3 = "NAME3"
     private const val IDENTIFIER = "IDENTIFIER"
     private const val SIGNING_ALGORITHM = "SIGNING_ALGORITHM"
-    private const val LOGO_DATA = "logo data"
 
     val keyBinding1 = CredentialKeyBindingEntity(
         id = IDENTIFIER,
@@ -62,10 +63,16 @@ object CredentialTestData {
         createdAt = 1,
     )
 
+    val authentication1 = CredentialAuthenticationEntity(
+        credentialId = credential1.id,
+        tokenType = TokenType.DPOP,
+        accessToken = ""
+    )
+
     val verifiableCredential1 = VerifiableCredentialEntity(
         credentialId = 1,
         createdAt = 1,
-        updatedAt = 1,
+        refreshedAt = 1,
         issuer = "issuer",
         validFrom = 0,
         validUntil = 17768026519L,
@@ -92,7 +99,7 @@ object CredentialTestData {
     val verifiableCredential2 = VerifiableCredentialEntity(
         credentialId = 2,
         createdAt = 2,
-        updatedAt = 2,
+        refreshedAt = 2,
         issuer = "issuer",
         validFrom = 0,
         validUntil = 17768026519L,
@@ -108,7 +115,7 @@ object CredentialTestData {
     val verifiableCredentialWithPayload = VerifiableCredentialEntity(
         credentialId = 3,
         createdAt = 3,
-        updatedAt = 3,
+        refreshedAt = 3,
         issuer = "issuer",
         validFrom = 0,
         validUntil = 17768026519L,
@@ -117,7 +124,8 @@ object CredentialTestData {
 
     val cluster1 = CredentialClaimClusterEntity(id = 1, verifiableCredentialId = 1, parentClusterId = null, order = -1)
     val cluster2 = CredentialClaimClusterEntity(id = 2, verifiableCredentialId = 2, parentClusterId = null, order = -1)
-    val clusterWithParent = CredentialClaimClusterEntity(id = 3, verifiableCredentialId = 1, parentClusterId = 1, order = 2)
+    val clusterWithParent =
+        CredentialClaimClusterEntity(id = 3, verifiableCredentialId = 1, parentClusterId = 1, order = 2)
 
     val clusterDisplay1 = CredentialClaimClusterDisplayEntity(id = 1, clusterId = 1, name = "name", locale = "locale")
     val clusterDisplay2 = CredentialClaimClusterDisplayEntity(id = 2, clusterId = 2, name = "name", locale = "locale")
@@ -139,7 +147,13 @@ object CredentialTestData {
         locale = "xx_XX",
         value = DISPLAY_VALUE
     )
-    val credentialClaimDisplay3 = CredentialClaimDisplay(id = 3, claimId = credentialClaim1.id, name = NAME3, locale = "xx_XX", value = DISPLAY_VALUE)
+    val credentialClaimDisplay3 = CredentialClaimDisplay(
+        id = 3,
+        claimId = credentialClaim1.id,
+        name = NAME3,
+        locale = "xx_XX",
+        value = DISPLAY_VALUE
+    )
 
     val credentialDisplay1 = CredentialDisplay(
         id = 1,
@@ -154,6 +168,8 @@ object CredentialTestData {
         name = FALLBACK
     )
 
-    val credentialIssuerDisplay1 = CredentialIssuerDisplay(id = 1, credentialId = credential1.id, name = NAME1, locale = "xx")
-    val credentialIssuerDisplay2 = CredentialIssuerDisplay(id = 2, credentialId = credential2.id, name = NAME2, locale = "xx_XX")
+    val credentialIssuerDisplay1 =
+        CredentialIssuerDisplay(id = 1, credentialId = credential1.id, name = NAME1, locale = "xx")
+    val credentialIssuerDisplay2 =
+        CredentialIssuerDisplay(id = 2, credentialId = credential2.id, name = NAME2, locale = "xx_XX")
 }

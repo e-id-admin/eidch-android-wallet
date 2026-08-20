@@ -57,13 +57,6 @@ class ValidateIssuerCredentialInfoImplTest {
     }
 
     @Test
-    fun `Config with response encryption but without request encryption returns an error`() = runTest {
-        every { mockIssuerCredentialInfo.credentialRequestEncryption } returns null
-
-        assertFalse(useCase(mockIssuerCredentialInfo))
-    }
-
-    @Test
     fun `Response encryption contains unsupported algorithm`() = runTest {
         every { mockResponseEncryption.algValuesSupported } returns listOf(SUPPORTED_ALGORITHM, OTHER_ALGORITHM)
 

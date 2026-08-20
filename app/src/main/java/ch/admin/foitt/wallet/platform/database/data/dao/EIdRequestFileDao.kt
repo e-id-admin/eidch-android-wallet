@@ -16,7 +16,7 @@ interface EIdRequestFileDao {
     fun insertAll(files: List<EIdRequestFile>): List<Long>
 
     @Transaction
-    @Query("SELECT * FROM eidrequestfile WHERE eIdRequestCaseId = :caseId")
+    @Query("SELECT * FROM eidrequestfile WHERE eIdRequestCaseId = :caseId ORDER BY createdAt DESC")
     fun getAllFilesByCaseId(caseId: String): List<EIdRequestFile>
 
     @Transaction

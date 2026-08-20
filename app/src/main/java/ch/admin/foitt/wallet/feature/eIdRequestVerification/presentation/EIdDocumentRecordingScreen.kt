@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,7 +21,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ch.admin.foitt.wallet.R
@@ -32,6 +34,7 @@ import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.composa
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.composables.ScannerButtonAltTexts
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.composables.ScannerCamera
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.composables.ScannerInfoBox
+import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentRecording.DocumentRecordingScannerEvent
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentRecording.EIdDocumentRecordingStatus
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentRecording.EIdDocumentRecordingUiState
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.documentScanner.DocumentScannerErrorContent
@@ -48,6 +51,7 @@ import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.platform.utils.LocalActivity
 import ch.admin.foitt.wallet.platform.utils.OnPauseEventHandler
 import ch.admin.foitt.wallet.platform.utils.OnResumeEventHandler
+import ch.admin.foitt.wallet.platform.utils.RepeatOnLifeCycleHandler
 import ch.admin.foitt.wallet.platform.utils.TraversalIndex
 import ch.admin.foitt.wallet.platform.utils.setIsTraversalGroup
 import ch.admin.foitt.wallet.platform.utils.traversalIndex
@@ -59,6 +63,7 @@ fun EIdDocumentRecordingScreen(
     viewModel: EIdDocumentRecordingViewModel,
 ) {
     val currentActivity = LocalActivity.current
+    val haptic = LocalHapticFeedback.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val documentType by viewModel.documentType.collectAsStateWithLifecycle()
     val shouldLock by viewModel.shouldLock.collectAsStateWithLifecycle()
@@ -68,8 +73,24 @@ fun EIdDocumentRecordingScreen(
     OnPauseEventHandler(viewModel::onPause)
     BackHandler(onBack = viewModel::onUp)
 
+    RepeatOnLifeCycleHandler {
+        viewModel.updateTopBarState(this)
+    }
+
+    LaunchedEffect(permissionState) {
+        if (permissionState is PermissionState.Granted) {
+            viewModel.initScannerSdk(currentActivity)
+        }
+    }
+
     LaunchedEffect(viewModel) {
-        viewModel.initScannerSdk(currentActivity)
+        viewModel.hapticEvent.collect { event ->
+            when (event) {
+                is DocumentRecordingScannerEvent.ScanDone -> {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+            }
+        }
     }
 
     OrientationLocker(currentActivity, shouldLock)
@@ -100,12 +121,12 @@ private fun EIdDocumentRecordingScreenContent(
 ) {
     when (uiState) {
         is EIdDocumentRecordingUiState.Error -> DocumentScannerErrorContent(
-            onButton = uiState.onRetry,
+            onButton = uiState.onButton,
             onHelp = uiState.onHelp,
             type = uiState.type,
-            title = R.string.tk_error_generic_primary,
-            content = R.string.tk_error_generic_secondary,
-            buttonText = R.string.tk_error_generic_button_primary,
+            title = uiState.title,
+            content = uiState.content,
+            buttonText = uiState.buttonText,
         )
 
         EIdDocumentRecordingUiState.Initializing -> LoadingContent()
@@ -152,7 +173,7 @@ private fun EIdDocumentRecordingContent(
                 onAfterViewLayout = onAfterViewLayout,
             )
 
-            val windowWidthClass = currentWindowAdaptiveInfo().windowWidthClass()
+            val windowWidthClass = currentWindowAdaptiveInfoV2().windowWidthClass()
             val isCompact = windowWidthClass == WindowWidthClass.COMPACT
 
             if (status != EIdDocumentRecordingStatus.Initializing && status != EIdDocumentRecordingStatus.Finished) {

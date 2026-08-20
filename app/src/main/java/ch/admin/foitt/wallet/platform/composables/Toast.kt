@@ -59,12 +59,14 @@ fun ScanInfoToast(
 fun PassphraseValidationErrorToastFixed(
     modifier: Modifier = Modifier,
     shouldRequestFocus: Boolean = false,
+    useLiveRegion: Boolean = false,
     @StringRes text: Int = R.string.tk_global_warning_alt,
     @StringRes iconEndContentDescription: Int? = R.string.tk_global_closewarning_alt,
     onIconEnd: () -> Unit,
 ) = Toast(
     modifier = modifier,
     shouldRequestFocus = shouldRequestFocus,
+    useLiveRegion = useLiveRegion,
     backgroundColor = WalletTheme.colorScheme.lightErrorFixed,
     iconStart = R.drawable.wallet_ic_warning,
     iconStartColor = WalletTheme.colorScheme.onLightErrorFixed,

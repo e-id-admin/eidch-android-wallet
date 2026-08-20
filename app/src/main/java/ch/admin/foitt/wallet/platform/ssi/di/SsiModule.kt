@@ -10,7 +10,6 @@ import ch.admin.foitt.wallet.platform.ssi.data.repository.DeferredCredentialRepo
 import ch.admin.foitt.wallet.platform.ssi.data.repository.DeferredCredentialWithDisplaysRepositoryImpl
 import ch.admin.foitt.wallet.platform.ssi.data.repository.RawCredentialDataRepositoryImpl
 import ch.admin.foitt.wallet.platform.ssi.data.repository.VerifiableCredentialRepositoryImpl
-import ch.admin.foitt.wallet.platform.ssi.data.repository.VerifiableCredentialWithBatchDataAndAuthenticationRepositoryImpl
 import ch.admin.foitt.wallet.platform.ssi.data.repository.VerifiableCredentialWithBundleItemsWithKeyBindingRepositoryImpl
 import ch.admin.foitt.wallet.platform.ssi.data.repository.VerifiableCredentialWithDisplaysAndClustersRepositoryImpl
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.BundleItemRepository
@@ -23,7 +22,6 @@ import ch.admin.foitt.wallet.platform.ssi.domain.repository.DeferredCredentialRe
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.DeferredCredentialWithDisplaysRepository
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.RawCredentialDataRepository
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.VerifiableCredentialRepository
-import ch.admin.foitt.wallet.platform.ssi.domain.repository.VerifiableCredentialWithBatchDataAndAuthenticationRepository
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.VerifiableCredentialWithBundleItemsWithKeyBindingRepository
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.VerifiableCredentialWithDisplaysAndClustersRepository
 import ch.admin.foitt.wallet.platform.ssi.domain.usecase.DeleteBundleItems
@@ -113,12 +111,6 @@ interface SsiModule {
     fun bindCredentialWithKeyBindingRepository(
         repo: VerifiableCredentialWithBundleItemsWithKeyBindingRepositoryImpl
     ): VerifiableCredentialWithBundleItemsWithKeyBindingRepository
-
-    @Binds
-    @ActivityRetainedScoped
-    fun bindVerifiableCredentialWithBatchDataAndAuthenticationRepository(
-        repo: VerifiableCredentialWithBatchDataAndAuthenticationRepositoryImpl
-    ): VerifiableCredentialWithBatchDataAndAuthenticationRepository
 
     @Binds
     @ActivityRetainedScoped

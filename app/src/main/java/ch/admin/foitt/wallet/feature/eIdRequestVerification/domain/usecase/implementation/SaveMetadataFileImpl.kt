@@ -20,8 +20,8 @@ import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.getOrElse
 import com.github.michaelbull.result.mapError
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -66,9 +66,9 @@ class SaveMetadataFileImpl @Inject constructor(
                     sIdCaseId = caseId,
                     filesDataList = metadataList,
                     filesCategory = EIdRequestFileCategory.METADATA,
-                ).onFailure { error ->
+                ).onErr { error ->
                     Timber.d("Metadata file: error saving file $error")
-                }.onSuccess {
+                }.onOk {
                     Timber.d("Metadata file: success saving file")
                 }.bind()
             }.getOrElse { error ->

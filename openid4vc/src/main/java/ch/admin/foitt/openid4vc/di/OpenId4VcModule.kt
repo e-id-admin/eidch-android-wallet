@@ -25,6 +25,7 @@ import ch.admin.foitt.openid4vc.domain.usecase.FetchVerifiableCredential
 import ch.admin.foitt.openid4vc.domain.usecase.GetAuthorizationResponseConfig
 import ch.admin.foitt.openid4vc.domain.usecase.GetHardwareKeyPair
 import ch.admin.foitt.openid4vc.domain.usecase.GetKeyPairForKeyBinding
+import ch.admin.foitt.openid4vc.domain.usecase.GetSignedMetadataDid
 import ch.admin.foitt.openid4vc.domain.usecase.GetSoftwareKeyPair
 import ch.admin.foitt.openid4vc.domain.usecase.GetVerifiableCredentialParams
 import ch.admin.foitt.openid4vc.domain.usecase.ResolveDid
@@ -47,6 +48,7 @@ import ch.admin.foitt.openid4vc.domain.usecase.implementation.FetchVerifiableCre
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.GetAuthorizationResponseConfigImpl
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.GetHardwareKeyPairImpl
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.GetKeyPairForKeyBindingImpl
+import ch.admin.foitt.openid4vc.domain.usecase.implementation.GetSignedMetadataDidImpl
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.GetSoftwareKeyPairImpl
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.GetVerifiableCredentialParamsImpl
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.ResolveDidImpl
@@ -66,14 +68,17 @@ import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.CreateVcSdJwtVerifiablePr
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.FetchTypeMetadata
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.FetchVcSchema
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.FetchVcSdJwtCredential
+import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.VerifyVcSdJwtBatchConsistency
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.VerifyVcSdJwtSignature
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.CreateVcSdJwtVerifiablePresentationImpl
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.FetchTypeMetadataImpl
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.FetchVcSchemaImpl
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.FetchVcSdJwtCredentialImpl
+import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.VerifyVcSdJwtBatchConsistencyImpl
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.implementation.VerifyVcSdJwtSignatureImpl
 import ch.admin.foitt.openid4vc.utils.ContentLengthLimiter
 import ch.admin.foitt.openid4vc.utils.SafeJson
+import ch.admin.foitt.swiyu.shared.consistency.SdJwtCredentialConsistencyChecker
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -84,6 +89,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
@@ -117,9 +123,16 @@ class OpenId4VcModule {
     @ActivityRetainedScoped
     @Provides
     @Named(NAMED_DEFAULT_HTTP_CLIENT)
-    internal fun provideDefaultHttpClient(@Named(NAMED_DEFAULT_ENGINE) engine: HttpClientEngine, jsonSerializer: Json): HttpClient {
+    internal fun provideDefaultHttpClient(
+        @Named(NAMED_DEFAULT_ENGINE) engine: HttpClientEngine,
+        @Named(NAMED_USER_AGENT) userAgent: String,
+        jsonSerializer: Json,
+    ): HttpClient {
         return HttpClient(engine) {
             expectSuccess = true
+            install(UserAgent) {
+                agent = userAgent
+            }
             install(ContentLengthLimiter) {
                 limitInBytes = MAX_CONTENT_SIZE
             }
@@ -144,9 +157,16 @@ class OpenId4VcModule {
     @ActivityRetainedScoped
     @Provides
     @Named(NAMED_GZIP_HTTP_CLIENT)
-    internal fun provideGzipHttpClient(@Named(NAMED_GZIP_ENGINE) engine: HttpClientEngine, jsonSerializer: Json): HttpClient {
+    internal fun provideGzipHttpClient(
+        @Named(NAMED_GZIP_ENGINE) engine: HttpClientEngine,
+        @Named(NAMED_USER_AGENT) userAgent: String,
+        jsonSerializer: Json,
+    ): HttpClient {
         return HttpClient(engine) {
             expectSuccess = true
+            install(UserAgent) {
+                agent = userAgent
+            }
             install(ContentLengthLimiter) {
                 limitInBytes = MAX_CONTENT_SIZE
             }
@@ -197,15 +217,20 @@ class OpenId4VcModule {
     @Provides
     internal fun provideClock(): Clock = Clock.systemUTC()
 
+    @Provides
+    internal fun provideSdJwtCredentialConsistencyChecker(): SdJwtCredentialConsistencyChecker =
+        SdJwtCredentialConsistencyChecker()
+
     companion object {
         const val NAMED_DEFAULT_HTTP_CLIENT = "defaultHttpClient"
         const val NAMED_DEFAULT_ENGINE = "defaultEngine"
         const val NAMED_GZIP_HTTP_CLIENT = "gzipHttpClient"
         const val NAMED_GZIP_ENGINE = "gzipEngine"
+        const val NAMED_USER_AGENT = "userAgent"
 
         private const val SOCKET_TIMEOUT_MILLIS = 30 * 1000L
         private const val REQUEST_TIMEOUT_MILLIS = 60 * 1000L
-        private const val MAX_CONTENT_SIZE = 150 * 1024 * 1024L // limit http responses to 150MB
+        private const val MAX_CONTENT_SIZE = 25 * 1024 * 1024L // limit http responses to 25MB
     }
 }
 
@@ -384,4 +409,14 @@ internal interface OpenId4VCBindings {
     fun bindVerifySdJwtCredentialSignature(
         useCase: VerifyVcSdJwtSignatureImpl
     ): VerifyVcSdJwtSignature
+
+    @Binds
+    fun bindVerifyVcSdJwtBatchConsistency(
+        useCase: VerifyVcSdJwtBatchConsistencyImpl
+    ): VerifyVcSdJwtBatchConsistency
+
+    @Binds
+    fun bindGetSignedMetadataDid(
+        useCase: GetSignedMetadataDidImpl
+    ): GetSignedMetadataDid
 }

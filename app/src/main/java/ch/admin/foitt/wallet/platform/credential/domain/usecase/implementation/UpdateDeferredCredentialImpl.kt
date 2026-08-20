@@ -63,7 +63,7 @@ class UpdateDeferredCredentialImpl @Inject constructor(
             credentialId = deferredCredentialEntity.credential.id,
             issuerDisplays = displays.issuerDisplays,
             credentialDisplays = displays.credentialDisplays,
-            rawMetadata = rawAndParsedIssuerCredentialInfo.rawIssuerCredentialInfo.toByteArray().compress(),
+            rawMetadata = rawAndParsedIssuerCredentialInfo.rawIssuerCredentialInfo.payloadString.toByteArray().compress(),
         ).mapError(CredentialOfferRepositoryError::toUpdateDeferredCredentialError)
             .bind()
     }

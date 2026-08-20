@@ -35,7 +35,7 @@ fun ToastAnimated(
     @DrawableRes iconEnd: Int? = null,
     isSnackBarDesign: Boolean,
     contentBottomPadding: Dp? = null,
-    @StringRes messageToast: Int?,
+    @StringRes message: Int?,
     onCloseToast: () -> Unit = {},
 ) = Box(
     modifier = modifier
@@ -60,7 +60,7 @@ fun ToastAnimated(
             targetOffsetY = { fullHeight -> fullHeight },
         )
     ) {
-        val text = remember(this) { messageToast }
+        val text = remember(this) { message }
         if (text != null) {
             val bottomPadding = contentBottomPadding
                 ?: (WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom).asPaddingValues().calculateBottomPadding() + Sizes.s06)

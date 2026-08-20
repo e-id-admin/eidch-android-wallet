@@ -48,6 +48,7 @@ class UploadAllFilesImplTest {
             mockUploadFileToCase,
             testDispatcher
         )
+        setupDefaultMocks()
     }
 
     @AfterEach
@@ -55,8 +56,7 @@ class UploadAllFilesImplTest {
         unmockkAll()
     }
 
-    @Test
-    fun `Successfully getting a file by caseId returns an Ok`() = runTest(testDispatcher) {
+    private fun setupDefaultMocks() {
         coEvery {
             mockEIdRequestFileRepository.getEIdRequestFileByCaseIdAndFileName(any(), any())
         } returns Ok(mockEIdRequestFile)
@@ -64,9 +64,18 @@ class UploadAllFilesImplTest {
         coEvery { mockEIdRequestFile.data } returns (byteArrayOf())
 
         coEvery {
-            mockUploadFileToCase.invoke(any())
+            mockUploadFileToCase(
+                caseId = any(),
+                fileName = any(),
+                accessToken = any(),
+                contentType = any(),
+                documentData = any(),
+            )
         } returns Ok(Unit)
+    }
 
+    @Test
+    fun `Successfully getting a file by caseId returns an Ok`() = runTest(testDispatcher) {
         val finalProgress = uploadAllFiles(caseId = "", accessToken = "").toList().last().assertOk()
         assertEquals(finalProgress.total, finalProgress.completed)
     }
@@ -95,9 +104,7 @@ class UploadAllFilesImplTest {
                 match { it != "metadata.bin" && it != "docRecVideo.mp4" }
             )
         } returns Ok(mockEIdRequestFile)
-        coEvery { mockEIdRequestFile.fileName } returns ""
         coEvery { mockEIdRequestFile.data } returns byteArrayOf()
-        coEvery { mockUploadFileToCase.invoke(any()) } returns Ok(Unit)
 
         val finalProgress = uploadAllFiles(caseId = "", accessToken = "").toList().last().assertOk()
         assertEquals(finalProgress.total, finalProgress.completed)
@@ -105,14 +112,15 @@ class UploadAllFilesImplTest {
 
     @Test
     fun `Upload failure emits partial progress then error, never reaching 1_0f`() = runTest(testDispatcher) {
-        coEvery {
-            mockEIdRequestFileRepository.getEIdRequestFileByCaseIdAndFileName(any(), any())
-        } returns Ok(mockEIdRequestFile)
-        coEvery { mockEIdRequestFile.fileName } returns ""
         coEvery { mockEIdRequestFile.data } returns byteArrayOf()
-        coEvery { mockUploadFileToCase.invoke(any()) } returns Ok(Unit)
         coEvery {
-            mockUploadFileToCase.invoke(match { it.fileName == "video.mp4" })
+            mockUploadFileToCase(
+                caseId = any(),
+                fileName = match { it == "video.mp4" },
+                accessToken = any(),
+                contentType = any(),
+                documentData = any(),
+            )
         } returns Err(EIdRequestError.Unexpected(Exception("upload failed")))
 
         val emissions = uploadAllFiles(caseId = "", accessToken = "").toList()

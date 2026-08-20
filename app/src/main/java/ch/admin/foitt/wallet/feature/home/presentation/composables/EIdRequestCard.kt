@@ -266,6 +266,7 @@ private fun EIdRequestCardGeneric(
                         },
                         text = buttonText,
                         onClick = onButtonClick,
+                        isSmall = true
                     )
                 } else {
                     Buttons.FilledPrimary(
@@ -274,6 +275,7 @@ private fun EIdRequestCardGeneric(
                         },
                         text = buttonText,
                         onClick = onButtonClick,
+                        isSmall = true
                     )
                 }
             }

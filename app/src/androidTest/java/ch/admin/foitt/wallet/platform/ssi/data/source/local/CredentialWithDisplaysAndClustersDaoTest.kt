@@ -103,6 +103,7 @@ class CredentialWithDisplaysAndClustersDaoTest {
                     )
                 )
             ),
+            bundleItems = emptyList(),
         )
 
         assertEquals(expected, credentialWithDisplaysAndClaims)
@@ -128,7 +129,6 @@ class CredentialWithDisplaysAndClustersDaoTest {
                 if (credentialWithDisplaysAndClusters != null) {
                     credentialDao.deleteById(credential1.id)
                 }
-
             }
         }
 
@@ -152,6 +152,7 @@ class CredentialWithDisplaysAndClustersDaoTest {
                     )
                 )
             ),
+            bundleItems = emptyList(),
         )
 
         assertEquals(2, collectedCredentialWithDisplaysAndClusters.size)
@@ -197,6 +198,7 @@ class CredentialWithDisplaysAndClustersDaoTest {
                     )
                 )
             ),
+            bundleItems = emptyList(),
         )
 
         val expected2 = VerifiableCredentialWithDisplaysAndClusters(
@@ -217,6 +219,7 @@ class CredentialWithDisplaysAndClustersDaoTest {
                     )
                 )
             ),
+            bundleItems = emptyList(),
         )
 
         assertEquals(2, credentialWithDisplaysAndClusters?.size)

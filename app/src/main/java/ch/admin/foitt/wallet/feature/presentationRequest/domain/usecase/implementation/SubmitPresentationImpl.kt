@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.feature.presentationRequest.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseConfig
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseResponse
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.GetAuthorizationResponseConfigError
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.SubmitAnyCredentialPresentationError
 import ch.admin.foitt.openid4vc.domain.usecase.GetAuthorizationResponseConfig
@@ -14,7 +15,6 @@ import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.Compat
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.PresentationRequestWithRaw
 import ch.admin.foitt.wallet.platform.credentialPresentation.domain.model.VerificationProcessType
 import ch.admin.foitt.wallet.platform.database.domain.model.VerifiableCredentialWithBundleItemsWithKeyBinding
-import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
 import ch.admin.foitt.wallet.platform.proximity.domain.usecase.GetProximityRepositoryForScope
 import ch.admin.foitt.wallet.platform.ssi.domain.model.BundleItemRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialWithKeyBindingRepositoryError
@@ -25,10 +25,10 @@ import ch.admin.foitt.wallet.platform.ssi.domain.repository.VerifiableCredential
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.mapError
+import com.github.michaelbull.result.onErr
 import javax.inject.Inject
 
 class SubmitPresentationImpl @Inject constructor(
-    private val environmentSetupRepository: EnvironmentSetupRepository,
     private val verifiableCredentialWithBundleItemsWithKeyBindingRepository: VerifiableCredentialWithBundleItemsWithKeyBindingRepository,
     private val verifiableCredentialRepository: VerifiableCredentialRepository,
     private val bundleItemRepository: BundleItemRepository,
@@ -40,7 +40,7 @@ class SubmitPresentationImpl @Inject constructor(
     override suspend fun invoke(
         presentationRequestWithRaw: PresentationRequestWithRaw,
         compatibleCredential: CompatibleCredential,
-    ): Result<Unit, SubmitPresentationError> = coroutineBinding {
+    ): Result<AuthorizationResponseResponse?, SubmitPresentationError> = coroutineBinding {
         val verifiableCredentialWithBundleItemsWithKeyBinding =
             verifiableCredentialWithBundleItemsWithKeyBindingRepository.getByCredentialId(compatibleCredential.credentialId)
                 .mapError(CredentialWithKeyBindingRepositoryError::toSubmitPresentationError)
@@ -53,29 +53,37 @@ class SubmitPresentationImpl @Inject constructor(
 
         val authorizationResponseConfig = getAuthorizationResponseConfig(
             anyCredential = nextAnyCredentialToPresent,
-            presentationPaths = compatibleCredential.presentationPaths,
             authorizationRequest = presentationRequestWithRaw.authorizationRequest,
-            usePayloadEncryption = environmentSetupRepository.payloadEncryptionEnabled,
-            dcqlQueryId = compatibleCredential.dcqlQueryId,
+            presentationContext = presentationRequestWithRaw.presentationContext.copy(
+                presentationPaths = compatibleCredential.presentationPaths,
+                dcqlQueryId = compatibleCredential.dcqlQueryId,
+            ),
         ).mapError(GetAuthorizationResponseConfigError::toSubmitPresentationError)
             .bind()
 
-        when (presentationRequestWithRaw.verificationProcessType) {
-            VerificationProcessType.NETWORK -> submitNetwork(
-                presentationRequestWithRaw,
-                authorizationResponseConfig
-            )
+        val authorizationResponseResponse = when (presentationRequestWithRaw.verificationProcessType) {
+            VerificationProcessType.NETWORK -> {
+                submitNetwork(
+                    presentationRequestWithRaw,
+                    authorizationResponseConfig
+                ).onErr {
+                    updateBundleIdToPresent(verifiableCredentialWithBundleItemsWithKeyBinding)
+                }.bind()
+            }
 
-            VerificationProcessType.PROXIMITY -> submitProximity(
-                authorizationResponseConfig
-            )
-        }.mapError { error ->
-            updateBundleIdToPresent(verifiableCredentialWithBundleItemsWithKeyBinding)
-            error
-        }.bind()
+            VerificationProcessType.PROXIMITY -> {
+                submitProximity(
+                    authorizationResponseConfig
+                ).onErr {
+                    updateBundleIdToPresent(verifiableCredentialWithBundleItemsWithKeyBinding)
+                }.bind()
+                null
+            }
+        }
 
-        updateBundleIdToPresent(verifiableCredentialWithBundleItemsWithKeyBinding)
-            .bind()
+        updateBundleIdToPresent(verifiableCredentialWithBundleItemsWithKeyBinding).bind()
+
+        authorizationResponseResponse
     }
 
     private suspend fun updateBundleIdToPresent(
@@ -106,7 +114,7 @@ class SubmitPresentationImpl @Inject constructor(
     private suspend fun submitNetwork(
         presentationRequestWithRaw: PresentationRequestWithRaw,
         authorizationResponseConfig: AuthorizationResponseConfig,
-    ): Result<Unit, SubmitPresentationError> = submitAnyCredentialNetworkPresentation(
+    ): Result<AuthorizationResponseResponse, SubmitPresentationError> = submitAnyCredentialNetworkPresentation(
         presentationRequestWithRaw.authorizationRequest,
         authorizationResponseConfig
     ).mapError(SubmitAnyCredentialPresentationError::toSubmitPresentationError)

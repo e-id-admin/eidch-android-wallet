@@ -1,9 +1,8 @@
 package ch.admin.foitt.wallet.platform.actorMetadata.presentation
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,16 +30,15 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorType
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
-import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
-import ch.admin.foitt.wallet.platform.badges.presentation.LegitimateActorBadge
-import ch.admin.foitt.wallet.platform.badges.presentation.NonComplianceBadge
-import ch.admin.foitt.wallet.platform.badges.presentation.TrustBadge
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.actorPainter
 import ch.admin.foitt.wallet.platform.composables.Avatar
 import ch.admin.foitt.wallet.platform.composables.AvatarSize
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
+import ch.admin.foitt.wallet.platform.composables.Callouts
 import ch.admin.foitt.wallet.platform.preview.WalletComponentPreview
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.toIcon
 import ch.admin.foitt.wallet.theme.Sizes
 import ch.admin.foitt.wallet.theme.WalletTexts
 import ch.admin.foitt.wallet.theme.WalletTheme
@@ -48,7 +47,8 @@ import ch.admin.foitt.wallet.theme.WalletTheme
 @Composable
 internal fun InvitationHeader(
     actorUiState: ActorUiState,
-    onBadge: (BadgeType) -> Unit,
+    onActorNameTap: () -> Unit,
+    onReportedActorInfo: () -> Unit,
     modifier: Modifier = Modifier,
 ) = Card(
     shape = RoundedCornerShape(bottomStart = Sizes.s09, bottomEnd = Sizes.s09),
@@ -61,10 +61,11 @@ internal fun InvitationHeader(
             .padding(start = Sizes.s04, end = Sizes.s04, top = Sizes.s04, bottom = Sizes.s02),
     ) {
         Row(
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onActorNameTap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Avatar(
-                imagePainter = actorUiState.painter ?: fallBackIcon(actorUiState.actorType),
+                imagePainter = actorUiState.actorPainter(),
                 size = AvatarSize.LARGE,
                 imageTint = WalletTheme.colorScheme.onSurface
             )
@@ -72,40 +73,31 @@ internal fun InvitationHeader(
             WalletTexts.TitleMedium(
                 text = actorUiState.name ?: fallBackName(actorUiState.actorType),
                 color = WalletTheme.colorScheme.onSurface,
-                modifier = Modifier.semantics { heading() }
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .semantics { heading() }
+            )
+            actorUiState.trustStatus.toIcon()?.let {
+                Spacer(modifier = Modifier.size(Sizes.s04))
+                Icon(
+                    modifier = Modifier.size(Sizes.s04),
+                    painter = painterResource(it),
+                    tint = WalletTheme.colorScheme.onLightTertiary,
+                    contentDescription = null,
+                )
+            }
+            Spacer(modifier = Modifier.size(Sizes.s02))
+        }
+        if (actorUiState.actorComplianceState == ActorComplianceState.REPORTED) {
+            Spacer(modifier = Modifier.height(Sizes.s06))
+            Callouts.ReportedActor(
+                modifier = Modifier.padding(horizontal = Sizes.s04),
+                label = R.string.tk_actor_nonCompliant_button,
+                onClick = onReportedActorInfo,
             )
         }
-
-        Spacer(modifier = Modifier.height(Sizes.s02))
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(Sizes.s03),
-        ) {
-            TrustBadge(
-                trustStatus = actorUiState.trustStatus,
-                onClick = onBadge,
-            )
-
-            NonComplianceBadge(
-                actorComplianceState = actorUiState.actorComplianceState,
-                onClick = onBadge,
-            )
-
-            LegitimateActorBadge(
-                actorType = actorUiState.actorType,
-                vcSchemaTrustStatus = actorUiState.vcSchemaTrustStatus,
-                onClick = onBadge,
-            )
-        }
+        Spacer(modifier = Modifier.height(Sizes.s04))
     }
-}
-
-@Composable
-private fun fallBackIcon(actorType: ActorType) = when (actorType) {
-    ActorType.ISSUER,
-    ActorType.VERIFIER -> painterResource(R.drawable.wallet_ic_actor_default)
-
-    ActorType.UNKNOWN -> null
 }
 
 @Composable
@@ -186,7 +178,8 @@ private fun InvitationHeaderPreview(
                 actorComplianceState = previewParams.actorComplianceState,
                 nonComplianceReason = null,
             ),
-            onBadge = {}
+            onActorNameTap = { },
+            onReportedActorInfo = {},
         )
     }
 }

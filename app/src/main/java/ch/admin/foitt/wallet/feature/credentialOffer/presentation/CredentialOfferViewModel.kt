@@ -13,30 +13,24 @@ import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorDisplayDat
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.FetchAndCacheIssuerDisplayData
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.GetActorForScope
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.toBadgeBottomSheetUiState
 import ch.admin.foitt.wallet.platform.appSetupState.domain.usecase.SaveFirstCredentialWasAdded
-import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
 import ch.admin.foitt.wallet.platform.badges.presentation.model.BadgeBottomSheetUiState
-import ch.admin.foitt.wallet.platform.badges.presentation.model.toBadgeBottomSheetUiState
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.usecase.UpdateCredentialStatus
 import ch.admin.foitt.wallet.platform.genericScreens.domain.model.GenericErrorScreenState
-import ch.admin.foitt.wallet.platform.messageEvents.domain.model.CredentialOfferEvent
-import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialOfferEventRepository
+import ch.admin.foitt.wallet.platform.messageEvents.domain.model.CredentialEvent
+import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.CredentialEventRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.navigation.domain.model.ComponentScope
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination
-import ch.admin.foitt.wallet.platform.navigation.domain.model.DestinationGroup
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.extension.refreshableStateFlow
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
-import ch.admin.foitt.wallet.platform.ssi.domain.model.SsiError
-import ch.admin.foitt.wallet.platform.ssi.domain.usecase.DeleteCredential
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.utils.openLink
 import com.github.michaelbull.result.annotation.UnsafeResultValueAccess
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -47,7 +41,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @HiltViewModel(assistedFactory = CredentialOfferViewModel.Factory::class)
 class CredentialOfferViewModel @AssistedInject constructor(
@@ -57,10 +50,9 @@ class CredentialOfferViewModel @AssistedInject constructor(
     private val updateCredentialStatus: UpdateCredentialStatus,
     private val getCredentialCardState: GetCredentialCardState,
     private val saveFirstCredentialWasAdded: SaveFirstCredentialWasAdded,
-    private val deleteCredential: DeleteCredential,
     private val getActorUiState: GetActorUiState,
     getActorForScope: GetActorForScope,
-    private val credentialOfferEventRepository: CredentialOfferEventRepository,
+    private val credentialEventRepository: CredentialEventRepository,
     private val saveIssuanceActivity: SaveIssuanceActivity,
     private val acceptCredential: AcceptCredential,
     private val fetchAndCacheIssuerDisplayData: FetchAndCacheIssuerDisplayData,
@@ -76,9 +68,6 @@ class CredentialOfferViewModel @AssistedInject constructor(
 
     private val _badgeBottomSheetUiState: MutableStateFlow<BadgeBottomSheetUiState?> = MutableStateFlow(null)
     val badgeBottomSheet = _badgeBottomSheetUiState.asStateFlow()
-
-    private val _showConfirmationBottomSheet: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showConfirmationBottomSheet = _showConfirmationBottomSheet.asStateFlow()
 
     private val actorDisplayData = getActorForScope(ComponentScope.CredentialIssuer)
 
@@ -127,14 +116,10 @@ class CredentialOfferViewModel @AssistedInject constructor(
         }
     }
 
-    fun onAcceptClicked() = if (credentialOfferUiState.stateFlow.value.issuer.trustStatus != TrustStatus.EXTERNAL) {
-        acceptCredential()
-    } else {
-        _showConfirmationBottomSheet.value = true
-    }
+    fun onAcceptClicked() = acceptCredential()
 
     fun acceptCredential() = viewModelScope.launch {
-        acceptCredential(credentialId).onFailure {
+        acceptCredential(credentialId).onErr {
             navigateToErrorScreen()
             return@launch
         }
@@ -144,7 +129,7 @@ class CredentialOfferViewModel @AssistedInject constructor(
             actorDisplayData = actorDisplayData.value,
             issuerFallbackName = appContext.getString(R.string.tk_credential_offer_issuer_name_unknown)
         )
-        credentialOfferEventRepository.setEvent(CredentialOfferEvent.ACCEPTED)
+        credentialEventRepository.setEvent(CredentialEvent.ACCEPTED)
         navManager.popBackStackOrToRoot()
     }
 
@@ -156,46 +141,27 @@ class CredentialOfferViewModel @AssistedInject constructor(
         )
     }
 
-    fun onDeclineBottomSheet() = viewModelScope.launch {
-        // User declined a VC from an unknown issuer. Delete immediately and navigate to home
-        deleteCredential(credentialId).onFailure { error ->
-            when (error) {
-                is SsiError.Unexpected -> Timber.e(error.cause)
-            }
-        }.onSuccess {
-            credentialOfferEventRepository.setEvent(CredentialOfferEvent.DECLINED)
-        }
-        navManager.navigateOutAndTo(DestinationGroup.CredentialOffer::class, Destination.HomeScreen)
-    }
-
-    fun onBadge(badgeType: BadgeType) {
-        _badgeBottomSheetUiState.value = when (badgeType) {
-            is BadgeType.ActorInfoBadge -> badgeType.toBadgeBottomSheetUiState(
-                actorName = credentialOfferUiState.stateFlow.value.issuer.name ?: "",
-                reason = credentialOfferUiState.stateFlow.value.issuer.nonComplianceReason,
-                onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
-            )
-
-            is BadgeType.ClaimInfoBadge -> badgeType.toBadgeBottomSheetUiState(
-                onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
-            )
-        }
-    }
-
     fun onDismissBadgeBottomSheet() {
         _badgeBottomSheetUiState.value = null
     }
 
-    fun onDismissConfirmationBottomSheet() {
-        _showConfirmationBottomSheet.value = false
+    fun onActorNameTap() {
+        _badgeBottomSheetUiState.value = credentialOfferUiState.stateFlow.value.issuer.toBadgeBottomSheetUiState {
+            onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value)
+        }
+    }
+
+    fun onReportedActorInfo() {
+        _badgeBottomSheetUiState.value = BadgeBottomSheetUiState.NonCompliantActor(
+            actorName = credentialOfferUiState.stateFlow.value.issuer.name ?: "",
+            actorPainter = credentialOfferUiState.stateFlow.value.issuer.painter,
+            reason = credentialOfferUiState.stateFlow.value.issuer.nonComplianceReason,
+            onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
+        )
     }
 
     private fun navigateToErrorScreen() {
         navManager.replaceCurrentWith(Destination.GenericErrorScreen(GenericErrorScreenState.Offer.generic()))
-    }
-
-    fun onReportWrongDataClicked() {
-        navManager.navigateTo(Destination.ReportWrongDataScreen)
     }
 
     private fun onMoreInformation(@StringRes uriResource: Int) = appContext.openLink(uriResource)

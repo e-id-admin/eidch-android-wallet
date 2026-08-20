@@ -1,21 +1,22 @@
 package ch.admin.foitt.wallet.platform.credential.di
 
+import ch.admin.foitt.wallet.platform.credential.data.CredentialRefreshRepositoryImpl
+import ch.admin.foitt.wallet.platform.credential.domain.repository.CredentialRefreshRepository
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.EvaluateBatchSize
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchAndSaveCredential
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchAndUpdateDeferredCredential
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchExistingIssuerCredentialInfo
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchTrustForIssuance
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GenerateAnyDisplays
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GenerateMetadataClaimDisplays
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GenerateMetadataDisplays
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetAllAnyCredentials
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetAllAnyCredentialsByCredentialId
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetBindingKeyPair
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GetCredentialConfig
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.HandleBatchCredentialResult
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.HandleCredentialResult
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.HandleDeferredCredentialResult
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.MapToCredentialDisplayData
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.RefreshCredential
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.RefreshDeferredCredentials
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.ResolveClaimTemplate
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.SaveCredentialFromDeferred
@@ -25,19 +26,18 @@ import ch.admin.foitt.wallet.platform.credential.domain.usecase.ValidateIssuerCr
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.EvaluateBatchSizeImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.FetchAndSaveCredentialImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.FetchAndUpdateDeferredCredentialImpl
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.FetchExistingIssuerCredentialInfoImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.FetchTrustForIssuanceImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.GenerateAnyDisplaysImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.GenerateMetadataClaimDisplaysImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.GenerateMetadataDisplaysImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.GetAllAnyCredentialsByCredentialIdImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.GetAllAnyCredentialsImpl
-import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.GetBindingKeyPairImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.GetCredentialConfigImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.HandleBatchCredentialResultImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.HandleCredentialResultImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.HandleDeferredCredentialResultImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.MapToCredentialDisplayDataImpl
+import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.RefreshCredentialImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.RefreshDeferredCredentialsImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.ResolveClaimTemplateImpl
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation.SaveCredentialFromDeferredImpl
@@ -50,6 +50,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
+import dagger.hilt.android.scopes.ActivityRetainedScoped
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
@@ -81,11 +82,6 @@ internal interface CredentialModule {
     ): GetAllAnyCredentials
 
     @Binds
-    fun bindGetBindingKeyPair(
-        useCase: GetBindingKeyPairImpl
-    ): GetBindingKeyPair
-
-    @Binds
     fun bindGetCredentialConfig(
         useCase: GetCredentialConfigImpl
     ): GetCredentialConfig
@@ -94,6 +90,11 @@ internal interface CredentialModule {
     fun bindRefreshDeferredCredentials(
         useCase: RefreshDeferredCredentialsImpl
     ): RefreshDeferredCredentials
+
+    @Binds
+    fun bindRefreshCredentials(
+        useCase: RefreshCredentialImpl
+    ): RefreshCredential
 
     @Binds
     fun bindGetCredentialState(
@@ -146,11 +147,6 @@ internal interface CredentialModule {
     ): FetchTrustForIssuance
 
     @Binds
-    fun bindFetchExistingIssuerCredentialInfo(
-        useCase: FetchExistingIssuerCredentialInfoImpl
-    ): FetchExistingIssuerCredentialInfo
-
-    @Binds
     fun bindValidateIssuerCredentialInfo(
         useCase: ValidateIssuerCredentialInfoImpl
     ): ValidateIssuerCredentialInfo
@@ -169,4 +165,10 @@ internal interface CredentialModule {
     fun bindResolveClaimTemplate(
         useCase: ResolveClaimTemplateImpl
     ): ResolveClaimTemplate
+
+    @Binds
+    @ActivityRetainedScoped
+    fun bindCredentialRefreshManager(
+        manager: CredentialRefreshRepositoryImpl
+    ): CredentialRefreshRepository
 }

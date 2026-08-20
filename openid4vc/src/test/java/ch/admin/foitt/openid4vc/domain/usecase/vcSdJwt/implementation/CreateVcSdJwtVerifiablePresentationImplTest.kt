@@ -7,7 +7,10 @@ import ch.admin.foitt.openid4vc.domain.model.claimsPathPointer.ClaimsPathPointer
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBinding
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.KeyBindingType
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationRequest
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.ClientIdentifier
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationFlowContext
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestError
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationResponseMode
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtCredential
 import ch.admin.foitt.openid4vc.domain.usecase.GetKeyPairForKeyBinding
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockKeyPairs.VALID_KEY_PAIR_HARDWARE
@@ -49,6 +52,12 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
     private lateinit var mockAuthorizationRequest: AuthorizationRequest
 
     @MockK
+    private lateinit var mockClientIdentifier: ClientIdentifier
+
+    @MockK
+    private lateinit var mockPresentationContext: PresentationFlowContext
+
+    @MockK
     private lateinit var mockKeyBinding: KeyBinding
 
     private lateinit var useCase: CreateVcSdJwtVerifiablePresentation
@@ -79,8 +88,8 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
             val result = useCase(
                 credential = mockCredential,
                 keyBinding = null,
-                presentationPaths = mockPresentationPaths,
                 authorizationRequest = mockAuthorizationRequest,
+                presentationContext = mockPresentationContext,
             ).assertOk()
 
             assertEquals(SD_JWT_WITH_DISCLOSURES, result)
@@ -93,8 +102,8 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
         val result = useCase(
             credential = mockCredential,
             keyBinding = mockKeyBinding,
-            presentationPaths = mockPresentationPaths,
             authorizationRequest = mockAuthorizationRequest,
+            presentationContext = mockPresentationContext,
         ).assertOk()
 
         // The proofJwtString is not created the same every time ->
@@ -122,8 +131,8 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
         useCase(
             credential = mockCredential,
             keyBinding = mockKeyBinding,
-            presentationPaths = mockPresentationPaths,
             authorizationRequest = mockAuthorizationRequest,
+            presentationContext = mockPresentationContext,
         ).assertErrorType(PresentationRequestError.Unexpected::class)
     }
 
@@ -135,8 +144,8 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
         useCase(
             credential = mockCredential,
             keyBinding = mockKeyBinding,
-            presentationPaths = mockPresentationPaths,
             authorizationRequest = mockAuthorizationRequest,
+            presentationContext = mockPresentationContext,
         ).assertErrorType(PresentationRequestError.Unexpected::class)
     }
 
@@ -149,8 +158,8 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
         useCase(
             credential = mockCredential,
             keyBinding = mockKeyBinding,
-            presentationPaths = mockPresentationPaths,
             authorizationRequest = mockAuthorizationRequest,
+            presentationContext = mockPresentationContext,
         ).assertErrorType(PresentationRequestError.Unexpected::class)
     }
 
@@ -162,12 +171,30 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
         useCase(
             credential = mockCredential,
             keyBinding = mockKeyBinding,
-            presentationPaths = mockPresentationPaths,
             authorizationRequest = mockAuthorizationRequest,
+            presentationContext = mockPresentationContext,
         ).assertErrorType(PresentationRequestError.Unexpected::class)
     }
 
+    @Test
+    fun `Creating VcSdJwtVerifiablePresentation maps error when origin is missing for DC_API_JWT response mode`() =
+        runTest(testDispatcher) {
+            every { mockAuthorizationRequest.responseMode } returns PresentationResponseMode.DC_API_JWT.value
+            every { mockPresentationContext.proximityOrigin } returns null
+
+            useCase(
+                credential = mockCredential,
+                keyBinding = mockKeyBinding,
+                authorizationRequest = mockAuthorizationRequest,
+                presentationContext = mockPresentationContext,
+            ).assertErrorType(PresentationRequestError.Unexpected::class)
+        }
+
     private fun setupDefaultMocks() {
+        every { mockPresentationContext.proximityOrigin } returns null
+        every { mockPresentationContext.presentationPaths } returns mockPresentationPaths
+        every { mockPresentationContext.dcqlQueryId } returns null
+
         every { mockCredential.digestAlgorithm } returns DigestAlgorithm.SHA256
         every {
             mockCredential.createVerifiableCredential(mockPresentationPaths)
@@ -179,7 +206,10 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
         every { mockKeyBinding.publicKey } returns byteArrayOf()
         every { mockKeyBinding.privateKey } returns byteArrayOf()
 
-        every { mockAuthorizationRequest.clientId } returns CLIENT_ID
+        every { mockClientIdentifier.raw } returns CLIENT_ID
+
+        every { mockAuthorizationRequest.clientIdentifier } returns mockClientIdentifier
+        every { mockAuthorizationRequest.responseMode } returns RESPONSE_MODE_DIRECT_POST
 
         mockkStatic(String::createDigest)
         every { any<String>().createDigest(hashAlgorithm) } returns BASE64_URL_ENCODED_HASH
@@ -200,6 +230,7 @@ class CreateVcSdJwtVerifiablePresentationImplTest {
         val mockPresentationPaths = mockk<List<ClaimsPathPointer>>()
         const val NONCE = "nonce"
         const val CLIENT_ID = "clientId"
+        const val RESPONSE_MODE_DIRECT_POST = "direct_post"
 
         const val CREDENTIAL_CNF_JWK = """{"kty":"EC","crv":"P-256","x":"x","y":"y"}"""
 

@@ -17,6 +17,7 @@ import ch.admin.foitt.wallet.feature.settings.presentation.composables.SettingsC
 import ch.admin.foitt.wallet.platform.composables.presentation.addTopScaffoldPadding
 import ch.admin.foitt.wallet.platform.composables.presentation.bottomSafeDrawing
 import ch.admin.foitt.wallet.platform.composables.presentation.horizontalSafeDrawing
+import ch.admin.foitt.wallet.platform.locale.DebugLocale
 import ch.admin.foitt.wallet.platform.locale.LocaleCompat
 import ch.admin.foitt.wallet.platform.preview.WalletAllScreenPreview
 import ch.admin.foitt.wallet.theme.Sizes
@@ -32,17 +33,20 @@ fun LanguageScreen(
 
     LanguageScreenContent(
         isSystemLanguage = viewModel.isSystemLocale.collectAsStateWithLifecycle().value,
-        language = viewModel.selectedLocale.collectAsStateWithLifecycle().value.displayLanguage,
+        selectedLanguageCode = viewModel.selectedLocale.collectAsStateWithLifecycle().value.language,
         supportedLocales = viewModel.supportedLocales.collectAsStateWithLifecycle().value,
         onUpdateLanguage = viewModel::onUpdateLocale,
         onUseSystemDefaultLanguage = viewModel::useSystemDefaultLocale,
     )
 }
 
+private fun Locale.displayTitle(): String =
+    if (language == DebugLocale.LANGUAGE) DebugLocale.LABEL else displayLanguage
+
 @Composable
 private fun LanguageScreenContent(
     isSystemLanguage: Boolean,
-    language: String,
+    selectedLanguageCode: String,
     supportedLocales: List<Locale>,
     onUpdateLanguage: (Locale) -> Unit,
     onUseSystemDefaultLanguage: () -> Unit,
@@ -65,8 +69,8 @@ private fun LanguageScreenContent(
         SettingsCard {
             supportedLocales.forEach { locale ->
                 WalletListItems.LanguageSettingsItem(
-                    title = locale.displayLanguage,
-                    isChecked = locale.displayLanguage == language && !isSystemLanguage,
+                    title = locale.displayTitle(),
+                    isChecked = locale.language == selectedLanguageCode && !isSystemLanguage,
                     onLanguageClick = { onUpdateLanguage(locale) }
                 )
                 WalletListItems.Divider()
@@ -86,7 +90,7 @@ private fun SettingsScreenPreview() {
     WalletTheme {
         LanguageScreenContent(
             isSystemLanguage = false,
-            language = "English",
+            selectedLanguageCode = "en",
             supportedLocales = listOf(LocaleCompat.of("en"), LocaleCompat.of("de")),
             onUpdateLanguage = {},
             onUseSystemDefaultLanguage = {},

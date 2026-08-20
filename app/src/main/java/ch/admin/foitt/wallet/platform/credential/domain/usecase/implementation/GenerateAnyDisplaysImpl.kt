@@ -13,7 +13,6 @@ import ch.admin.foitt.wallet.platform.credential.domain.model.toGenerateCredenti
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GenerateAnyDisplays
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GenerateMetadataDisplays
 import ch.admin.foitt.wallet.platform.credential.domain.util.addFallbackLanguage
-import ch.admin.foitt.wallet.platform.credential.domain.util.entityNames
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayConst
 import ch.admin.foitt.wallet.platform.database.domain.model.DisplayLanguage
 import ch.admin.foitt.wallet.platform.locale.domain.usecase.GetLocalizedCredentialInformationDisplay
@@ -21,7 +20,7 @@ import ch.admin.foitt.wallet.platform.oca.domain.model.GenerateOcaDisplaysError
 import ch.admin.foitt.wallet.platform.oca.domain.model.MetaDisplays
 import ch.admin.foitt.wallet.platform.oca.domain.model.OcaBundle
 import ch.admin.foitt.wallet.platform.oca.domain.usecase.GenerateOcaDisplays
-import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatement
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.IdentityTrustStatement
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.coroutines.runSuspendCatching
@@ -37,7 +36,7 @@ class GenerateAnyDisplaysImpl @Inject constructor(
     override suspend fun invoke(
         anyCredential: AnyCredential?,
         issuerInfo: IssuerCredentialInfo,
-        trustStatement: TrustStatement?,
+        trustStatement: IdentityTrustStatement?,
         credentialConfiguration: AnyCredentialConfiguration,
         ocaBundle: OcaBundle?,
     ): Result<AnyDisplays, GenerateCredentialDisplaysError> = coroutineBinding {
@@ -82,7 +81,7 @@ class GenerateAnyDisplaysImpl @Inject constructor(
             anyCredential.getClaimsToSave()
         }.mapError { throwable -> throwable.toGenerateCredentialDisplaysError("getClaimsToSave error") }
 
-    private fun generateIssuerDisplays(trustStatement: TrustStatement?, issuerInfo: IssuerCredentialInfo): List<AnyIssuerDisplay> =
+    private fun generateIssuerDisplays(trustStatement: IdentityTrustStatement?, issuerInfo: IssuerCredentialInfo): List<AnyIssuerDisplay> =
         if (trustStatement != null) {
             createTrustedIssuerDisplays(trustStatement, issuerInfo)
         } else {
@@ -92,23 +91,25 @@ class GenerateAnyDisplaysImpl @Inject constructor(
         }
 
     private fun createTrustedIssuerDisplays(
-        trustStatement: TrustStatement,
+        trustStatement: IdentityTrustStatement,
         issuerInfo: IssuerCredentialInfo
-    ): List<AnyIssuerDisplay> = trustStatement.entityNames()?.map { (locale, entityName) ->
-        val metadataDisplay = issuerInfo.display?.let {
-            getLocalizedCredentialInformationDisplay(
-                displays = it,
-                preferredLocaleString = locale,
+    ): List<AnyIssuerDisplay> = trustStatement.entityName
+        .filterKeys { it.isNotBlank() }
+        .map { (locale, entityName) ->
+            val metadataDisplay = issuerInfo.display?.let {
+                getLocalizedCredentialInformationDisplay(
+                    displays = it,
+                    preferredLocaleString = locale,
+                )
+            }
+
+            AnyIssuerDisplay(
+                locale = locale,
+                name = entityName,
+                logo = metadataDisplay?.logo?.uri, // exception: use logo from metadata
+                logoAltText = metadataDisplay?.logo?.altText, // exception: use logo alt text from metadata
             )
         }
-
-        AnyIssuerDisplay(
-            locale = locale,
-            name = entityName,
-            logo = metadataDisplay?.logo?.uri, // exception: use logo from metadata
-            logoAltText = metadataDisplay?.logo?.altText, // exception: use logo alt text from metadata
-        )
-    }.orEmpty()
 
     private fun createMetadataIssuerDisplays(issuerInfo: IssuerCredentialInfo): List<AnyIssuerDisplay> =
         issuerInfo.display?.map(OidIssuerDisplay::toAnyIssuerDisplay).orEmpty()

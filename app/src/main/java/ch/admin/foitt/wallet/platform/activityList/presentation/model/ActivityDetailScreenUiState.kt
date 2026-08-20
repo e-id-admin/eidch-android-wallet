@@ -4,8 +4,8 @@ import androidx.compose.ui.graphics.Color
 import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityType
 import ch.admin.foitt.wallet.platform.credential.presentation.model.CredentialCardState
 import ch.admin.foitt.wallet.platform.credentialStatus.domain.model.CredentialDisplayStatus
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialClaimCluster
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 
@@ -13,6 +13,7 @@ data class ActivityDetailScreenUiState(
     val activity: ActivityDetailUiState,
     val credential: CredentialCardState,
     val claims: List<CredentialClaimCluster>,
+    val canReport: Boolean = false,
 ) {
     companion object {
         val EMPTY = ActivityDetailScreenUiState(
@@ -38,6 +39,7 @@ data class ActivityDetailScreenUiState(
                 actorCompliance = ActorComplianceState.UNKNOWN,
             ),
             claims = emptyList(),
+            canReport = false
         )
     }
 }

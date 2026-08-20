@@ -9,6 +9,8 @@ import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
 import com.nimbusds.jose.crypto.ECDSASigner
 import com.nimbusds.jose.jwk.Curve
+import com.nimbusds.jose.jwk.ECKey
+import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import java.security.KeyFactory
 import java.security.interfaces.ECPrivateKey
 import java.security.spec.PKCS8EncodedKeySpec
@@ -103,6 +105,47 @@ object MockRequestObject {
         RequestObject(
             clientId = ATTESTATION_CLIENT_ID,
             jwt = requestObjectJwtAttestation,
+            redirectUri = null,
+        )
+    }
+
+    // ── self-signed verifier-attestation fixtures (no kid; signing key embedded as jwk in header) ──
+    private val selfSignedAttestationKey: ECKey by lazy {
+        ECKeyGenerator(Curve.P_256).generate()
+    }
+
+    private val selfSignedAttestationJwtRaw: String by lazy {
+        val payload = """
+            {
+              "sub": "$CLIENT_ID_VERIFIER",
+              "cnf": { "jwk": { "kty": "EC", "crv": "P-256", "x": "xValue", "y": "yValue" } }
+            }
+        """.trimIndent()
+        val jws = JWSObject(
+            JWSHeader.Builder(JWSAlgorithm.ES256)
+                .type(JOSEObjectType(ATTESTATION_HEADER_TYP))
+                .jwk(selfSignedAttestationKey.toPublicJWK())
+                .build(),
+            Payload(payload),
+        )
+        jws.sign(ECDSASigner(selfSignedAttestationKey))
+        jws.serialize()
+    }
+
+    val requestObjectJwtSelfSignedAttestation: Jwt by lazy {
+        val outerPayload = """{"client_id":"$ATTESTATION_CLIENT_ID"}"""
+        val raw = signJwt(
+            JWSHeader.Builder(JWSAlgorithm.ES256)
+                .customParam("jwt", selfSignedAttestationJwtRaw),
+            outerPayload,
+        )
+        Jwt(raw)
+    }
+
+    val selfSignedAttestationRequestObject: RequestObject by lazy {
+        RequestObject(
+            clientId = ATTESTATION_CLIENT_ID,
+            jwt = requestObjectJwtSelfSignedAttestation,
             redirectUri = null,
         )
     }

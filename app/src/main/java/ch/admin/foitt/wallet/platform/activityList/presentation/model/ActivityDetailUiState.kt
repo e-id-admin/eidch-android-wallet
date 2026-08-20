@@ -3,7 +3,7 @@ package ch.admin.foitt.wallet.platform.activityList.presentation.model
 import androidx.compose.ui.graphics.painter.Painter
 import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityDetailDisplayData
 import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityType
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.ActorComplianceState
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.ActorComplianceState
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.VcSchemaTrustStatus
 

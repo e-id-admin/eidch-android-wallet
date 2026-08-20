@@ -18,6 +18,7 @@ data class CredentialCardState(
     val isCredentialFromBetaIssuer: Boolean,
     val progressionState: VerifiableProgressionState = VerifiableProgressionState.UNACCEPTED,
     val deferredStatus: DeferredProgressionState? = null,
+    val showBatchWarning: Boolean = false,
 ) {
     val useDefaultBackground = backgroundColor == defaultCardColor
 

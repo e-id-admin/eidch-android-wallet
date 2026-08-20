@@ -39,7 +39,7 @@ fun AppVersionBlockedScreen(viewModel: AppVersionBlockedViewModel) {
         onPlayStore = viewModel::goToPlayStore,
         onContinue = viewModel::onContinue,
         onSettings = viewModel::onSettings,
-        onClose = viewModel::onClose
+        onSupport = viewModel::onSupport
     )
 }
 
@@ -51,7 +51,7 @@ private fun AppVersionBlockedScreenContent(
     onPlayStore: () -> Unit,
     onContinue: () -> Unit,
     onSettings: () -> Unit,
-    onClose: () -> Unit
+    onSupport: () -> Unit
 ) {
     WalletLayouts.ScrollableColumnWithFullscreenGradient(
         stickyBottomContent = {
@@ -63,7 +63,7 @@ private fun AppVersionBlockedScreenContent(
                             onPlayStore = onPlayStore,
                             onContinue = onContinue,
                             onSettings = onSettings,
-                            onClose = onClose,
+                            onSupport = onSupport,
                         )
                     }
                 ),
@@ -108,7 +108,7 @@ private fun BottomButtons(
     onPlayStore: () -> Unit,
     onContinue: () -> Unit,
     onSettings: () -> Unit,
-    onClose: () -> Unit
+    onSupport: () -> Unit,
 ) {
     when (enforcedType) {
         EnforcementType.OS_UPDATE -> {
@@ -121,7 +121,7 @@ private fun BottomButtons(
         EnforcementType.DEVICE_BLACKLIST -> {
             Buttons.FilledPrimaryFixed(
                 text = stringResource(id = R.string.tk_versionEnforcement_blacklisted_button),
-                onClick = onClose,
+                onClick = onSupport,
             )
         }
 
@@ -153,10 +153,10 @@ private fun AppVersionBlockedScreenPreview() {
             title = "App is too old",
             text = "You need to update the app",
             onPlayStore = {},
-            enforcedType = EnforcementType.UPDATE_SUGGESTED,
+            enforcedType = EnforcementType.DEVICE_BLACKLIST,
             onContinue = {},
             onSettings = {},
-            onClose = {},
+            onSupport = {},
         )
     }
 }

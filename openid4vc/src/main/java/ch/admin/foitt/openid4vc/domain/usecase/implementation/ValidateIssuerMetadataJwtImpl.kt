@@ -1,6 +1,6 @@
 package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
-import ch.admin.foitt.openid4vc.domain.model.SigningAlgorithm
+import ch.admin.foitt.openid4vc.domain.model.SignatureAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.anycredential.Validity
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.CredentialOfferError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.ValidateIssuerMetadataJwtError
@@ -24,7 +24,9 @@ internal class ValidateIssuerMetadataJwtImpl @Inject constructor(
         type: String?
     ): Result<Unit, ValidateIssuerMetadataJwtError> = coroutineBinding {
         runSuspendCatching {
-            check(jwt.algorithm == SigningAlgorithm.ES256.stdName) { "Unsupported JWT algorithm: ${jwt.algorithm}" }
+            check(SignatureAlgorithm.fromStdName(jwt.algorithm) in supportedAlgorithms) {
+                "Unsupported JWT algorithm: ${jwt.algorithm}"
+            }
             type?.let {
                 check(jwt.type == type) { "Unsupported JWT type: ${jwt.type}" }
             }
@@ -47,5 +49,9 @@ internal class ValidateIssuerMetadataJwtImpl @Inject constructor(
         }.mapError {
             CredentialOfferError.InvalidSignedMetadata(it.localizedMessage ?: "Unknown")
         }.bind()
+    }
+
+    private companion object {
+        private val supportedAlgorithms = setOf(SignatureAlgorithm.ES256, SignatureAlgorithm.EdDSA)
     }
 }

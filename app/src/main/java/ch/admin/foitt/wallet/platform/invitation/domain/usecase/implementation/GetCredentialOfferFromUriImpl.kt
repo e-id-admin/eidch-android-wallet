@@ -7,11 +7,12 @@ import ch.admin.foitt.wallet.platform.invitation.domain.model.toGetCredentialOff
 import ch.admin.foitt.wallet.platform.invitation.domain.usecase.GetCredentialOfferFromUri
 import ch.admin.foitt.wallet.platform.utils.JsonParsingError
 import ch.admin.foitt.wallet.platform.utils.SafeJson
+import ch.admin.foitt.wallet.platform.utils.getQueryParameter
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.binding
-import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.mapError
 import com.github.michaelbull.result.toErrorIf
+import com.github.michaelbull.result.toErrorIfNull
 import java.net.URI
 import javax.inject.Inject
 
@@ -19,11 +20,14 @@ internal class GetCredentialOfferFromUriImpl @Inject constructor(
     private val safeJson: SafeJson,
 ) : GetCredentialOfferFromUri {
     override fun invoke(uri: URI): Result<CredentialOffer, GetCredentialOfferError> = binding {
-        val jsonString = runSuspendCatching {
-            uri.query.split("=").last()
-        }.mapError { throwable ->
-            throwable.toGetCredentialOfferError("GetCredentialOfferFromUri error")
-        }.bind()
+        val jsonString: String = uri.getQueryParameter("credential_offer")
+            .toErrorIfNull {
+                Throwable("Could not find parameter \"credential_offer\" in uri")
+            }
+            .mapError { throwable ->
+                throwable.toGetCredentialOfferError("GetCredentialOfferFromUri error")
+            }
+            .bind()
         safeJson.safeDecodeStringTo<CredentialOffer>(
             string = jsonString,
         ).mapError(JsonParsingError::toGetCredentialOfferError)

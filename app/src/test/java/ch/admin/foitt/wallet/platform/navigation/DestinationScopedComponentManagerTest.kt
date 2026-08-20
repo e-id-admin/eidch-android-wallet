@@ -118,7 +118,7 @@ class DestinationScopedComponentManagerTest {
             "Retrieved component has expected type"
         }
 
-        coEvery { mockNavManager.currentDestination } returns Destination.PresentationSuccessScreen(sentFields = emptyList())
+        coEvery { mockNavManager.currentDestination } returns Destination.PresentationSuccessScreen(redirectUri = "")
         manager.getEntryPoint(
             ActorRepositoryEntryPoint::class.java,
             ComponentScope.Verifier

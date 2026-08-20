@@ -14,6 +14,6 @@ data class VerifiableCredentialParams(
     val credentialEndpoint: URL,
     val deferredCredentialEndpoint: URL?,
     val credentialConfiguration: AnyCredentialConfiguration,
-    val nonceEndpoint: URL?,
+    val nonceEndpoint: URL,
     val isBatch: Boolean,
 )

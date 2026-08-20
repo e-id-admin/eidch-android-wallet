@@ -3,20 +3,20 @@ package ch.admin.foitt.wallet.platform.credential.domain.usecase.implementation
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.AnyCredentialConfiguration
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.RawAndParsedIssuerCredentialInfo
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwtCredential
-import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.CacheIssuerDisplayData
 import ch.admin.foitt.wallet.platform.credential.domain.model.FetchCredentialError
+import ch.admin.foitt.wallet.platform.credential.domain.model.FetchTrustForIssuanceError
 import ch.admin.foitt.wallet.platform.credential.domain.model.GenerateCredentialDisplaysError
 import ch.admin.foitt.wallet.platform.credential.domain.model.toFetchCredentialError
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.FetchTrustForIssuance
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.GenerateAnyDisplays
 import ch.admin.foitt.wallet.platform.credential.domain.usecase.SaveVcSdJwtCredentials
 import ch.admin.foitt.wallet.platform.database.domain.model.RawCredentialData
-import ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.FetchNonComplianceData
 import ch.admin.foitt.wallet.platform.oca.domain.model.FetchVcMetadataByFormatError
 import ch.admin.foitt.wallet.platform.oca.domain.usecase.FetchVcMetadataByFormat
 import ch.admin.foitt.wallet.platform.oca.domain.usecase.OcaBundler
 import ch.admin.foitt.wallet.platform.ssi.domain.model.CredentialOfferRepositoryError
 import ch.admin.foitt.wallet.platform.ssi.domain.repository.CredentialOfferRepository
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.IdentityV2TrustStatement
 import ch.admin.foitt.wallet.platform.utils.compress
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
@@ -26,11 +26,9 @@ import java.net.URL
 import javax.inject.Inject
 
 class SaveVcSdJwtCredentialsImpl @Inject constructor(
-    private val fetchNonComplianceData: FetchNonComplianceData,
     private val fetchVcMetadataByFormat: FetchVcMetadataByFormat,
     private val ocaBundler: OcaBundler,
     private val generateAnyDisplays: GenerateAnyDisplays,
-    private val cacheIssuerDisplayData: CacheIssuerDisplayData,
     private val credentialOfferRepository: CredentialOfferRepository,
     private val fetchTrustForIssuance: FetchTrustForIssuance,
 ) : SaveVcSdJwtCredentials {
@@ -38,6 +36,7 @@ class SaveVcSdJwtCredentialsImpl @Inject constructor(
         credentialId: Long,
         issuerUrl: URL,
         vcSdJwtCredentials: List<VcSdJwtCredential>,
+        identityTrustStatement: IdentityV2TrustStatement?,
         rawAndParsedCredentialInfo: RawAndParsedIssuerCredentialInfo,
         credentialConfig: AnyCredentialConfiguration,
     ): Result<Long, FetchCredentialError> = coroutineBinding {
@@ -47,9 +46,12 @@ class SaveVcSdJwtCredentialsImpl @Inject constructor(
             .bind()
 
         val trustCheckResult = fetchTrustForIssuance(
+            identityTrustStatement = identityTrustStatement,
+            protectedIssuanceAuthorizationTrustStatement = credentialConfig.protectedIssuanceAuthorizationTrustStatement,
             issuerDid = vcSdJwtCredential.issuer,
             vcSchemaId = vcSdJwtCredential.vcSchemaId,
-        )
+        ).mapError(FetchTrustForIssuanceError::toFetchCredentialError)
+            .bind()
 
         val rawOcaBundle = vcMetadata.rawOcaBundle?.rawOcaBundle
         val ocaBundle = rawOcaBundle?.let {
@@ -59,23 +61,15 @@ class SaveVcSdJwtCredentialsImpl @Inject constructor(
         val displays = generateAnyDisplays(
             anyCredential = vcSdJwtCredential,
             issuerInfo = rawAndParsedCredentialInfo.issuerCredentialInfo,
-            trustStatement = trustCheckResult.actorTrustStatement,
+            trustStatement = trustCheckResult?.identityTrustStatement,
             credentialConfiguration = credentialConfig,
             ocaBundle = ocaBundle,
         ).mapError(GenerateCredentialDisplaysError::toFetchCredentialError).bind()
 
-        val nonComplianceData = fetchNonComplianceData(actorDid = vcSdJwtCredential.issuer)
-
-        cacheIssuerDisplayData(
-            trustCheckResult = trustCheckResult,
-            issuerDisplays = displays.issuerDisplays,
-            nonComplianceData = nonComplianceData,
-        )
-
         val rawCredentialData = RawCredentialData(
             credentialId = -1,
             rawOcaBundle = rawOcaBundle?.toByteArray()?.compress(),
-            rawOIDMetadata = rawAndParsedCredentialInfo.rawIssuerCredentialInfo.toByteArray().compress()
+            rawOIDMetadata = rawAndParsedCredentialInfo.rawIssuerCredentialInfo.payloadString.toByteArray().compress()
         )
 
         credentialOfferRepository.saveCredentialOffer(

@@ -1,7 +1,7 @@
 package ch.admin.foitt.wallet.platform.trustRegistry
 
 import ch.admin.foitt.didResolver.domain.DidResolverHelper
-import ch.admin.foitt.openid4vc.domain.model.SigningAlgorithm
+import ch.admin.foitt.openid4vc.domain.model.SignatureAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.anycredential.Validity
 import ch.admin.foitt.openid4vc.domain.model.jwt.JwtError
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VcSdJwt
@@ -71,7 +71,7 @@ class ValidateTrustStatementImplTest {
 
         every { trustStatement.kid } returns KEY_ID
         every { trustStatement.type } returns ValidateTrustStatementImpl.VCSDJWT_TYPE_VALUE
-        every { trustStatement.algorithm } returns SigningAlgorithm.ES256.stdName
+        every { trustStatement.algorithm } returns SignatureAlgorithm.ES256.stdName
         every { trustStatement.issuedAt } returns Instant.ofEpochSecond(0)
         every { trustStatement.subject } returns ACTOR_DID
         every { trustStatement.jwtValidity } returns Validity.Valid
@@ -228,9 +228,9 @@ class ValidateTrustStatementImplTest {
 
     @Test
     fun `A failed status list call fails validation`(): Unit = runTest {
-        coEvery { mockFetchCredentialStatus(any(), any()) } returns Err(CredentialStatusError.NetworkError)
+        coEvery { mockFetchCredentialStatus(any(), any()) } returns Err(CredentialStatusError.UnknownRegistry)
 
-        useCase(trustStatement, ACTOR_DID).assertErrorType(TrustRegistryError.Unexpected::class)
+        useCase(trustStatement, ACTOR_DID).assertErrorType(TrustRegistryError.UnknownRegistry::class)
 
         coVerify(exactly = 1) {
             mockFetchCredentialStatus(any(), any())

@@ -18,4 +18,8 @@ sealed interface ProcessInvitationResult {
         val credentials: Set<CompatibleCredential>,
         val request: PresentationRequestWithRaw,
     ) : ProcessInvitationResult
+    data class PresentationRequestReview(
+        val credentials: Set<CompatibleCredential>,
+        val request: PresentationRequestWithRaw,
+    ) : ProcessInvitationResult
 }

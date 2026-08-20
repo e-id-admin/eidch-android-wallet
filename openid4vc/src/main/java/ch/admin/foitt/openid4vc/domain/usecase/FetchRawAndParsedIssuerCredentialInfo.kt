@@ -10,5 +10,6 @@ interface FetchRawAndParsedIssuerCredentialInfo {
     @CheckResult
     suspend operator fun invoke(
         issuerEndpoint: URL,
+        forceRefresh: Boolean = false,
     ): Result<RawAndParsedIssuerCredentialInfo, FetchIssuerCredentialInfoError>
 }

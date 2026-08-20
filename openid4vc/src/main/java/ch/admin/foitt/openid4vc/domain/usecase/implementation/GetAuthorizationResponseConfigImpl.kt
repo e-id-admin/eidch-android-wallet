@@ -1,7 +1,6 @@
 package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.anycredential.AnyCredential
-import ch.admin.foitt.openid4vc.domain.model.claimsPathPointer.ClaimsPathPointer
 import ch.admin.foitt.openid4vc.domain.model.jwe.CreateJWEError
 import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.EncryptionAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationRequest
@@ -11,6 +10,7 @@ import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationRe
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseType
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.CreateAnyVerifiablePresentationError
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.GetAuthorizationResponseConfigError
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationFlowContext
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationRequestError
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.PresentationResponseMode
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.toGetAuthorizationResponseConfigError
@@ -36,19 +36,17 @@ internal class GetAuthorizationResponseConfigImpl @Inject constructor(
 ) : GetAuthorizationResponseConfig {
     override suspend fun invoke(
         anyCredential: AnyCredential,
-        presentationPaths: List<ClaimsPathPointer>,
         authorizationRequest: AuthorizationRequest,
-        usePayloadEncryption: Boolean,
-        dcqlQueryId: String?,
+        presentationContext: PresentationFlowContext,
     ): Result<AuthorizationResponseConfig, GetAuthorizationResponseConfigError> = coroutineBinding {
         val verifiablePresentation = createAnyVerifiablePresentation(
             anyCredential = anyCredential,
-            presentationPaths = presentationPaths,
             authorizationRequest = authorizationRequest,
+            presentationContext = presentationContext,
         ).mapError(CreateAnyVerifiablePresentationError::toGetAuthorizationResponseConfigError)
             .bind()
 
-        val dcqlId = dcqlQueryId ?: return@coroutineBinding Err(
+        val dcqlId = presentationContext.dcqlQueryId ?: return@coroutineBinding Err(
             PresentationRequestError.Unexpected(IllegalStateException("No dcql query provided"))
         ).bind<AuthorizationResponseConfig>()
 
@@ -58,19 +56,10 @@ internal class GetAuthorizationResponseConfigImpl @Inject constructor(
             state = authorizationRequest.state,
         )
 
-        when {
-            usePayloadEncryption && authorizationRequest.responseMode == PresentationResponseMode.DIRECT_POST_JWT.value -> {
-                getJWEAuthorizationResponseConfig(authorizationRequest, authorizationResponse)
-            }
-
-            authorizationRequest.responseMode == PresentationResponseMode.DIRECT_POST.value ||
-                authorizationRequest.responseMode == PresentationResponseMode.DC_API_JWT.value -> {
-                getDCQLAuthorizationResponseConfig(authorizationResponse)
-            }
-
-            else -> {
-                Err(PresentationRequestError.Unexpected(IllegalStateException("invalid response mode")))
-            }
+        if (authorizationRequest.responseMode == PresentationResponseMode.DIRECT_POST_JWT.value) {
+            getJWEAuthorizationResponseConfig(authorizationRequest, authorizationResponse)
+        } else {
+            Err(PresentationRequestError.Unexpected(IllegalStateException("invalid response mode")))
         }.bind()
     }
 
@@ -82,24 +71,6 @@ internal class GetAuthorizationResponseConfigImpl @Inject constructor(
         vpToken = mapOf(dcqlQueryId to listOf(verifiablePresentation)),
         state = state,
     )
-
-    private fun getDCQLAuthorizationResponseConfig(
-        authorizationResponse: AuthorizationResponse.Dcql
-    ): Result<AuthorizationResponseConfig, GetAuthorizationResponseConfigError> = binding {
-        val value = safeJson.safeEncodeObjectToString(authorizationResponse.vpToken)
-            .mapError(JsonParsingError::toGetPresentationRequestConfigError)
-            .bind()
-        AuthorizationResponseConfig(
-            type = AuthorizationResponseType.DCQL,
-            params = buildMap {
-                put(AuthorizationResponseParam.VP_TOKEN, value)
-
-                authorizationResponse.state?.let {
-                    put(AuthorizationResponseParam.STATE, it)
-                }
-            }
-        )
-    }
 
     private fun getJWEAuthorizationResponseConfig(
         authorizationRequest: AuthorizationRequest,
@@ -131,9 +102,6 @@ internal class GetAuthorizationResponseConfigImpl @Inject constructor(
             ).bind<AuthorizationResponseConfig>()
         }
 
-        /* TODO: Omni does not support payload encryption for presentation
-             (as acc. to them payload encryption needs DCQL and does not work with the DIF spec), it kind of works by accident.
-              Meaning, they expect the payload to be two strings (because without payload encryption we send both as string) */
         val payloadJson = when (authorizationResponse) {
             is AuthorizationResponse.Dcql -> {
                 val value = safeJson.safeEncodeObjectToString(authorizationResponse.vpToken)

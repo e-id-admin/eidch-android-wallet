@@ -2,6 +2,7 @@ package ch.admin.foitt.openid4vc.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationRequest
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseConfig
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationResponseResponse
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.SubmitAnyCredentialPresentationError
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.toSubmitAnyCredentialPresentationError
 import ch.admin.foitt.openid4vc.domain.repository.PresentationRequestRepository
@@ -19,7 +20,7 @@ internal class SubmitAnyCredentialNetworkPresentationImpl @Inject constructor(
     override suspend fun invoke(
         authorizationRequest: AuthorizationRequest,
         authorizationResponseConfig: AuthorizationResponseConfig
-    ): Result<Unit, SubmitAnyCredentialPresentationError> = coroutineBinding {
+    ): Result<AuthorizationResponseResponse, SubmitAnyCredentialPresentationError> = coroutineBinding {
         val responseURL = runSuspendCatching { URL(authorizationRequest.responseUri) }
             .mapError { throwable -> throwable.toSubmitAnyCredentialPresentationError("presentationRequest.responseUri error") }
             .bind()

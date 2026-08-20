@@ -1,6 +1,7 @@
 package ch.admin.foitt.openid4vc.domain.model.issuerMetadata
 
 import android.webkit.URLUtil
+import ch.admin.foitt.openid4vc.domain.model.SignatureAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.SigningAlgorithm
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.IssuerCredentialInfo
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.metadata.ProofType
@@ -47,6 +48,60 @@ class MetadataTest {
     }
 
     @Test
+    fun `EdDSA proof signing algorithm is filtered out`() = runTest {
+        mockkStatic(URLUtil::class)
+        every { URLUtil.isHttpsUrl(any()) } returns true
+        val result = json.safeDecodeStringTo<IssuerCredentialInfo>(
+            createMetadata(signingAlgorithms = listOf(SigningAlgorithm.ES256.stdName, SignatureAlgorithm.EdDSA.stdName))
+        ).assertOk()
+
+        val parsedSigningAlgorithms =
+            result.credentialConfigurations.first().proofTypesSupported[ProofType.JWT]?.proofSigningAlgValuesSupported
+
+        assertEquals(listOf(SigningAlgorithm.ES256), parsedSigningAlgorithms)
+    }
+
+    @Test
+    fun `Ed25519 proof signing algorithm alias is filtered out`() = runTest {
+        mockkStatic(URLUtil::class)
+        every { URLUtil.isHttpsUrl(any()) } returns true
+        val result = json.safeDecodeStringTo<IssuerCredentialInfo>(
+            createMetadata(signingAlgorithms = listOf("Ed25519"))
+        ).assertOk()
+
+        val parsedSigningAlgorithms =
+            result.credentialConfigurations.first().proofTypesSupported[ProofType.JWT]?.proofSigningAlgValuesSupported
+
+        assertEquals(emptyList<SigningAlgorithm>(), parsedSigningAlgorithms)
+    }
+
+    @Test
+    fun `metadata with only the EdDSA credential signing algorithm is accepted`() = runTest {
+        mockkStatic(URLUtil::class)
+        every { URLUtil.isHttpsUrl(any()) } returns true
+        val result = json.safeDecodeStringTo<IssuerCredentialInfo>(
+            createMetadata(credentialSigningAlgorithms = listOf(SignatureAlgorithm.EdDSA.stdName))
+        ).assertOk()
+
+        val parsedSignatureAlgorithms = result.credentialConfigurations.first().credentialSigningAlgValuesSupported
+
+        assertEquals(listOf(SignatureAlgorithm.EdDSA), parsedSignatureAlgorithms)
+    }
+
+    @Test
+    fun `metadata with only the Ed25519 credential signing algorithm alias is accepted`() = runTest {
+        mockkStatic(URLUtil::class)
+        every { URLUtil.isHttpsUrl(any()) } returns true
+        val result = json.safeDecodeStringTo<IssuerCredentialInfo>(
+            createMetadata(credentialSigningAlgorithms = listOf("Ed25519"))
+        ).assertOk()
+
+        val parsedSignatureAlgorithms = result.credentialConfigurations.first().credentialSigningAlgValuesSupported
+
+        assertEquals(listOf(SignatureAlgorithm.EdDSA), parsedSignatureAlgorithms)
+    }
+
+    @Test
     fun `issuer metadata test with not valid https url returns error`() = runTest {
         mockkStatic(URLUtil::class)
         every { URLUtil.isHttpsUrl(any()) } returns false
@@ -58,20 +113,48 @@ class MetadataTest {
 
     fun createMetadata(
         signingAlgorithms: List<String> = listOf(SigningAlgorithm.ES256.stdName, SigningAlgorithm.ES512.stdName),
+        credentialSigningAlgorithms: List<String> = listOf("Ed25519VerificationKey2020"),
     ): String {
         val signingAlgorithmsString = signingAlgorithms.joinToString(separator = ",") { it }
+        val credentialSigningAlgorithmsString = credentialSigningAlgorithms.joinToString(separator = ",") { it }
 
         return """
             {
                "credential_issuer":"https://issuer-agent.domain.ch",
+               "nonce_endpoint":"https://issuer-agent.domain.ch/nonce",
+               "credential_request_encryption":{
+                  "enc_values_supported":[
+                     "A128GCM",
+                     "A256GCM"
+                  ],
+                  "zip_values_supported":[
+                     "DEF"
+                  ],
+                  "encryption_required":false,
+                  "jwks":{
+                     "keys":[
+                        {
+                           "kty":"EC",
+                           "crv":"P-256",
+                           "kid":"7ff5adfd-811c-4ccc-ab8c-aaf0bbfd33d2",
+                           "x":"Q-21f1nn5YsTSGvh0wrZFilUcDMNH1NHCsrDNrnep5I",
+                           "y":"FSU_XURrqId0PVWckqTHeFS9ivSdpE5Zgn71uj5cb2w",
+                           "alg":"ECDH-ES"
+                        }
+                     ]
+                  }
+               },
                "credential_response_encryption":{
+                  "enc_values_supported":[
+                     "A128GCM",
+                     "A256GCM"
+                  ],
+                  "zip_values_supported":[
+                     "DEF"
+                  ],
                   "encryption_required":false,
                   "alg_values_supported":[
-                     "RSA-OAEP-256",
-                     "ECDH-ES+A128KW"
-                  ],
-                  "enc_values_supported":[
-                     "A128CBC-HS256"
+                     "ECDH-ES"
                   ]
                },
                "display":[
@@ -97,21 +180,21 @@ class MetadataTest {
                         "jwk"
                      ],
                      "credential_signing_alg_values_supported":[
-                        "Ed25519VerificationKey2020"
+                        $credentialSigningAlgorithmsString
                      ],
                      "proof_types_supported":{
                         "jwt":{
                            "proof_signing_alg_values_supported":[
                               $signingAlgorithmsString
                            ],
-                           "key_attestations_required": {
-                             "key_storage": [
-                                "iso_18045_high",
-                                "iso_18045_moderate"
-                             ],
-                             "user_authentication": [
-                                "iso_18045_high"
-                             ]
+                           "key_attestations_required":{
+                              "key_storage":[
+                                 "iso_18045_high",
+                                 "iso_18045_moderate"
+                              ],
+                              "user_authentication":[
+                                 "iso_18045_high"
+                              ]
                            }
                         }
                      },

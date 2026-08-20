@@ -20,6 +20,8 @@ import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockRequestOb
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockRequestObject.requestObjectJwtNoClientId
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockRequestObject.requestObjectJwtNoKeyId
 import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockRequestObject.requestObjectJwtOtherKid
+import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockRequestObject.requestObjectJwtSelfSignedAttestation
+import ch.admin.foitt.openid4vc.domain.usecase.implementation.mock.MockRequestObject.selfSignedAttestationRequestObject
 import ch.admin.foitt.openid4vc.domain.usecase.jwt.VerifyJwtSignature
 import ch.admin.foitt.openid4vc.domain.usecase.jwt.VerifyJwtSignatureFromDid
 import ch.admin.foitt.openid4vc.util.SafeJsonTestInstance
@@ -160,5 +162,26 @@ class VerifyRequestObjectSignatureImplTest {
 
         val outcome = useCase(attestationRequestObject, emptyList()).assertOk()
         assertEquals(RequestObjectVerificationOutcome.ATTESTATION_UNTRUSTED, outcome)
+    }
+
+    @Test
+    fun `Self-signed verifierAttestation without kid is verified as ATTESTATION_UNTRUSTED`() = runTest {
+        coEvery {
+            mockVerifyJwtSignature(jwt = requestObjectJwtSelfSignedAttestation, publicKey = any<Jwk>())
+        } returns Ok(Unit)
+
+        // even with a non-empty trust list it can never become trusted, as there is no issuer DID to resolve
+        val outcome = useCase(selfSignedAttestationRequestObject, listOf(ATTESTATION_ISSUER_DID)).assertOk()
+        assertEquals(RequestObjectVerificationOutcome.ATTESTATION_UNTRUSTED, outcome)
+    }
+
+    @Test
+    fun `Self-signed verifierAttestation still validates the request object signature`() = runTest {
+        val exception = IllegalStateException("jwt signature failure")
+        coEvery {
+            mockVerifyJwtSignature(jwt = requestObjectJwtSelfSignedAttestation, publicKey = any<Jwk>())
+        } returns Err(JwtError.Unexpected(exception))
+
+        useCase(selfSignedAttestationRequestObject, emptyList()).assertErrorType(VcSdJwtError.Unexpected::class)
     }
 }

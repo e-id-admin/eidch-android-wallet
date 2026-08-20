@@ -7,6 +7,7 @@ import ch.admin.foitt.wallet.platform.appAttestation.domain.usecase.GenerateProo
 import ch.admin.foitt.wallet.platform.appAttestation.domain.usecase.RequestClientAttestation
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.SIdRepositoryError
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.toPairWalletError
+import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.EIdRequestCaseRepository
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.repository.SIdRepository
 import ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.usecase.PairWallet
 import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
@@ -17,6 +18,7 @@ import javax.inject.Inject
 
 class PairWalletImpl @Inject constructor(
     private val sIdRepository: SIdRepository,
+    private val eIdRequestCaseRepository: EIdRequestCaseRepository,
     private val requestClientAttestation: RequestClientAttestation,
     private val generateProofOfPossession: GenerateProofOfPossession,
     private val environmentSetupRepository: EnvironmentSetupRepository,
@@ -36,10 +38,18 @@ class PairWalletImpl @Inject constructor(
 
         ).mapError(GenerateProofOfPossessionError::toPairWalletError).bind()
 
-        sIdRepository.pairWallet(
+        val response = sIdRepository.pairWallet(
             caseId = caseId,
             clientAttestation = clientAttestation,
             clientAttestationPoP = clientAttestationProofOfPossession,
         ).bind()
+
+        eIdRequestCaseRepository.addPairingId(caseId, response.walletPairingId).mapError { error ->
+            ch.admin.foitt.wallet.platform.eIdApplicationProcess.domain.model.EIdRequestError.Unexpected(
+                IllegalStateException("Failed to store pairing ID: $error")
+            )
+        }.bind()
+
+        response
     }
 }

@@ -11,8 +11,8 @@ import ch.admin.foitt.wallet.platform.appAttestation.domain.model.AttestationCha
 import ch.admin.foitt.wallet.platform.appAttestation.domain.model.AttestationError
 import ch.admin.foitt.wallet.platform.appAttestation.domain.model.KeyAttestation
 import ch.admin.foitt.wallet.platform.appAttestation.domain.model.KeyAttestationResponse
-import ch.admin.foitt.wallet.platform.appAttestation.domain.model.RequestKeyAttestationError
 import ch.admin.foitt.wallet.platform.appAttestation.domain.repository.AppAttestationRepository
+import ch.admin.foitt.wallet.platform.appAttestation.domain.usecase.GetAttestationUrlFromDid
 import ch.admin.foitt.wallet.platform.appAttestation.domain.usecase.RequestKeyAttestation
 import ch.admin.foitt.wallet.platform.appAttestation.domain.usecase.ValidateKeyAttestation
 import ch.admin.foitt.wallet.platform.appAttestation.domain.usecase.implementation.RequestKeyAttestationImpl
@@ -24,7 +24,6 @@ import ch.admin.foitt.wallet.util.assertErrorType
 import ch.admin.foitt.wallet.util.assertOk
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
-import com.github.michaelbull.result.Result
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -41,6 +40,8 @@ import org.junit.jupiter.api.Test
 import java.security.KeyPair
 
 class RequestKeyAttestationImplTest {
+    @MockK
+    private lateinit var mockGetAttestationUrlFromDid: GetAttestationUrlFromDid
 
     @MockK
     private lateinit var mockAppAttestationRepository: AppAttestationRepository
@@ -64,6 +65,8 @@ class RequestKeyAttestationImplTest {
     private val jwsKeyPair = JWSKeyPair(signingAlgorithm, keyPair, keyStoreAlias, KeyBindingType.SOFTWARE)
     private val keyAttestation = KeyAttestation(jwsKeyPair, keyAttestationJwt)
     private val jwk = KeyAttestationMocks.jwkEcP256_02
+    private val actorDid = "actor did"
+    private val attestationServiceUrl = "attestation service url"
 
     private lateinit var useCase: RequestKeyAttestation
 
@@ -72,13 +75,16 @@ class RequestKeyAttestationImplTest {
         MockKAnnotations.init(this)
 
         useCase = RequestKeyAttestationImpl(
+            getAttestationUrlFromDid = mockGetAttestationUrlFromDid,
             attestationRepository = mockAppAttestationRepository,
             createJWSKeyPairInHardware = mockCreateJWSKeyPairInHardware,
             createJwk = mockCreateJwk,
             validateKeyAttestation = mockValidateKeyAttestation,
         )
 
-        coEvery { mockAppAttestationRepository.fetchChallenge() } returns Ok(challengeResponse)
+        coEvery { mockGetAttestationUrlFromDid(actorDid) } returns Ok(attestationServiceUrl)
+
+        coEvery { mockAppAttestationRepository.fetchChallenge(attestationServiceUrl) } returns Ok(challengeResponse)
 
         coEvery { mockCreateJWSKeyPairInHardware(any(), any(), any(), any(), any()) } returns Ok(jwsKeyPair)
 
@@ -88,7 +94,7 @@ class RequestKeyAttestationImplTest {
         coEvery { any<JWSKeyPair>().getBase64CertificateChain() } returns Ok(listOf("base64Certificate"))
 
         coEvery {
-            mockAppAttestationRepository.fetchKeyAttestation(any())
+            mockAppAttestationRepository.fetchKeyAttestation(attestationServiceUrl, any())
         } returns Ok(KeyAttestationResponse(keyAttestationRawJwt))
 
         coEvery { mockValidateKeyAttestation(any(), any()) } returns Ok(keyAttestationJwt)
@@ -102,28 +108,40 @@ class RequestKeyAttestationImplTest {
     @SuppressLint("CheckResult")
     @Test
     fun `A success returns a valid KeyAttestation and follows specific steps`() = runTest {
-        val result: Result<KeyAttestation, RequestKeyAttestationError> = useCase()
-        val resultKeyAttestation = result.assertOk()
+        val result = useCase(actorDid = actorDid).assertOk()
 
-        assert(resultKeyAttestation == keyAttestation)
+        assertEquals(keyAttestation, result)
 
         coVerifyOrder {
-            mockAppAttestationRepository.fetchChallenge()
+            mockAppAttestationRepository.fetchChallenge(attestationServiceUrl)
             mockCreateJWSKeyPairInHardware(any(), any(), any(), any(), any())
             mockCreateJwk(jwsKeyPair.keyPair, jwsKeyPair.algorithm)
-            mockAppAttestationRepository.fetchKeyAttestation(any())
+            mockAppAttestationRepository.fetchKeyAttestation(attestationServiceUrl, any())
             mockValidateKeyAttestation(any(), any())
         }
     }
 
     @Test
+    fun `Failure while getting the attestation service url is mapped`() = runTest {
+        val exception = IllegalStateException("did error")
+        coEvery { mockGetAttestationUrlFromDid(actorDid) } returns Err(AttestationError.Unexpected(exception))
+
+        useCase(actorDid = actorDid).assertErrorType(AttestationError.Unexpected::class)
+
+        coVerify(exactly = 0) {
+            mockAppAttestationRepository.fetchChallenge(attestationServiceUrl)
+            mockCreateJWSKeyPairInHardware(any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
     fun `A network failure while getting the challenge is propagated`() = runTest {
-        coEvery { mockAppAttestationRepository.fetchChallenge() } returns Err(AttestationError.NetworkError)
-        val result: Result<KeyAttestation, RequestKeyAttestationError> = useCase()
-        result.assertErrorType(AttestationError.NetworkError::class)
+        coEvery { mockAppAttestationRepository.fetchChallenge(any()) } returns Err(AttestationError.NetworkError)
+
+        useCase(actorDid = actorDid).assertErrorType(AttestationError.NetworkError::class)
 
         coVerify(exactly = 1) {
-            mockAppAttestationRepository.fetchChallenge()
+            mockAppAttestationRepository.fetchChallenge(attestationServiceUrl)
         }
 
         coVerify(exactly = 0) {
@@ -137,8 +155,8 @@ class RequestKeyAttestationImplTest {
         coEvery {
             mockCreateJWSKeyPairInHardware.invoke(any(), any(), any(), any(), any())
         } returns Err(KeyPairError.Unexpected(exception))
-        val result: Result<KeyAttestation, RequestKeyAttestationError> = useCase()
-        val error = result.assertErrorType(AttestationError.Unexpected::class)
+
+        val error = useCase(actorDid = actorDid).assertErrorType(AttestationError.Unexpected::class)
         assertEquals(exception, error.throwable)
     }
 
@@ -146,8 +164,8 @@ class RequestKeyAttestationImplTest {
     fun `A Jwk string creation failure is propagated`() = runTest {
         val exception = Exception("myException")
         coEvery { mockCreateJwk.invoke(any(), any()) } returns Err(JwkError.Unexpected(exception))
-        val result: Result<KeyAttestation, RequestKeyAttestationError> = useCase()
-        val error = result.assertErrorType(AttestationError.Unexpected::class)
+
+        val error = useCase(actorDid = actorDid).assertErrorType(AttestationError.Unexpected::class)
         assertEquals(exception, error.throwable)
     }
 
@@ -155,8 +173,8 @@ class RequestKeyAttestationImplTest {
     fun `A certificate creation failure is propagated`() = runTest {
         val exception = Exception("myException")
         coEvery { any<JWSKeyPair>().getBase64CertificateChain() } returns Err(exception)
-        val result: Result<KeyAttestation, RequestKeyAttestationError> = useCase()
-        val error = result.assertErrorType(AttestationError.Unexpected::class)
+
+        val error = useCase(actorDid = actorDid).assertErrorType(AttestationError.Unexpected::class)
         assertEquals(exception, error.throwable)
     }
 
@@ -164,10 +182,10 @@ class RequestKeyAttestationImplTest {
     fun `An attestation fetching failure is propagated`() = runTest {
         val exception = Exception("myException")
         coEvery {
-            mockAppAttestationRepository.fetchKeyAttestation(any())
+            mockAppAttestationRepository.fetchKeyAttestation(any(), any())
         } returns Err(AttestationError.Unexpected(exception))
-        val result: Result<KeyAttestation, RequestKeyAttestationError> = useCase()
-        val error = result.assertErrorType(AttestationError.Unexpected::class)
+
+        val error = useCase(actorDid = actorDid).assertErrorType(AttestationError.Unexpected::class)
         assertEquals(exception, error.throwable)
     }
 
@@ -177,8 +195,8 @@ class RequestKeyAttestationImplTest {
         coEvery {
             mockValidateKeyAttestation.invoke(any(), any())
         } returns Err(AttestationError.Unexpected(exception))
-        val result: Result<KeyAttestation, RequestKeyAttestationError> = useCase()
-        val error = result.assertErrorType(AttestationError.Unexpected::class)
+
+        val error = useCase(actorDid = actorDid).assertErrorType(AttestationError.Unexpected::class)
         assertEquals(exception, error.throwable)
     }
 }

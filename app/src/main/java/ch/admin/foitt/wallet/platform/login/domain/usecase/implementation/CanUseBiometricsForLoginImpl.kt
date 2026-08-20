@@ -18,13 +18,12 @@ class CanUseBiometricsForLoginImpl @Inject constructor(
     private val getBiometricsCipher: GetBiometricsCipher,
 ) : CanUseBiometricsForLogin {
     override suspend fun invoke(): CanUseBiometricsForLoginResult = withContext(ioDispatcher) {
-        val status = biometricsStatus()
+        val status by lazy { biometricsStatus() }
         val biometricsNotSetupInApp = !biometricLoginEnabled()
-        val keyIsNotUsable = getBiometricsCipher().isErr
 
         when {
             biometricsNotSetupInApp -> CanUseBiometricsForLoginResult.NotSetUpInApp
-            keyIsNotUsable -> CanUseBiometricsForLoginResult.Changed
+            isKeyNotUsable() -> CanUseBiometricsForLoginResult.Changed
             status == BiometricManagerResult.Available -> CanUseBiometricsForLoginResult.Usable
             status == BiometricManagerResult.CanEnroll -> CanUseBiometricsForLoginResult.RemovedInDeviceSettings
             status == BiometricManagerResult.Disabled -> CanUseBiometricsForLoginResult.DeactivatedInDeviceSettings
@@ -32,4 +31,6 @@ class CanUseBiometricsForLoginImpl @Inject constructor(
             else -> CanUseBiometricsForLoginResult.NoHardwareAvailable
         }
     }
+
+    private suspend fun isKeyNotUsable() = getBiometricsCipher().isErr
 }

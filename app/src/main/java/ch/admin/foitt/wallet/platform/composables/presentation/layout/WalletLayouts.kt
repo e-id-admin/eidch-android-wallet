@@ -23,7 +23,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,7 +61,7 @@ object WalletLayouts {
     //endregion
 
     @Composable
-    fun isHeightCompact() = currentWindowAdaptiveInfo().windowHeightClass() == WindowHeightClass.COMPACT
+    fun isHeightCompact() = currentWindowAdaptiveInfoV2().windowHeightClass() == WindowHeightClass.COMPACT
 
     @Composable
     private fun getCardScreenRatio() = if (isHeightCompact()) {

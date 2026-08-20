@@ -118,7 +118,11 @@ class CredentialDaoTest {
 
         credentialDao.deleteById(credential1.id)
 
-        assertNull(credentialWithDisplaysAndClustersDao.getNullableVerifiableCredentialWithDisplaysAndClustersFlowById(credential1.id).firstOrNull())
+        assertNull(
+            credentialWithDisplaysAndClustersDao.getNullableVerifiableCredentialWithDisplaysAndClustersFlowById(
+                credential1.id
+            ).firstOrNull()
+        )
         assertEquals(
             emptyList<CredentialIssuerDisplay>(),
             credentialIssuerDisplayDao.getCredentialIssuerDisplaysById(credential1.id)

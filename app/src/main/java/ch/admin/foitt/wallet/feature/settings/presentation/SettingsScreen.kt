@@ -40,7 +40,7 @@ fun SettingsScreen(
         onFeedback = viewModel::onFeedback,
         onLicences = viewModel::onLicenses,
         onImprint = viewModel::onImprint,
-        onDevsSettings = viewModel.onDevsViewer,
+        devsSettingsEnabled = viewModel.devsSettingsEnabled,
         otpEnabled = viewModel.otpBypassValue.collectAsStateWithLifecycle(false).value,
         onLottie = viewModel.onLottieViewer,
         onChangeOtpBypass = viewModel::onChangeOtpBypass
@@ -58,7 +58,7 @@ private fun SettingsScreenContent(
     onLicences: () -> Unit,
     onImprint: () -> Unit,
     onChangeOtpBypass: () -> Unit,
-    onDevsSettings: Boolean,
+    devsSettingsEnabled: Boolean,
     onLottie: (() -> Unit)?,
 ) = Box(
     modifier = Modifier
@@ -73,6 +73,7 @@ private fun SettingsScreenContent(
             .horizontalSafeDrawing()
             .bottomSafeDrawing()
             .padding(
+                top = Sizes.s06,
                 bottom = Sizes.s04,
             )
     ) {
@@ -81,14 +82,17 @@ private fun SettingsScreenContent(
             onLanguage = onLanguage,
         )
         Spacer(modifier = Modifier.height(Sizes.s06))
-        GeneralSection(
+        FeedbackAndSupportSection(
             onHelp = onHelp,
             onFeedback = onFeedback,
+        )
+        Spacer(modifier = Modifier.height(Sizes.s06))
+        GeneralSection(
             onAccessibility = onAccessibility,
             onLicenses = onLicences,
             onImprint = onImprint,
         )
-        if (onDevsSettings) {
+        if (devsSettingsEnabled) {
             Spacer(modifier = Modifier.height(Sizes.s06))
             DevsSection(
                 otpEnabled = otpEnabled,
@@ -120,6 +124,26 @@ private fun WalletSection(
 }
 
 @Composable
+private fun FeedbackAndSupportSection(
+    onHelp: () -> Unit,
+    onFeedback: () -> Unit,
+) = SettingsSection(
+    title = stringResource(R.string.tk_settings_feedbackSupport_sectionTitle)
+) {
+    WalletListItems.LinkSettingsItem(
+        title = stringResource(R.string.tk_settings_general_help_link_text),
+        leadingIcon = R.drawable.wallet_ic_questionmark,
+        onClick = onHelp,
+    )
+    WalletListItems.Divider()
+    WalletListItems.LinkSettingsItem(
+        title = stringResource(R.string.tk_settings_general_feedback_link_text),
+        leadingIcon = R.drawable.wallet_ic_feedback,
+        onClick = onFeedback,
+    )
+}
+
+@Composable
 private fun DevsSection(
     otpEnabled: Boolean,
     onLottie: (() -> Unit)?,
@@ -145,26 +169,12 @@ private fun DevsSection(
 
 @Composable
 private fun GeneralSection(
-    onHelp: () -> Unit,
-    onFeedback: () -> Unit,
     onAccessibility: () -> Unit,
     onLicenses: () -> Unit,
     onImprint: () -> Unit,
 ) = SettingsSection(
     title = stringResource(R.string.tk_settings_general_sectionTitle)
 ) {
-    WalletListItems.LinkSettingsItem(
-        title = stringResource(R.string.tk_settings_general_help_link_text),
-        leadingIcon = R.drawable.wallet_ic_questionmark,
-        onClick = onHelp,
-    )
-    WalletListItems.Divider()
-    WalletListItems.LinkSettingsItem(
-        title = stringResource(R.string.tk_settings_general_feedback_link_text),
-        leadingIcon = R.drawable.wallet_ic_feedback,
-        onClick = onFeedback,
-    )
-    WalletListItems.Divider()
     WalletListItems.ClickableTextSettingsItem(
         title = stringResource(R.string.tk_settings_general_accessibility),
         leadingIcon = R.drawable.wallet_ic_accessibility,
@@ -205,7 +215,7 @@ fun SettingsScreenPreview(
             onAccessibility = {},
             onLicences = {},
             onImprint = {},
-            onDevsSettings = true,
+            devsSettingsEnabled = true,
             otpEnabled = previewParams,
             onLottie = {},
             onChangeOtpBypass = {}

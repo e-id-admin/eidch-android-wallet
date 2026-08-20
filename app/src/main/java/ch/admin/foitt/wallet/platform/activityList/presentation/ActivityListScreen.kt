@@ -86,7 +86,7 @@ fun ActivityListScreenContent(
     ToastAnimated(
         isVisible = isSnackbarVisible,
         isSnackBarDesign = true,
-        messageToast = R.string.tk_activity_activityList_entryDeleted_title,
+        message = R.string.tk_activity_activityList_entryDeleted_title,
         iconEnd = R.drawable.wallet_ic_cross,
         onCloseToast = onCloseSnackbar,
     )

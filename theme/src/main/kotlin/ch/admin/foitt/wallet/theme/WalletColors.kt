@@ -77,6 +77,10 @@ internal object WalletColors {
     val transparentBlack01 = Color(0x66000000)
     val transparentBlack02 = Color(0x40000000)
     val tansparentBlack03 = grey10.copy(alpha = 0.6f)
+    val callOutSurfaceOrange = Color(0xFFFFFBFF)
+    val callOutBorderOrange = Color(0xFFFFDBCF)
+    val callOutSurfaceOrangeDark = Color(0xFF390C00)
+    val callOutBorderOrangeDark = Color(0xFF5C1900)
 }
 
 // The light scrim color used in the platform API 29+

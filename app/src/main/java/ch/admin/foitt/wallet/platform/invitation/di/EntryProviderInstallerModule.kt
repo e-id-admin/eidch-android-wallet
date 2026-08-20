@@ -25,7 +25,8 @@ object EntryProviderInstallerModule {
                     creationCallback = { factory ->
                         factory.create(
                             invitationErrorScreenState = navKey.invitationError,
-                            uri = navKey.uri
+                            responseUri = navKey.responseUri,
+                            state = navKey.state,
                         )
                     }
                 )

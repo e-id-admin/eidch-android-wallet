@@ -9,7 +9,8 @@ import kotlinx.serialization.json.jsonPrimitive
 @Serializable
 data class ClientIdentifier(
     val clientIdPrefix: ClientIdPrefix,
-    val clientId: String
+    val clientId: String,
+    val raw: String,
 ) {
     @Serializable
     enum class ClientIdPrefix(val value: String) {
@@ -27,26 +28,27 @@ data class ClientIdentifier(
             getClientIdentifier(clientId)
         }
 
-        fun fromAuthorizationRequest(authorizationRequest: AuthorizationRequest): Result<ClientIdentifier, Throwable> = runCatching {
-            val clientId = authorizationRequest.clientId
+        fun fromString(clientId: String) = runCatching {
             getClientIdentifier(clientId)
         }
 
         private fun getClientIdentifier(clientId: String): ClientIdentifier {
             return if (clientId.hasValidPrefix()) {
                 val split = clientId.split(":", limit = 2)
-                if (split[1].isEmpty()) {
+                if (split.getOrElse(1, { "" }).isEmpty()) {
                     error("authorization request jwt contains invalid client_id")
                 } else {
                     ClientIdentifier(
                         clientIdPrefix = clientIdPrefixFromString(split[0]),
                         clientId = split[1],
+                        raw = clientId,
                     )
                 }
             } else {
                 ClientIdentifier(
                     clientIdPrefix = clientIdPrefixFromString(null),
                     clientId = clientId,
+                    raw = clientId,
                 )
             }
         }

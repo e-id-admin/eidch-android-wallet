@@ -31,7 +31,7 @@ import com.github.michaelbull.result.annotation.UnsafeResultErrorAccess
 import com.github.michaelbull.result.annotation.UnsafeResultValueAccess
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getError
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onOk
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -117,7 +117,7 @@ internal class EIdGuardianVerificationViewModel @AssistedInject constructor(
             wasPresentationTriggered.update { false }
 
             fetchGuardianVerificationResult.update { fetchGuardianVerification(caseId) }
-            fetchGuardianVerificationResult.value?.onSuccess { guardianVerificationResponse ->
+            fetchGuardianVerificationResult.value?.onOk { guardianVerificationResponse ->
                 processInvitationResult.update {
                     processInvitation(guardianVerificationResponse.legalRepresentantVerificationRequestUrl)
                 }
@@ -129,7 +129,7 @@ internal class EIdGuardianVerificationViewModel @AssistedInject constructor(
         if (wasPresentationTriggered.value) {
             viewModelScope.launch {
                 fetchSIdStatusResult.update { fetchSIdStatus(caseId) }
-                fetchSIdStatusResult.value?.onSuccess {
+                fetchSIdStatusResult.value?.onOk {
                     updateSIdStatusByCaseId(caseId, it)
                 }
             }.trackCompletion(isLoading)
@@ -161,6 +161,16 @@ internal class EIdGuardianVerificationViewModel @AssistedInject constructor(
             wasPresentationTriggered.update { true }
             uiStateLoading
         }
+
+        is ProcessInvitationResult.PresentationRequestReview -> {
+            val destination = Destination.PresentationRequestReviewScreen(
+                compatibleCredentials = processInvitationResult.credentials,
+                presentationRequestWithRaw = processInvitationResult.request,
+            )
+            navManager.navigateTo(destination)
+            wasPresentationTriggered.update { true }
+            uiStateLoading
+        }
     }
 
     private fun handleProcessInvitationError(
@@ -179,6 +189,10 @@ internal class EIdGuardianVerificationViewModel @AssistedInject constructor(
         InvitationError.Unexpected,
         InvitationError.UnknownIssuer,
         InvitationError.UnknownVerifier,
+        InvitationError.UnverifiedIssuer,
+        is InvitationError.UnverifiedVerifier,
+        InvitationError.UnauthorizedIssuance,
+        is InvitationError.UnknownRegistry,
         is InvitationError.MetadataMisconfiguration,
         InvitationError.CredentialRequestDenied,
         InvitationError.InsufficientScope,

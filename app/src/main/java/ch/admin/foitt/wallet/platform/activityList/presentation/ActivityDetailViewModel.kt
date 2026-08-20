@@ -9,9 +9,8 @@ import ch.admin.foitt.wallet.platform.activityList.domain.usecase.DeleteActivity
 import ch.admin.foitt.wallet.platform.activityList.domain.usecase.GetActivityDetailFlow
 import ch.admin.foitt.wallet.platform.activityList.presentation.model.ActivityDetailScreenUiState
 import ch.admin.foitt.wallet.platform.activityList.presentation.model.toActivityDetailUiState
-import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
+import ch.admin.foitt.wallet.platform.actorMetadata.domain.model.ActorMetadataDisplayData
 import ch.admin.foitt.wallet.platform.badges.presentation.model.BadgeBottomSheetUiState
-import ch.admin.foitt.wallet.platform.badges.presentation.model.toBadgeBottomSheetUiState
 import ch.admin.foitt.wallet.platform.composables.presentation.adapter.GetDrawableFromImageData
 import ch.admin.foitt.wallet.platform.credential.presentation.adapter.GetCredentialCardState
 import ch.admin.foitt.wallet.platform.environmentSetup.domain.repository.EnvironmentSetupRepository
@@ -22,11 +21,13 @@ import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.ActivityEv
 import ch.admin.foitt.wallet.platform.messageEvents.domain.repository.NonComplianceEventRepository
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.navigation.domain.model.Destination
+import ch.admin.foitt.wallet.platform.nonCompliance.domain.model.NonComplianceReportingData
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarBackground
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.extension.refreshableStateFlow
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
+import ch.admin.foitt.wallet.platform.trustRegistry.domain.model.TrustStatus
 import ch.admin.foitt.wallet.platform.utils.openLink
 import ch.admin.foitt.wallet.platform.utils.toPainter
 import com.github.michaelbull.result.mapBoth
@@ -82,12 +83,15 @@ class ActivityDetailViewModel @AssistedInject constructor(
     private val _showConfirmationBottomSheet: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showConfirmationBottomSheet = _showConfirmationBottomSheet.asStateFlow()
 
+    private val actorImageData = MutableStateFlow<ByteArray?>(null)
+
     val activityDetailUiState = refreshableStateFlow(ActivityDetailScreenUiState.EMPTY) {
         getActivityDetailFlow(credentialId = credentialId, activityId = activityId)
             .map { result ->
                 result.mapBoth(
                     success = { activityDetail ->
                         _isLoading.value = false
+                        actorImageData.value = activityDetail?.activity?.actorImageData
                         mapToUiState(activityDetail)
                     },
                     failure = {
@@ -129,13 +133,32 @@ class ActivityDetailViewModel @AssistedInject constructor(
                 activity = activityDetail.activity.toActivityDetailUiState(drawable?.toPainter()),
                 credential = getCredentialCardState(activityDetail.credential).copy(status = null),
                 claims = activityDetail.claims,
+                canReport = nonComplianceEnabled &&
+                    activityDetail.activity.actorTrustStatus != TrustStatus.TRUSTED_PROXIMITY_VERIFIER
             )
         }
     }
 
-    fun onBadge(badgeType: BadgeType.ActorInfoBadge) {
-        _badgeBottomSheetUiState.value = badgeType.toBadgeBottomSheetUiState(
+    fun onActorNameTap() {
+        if (activityDetailUiState.stateFlow.value.activity.actorTrust == TrustStatus.TRUSTED) {
+            _badgeBottomSheetUiState.value = BadgeBottomSheetUiState.TrustVerified(
+                actorName = activityDetailUiState.stateFlow.value.activity.localizedActorName,
+                actorPainter = activityDetailUiState.stateFlow.value.activity.actorImage,
+                onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
+            )
+        } else {
+            _badgeBottomSheetUiState.value = BadgeBottomSheetUiState.BadgeNotVerified(
+                actorName = activityDetailUiState.stateFlow.value.activity.localizedActorName,
+                actorPainter = activityDetailUiState.stateFlow.value.activity.actorImage,
+                onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
+            )
+        }
+    }
+
+    fun onReportedActorInfo() {
+        _badgeBottomSheetUiState.value = BadgeBottomSheetUiState.NonCompliantActor(
             actorName = activityDetailUiState.stateFlow.value.activity.localizedActorName,
+            actorPainter = activityDetailUiState.stateFlow.value.activity.actorImage,
             reason = activityDetailUiState.stateFlow.value.activity.nonComplianceReason,
             onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
         )
@@ -160,10 +183,21 @@ class ActivityDetailViewModel @AssistedInject constructor(
     }
 
     fun onReportActor() {
+        if (activityDetailUiState.stateFlow.value.activity.actorTrust == TrustStatus.TRUSTED_PROXIMITY_VERIFIER) {
+            return
+        }
         navManager.navigateTo(
             Destination.NonComplianceListScreen(
-                activityId = activityId,
-                activityType = activityDetailUiState.stateFlow.value.activity.activityType,
+                reportingData = NonComplianceReportingData(
+                    actorDisplayData = ActorMetadataDisplayData(
+                        activityId = activityId,
+                        localizedActorName = activityDetailUiState.stateFlow.value.activity.localizedActorName,
+                        actorImageData = actorImageData.value
+                    ),
+                    rawData = null,
+                    issuerDid = null,
+                    activityType = activityDetailUiState.stateFlow.value.activity.activityType
+                ),
             )
         )
     }

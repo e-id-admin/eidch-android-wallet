@@ -16,7 +16,6 @@ import ch.admin.foitt.wallet.platform.passphraseInput.domain.usecase.ValidatePas
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
-import ch.admin.foitt.wallet.platform.utils.trackCompletion
 import com.github.michaelbull.result.mapBoth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +33,7 @@ class EnterCurrentPassphraseViewModel @Inject constructor(
     private val authenticateWithPassphrase: AuthenticateWithPassphrase,
     private val resetLockout: ResetLockout,
     private val increaseFailedLoginAttemptsCounter: IncreaseFailedLoginAttemptsCounter,
-    setTopBarState: SetTopBarState,
+    private val setTopBarState: SetTopBarState,
 ) : ScreenViewModel(setTopBarState) {
     override val topBarState = TopBarState.Details(navManager::popBackStack, R.string.tk_global_changepassword)
 
@@ -74,23 +73,37 @@ class EnterCurrentPassphraseViewModel @Inject constructor(
         _passphraseInputFieldState.value = PassphraseInputFieldState.Typing
         if (isPassphraseValid.value) {
             viewModelScope.launch {
-                authenticateWithPassphrase(passphrase = textFieldValue.value.text).mapBoth(
-                    success = {
-                        resetLockout()
-                        _passphraseInputFieldState.value = PassphraseInputFieldState.Success
-                        _textFieldValue.value = TextFieldValue("")
-                        navigateToEnterNewPassphraseScreen()
-                    },
-                    failure = { error ->
-                        increaseFailedLoginAttemptsCounter()
-                        if (error is AuthenticateWithPassphraseError.Unexpected) {
-                            Timber.e(error.cause, "Authentication with current passphrase failed")
+                _isLoading.value = true
+                try {
+                    // Hide the back button while authenticating so TalkBack focuses the loading
+                    // indicator instead of the back button (which otherwise wins by traversal priority).
+                    setTopBarState(TopBarState.Empty)
+                    authenticateWithPassphrase(passphrase = textFieldValue.value.text).mapBoth(
+                        success = {
+                            resetLockout()
+                            _passphraseInputFieldState.value = PassphraseInputFieldState.Success
+                            _textFieldValue.value = TextFieldValue("")
+                            navigateToEnterNewPassphraseScreen()
+                        },
+                        failure = { error ->
+                            increaseFailedLoginAttemptsCounter()
+                            if (error is AuthenticateWithPassphraseError.Unexpected) {
+                                Timber.e(error.cause, "Authentication with current passphrase failed")
+                            }
+                            _passphraseInputFieldState.value = PassphraseInputFieldState.Error
+                            // The loading overlay has to be gone before the back button comes back, otherwise the
+                            // reappearing top bar takes the accessibility focus before the error can be announced.
+                            _isLoading.value = false
+                            checkRemainingAttempts()
+                            if (remainingAuthAttempts.value > 0) {
+                                setTopBarState(topBarState)
+                            }
                         }
-                        _passphraseInputFieldState.value = PassphraseInputFieldState.Error
-                        checkRemainingAttempts()
-                    }
-                )
-            }.trackCompletion(_isLoading)
+                    )
+                } finally {
+                    _isLoading.value = false
+                }
+            }
         }
     }
 

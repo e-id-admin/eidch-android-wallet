@@ -6,9 +6,8 @@ import ch.admin.foitt.wallet.R
 import ch.admin.foitt.wallet.platform.actorMetadata.domain.usecase.GetActorForScope
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.adapter.GetActorUiState
 import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.ActorUiState
-import ch.admin.foitt.wallet.platform.badges.domain.model.BadgeType
+import ch.admin.foitt.wallet.platform.actorMetadata.presentation.model.toBadgeBottomSheetUiState
 import ch.admin.foitt.wallet.platform.badges.presentation.model.BadgeBottomSheetUiState
-import ch.admin.foitt.wallet.platform.badges.presentation.model.toBadgeBottomSheetUiState
 import ch.admin.foitt.wallet.platform.navigation.NavigationManager
 import ch.admin.foitt.wallet.platform.navigation.domain.model.ComponentScope
 import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
@@ -43,18 +42,19 @@ class PresentationVerificationErrorViewModel @Inject constructor(
 
     fun onClose() = navManager.popBackStackOrToRoot()
 
-    fun onBadge(badgeType: BadgeType) {
-        _badgeBottomSheetUiState.value = when (badgeType) {
-            is BadgeType.ActorInfoBadge -> badgeType.toBadgeBottomSheetUiState(
-                actorName = verifierUiState.value.name ?: "",
-                reason = verifierUiState.value.nonComplianceReason,
-                onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
-            )
-
-            is BadgeType.ClaimInfoBadge -> badgeType.toBadgeBottomSheetUiState(
-                onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
-            )
+    fun onActorNameTap() {
+        _badgeBottomSheetUiState.value = verifierUiState.value.toBadgeBottomSheetUiState {
+            onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value)
         }
+    }
+
+    fun onReportedActorInfo() {
+        _badgeBottomSheetUiState.value = BadgeBottomSheetUiState.NonCompliantActor(
+            actorName = verifierUiState.value.name ?: "",
+            actorPainter = verifierUiState.value.painter,
+            reason = verifierUiState.value.nonComplianceReason,
+            onMoreInformation = { onMoreInformation(R.string.tk_badgeInformation_furtherInformation_link_value) },
+        )
     }
 
     fun onDismissBottomSheet() {

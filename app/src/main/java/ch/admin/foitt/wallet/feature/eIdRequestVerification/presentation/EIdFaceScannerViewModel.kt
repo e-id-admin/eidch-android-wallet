@@ -18,6 +18,7 @@ import ch.admin.foitt.wallet.feature.eIdRequestVerification.domain.usecase.Creat
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.domain.usecase.SaveEIdRequestFiles
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.faceScanner.EIdFaceScanStatus
 import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.faceScanner.EIdFaceScannerUiState
+import ch.admin.foitt.wallet.feature.eIdRequestVerification.presentation.faceScanner.FaceScannerEvent
 import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.model.OnPermissionResult
 import ch.admin.foitt.wallet.platform.cameraPermissionHandler.domain.model.PermissionState
 import ch.admin.foitt.wallet.platform.cameraPermissionHandler.infra.PermissionStateHandler
@@ -31,6 +32,8 @@ import ch.admin.foitt.wallet.platform.scaffold.domain.model.TopBarState
 import ch.admin.foitt.wallet.platform.scaffold.domain.usecase.SetTopBarState
 import ch.admin.foitt.wallet.platform.scaffold.presentation.ScreenViewModel
 import ch.admin.foitt.wallet.platform.scanning.di.AvBeamSdkEntryPoint
+import ch.admin.foitt.wallet.platform.utils.combine
+import ch.admin.foitt.wallet.platform.utils.isUsbImageDeviceDetectedFlow
 import ch.admin.foitt.wallet.platform.utils.launchTimer
 import ch.admin.foitt.wallet.platform.utils.openLink
 import dagger.assisted.Assisted
@@ -41,16 +44,20 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+@Suppress("TooManyFunctions")
 @HiltViewModel(assistedFactory = EIdFaceScannerViewModel.Factory::class)
 class EIdFaceScannerViewModel @AssistedInject constructor(
     @param:ApplicationContext private val appContext: Context,
@@ -60,7 +67,7 @@ class EIdFaceScannerViewModel @AssistedInject constructor(
     private val createSDKErrorTextKeys: CreateSDKErrorTextKeys,
     destinationScopedComponentManager: DestinationScopedComponentManager,
     @Assisted private val caseId: String,
-    setTopBarState: SetTopBarState,
+    private val setTopBarState: SetTopBarState,
 ) : ScreenViewModel(setTopBarState) {
 
     @AssistedFactory
@@ -77,20 +84,28 @@ class EIdFaceScannerViewModel @AssistedInject constructor(
 
     override val topBarState: TopBarState
         get() {
-            return when (uiState.value) {
-                EIdFaceScannerUiState.Initializing -> TopBarState.Empty
-                is EIdFaceScannerUiState.Error ->
+            val state = uiState.value
+            val permissionState = permissionState.value
+            return when {
+                permissionState !is PermissionState.Granted -> TopBarState.DetailsWithCloseButton(
+                    titleId = null,
+                    onUp = ::onUp,
+                    onClose = ::onClose,
+                )
+
+                state is EIdFaceScannerUiState.Error ->
                     TopBarState.DetailsWithCloseButton(
                         titleId = null,
                         onUp = ::onUp,
                         onClose = ::onClose,
                     )
-                is EIdFaceScannerUiState.Scanning ->
+                state is EIdFaceScannerUiState.Scanning ->
                     TopBarState.DetailsWithCloseRoundButtons(
                         titleId = null,
                         onUp = ::onUp,
                         onClose = ::onClose,
                     )
+                else -> TopBarState.Empty
             }
         }
 
@@ -102,7 +117,6 @@ class EIdFaceScannerViewModel @AssistedInject constructor(
 
     private val isCameraRunning = MutableStateFlow(false)
     private val isViewReady = MutableStateFlow(false)
-
     private var viewWidth = 0
     private var viewHeight = 0
     private var lastActivityHash: Int? = null
@@ -122,13 +136,21 @@ class EIdFaceScannerViewModel @AssistedInject constructor(
             }
         }
 
+    private val isUsbDeviceDetected = appContext.isUsbImageDeviceDetectedFlow.onEach { isUsbDeviceDetected ->
+        if (isUsbDeviceDetected) {
+            resetScanningState()
+            clearFlows()
+        }
+    }
+
     val uiState: StateFlow<EIdFaceScannerUiState> = combine(
         errorState,
         permissionState,
         avBeam.initializedFlow,
         eIdFaceScanStatus,
         avBeam.statusFlow,
-    ) { errorState, permission, initialized, status, avBeamStatus ->
+        isUsbDeviceDetected,
+    ) { errorState, permission, initialized, status, avBeamStatus, isUsbDeviceDetected ->
         when {
             errorState is DocumentScannerErrorType.SdkError ->
                 EIdFaceScannerUiState.Error(
@@ -166,6 +188,14 @@ class EIdFaceScannerViewModel @AssistedInject constructor(
             )
 
             permission !is PermissionState.Granted -> EIdFaceScannerUiState.Initializing
+            isUsbDeviceDetected -> EIdFaceScannerUiState.Error(
+                type = DocumentScannerErrorType.Generic,
+                onButton = ::onRetry,
+                onHelp = null,
+                title = R.string.tk_getEid_externalDeviceDetected_primary,
+                content = R.string.tk_getEid_externalDeviceDetected_secondary,
+                buttonText = R.string.tk_error_generic_button_primary,
+            )
             !initialized -> EIdFaceScannerUiState.Initializing
             else -> EIdFaceScannerUiState.Scanning(
                 infoText = avBeamStatus.toTextRes(),
@@ -173,6 +203,22 @@ class EIdFaceScannerViewModel @AssistedInject constructor(
             )
         }
     }.toStateFlow(EIdFaceScannerUiState.Initializing)
+
+    private val _hapticEvent = MutableSharedFlow<FaceScannerEvent>()
+    val hapticEvent = _hapticEvent.asSharedFlow()
+
+    fun updateTopBarState(coroutineScope: CoroutineScope): Unit = coroutineScope.run {
+        launch {
+            uiState.collectLatest {
+                setTopBarState(topBarState)
+            }
+        }
+        launch {
+            permissionState.collectLatest {
+                setTopBarState(topBarState)
+            }
+        }
+    }
 
     val shouldLock: StateFlow<Boolean> = uiState.map { state ->
         state is EIdFaceScannerUiState.Initializing && permissionState.value is PermissionState.Granted ||
@@ -257,6 +303,8 @@ class EIdFaceScannerViewModel @AssistedInject constructor(
     private fun onFaceScanCompleted(packageResult: AVBeamPackageResult) = viewModelScope.launch {
         eIdFaceScanStatus.update { EIdFaceScanStatus.Finished }
 
+        _hapticEvent.emit(FaceScannerEvent.ScanDone)
+
         delay(NAVIGATION_DELAY)
 
         avBeam.stopCaptureFace()
@@ -279,9 +327,12 @@ class EIdFaceScannerViewModel @AssistedInject constructor(
         )
     }
 
-    private fun onFaceScanError(avBeamError: AvBeamNotification.Error) {
+    private suspend fun onFaceScanError(avBeamError: AvBeamNotification.Error) {
         if (!isRotation) {
             val baseError = StringBuilder("$logTitle Error - faceScan notification")
+
+            _hapticEvent.emit(FaceScannerEvent.ScanDone)
+
             avBeamError.packageData?.let { packageData ->
                 baseError.append("\nerror: ${packageData.errorType}, ${packageData.errorCode}")
                 baseError.append("\nerrorList: ${packageData.errorCodeList.joinToString()}")

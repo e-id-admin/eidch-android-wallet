@@ -11,10 +11,12 @@ import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchVcSdJwtCredent
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.FetchVerifiableCredentialError
 import ch.admin.foitt.openid4vc.domain.model.credentialoffer.toFetchVcSdJwtCredentialError
 import ch.admin.foitt.openid4vc.domain.model.keyBinding.BindingKeyPair
-import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryptionType
+import ch.admin.foitt.openid4vc.domain.model.payloadEncryption.PayloadEncryption
+import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VerifyVcSdJwtBatchConsistencyError
 import ch.admin.foitt.openid4vc.domain.model.vcSdJwt.VerifyVcSdJwtSignatureError
 import ch.admin.foitt.openid4vc.domain.usecase.FetchVerifiableCredential
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.FetchVcSdJwtCredential
+import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.VerifyVcSdJwtBatchConsistency
 import ch.admin.foitt.openid4vc.domain.usecase.vcSdJwt.VerifyVcSdJwtSignature
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
@@ -24,19 +26,18 @@ import javax.inject.Inject
 internal class FetchVcSdJwtCredentialImpl @Inject constructor(
     private val fetchVerifiableCredential: FetchVerifiableCredential,
     private val verifyVcSdJwtSignature: VerifyVcSdJwtSignature,
+    private val verifyVcSdJwtBatchConsistency: VerifyVcSdJwtBatchConsistency,
 ) : FetchVcSdJwtCredential {
     override suspend fun invoke(
-        isDPopEnabled: Boolean,
         verifiableCredentialParams: VerifiableCredentialParams,
         bindingKeyPairs: List<BindingKeyPair>?,
-        payloadEncryptionType: PayloadEncryptionType,
+        payloadEncryption: PayloadEncryption,
         dpopKeyPair: BindingKeyPair?,
     ): Result<AnyCredentialResult, FetchVcSdJwtCredentialError> = coroutineBinding {
-        val fetchVerifiableCredentialResult = fetchVerifiableCredential.invoke(
-            isDPopEnabled = isDPopEnabled,
+        val fetchVerifiableCredentialResult = fetchVerifiableCredential(
             verifiableCredentialParams = verifiableCredentialParams,
             credentialBindingKeyPairs = bindingKeyPairs,
-            payloadEncryptionType = payloadEncryptionType,
+            payloadEncryption = payloadEncryption,
             dpopKeyPair = dpopKeyPair,
         ).mapError(FetchVerifiableCredentialError::toFetchVcSdJwtCredentialError)
             .bind()
@@ -44,26 +45,35 @@ internal class FetchVcSdJwtCredentialImpl @Inject constructor(
         when (fetchVerifiableCredentialResult) {
             is VerifiableCredential -> {
                 AnyVerifiedCredential(
-                    verifyVcSdJwtSignature(
+                    accessToken = fetchVerifiableCredentialResult.accessToken,
+                    refreshToken = fetchVerifiableCredentialResult.refreshToken,
+                    dpopKeyBinding = fetchVerifiableCredentialResult.dpopKeyBinding,
+                    vcSdJwtCredential = verifyVcSdJwtSignature(
                         keyBinding = fetchVerifiableCredentialResult.keyBinding,
                         payload = fetchVerifiableCredentialResult.credential,
                         format = verifiableCredentialParams.credentialConfiguration.format,
-                    ).mapError(VerifyVcSdJwtSignatureError::toFetchVcSdJwtCredentialError).bind()
+                    ).mapError(VerifyVcSdJwtSignatureError::toFetchVcSdJwtCredentialError).bind(),
                 )
             }
 
             is BatchCredential -> {
+                val verifiedCredentials = fetchVerifiableCredentialResult.credentials.map {
+                    verifyVcSdJwtSignature(
+                        keyBinding = it.keyBinding,
+                        payload = it.credential,
+                        format = verifiableCredentialParams.credentialConfiguration.format,
+                    ).mapError(VerifyVcSdJwtSignatureError::toFetchVcSdJwtCredentialError).bind()
+                }
+
+                verifyVcSdJwtBatchConsistency(verifiedCredentials)
+                    .mapError(VerifyVcSdJwtBatchConsistencyError::toFetchVcSdJwtCredentialError)
+                    .bind()
+
                 AnyVerifiedBatchCredential(
                     fetchVerifiableCredentialResult.accessToken,
                     fetchVerifiableCredentialResult.refreshToken,
                     fetchVerifiableCredentialResult.dpopKeyBinding,
-                    fetchVerifiableCredentialResult.credentials.map {
-                        verifyVcSdJwtSignature(
-                            keyBinding = it.keyBinding,
-                            payload = it.credential,
-                            format = verifiableCredentialParams.credentialConfiguration.format,
-                        ).mapError(VerifyVcSdJwtSignatureError::toFetchVcSdJwtCredentialError).bind()
-                    }
+                    verifiedCredentials,
                 )
             }
 

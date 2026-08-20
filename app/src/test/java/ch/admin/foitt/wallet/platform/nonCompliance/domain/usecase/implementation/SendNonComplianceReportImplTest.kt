@@ -1,6 +1,7 @@
 package ch.admin.foitt.wallet.platform.nonCompliance.domain.usecase.implementation
 
 import ch.admin.foitt.openid4vc.domain.model.presentationRequest.AuthorizationRequest
+import ch.admin.foitt.openid4vc.domain.model.presentationRequest.ClientIdentifier
 import ch.admin.foitt.wallet.platform.activityList.domain.model.ActivityListError
 import ch.admin.foitt.wallet.platform.activityList.domain.repository.CredentialActivityRepository
 import ch.admin.foitt.wallet.platform.appAttestation.domain.model.AttestationError
@@ -90,6 +91,9 @@ class SendNonComplianceReportImplTest {
 
     @MockK
     private lateinit var mockAuthorizationRequest: AuthorizationRequest
+
+    @MockK
+    private lateinit var mockClientIdentifier: ClientIdentifier
 
     private lateinit var useCase: SendNonComplianceReport
 
@@ -233,7 +237,7 @@ class SendNonComplianceReportImplTest {
         )
 
         every {
-            useCase invoke "getPresentationRequest" withArguments listOf(anyNullable<String>())
+            useCase invoke "getAuthorizationRequest" withArguments listOf(anyNullable<String>())
         } returns Ok(mockAuthorizationRequest)
 
         every {
@@ -274,7 +278,7 @@ class SendNonComplianceReportImplTest {
         )
 
         every {
-            useCase invoke "getPresentationRequest" withArguments listOf(anyNullable<String>())
+            useCase invoke "getAuthorizationRequest" withArguments listOf(anyNullable<String>())
         } returns Ok(mockAuthorizationRequest)
 
         every {
@@ -310,7 +314,9 @@ class SendNonComplianceReportImplTest {
         every { mockCredentialActivity.createdAt } returns ACTIVITY_CREATED_AT
         every { mockCredentialActivity.nonComplianceData } returns PRESENTATION_REQUEST_JWT
 
-        every { mockAuthorizationRequest.clientId } returns VERIFIER_DID
+        every { mockClientIdentifier.clientId } returns VERIFIER_DID
+
+        every { mockAuthorizationRequest.clientIdentifier } returns mockClientIdentifier
         every { mockAuthorizationRequest.responseUri } returns VERIFIER_URL
         every { mockAuthorizationRequest.dcqlQuery } returns io.mockk.mockk()
 
